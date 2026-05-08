@@ -148,7 +148,7 @@ export default async function StatsPage() {
         <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>
           Stats
         </h1>
-        <p className="text-sm mt-1" style={{ color: '#8896ae' }}>
+        <p className="text-sm mt-1" style={{ color: '#a8b8c8' }}>
           Your complete MLB journey by the numbers
         </p>
       </div>
@@ -159,7 +159,7 @@ export default async function StatsPage() {
           <div key={label} className="card p-5">
             <div className="flex items-center gap-2 mb-3" style={{ color }}>
               {icon}
-              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#8896ae' }}>
+              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#a8b8c8' }}>
                 {label}
               </span>
             </div>
@@ -167,7 +167,7 @@ export default async function StatsPage() {
               {value}
             </div>
             {sub && (
-              <div className="text-xs mt-1" style={{ color: '#8896ae' }}>
+              <div className="text-xs mt-1" style={{ color: '#a8b8c8' }}>
                 {sub}
               </div>
             )}
@@ -185,8 +185,8 @@ export default async function StatsPage() {
             {divBreakdown.map(({ label, visited, total }) => (
               <div key={label}>
                 <div className="flex justify-between text-sm mb-1">
-                  <span style={{ color: '#94a3b8' }}>{label}</span>
-                  <span style={{ color: visited === total ? '#22c55e' : '#8896ae' }}>
+                  <span style={{ color: '#b8c8d8' }}>{label}</span>
+                  <span style={{ color: visited === total ? '#22c55e' : '#a8b8c8' }}>
                     {visited} / {total}
                   </span>
                 </div>
@@ -211,7 +211,7 @@ export default async function StatsPage() {
             Most Seen Opponents
           </div>
           {teamOpponentData.length === 0 ? (
-            <div className="text-sm" style={{ color: '#8896ae' }}>
+            <div className="text-sm" style={{ color: '#a8b8c8' }}>
               Log some games to see opponent stats
             </div>
           ) : (
@@ -220,7 +220,7 @@ export default async function StatsPage() {
                 const max = teamOpponentData[0][1] as number
                 return (
                   <div key={team} className="flex items-center gap-3">
-                    <div className="text-sm w-36 truncate" style={{ color: '#94a3b8' }}>
+                    <div className="text-sm w-36 truncate" style={{ color: '#b8c8d8' }}>
                       {team}
                     </div>
                     <div className="flex-1 rounded-full overflow-hidden" style={{ height: 6, backgroundColor: '#1f2937' }}>
@@ -264,7 +264,7 @@ export default async function StatsPage() {
                         minHeight: 4,
                       }}
                     />
-                    <div className="text-xs text-center" style={{ color: '#8896ae', fontSize: '0.6rem' }}>
+                    <div className="text-xs text-center" style={{ color: '#a8b8c8', fontSize: '0.78rem' }}>
                       {month}
                     </div>
                   </div>
@@ -280,7 +280,7 @@ export default async function StatsPage() {
             Visited Stadiums
           </div>
           {visitedStadiums.length === 0 ? (
-            <div className="text-sm" style={{ color: '#8896ae' }}>
+            <div className="text-sm" style={{ color: '#a8b8c8' }}>
               No stadiums visited yet. Start logging your games!
             </div>
           ) : (
@@ -293,10 +293,10 @@ export default async function StatsPage() {
                 >
                   <TeamLogo abbreviation={s.abbreviation} size={33} style={{ flexShrink: 0 }} />
                   <div className="min-w-0">
-                    <div className="truncate" style={{ color: '#f1f5f9', fontSize: '0.8rem' }}>
+                    <div className="truncate" style={{ color: '#f1f5f9', fontSize: '0.96rem' }}>
                       {s.name}
                     </div>
-                    <div className="text-xs truncate" style={{ color: '#8896ae' }}>
+                    <div className="text-xs truncate" style={{ color: '#a8b8c8' }}>
                       {s.team}
                     </div>
                   </div>
@@ -321,7 +321,7 @@ export default async function StatsPage() {
               return (
                 <div key={type} className="text-center p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
                   <div className="text-2xl font-bold" style={{ color: '#f59e0b' }}>{count}</div>
-                  <div className="text-xs mt-1" style={{ color: '#8896ae' }}>{label}</div>
+                  <div className="text-xs mt-1" style={{ color: '#a8b8c8' }}>{label}</div>
                 </div>
               )
             })}

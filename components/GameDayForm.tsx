@@ -237,11 +237,11 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
             <div className="font-semibold" style={{ color: '#f1f5f9' }}>
               {visit ? 'Edit GameDay Record' : 'Log a Game'}
             </div>
-            <div className="text-sm" style={{ color: '#8896ae' }}>
+            <div className="text-sm" style={{ color: '#a8b8c8' }}>
               {stadium.name}
             </div>
           </div>
-          <button onClick={onClose} style={{ color: '#8896ae' }}>
+          <button onClick={onClose} style={{ color: '#a8b8c8' }}>
             <X size={20} />
           </button>
         </div>
@@ -394,7 +394,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Home starter */}
             <div>
-              <div className="text-xs font-medium mb-2" style={{ color: '#94a3b8' }}>
+              <div className="text-xs font-medium mb-2" style={{ color: '#b8c8d8' }}>
                 Home Starter
               </div>
               <div className="flex flex-col gap-2">
@@ -431,7 +431,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
 
             {/* Away starter */}
             <div>
-              <div className="text-xs font-medium mb-2" style={{ color: '#94a3b8' }}>
+              <div className="text-xs font-medium mb-2" style={{ color: '#b8c8d8' }}>
                 Away Starter
               </div>
               <div className="flex flex-col gap-2">
@@ -474,7 +474,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                 <tr>
                   <th
                     className="text-left py-1 pr-3 text-xs font-medium"
-                    style={{ color: '#8896ae', width: 70 }}
+                    style={{ color: '#a8b8c8', width: 70 }}
                   >
                     Team
                   </th>
@@ -482,7 +482,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                     <th
                       key={inn.inning}
                       className="text-center px-1 text-xs font-medium"
-                      style={{ color: '#8896ae', minWidth: 36 }}
+                      style={{ color: '#a8b8c8', minWidth: 36 }}
                     >
                       {inn.inning}
                     </th>
@@ -492,7 +492,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
               <tbody>
                 {(['away', 'home'] as const).map((side) => (
                   <tr key={side}>
-                    <td className="py-1 pr-3 text-xs" style={{ color: '#94a3b8' }}>
+                    <td className="py-1 pr-3 text-xs" style={{ color: '#b8c8d8' }}>
                       {side === 'away' ? form.visiting_team || 'Away' : form.home_team || 'Home'}
                     </td>
                     {innings.map((inn, idx) => (
@@ -501,7 +501,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                           type="number"
                           min={0}
                           className="input text-center"
-                          style={{ padding: '4px 2px', fontSize: '0.75rem' }}
+                          style={{ padding: '4px 2px', fontSize: '0.92rem' }}
                           value={inn[side] ?? ''}
                           onChange={(e) => setInning(idx, side, e.target.value)}
                         />
@@ -513,11 +513,11 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
             </table>
           </div>
           <div className="flex gap-2 mt-2">
-            <button type="button" onClick={addInning} className="btn-secondary" style={{ padding: '4px 10px', fontSize: '0.75rem' }}>
+            <button type="button" onClick={addInning} className="btn-secondary" style={{ padding: '4px 10px', fontSize: '0.92rem' }}>
               <Plus size={12} /> Inning
             </button>
             {innings.length > 9 && (
-              <button type="button" onClick={removeInning} className="btn-secondary" style={{ padding: '4px 10px', fontSize: '0.75rem' }}>
+              <button type="button" onClick={removeInning} className="btn-secondary" style={{ padding: '4px 10px', fontSize: '0.92rem' }}>
                 <Minus size={12} /> Remove
               </button>
             )}
@@ -532,7 +532,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                     <th
                       key={h}
                       className="text-left py-1 pr-2 text-xs font-medium"
-                      style={{ color: '#8896ae' }}
+                      style={{ color: '#a8b8c8' }}
                     >
                       {h}
                     </th>
@@ -545,7 +545,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                   { label: form.home_team || 'Home', prefix: 'home' },
                 ].map(({ label, prefix }) => (
                   <tr key={prefix}>
-                    <td className="py-1 pr-2 text-xs" style={{ color: '#94a3b8', width: 80 }}>
+                    <td className="py-1 pr-2 text-xs" style={{ color: '#b8c8d8', width: 80 }}>
                       {label}
                     </td>
                     {['runs', 'hits', 'errors', 'lob'].map((stat) => (
@@ -554,7 +554,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                           type="number"
                           min={0}
                           className="input"
-                          style={{ padding: '4px 6px', fontSize: '0.75rem', width: 52 }}
+                          style={{ padding: '4px 6px', fontSize: '0.92rem', width: 52 }}
                           value={form[`${prefix}_${stat}` as keyof typeof form]}
                           onChange={(e) => set(`${prefix}_${stat}`, e.target.value)}
                         />
@@ -634,7 +634,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                   border: '2px dashed #2d3748',
                   backgroundColor: '#1a2235',
                   padding: '2rem 1rem',
-                  color: '#8896ae',
+                  color: '#a8b8c8',
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#3b82f6')}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#2d3748')}

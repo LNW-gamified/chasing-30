@@ -311,3 +311,38 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION get_public_progress(TEXT) TO anon;
+
+-- ============================================================
+-- Trip Improvements: multi-stop itinerary + date range
+-- Run this block in the Supabase SQL Editor
+-- ============================================================
+
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS start_date DATE;
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS end_date DATE;
+
+CREATE TABLE IF NOT EXISTS trip_stops (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id UUID REFERENCES trips(id) ON DELETE CASCADE NOT NULL,
+  stadium_id UUID REFERENCES stadiums(id) ON DELETE CASCADE NOT NULL,
+  game_date DATE,
+  sort_order INTEGER DEFAULT 0,
+  est_tickets DECIMAL(10,2) DEFAULT 0,
+  est_food DECIMAL(10,2) DEFAULT 0,
+  est_parking DECIMAL(10,2) DEFAULT 0,
+  actual_tickets DECIMAL(10,2) DEFAULT 0,
+  actual_food DECIMAL(10,2) DEFAULT 0,
+  actual_parking DECIMAL(10,2) DEFAULT 0,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE trip_stops ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated users can read trip_stops"
+  ON trip_stops FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Authenticated users can insert trip_stops"
+  ON trip_stops FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Authenticated users can update trip_stops"
+  ON trip_stops FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "Authenticated users can delete trip_stops"
+  ON trip_stops FOR DELETE TO authenticated USING (true);

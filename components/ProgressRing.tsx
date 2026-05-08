@@ -40,7 +40,7 @@ export default function ProgressRing({ visited, total, size = 160 }: ProgressRin
         <span className="text-3xl font-bold" style={{ color: '#f1f5f9' }}>
           {visited}
         </span>
-        <span className="text-sm" style={{ color: '#8896ae' }}>
+        <span className="text-sm" style={{ color: '#a8b8c8' }}>
           / {total}
         </span>
       </div>

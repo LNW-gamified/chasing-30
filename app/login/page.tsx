@@ -40,7 +40,7 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>
             Chasing 30
           </h1>
-          <p className="text-sm mt-1" style={{ color: '#8896ae' }}>
+          <p className="text-sm mt-1" style={{ color: '#a8b8c8' }}>
             MLB Stadium Tracker
           </p>
         </div>

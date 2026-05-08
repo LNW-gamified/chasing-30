@@ -53,7 +53,7 @@ export default function Navigation() {
         </div>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          style={{ color: '#94a3b8' }}
+          style={{ color: '#b8c8d8' }}
           className="p-1"
         >
           {mobileOpen ? <X size={24} /> : <Menu size={24} />}
@@ -77,11 +77,11 @@ export default function Navigation() {
                   className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors"
                   style={{
                     backgroundColor: active ? 'rgba(59,130,246,0.15)' : 'transparent',
-                    color: active ? '#60a5fa' : '#94a3b8',
+                    color: active ? '#60a5fa' : '#b8c8d8',
                   }}
                 >
-                  <Icon size={20} />
-                  <span className="font-medium">{label}</span>
+                  <Icon size={22} />
+                  <span className="font-medium text-base">{label}</span>
                 </Link>
               )
             })}
@@ -90,8 +90,8 @@ export default function Navigation() {
               className="flex items-center gap-3 px-4 py-3 rounded-lg mt-4"
               style={{ color: '#ef4444' }}
             >
-              <LogOut size={20} />
-              <span className="font-medium">Sign Out</span>
+              <LogOut size={22} />
+              <span className="font-medium text-base">Sign Out</span>
             </button>
           </nav>
         </div>
@@ -99,7 +99,7 @@ export default function Navigation() {
 
       {/* Desktop sidebar */}
       <aside
-        className="hidden md:flex flex-col w-60 min-h-screen fixed left-0 top-0 z-40"
+        className="hidden md:flex flex-col w-64 min-h-screen fixed left-0 top-0 z-40"
         style={{ backgroundColor: '#0d1424', borderRight: '1px solid #1f2937' }}
       >
         {/* Logo */}
@@ -112,7 +112,7 @@ export default function Navigation() {
             <div className="font-bold text-base" style={{ color: '#f1f5f9' }}>
               Chasing 30
             </div>
-            <div className="text-xs" style={{ color: '#8896ae' }}>
+            <div className="text-xs" style={{ color: '#a8b8c8' }}>
               MLB Stadium Tracker
             </div>
           </div>
@@ -129,7 +129,7 @@ export default function Navigation() {
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150"
                 style={{
                   backgroundColor: active ? 'rgba(59,130,246,0.15)' : 'transparent',
-                  color: active ? '#60a5fa' : '#94a3b8',
+                  color: active ? '#60a5fa' : '#b8c8d8',
                 }}
                 onMouseEnter={(e) => {
                   if (!active) {
@@ -140,12 +140,12 @@ export default function Navigation() {
                 onMouseLeave={(e) => {
                   if (!active) {
                     e.currentTarget.style.backgroundColor = 'transparent'
-                    e.currentTarget.style.color = '#94a3b8'
+                    e.currentTarget.style.color = '#b8c8d8'
                   }
                 }}
               >
-                <Icon size={18} />
-                <span className="font-medium text-sm">{label}</span>
+                <Icon size={20} />
+                <span className="font-medium text-base">{label}</span>
                 {active && (
                   <div
                     className="ml-auto w-1.5 h-1.5 rounded-full"
@@ -162,18 +162,18 @@ export default function Navigation() {
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full transition-colors"
-            style={{ color: '#8896ae' }}
+            style={{ color: '#a8b8c8' }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = '#ef4444'
               e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.08)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#8896ae'
+              e.currentTarget.style.color = '#a8b8c8'
               e.currentTarget.style.backgroundColor = 'transparent'
             }}
           >
-            <LogOut size={18} />
-            <span className="font-medium text-sm">Sign Out</span>
+            <LogOut size={20} />
+            <span className="font-medium text-base">Sign Out</span>
           </button>
         </div>
       </aside>

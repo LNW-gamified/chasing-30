@@ -72,14 +72,14 @@ export default function StadiumsPage() {
         <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>
           Stadiums
         </h1>
-        <p className="text-sm mt-1" style={{ color: '#8896ae' }}>
+        <p className="text-sm mt-1" style={{ color: '#a8b8c8' }}>
           {visitedCount} of 30 visited
         </p>
       </div>
 
       {/* Progress bar */}
       <div className="card p-4 mb-6">
-        <div className="flex justify-between text-xs mb-2" style={{ color: '#8896ae' }}>
+        <div className="flex justify-between text-xs mb-2" style={{ color: '#a8b8c8' }}>
           <span>{visitedCount} visited</span>
           <span>{30 - visitedCount} remaining</span>
         </div>
@@ -95,7 +95,7 @@ export default function StadiumsPage() {
       <div className="mb-6">
         {/* Search — full width on all screens */}
         <div className="relative mb-3">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#8896ae' }} />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#a8b8c8' }} />
           <input
             type="text"
             className="input"
@@ -138,12 +138,12 @@ export default function StadiumsPage() {
       </div>
 
       {/* Count */}
-      <div className="text-xs mb-4" style={{ color: '#8896ae' }}>
+      <div className="text-xs mb-4" style={{ color: '#a8b8c8' }}>
         Showing {filtered.length} of 30 stadiums
       </div>
 
       {loading ? (
-        <div className="text-center py-12" style={{ color: '#8896ae' }}>
+        <div className="text-center py-12" style={{ color: '#a8b8c8' }}>
           Loading stadiums...
         </div>
       ) : (
@@ -174,7 +174,7 @@ export default function StadiumsPage() {
                       }}>
                         <Check size={10} style={{ color: '#22c55e', strokeWidth: 3 }} />
                         <span style={{
-                          fontSize: '0.48rem',
+                          fontSize: '0.62rem',
                           color: '#22c55e',
                           fontWeight: 700,
                           letterSpacing: '0.08em',
@@ -202,17 +202,17 @@ export default function StadiumsPage() {
                       {stadium.name}
                     </div>
                   </div>
-                  <div className="text-xs truncate" style={{ color: '#8896ae' }}>
+                  <div className="text-xs truncate" style={{ color: '#a8b8c8' }}>
                     {stadium.team}
                   </div>
                   <div className="flex gap-2 mt-1 items-center flex-wrap">
-                    <span className="badge badge-blue" style={{ fontSize: '0.65rem' }}>
+                    <span className="badge badge-blue" style={{ fontSize: '0.82rem' }}>
                       {stadium.league}
                     </span>
-                    <span className="badge badge-gray" style={{ fontSize: '0.65rem' }}>
+                    <span className="badge badge-gray" style={{ fontSize: '0.82rem' }}>
                       {stadium.division}
                     </span>
-                    <span className="text-xs" style={{ color: '#8896ae' }}>
+                    <span className="text-xs" style={{ color: '#a8b8c8' }}>
                       {stadium.city}, {stadium.state}
                     </span>
                     {visited && visitCounts[stadium.id] > 0 && (

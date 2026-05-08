@@ -185,11 +185,11 @@ export default function SpecialEventForm({ event, onClose, onSaved }: Props) {
             <div className="font-semibold" style={{ color: '#f1f5f9' }}>
               {event ? 'Edit Special Event' : 'Log a Special Event'}
             </div>
-            <div className="text-sm" style={{ color: '#8896ae' }}>
+            <div className="text-sm" style={{ color: '#a8b8c8' }}>
               {currentType?.icon} {currentType?.label}
             </div>
           </div>
-          <button onClick={onClose} style={{ color: '#8896ae' }}>
+          <button onClick={onClose} style={{ color: '#a8b8c8' }}>
             <X size={20} />
           </button>
         </div>
@@ -206,7 +206,7 @@ export default function SpecialEventForm({ event, onClose, onSaved }: Props) {
                 style={{
                   backgroundColor: form.event_type === et.value ? 'rgba(59,130,246,0.2)' : '#1a2235',
                   border: `1.5px solid ${form.event_type === et.value ? '#3b82f6' : '#2d3748'}`,
-                  color: form.event_type === et.value ? '#60a5fa' : '#94a3b8',
+                  color: form.event_type === et.value ? '#60a5fa' : '#b8c8d8',
                 }}
               >
                 <span>{et.icon}</span>
@@ -387,7 +387,7 @@ export default function SpecialEventForm({ event, onClose, onSaved }: Props) {
             ) : (
               <label
                 className="flex flex-col items-center justify-center gap-2 rounded-xl cursor-pointer transition-colors"
-                style={{ border: '2px dashed #2d3748', backgroundColor: '#1a2235', padding: '1.5rem 1rem', color: '#8896ae' }}
+                style={{ border: '2px dashed #2d3748', backgroundColor: '#1a2235', padding: '1.5rem 1rem', color: '#a8b8c8' }}
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#3b82f6')}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#2d3748')}
               >

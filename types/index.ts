@@ -74,11 +74,30 @@ export interface StadiumVisit {
   stadium?: Stadium
 }
 
+export interface TripStop {
+  id: string
+  trip_id: string
+  stadium_id: string
+  game_date: string | null
+  sort_order: number
+  est_tickets: number
+  est_food: number
+  est_parking: number
+  actual_tickets: number
+  actual_food: number
+  actual_parking: number
+  notes: string | null
+  created_at: string
+  stadium?: Stadium
+}
+
 export interface Trip {
   id: string
-  stadium_id: string
+  stadium_id: string | null
   name: string
   trip_date: string | null
+  start_date: string | null
+  end_date: string | null
   status: 'planned' | 'completed' | 'cancelled'
   est_tickets: number
   est_travel: number

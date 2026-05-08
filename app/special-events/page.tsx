@@ -16,7 +16,7 @@ const EVENT_META: Record<SpecialEventType, { label: string; icon: string; color:
   minor_league:      { label: 'Minor League',               icon: '🌱', color: '#10b981' },
   historic_ballpark: { label: 'Historic Ballpark',          icon: '🏛️', color: '#8b5cf6' },
   international:     { label: 'International Game',         icon: '🌍', color: '#06b6d4' },
-  other:             { label: 'Other Experience',           icon: '📝', color: '#94a3b8' },
+  other:             { label: 'Other Experience',           icon: '📝', color: '#b8c8d8' },
 }
 
 // Use MLB logo from ESPN CDN for WS and All-Star
@@ -98,7 +98,7 @@ export default function SpecialEventsPage() {
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>Special Events</h1>
-          <p className="text-sm mt-1" style={{ color: '#8896ae' }}>
+          <p className="text-sm mt-1" style={{ color: '#a8b8c8' }}>
             {events.length} experience{events.length !== 1 ? 's' : ''} logged
           </p>
         </div>
@@ -128,12 +128,12 @@ export default function SpecialEventsPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12" style={{ color: '#8896ae' }}>Loading...</div>
+        <div className="text-center py-12" style={{ color: '#a8b8c8' }}>Loading...</div>
       ) : events.length === 0 ? (
         <div className="card p-12 text-center" style={{ borderStyle: 'dashed', borderColor: '#1f2937' }}>
           <div className="text-4xl mb-3">⭐</div>
-          <div className="font-medium mb-1" style={{ color: '#94a3b8' }}>No special events yet</div>
-          <div className="text-sm mb-4" style={{ color: '#8896ae' }}>
+          <div className="font-medium mb-1" style={{ color: '#b8c8d8' }}>No special events yet</div>
+          <div className="text-sm mb-4" style={{ color: '#a8b8c8' }}>
             Log a World Series, All-Star Game, minor league game, historic ballpark visit, and more
           </div>
           <button onClick={openAdd} className="btn-primary mx-auto">
@@ -173,7 +173,7 @@ export default function SpecialEventsPage() {
                     <div className="font-semibold text-sm" style={{ color: '#f1f5f9' }}>
                       {eventTitle(e)}
                     </div>
-                    <div className="text-xs mt-0.5 flex flex-wrap gap-2" style={{ color: '#8896ae' }}>
+                    <div className="text-xs mt-0.5 flex flex-wrap gap-2" style={{ color: '#a8b8c8' }}>
                       <span>{formatDate(e.event_date)}</span>
                       {eventSubtitle(e) && <span>{eventSubtitle(e)}</span>}
                     </div>
@@ -188,17 +188,17 @@ export default function SpecialEventsPage() {
                   <div className="flex gap-1 flex-shrink-0">
                     <button
                       onClick={(ev) => { ev.stopPropagation(); openEdit(e) }}
-                      className="p-1.5 rounded" style={{ color: '#8896ae' }} title="Edit"
+                      className="p-1.5 rounded" style={{ color: '#a8b8c8' }} title="Edit"
                     >
                       <Pencil size={14} />
                     </button>
                     <button
                       onClick={(ev) => { ev.stopPropagation(); deleteEvent(e.id) }}
-                      className="p-1.5 rounded" style={{ color: '#8896ae' }} title="Delete"
+                      className="p-1.5 rounded" style={{ color: '#a8b8c8' }} title="Delete"
                     >
                       <Trash2 size={14} />
                     </button>
-                    {expanded ? <ChevronUp size={16} style={{ color: '#8896ae' }} /> : <ChevronDown size={16} style={{ color: '#8896ae' }} />}
+                    {expanded ? <ChevronUp size={16} style={{ color: '#a8b8c8' }} /> : <ChevronDown size={16} style={{ color: '#a8b8c8' }} />}
                   </div>
                 </div>
 
@@ -242,7 +242,7 @@ export default function SpecialEventsPage() {
                       <div>
                         <div className="label mb-1">Notes</div>
                         <div className="text-sm whitespace-pre-wrap p-3 rounded-lg"
-                          style={{ color: '#94a3b8', backgroundColor: '#0d1424' }}>
+                          style={{ color: '#b8c8d8', backgroundColor: '#0d1424' }}>
                           {e.notes}
                         </div>
                       </div>

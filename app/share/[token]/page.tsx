@@ -46,7 +46,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
     return (
       <div
         className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: '#0a0e1a', color: '#94a3b8' }}
+        style={{ backgroundColor: '#0a0e1a', color: '#b8c8d8' }}
       >
         <div className="text-center p-8">
           <div className="text-4xl mb-4">🔒</div>
@@ -86,7 +86,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
         <span style={{ fontSize: '1.75rem' }}>⚾</span>
         <div>
           <div className="font-bold text-lg" style={{ color: '#f1f5f9' }}>Chasing 30</div>
-          <div className="text-xs" style={{ color: '#8896ae' }}>MLB Stadium Tracker — Read Only</div>
+          <div className="text-xs" style={{ color: '#a8b8c8' }}>MLB Stadium Tracker — Read Only</div>
         </div>
       </div>
 
@@ -99,7 +99,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
           <div className="text-5xl font-bold mb-1" style={{ color: '#22c55e' }}>
             {visitedCount} / 30
           </div>
-          <div className="text-base mb-4" style={{ color: '#94a3b8' }}>
+          <div className="text-base mb-4" style={{ color: '#b8c8d8' }}>
             MLB Stadiums Visited
           </div>
           <div className="rounded-full overflow-hidden mx-auto" style={{ height: 10, backgroundColor: '#1f2937', maxWidth: 320 }}>
@@ -108,16 +108,16 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
               style={{ width: `${pct}%`, backgroundColor: '#22c55e', transition: 'width 0.5s' }}
             />
           </div>
-          <div className="text-sm mt-2" style={{ color: '#8896ae' }}>{pct}% complete</div>
+          <div className="text-sm mt-2" style={{ color: '#a8b8c8' }}>{pct}% complete</div>
           <div className="flex justify-center gap-8 mt-5">
             <div>
               <div className="text-2xl font-bold" style={{ color: '#3b82f6' }}>{progress.games_attended}</div>
-              <div className="text-xs" style={{ color: '#8896ae' }}>Games Attended</div>
+              <div className="text-xs" style={{ color: '#a8b8c8' }}>Games Attended</div>
             </div>
             {progress.special_events_count > 0 && (
               <div>
                 <div className="text-2xl font-bold" style={{ color: '#f59e0b' }}>{progress.special_events_count}</div>
-                <div className="text-xs" style={{ color: '#8896ae' }}>Special Events</div>
+                <div className="text-xs" style={{ color: '#a8b8c8' }}>Special Events</div>
               </div>
             )}
           </div>
@@ -133,8 +133,8 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
             {divisionBreakdown.map(({ label, visited, total }) => (
               <div key={label}>
                 <div className="flex justify-between text-sm mb-1">
-                  <span style={{ color: '#94a3b8' }}>{label}</span>
-                  <span style={{ color: visited === total ? '#22c55e' : '#8896ae' }}>
+                  <span style={{ color: '#b8c8d8' }}>{label}</span>
+                  <span style={{ color: visited === total ? '#22c55e' : '#a8b8c8' }}>
                     {visited} / {total}
                   </span>
                 </div>
@@ -167,12 +167,12 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
                     <div className="text-sm font-medium" style={{ color: '#f1f5f9' }}>
                       {v.home_team} vs {v.visiting_team}
                     </div>
-                    <div className="text-xs mt-0.5" style={{ color: '#8896ae' }}>
+                    <div className="text-xs mt-0.5" style={{ color: '#a8b8c8' }}>
                       {formatDateStr(v.visit_date)}
                     </div>
                   </div>
                   {v.home_runs != null && v.away_runs != null && (
-                    <div className="text-sm font-bold" style={{ color: '#94a3b8' }}>
+                    <div className="text-sm font-bold" style={{ color: '#b8c8d8' }}>
                       {v.away_runs}–{v.home_runs}
                     </div>
                   )}
@@ -205,10 +205,10 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
                     <Circle size={14} style={{ color: '#536476', flexShrink: 0 }} />
                   )}
                   <div className="min-w-0">
-                    <div className="text-sm truncate" style={{ color: visited ? '#f1f5f9' : '#8896ae' }}>
+                    <div className="text-sm truncate" style={{ color: visited ? '#f1f5f9' : '#a8b8c8' }}>
                       {s.name}
                     </div>
-                    <div className="text-xs truncate" style={{ color: '#8896ae' }}>
+                    <div className="text-xs truncate" style={{ color: '#a8b8c8' }}>
                       {s.team}
                     </div>
                   </div>

@@ -80,23 +80,23 @@ export default function StadiumMapInner({ stadiums }: Props) {
                   />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem', color: '#f1f5f9', lineHeight: 1.25 }}>
+                  <div style={{ fontWeight: 600, fontSize: '1.0rem', color: '#f1f5f9', lineHeight: 1.25 }}>
                     {stadium.name}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 2 }}>
+                  <div style={{ fontSize: '0.92rem', color: '#b8c8d8', marginTop: 2 }}>
                     {stadium.team}
                   </div>
                 </div>
               </div>
 
-              <div style={{ fontSize: '0.75rem', color: '#8896ae', marginBottom: 8 }}>
+              <div style={{ fontSize: '0.92rem', color: '#a8b8c8', marginBottom: 8 }}>
                 {stadium.city}, {stadium.state} · {stadium.league} {stadium.division}
               </div>
 
               {stadium.visited ? (
                 <div style={{
                   display: 'inline-block',
-                  fontSize: '0.7rem',
+                  fontSize: '0.88rem',
                   color: '#22c55e',
                   backgroundColor: 'rgba(34,197,94,0.1)',
                   borderRadius: 4,
@@ -107,7 +107,7 @@ export default function StadiumMapInner({ stadiums }: Props) {
                   ✓ Visited{stadium.visits.length > 0 ? ` · ${stadium.visits.length} game${stadium.visits.length !== 1 ? 's' : ''}` : ''}
                 </div>
               ) : (
-                <div style={{ fontSize: '0.7rem', color: '#8896ae', marginBottom: 10 }}>
+                <div style={{ fontSize: '0.88rem', color: '#a8b8c8', marginBottom: 10 }}>
                   Not yet visited
                 </div>
               )}
@@ -120,7 +120,7 @@ export default function StadiumMapInner({ stadiums }: Props) {
                   color: 'white',
                   padding: '5px 14px',
                   borderRadius: 6,
-                  fontSize: '0.75rem',
+                  fontSize: '0.92rem',
                   fontWeight: 500,
                   textDecoration: 'none',
                 }}
