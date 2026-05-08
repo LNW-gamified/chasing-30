@@ -1,22 +1,35 @@
 import { createClient } from '@/lib/supabase-server'
 import AppShell from '@/components/AppShell'
 import { haversineDistance, formatCurrency } from '@/lib/utils'
-import type { Stadium, StadiumVisit, Trip } from '@/types'
-import { BarChart3, TrendingUp, DollarSign, MapPin, Trophy, Users } from 'lucide-react'
+import type { Stadium, StadiumVisit, Trip, SpecialEvent, SpecialEventType } from '@/types'
+import { BarChart3, TrendingUp, DollarSign, MapPin, Trophy, Users, Star } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
+
+const EVENT_LABELS: Record<SpecialEventType, string> = {
+  world_series:      'World Series',
+  all_star_game:     'All-Star Game',
+  postseason:        'Postseason',
+  spring_training:   'Spring Training',
+  minor_league:      'Minor League',
+  historic_ballpark: 'Historic Ballpark',
+  international:     'International',
+  other:             'Other',
+}
 
 export default async function StatsPage() {
   const supabase = await createClient()
 
-  const [{ data: stadiums }, { data: visits }, { data: trips }] = await Promise.all([
+  const [{ data: stadiums }, { data: visits }, { data: trips }, { data: events }] = await Promise.all([
     supabase.from('stadiums').select('*'),
     supabase.from('stadium_visits').select('*'),
     supabase.from('trips').select('*'),
+    supabase.from('special_events').select('*'),
   ])
 
   const allStadiums: Stadium[] = stadiums ?? []
   const allVisits: StadiumVisit[] = visits ?? []
   const allTrips: Trip[] = trips ?? []
+  const allEvents: SpecialEvent[] = events ?? []
 
   const visitedIds = new Set(allVisits.map((v) => v.stadium_id))
   const visitedStadiums = allStadiums.filter((s) => visitedIds.has(s.id))
@@ -135,7 +148,7 @@ export default async function StatsPage() {
         <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>
           Stats
         </h1>
-        <p className="text-sm mt-1" style={{ color: '#64748b' }}>
+        <p className="text-sm mt-1" style={{ color: '#8896ae' }}>
           Your complete MLB journey by the numbers
         </p>
       </div>
@@ -146,7 +159,7 @@ export default async function StatsPage() {
           <div key={label} className="card p-5">
             <div className="flex items-center gap-2 mb-3" style={{ color }}>
               {icon}
-              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#64748b' }}>
+              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#8896ae' }}>
                 {label}
               </span>
             </div>
@@ -154,7 +167,7 @@ export default async function StatsPage() {
               {value}
             </div>
             {sub && (
-              <div className="text-xs mt-1" style={{ color: '#64748b' }}>
+              <div className="text-xs mt-1" style={{ color: '#8896ae' }}>
                 {sub}
               </div>
             )}
@@ -173,7 +186,7 @@ export default async function StatsPage() {
               <div key={label}>
                 <div className="flex justify-between text-sm mb-1">
                   <span style={{ color: '#94a3b8' }}>{label}</span>
-                  <span style={{ color: visited === total ? '#22c55e' : '#64748b' }}>
+                  <span style={{ color: visited === total ? '#22c55e' : '#8896ae' }}>
                     {visited} / {total}
                   </span>
                 </div>
@@ -198,7 +211,7 @@ export default async function StatsPage() {
             Most Seen Opponents
           </div>
           {teamOpponentData.length === 0 ? (
-            <div className="text-sm" style={{ color: '#64748b' }}>
+            <div className="text-sm" style={{ color: '#8896ae' }}>
               Log some games to see opponent stats
             </div>
           ) : (
@@ -251,7 +264,7 @@ export default async function StatsPage() {
                         minHeight: 4,
                       }}
                     />
-                    <div className="text-xs text-center" style={{ color: '#64748b', fontSize: '0.6rem' }}>
+                    <div className="text-xs text-center" style={{ color: '#8896ae', fontSize: '0.6rem' }}>
                       {month}
                     </div>
                   </div>
@@ -267,7 +280,7 @@ export default async function StatsPage() {
             Visited Stadiums
           </div>
           {visitedStadiums.length === 0 ? (
-            <div className="text-sm" style={{ color: '#64748b' }}>
+            <div className="text-sm" style={{ color: '#8896ae' }}>
               No stadiums visited yet. Start logging your games!
             </div>
           ) : (
@@ -278,12 +291,12 @@ export default async function StatsPage() {
                   className="flex items-center gap-2 p-2 rounded-lg text-sm"
                   style={{ backgroundColor: '#0d1424' }}
                 >
-                  <TeamLogo abbreviation={s.abbreviation} size={22} style={{ flexShrink: 0 }} />
+                  <TeamLogo abbreviation={s.abbreviation} size={33} style={{ flexShrink: 0 }} />
                   <div className="min-w-0">
                     <div className="truncate" style={{ color: '#f1f5f9', fontSize: '0.8rem' }}>
                       {s.name}
                     </div>
-                    <div className="text-xs truncate" style={{ color: '#64748b' }}>
+                    <div className="text-xs truncate" style={{ color: '#8896ae' }}>
                       {s.team}
                     </div>
                   </div>
@@ -293,6 +306,28 @@ export default async function StatsPage() {
           )}
         </div>
       </div>
+
+      {/* Special Events section */}
+      {allEvents.length > 0 && (
+        <div className="mt-6 card p-6">
+          <div className="flex items-center gap-2 font-semibold mb-4" style={{ color: '#f1f5f9' }}>
+            <Star size={18} style={{ color: '#f59e0b' }} />
+            Special Events ({allEvents.length})
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {(Object.entries(EVENT_LABELS) as [SpecialEventType, string][]).map(([type, label]) => {
+              const count = allEvents.filter((e) => e.event_type === type).length
+              if (count === 0) return null
+              return (
+                <div key={type} className="text-center p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
+                  <div className="text-2xl font-bold" style={{ color: '#f59e0b' }}>{count}</div>
+                  <div className="text-xs mt-1" style={{ color: '#8896ae' }}>{label}</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </AppShell>
   )
 }

@@ -110,7 +110,7 @@ export default function TripForm({ stadiums, trip, onClose, onSaved }: Props) {
           <div className="font-semibold" style={{ color: '#f1f5f9' }}>
             {trip ? 'Edit Trip' : 'Plan a Trip'}
           </div>
-          <button onClick={onClose} style={{ color: '#64748b' }}>
+          <button onClick={onClose} style={{ color: '#8896ae' }}>
             <X size={20} />
           </button>
         </div>
@@ -180,13 +180,13 @@ export default function TripForm({ stadiums, trip, onClose, onSaved }: Props) {
               <table className="w-full text-sm">
                 <thead>
                   <tr>
-                    <th className="text-left pb-2 text-xs font-medium" style={{ color: '#64748b' }}>
+                    <th className="text-left pb-2 text-xs font-medium" style={{ color: '#8896ae' }}>
                       Category
                     </th>
-                    <th className="text-left pb-2 pl-2 text-xs font-medium" style={{ color: '#64748b' }}>
+                    <th className="text-left pb-2 pl-2 text-xs font-medium" style={{ color: '#8896ae' }}>
                       Estimated ($)
                     </th>
-                    <th className="text-left pb-2 pl-2 text-xs font-medium" style={{ color: '#64748b' }}>
+                    <th className="text-left pb-2 pl-2 text-xs font-medium" style={{ color: '#8896ae' }}>
                       Actual ($)
                     </th>
                   </tr>

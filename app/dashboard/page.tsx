@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase-server'
 import AppShell from '@/components/AppShell'
 import ProgressRing from '@/components/ProgressRing'
+import ShareButton from '@/components/ShareButton'
 import { MILESTONES } from '@/lib/milestones'
 import { formatDate, formatCurrency } from '@/lib/utils'
-import type { Stadium, StadiumVisit, Trip } from '@/types'
+import type { Stadium, StadiumVisit, Trip, SpecialEvent } from '@/types'
 import Link from 'next/link'
 import { Trophy, Plane, Calendar } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
@@ -11,22 +12,24 @@ import TeamLogo from '@/components/TeamLogo'
 export default async function DashboardPage() {
   const supabase = await createClient()
 
-  const [{ data: stadiums }, { data: visits }, { data: trips }] = await Promise.all([
+  const [{ data: stadiums }, { data: visits }, { data: trips }, { data: events }] = await Promise.all([
     supabase.from('stadiums').select('*').order('name'),
     supabase.from('stadium_visits').select('*').order('visit_date', { ascending: false }),
     supabase.from('trips').select('*, stadium:stadiums(*)').order('trip_date', { ascending: true }),
+    supabase.from('special_events').select('*'),
   ])
 
   const allStadiums: Stadium[] = stadiums ?? []
   const allVisits: StadiumVisit[] = visits ?? []
   const allTrips: (Trip & { stadium: Stadium })[] = (trips as any) ?? []
+  const allEvents: SpecialEvent[] = events ?? []
 
   const visitedIds = new Set(allVisits.map((v) => v.stadium_id))
   const visitedCount = visitedIds.size
   const pct = Math.round((visitedCount / 30) * 100)
 
-  const earnedMilestones = MILESTONES.filter((m) => m.check(allVisits, allStadiums))
-  const nextMilestone = MILESTONES.find((m) => !m.check(allVisits, allStadiums))
+  const earnedMilestones = MILESTONES.filter((m) => m.check(allVisits, allStadiums, allEvents))
+  const nextMilestone = MILESTONES.find((m) => !m.check(allVisits, allStadiums, allEvents))
 
   const recentVisits = allVisits.slice(0, 3)
   const upcomingTrips = allTrips.filter(
@@ -58,13 +61,16 @@ export default async function DashboardPage() {
   return (
     <AppShell>
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>
-          Dashboard
-        </h1>
-        <p style={{ color: '#64748b' }} className="text-sm mt-1">
-          Your MLB stadium journey at a glance
-        </p>
+      <div className="mb-8 flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>
+            Dashboard
+          </h1>
+          <p style={{ color: '#8896ae' }} className="text-sm mt-1">
+            Your MLB stadium journey at a glance
+          </p>
+        </div>
+        <ShareButton />
       </div>
 
       {/* Top stats row */}
@@ -76,13 +82,13 @@ export default async function DashboardPage() {
           { label: 'Total Spent', value: formatCurrency(totalSpent), sub: 'across all trips', color: '#f59e0b' },
         ].map(({ label, value, sub, color }) => (
           <div key={label} className="card p-5">
-            <div className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: '#64748b' }}>
+            <div className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: '#8896ae' }}>
               {label}
             </div>
             <div className="text-2xl font-bold" style={{ color }}>
               {value}
             </div>
-            <div className="text-xs mt-1" style={{ color: '#64748b' }}>
+            <div className="text-xs mt-1" style={{ color: '#8896ae' }}>
               {sub}
             </div>
           </div>
@@ -99,7 +105,7 @@ export default async function DashboardPage() {
           <div className="mt-4 w-full grid grid-cols-2 gap-2">
             {divisionProgress.map(({ label, visited, total }) => (
               <div key={label} className="flex flex-col gap-1">
-                <div className="flex justify-between text-xs" style={{ color: '#64748b' }}>
+                <div className="flex justify-between text-xs" style={{ color: '#8896ae' }}>
                   <span>{label}</span>
                   <span style={{ color: '#94a3b8' }}>
                     {visited}/{total}
@@ -131,7 +137,7 @@ export default async function DashboardPage() {
             </Link>
           </div>
           {recentVisits.length === 0 ? (
-            <div className="text-center py-8" style={{ color: '#64748b' }}>
+            <div className="text-center py-8" style={{ color: '#8896ae' }}>
               <Calendar size={32} className="mx-auto mb-2 opacity-40" />
               <p className="text-sm">No games logged yet</p>
               <Link href="/stadiums" className="text-xs mt-2 block" style={{ color: '#3b82f6' }}>
@@ -152,7 +158,7 @@ export default async function DashboardPage() {
                     {stadium ? (
                       <TeamLogo
                         abbreviation={stadium.abbreviation}
-                        size={32}
+                        size={48}
                         style={{ borderRadius: '50%', flexShrink: 0 }}
                       />
                     ) : (
@@ -162,7 +168,7 @@ export default async function DashboardPage() {
                       <div className="text-sm font-medium truncate" style={{ color: '#f1f5f9' }}>
                         {visit.home_team} vs {visit.visiting_team}
                       </div>
-                      <div className="text-xs" style={{ color: '#64748b' }}>
+                      <div className="text-xs" style={{ color: '#8896ae' }}>
                         {stadium?.name} &bull; {formatDate(visit.visit_date)}
                       </div>
                     </div>
@@ -189,7 +195,7 @@ export default async function DashboardPage() {
             </Link>
           </div>
           {upcomingTrips.length === 0 ? (
-            <div className="text-center py-8" style={{ color: '#64748b' }}>
+            <div className="text-center py-8" style={{ color: '#8896ae' }}>
               <Plane size={32} className="mx-auto mb-2 opacity-40" />
               <p className="text-sm">No upcoming trips</p>
               <Link href="/trips" className="text-xs mt-2 block" style={{ color: '#3b82f6' }}>
@@ -213,7 +219,7 @@ export default async function DashboardPage() {
                       <div className="text-sm font-medium truncate" style={{ color: '#f1f5f9' }}>
                         {trip.name}
                       </div>
-                      <div className="text-xs" style={{ color: '#64748b' }}>
+                      <div className="text-xs" style={{ color: '#8896ae' }}>
                         {trip.stadium?.name}
                         {trip.trip_date && ` · ${formatDate(trip.trip_date)}`}
                       </div>

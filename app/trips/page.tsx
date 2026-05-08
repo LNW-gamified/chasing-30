@@ -65,7 +65,7 @@ export default function TripsPage() {
           <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>
             Trip Planner
           </h1>
-          <p className="text-sm mt-1" style={{ color: '#64748b' }}>
+          <p className="text-sm mt-1" style={{ color: '#8896ae' }}>
             {trips.length} total trips · {planned.length} planned
           </p>
         </div>
@@ -83,7 +83,7 @@ export default function TripsPage() {
           { label: 'Total Spent', value: formatCurrency(totalSpent), color: '#f97316' },
         ].map(({ label, value, color }) => (
           <div key={label} className="card p-4">
-            <div className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: '#64748b' }}>
+            <div className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: '#8896ae' }}>
               {label}
             </div>
             <div className="text-xl font-bold" style={{ color }}>
@@ -94,12 +94,12 @@ export default function TripsPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12" style={{ color: '#64748b' }}>Loading trips...</div>
+        <div className="text-center py-12" style={{ color: '#8896ae' }}>Loading trips...</div>
       ) : trips.length === 0 ? (
         <div className="card p-12 text-center">
-          <Plane size={40} className="mx-auto mb-3 opacity-30" style={{ color: '#64748b' }} />
+          <Plane size={40} className="mx-auto mb-3 opacity-30" style={{ color: '#8896ae' }} />
           <div className="font-medium mb-1" style={{ color: '#94a3b8' }}>No trips yet</div>
-          <div className="text-sm mb-4" style={{ color: '#64748b' }}>Plan your first stadium trip</div>
+          <div className="text-sm mb-4" style={{ color: '#8896ae' }}>Plan your first stadium trip</div>
           <button onClick={() => setShowForm(true)} className="btn-primary mx-auto">
             <Plus size={16} /> Plan a Trip
           </button>
@@ -135,7 +135,7 @@ export default function TripsPage() {
                         <div className="font-semibold text-sm" style={{ color: '#f1f5f9' }}>
                           {trip.name}
                         </div>
-                        <div className="text-xs" style={{ color: '#64748b' }}>
+                        <div className="text-xs" style={{ color: '#8896ae' }}>
                           {trip.stadium?.name}
                           {trip.trip_date && ` · ${formatDate(trip.trip_date)}`}
                         </div>
@@ -144,14 +144,14 @@ export default function TripsPage() {
                         <div className="text-sm font-semibold" style={{ color: '#f59e0b' }}>
                           {trip.status === 'completed' ? formatCurrency(actual) : formatCurrency(est)}
                         </div>
-                        <div className="text-xs" style={{ color: '#64748b' }}>
+                        <div className="text-xs" style={{ color: '#8896ae' }}>
                           {trip.status === 'completed' ? 'spent' : 'estimated'}
                         </div>
                       </div>
                       <span className={`badge ${trip.status === 'completed' ? 'badge-green' : trip.status === 'cancelled' ? 'badge-gray' : 'badge-blue'}`}>
                         {trip.status}
                       </span>
-                      <ChevronRight size={16} style={{ color: '#374151', flexShrink: 0 }} />
+                      <ChevronRight size={16} style={{ color: '#536476', flexShrink: 0 }} />
                     </Link>
                   )
                 })}

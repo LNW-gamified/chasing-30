@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   X,
+  Star,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/map', label: 'Map', icon: Map },
   { href: '/stadiums', label: 'Stadiums', icon: Building2 },
+  { href: '/special-events', label: 'Events', icon: Star },
   { href: '/stats', label: 'Stats', icon: BarChart3 },
   { href: '/milestones', label: 'Milestones', icon: Trophy },
   { href: '/trips', label: 'Trips', icon: Plane },
@@ -110,7 +112,7 @@ export default function Navigation() {
             <div className="font-bold text-base" style={{ color: '#f1f5f9' }}>
               Chasing 30
             </div>
-            <div className="text-xs" style={{ color: '#64748b' }}>
+            <div className="text-xs" style={{ color: '#8896ae' }}>
               MLB Stadium Tracker
             </div>
           </div>
@@ -160,13 +162,13 @@ export default function Navigation() {
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full transition-colors"
-            style={{ color: '#64748b' }}
+            style={{ color: '#8896ae' }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = '#ef4444'
               e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.08)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#64748b'
+              e.currentTarget.style.color = '#8896ae'
               e.currentTarget.style.backgroundColor = 'transparent'
             }}
           >

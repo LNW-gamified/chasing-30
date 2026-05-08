@@ -172,3 +172,142 @@ INSERT INTO stadiums (name, team, abbreviation, city, state, lat, lng, capacity,
   ('Petco Park', 'San Diego Padres', 'SD', 'San Diego', 'CA', 32.7076, -117.1570, 40162, 2004, 'Grass', 'NL', 'West'),
   ('Oracle Park', 'San Francisco Giants', 'SF', 'San Francisco', 'CA', 37.7786, -122.3893, 41915, 2000, 'Grass', 'NL', 'West')
 ON CONFLICT DO NOTHING;
+
+-- ============================================================
+-- Stadium notes (pre-visit wishlist / notes per stadium)
+-- Run these additions in the Supabase SQL Editor
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS stadium_notes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stadium_id UUID REFERENCES stadiums(id) ON DELETE CASCADE UNIQUE,
+  notes TEXT,
+  updated_by UUID REFERENCES auth.users(id),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE stadium_notes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated users can read stadium notes"
+  ON stadium_notes FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Authenticated users can insert stadium notes"
+  ON stadium_notes FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Authenticated users can update stadium notes"
+  ON stadium_notes FOR UPDATE TO authenticated USING (true);
+
+-- ============================================================
+-- Special Events (non-regular-season baseball experiences)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS special_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_type TEXT NOT NULL CHECK (event_type IN (
+    'world_series', 'all_star_game', 'postseason',
+    'spring_training', 'minor_league', 'historic_ballpark',
+    'international', 'other'
+  )),
+  event_date DATE NOT NULL,
+  seat_section TEXT,
+  seat_row TEXT,
+  seat_number TEXT,
+  weather TEXT,
+  temperature INTEGER,
+  attendance INTEGER,
+  notes TEXT,
+  photo_url TEXT,
+  home_team TEXT,
+  visiting_team TEXT,
+  event_year INTEGER,
+  game_number INTEGER,
+  series_round TEXT,
+  stadium_name TEXT,
+  city TEXT,
+  state TEXT,
+  country TEXT,
+  ml_level TEXT,
+  venue_name TEXT,
+  series_name TEXT,
+  custom_title TEXT,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE special_events ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated users can read special events"
+  ON special_events FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Authenticated users can insert special events"
+  ON special_events FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Authenticated users can update special events"
+  ON special_events FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "Authenticated users can delete special events"
+  ON special_events FOR DELETE TO authenticated USING (true);
+
+-- ============================================================
+-- Share tokens (public read-only progress link)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS share_tokens (
+  token UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE share_tokens ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read share tokens"
+  ON share_tokens FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Authenticated users can manage share tokens"
+  ON share_tokens FOR INSERT TO authenticated WITH CHECK (true);
+
+-- ============================================================
+-- Public progress function (SECURITY DEFINER — no auth needed)
+-- Called by the /share/[token] page using anon key
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION get_public_progress(p_token TEXT)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_result JSONB;
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM share_tokens WHERE token::TEXT = p_token) THEN
+    RETURN NULL;
+  END IF;
+
+  SELECT jsonb_build_object(
+    'stadiums_visited', (SELECT COUNT(DISTINCT stadium_id)::INT FROM stadium_visits),
+    'games_attended', (SELECT COUNT(*)::INT FROM stadium_visits),
+    'special_events_count', (SELECT COUNT(*)::INT FROM special_events),
+    'all_stadiums', COALESCE((
+      SELECT jsonb_agg(
+        jsonb_build_object(
+          'id', s.id, 'name', s.name, 'team', s.team,
+          'abbreviation', s.abbreviation, 'city', s.city,
+          'state', s.state, 'league', s.league, 'division', s.division
+        ) ORDER BY s.name
+      ) FROM stadiums s
+    ), '[]'::JSONB),
+    'visited_ids', COALESCE((
+      SELECT jsonb_agg(DISTINCT stadium_id) FROM stadium_visits
+    ), '[]'::JSONB),
+    'recent_visits', COALESCE((
+      SELECT jsonb_agg(row_to_json(v.*)::JSONB)
+      FROM (
+        SELECT sv.visit_date, sv.home_team, sv.visiting_team,
+               sv.home_runs, sv.away_runs, sv.stadium_id
+        FROM stadium_visits sv
+        ORDER BY sv.visit_date DESC
+        LIMIT 6
+      ) v
+    ), '[]'::JSONB)
+  ) INTO v_result;
+
+  RETURN v_result;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION get_public_progress(TEXT) TO anon;

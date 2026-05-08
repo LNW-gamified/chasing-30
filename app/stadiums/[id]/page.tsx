@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase'
 import AppShell from '@/components/AppShell'
 import GameDayForm from '@/components/GameDayForm'
 import { formatDate } from '@/lib/utils'
-import type { Stadium, StadiumVisit } from '@/types'
+import type { Stadium, StadiumVisit, StadiumNote } from '@/types'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -16,6 +16,8 @@ import {
   MapPin,
   Users,
   Calendar,
+  NotebookPen,
+  Save,
 } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 
@@ -29,16 +31,37 @@ export default function StadiumDetailPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingVisit, setEditingVisit] = useState<StadiumVisit | undefined>()
   const [expandedVisit, setExpandedVisit] = useState<string | null>(null)
+  const [stadiumNote, setStadiumNote] = useState<string>('')
+  const [editingNote, setEditingNote] = useState(false)
+  const [noteInput, setNoteInput] = useState('')
+  const [savingNote, setSavingNote] = useState(false)
 
   async function load() {
     const supabase = createClient()
-    const [{ data: s }, { data: v }] = await Promise.all([
+    const [{ data: s }, { data: v }, { data: n }] = await Promise.all([
       supabase.from('stadiums').select('*').eq('id', id).single(),
       supabase.from('stadium_visits').select('*').eq('stadium_id', id).order('visit_date', { ascending: false }),
+      supabase.from('stadium_notes').select('notes').eq('stadium_id', id).maybeSingle(),
     ])
     setStadium(s)
     setVisits(v ?? [])
+    const notes = (n as StadiumNote | null)?.notes ?? ''
+    setStadiumNote(notes)
+    setNoteInput(notes)
     setLoading(false)
+  }
+
+  async function saveNote() {
+    setSavingNote(true)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('stadium_notes').upsert(
+      { stadium_id: id, notes: noteInput || null, updated_by: user?.id ?? null },
+      { onConflict: 'stadium_id' }
+    )
+    setStadiumNote(noteInput)
+    setEditingNote(false)
+    setSavingNote(false)
   }
 
   useEffect(() => { load() }, [id])
@@ -63,7 +86,7 @@ export default function StadiumDetailPage() {
   if (loading) {
     return (
       <AppShell>
-        <div className="text-center py-12" style={{ color: '#64748b' }}>
+        <div className="text-center py-12" style={{ color: '#8896ae' }}>
           Loading...
         </div>
       </AppShell>
@@ -73,7 +96,7 @@ export default function StadiumDetailPage() {
   if (!stadium) {
     return (
       <AppShell>
-        <div className="text-center py-12" style={{ color: '#64748b' }}>
+        <div className="text-center py-12" style={{ color: '#8896ae' }}>
           Stadium not found.
         </div>
       </AppShell>
@@ -88,7 +111,7 @@ export default function StadiumDetailPage() {
       <Link
         href="/stadiums"
         className="inline-flex items-center gap-2 text-sm mb-6"
-        style={{ color: '#64748b' }}
+        style={{ color: '#8896ae' }}
       >
         <ArrowLeft size={16} /> Back to Stadiums
       </Link>
@@ -99,8 +122,8 @@ export default function StadiumDetailPage() {
           <div className="flex items-start gap-4 min-w-0">
             <TeamLogo
               abbreviation={stadium.abbreviation}
-              size={64}
-              style={{ borderRadius: 10, flexShrink: 0 }}
+              size={96}
+              style={{ borderRadius: 12, flexShrink: 0 }}
             />
             <div className="min-w-0">
               <h1 className="text-xl font-bold mb-1" style={{ color: '#f1f5f9' }}>
@@ -120,16 +143,16 @@ export default function StadiumDetailPage() {
                 <span className="badge badge-blue">
                   {stadium.league} {stadium.division}
                 </span>
-                <span className="flex items-center gap-1 text-xs" style={{ color: '#64748b' }}>
+                <span className="flex items-center gap-1 text-xs" style={{ color: '#8896ae' }}>
                   <MapPin size={12} /> {stadium.city}, {stadium.state}
                 </span>
                 {stadium.capacity && (
-                  <span className="flex items-center gap-1 text-xs" style={{ color: '#64748b' }}>
+                  <span className="flex items-center gap-1 text-xs" style={{ color: '#8896ae' }}>
                     <Users size={12} /> {stadium.capacity.toLocaleString()} capacity
                   </span>
                 )}
                 {stadium.opened && (
-                  <span className="flex items-center gap-1 text-xs" style={{ color: '#64748b' }}>
+                  <span className="flex items-center gap-1 text-xs" style={{ color: '#8896ae' }}>
                     <Calendar size={12} /> Opened {stadium.opened}
                   </span>
                 )}
@@ -158,7 +181,7 @@ export default function StadiumDetailPage() {
           <div className="font-medium mb-1" style={{ color: '#94a3b8' }}>
             No games logged yet
           </div>
-          <div className="text-sm mb-4" style={{ color: '#64748b' }}>
+          <div className="text-sm mb-4" style={{ color: '#8896ae' }}>
             Log your first game at {stadium.name}
           </div>
           <button onClick={openAdd} className="btn-primary mx-auto">
@@ -187,7 +210,7 @@ export default function StadiumDetailPage() {
                     <div className="font-semibold text-sm" style={{ color: '#f1f5f9' }}>
                       {visit.home_team} vs {visit.visiting_team}
                     </div>
-                    <div className="text-xs mt-0.5 flex gap-3" style={{ color: '#64748b' }}>
+                    <div className="text-xs mt-0.5 flex gap-3" style={{ color: '#8896ae' }}>
                       <span>{formatDate(visit.visit_date)}</span>
                       {visit.first_pitch_time && <span>First pitch: {visit.first_pitch_time}</span>}
                       {visit.attendance && <span>{visit.attendance.toLocaleString()} fans</span>}
@@ -214,7 +237,7 @@ export default function StadiumDetailPage() {
                         openEdit(visit)
                       }}
                       className="p-1.5 rounded"
-                      style={{ color: '#64748b' }}
+                      style={{ color: '#8896ae' }}
                       title="Edit"
                     >
                       <Pencil size={14} />
@@ -225,7 +248,7 @@ export default function StadiumDetailPage() {
                         deleteVisit(visit.id)
                       }}
                       className="p-1.5 rounded"
-                      style={{ color: '#64748b' }}
+                      style={{ color: '#8896ae' }}
                       title="Delete"
                     >
                       <Trash2 size={14} />
@@ -277,10 +300,10 @@ export default function StadiumDetailPage() {
                             { label: 'Away', name: visit.away_starter_name, wl: visit.away_starter_wl, ip: visit.away_starter_ip, h: visit.away_starter_h, er: visit.away_starter_er, bb: visit.away_starter_bb, k: visit.away_starter_k },
                           ].map(({ label, name, wl, ip, h, er, bb, k }) => name ? (
                             <div key={label} className="p-3 rounded-lg" style={{ backgroundColor: '#0d1424' }}>
-                              <div className="text-xs" style={{ color: '#64748b' }}>{label}</div>
+                              <div className="text-xs" style={{ color: '#8896ae' }}>{label}</div>
                               <div className="font-medium text-sm" style={{ color: '#f1f5f9' }}>{name}</div>
                               {wl && <div className="text-xs mt-1" style={{ color: '#94a3b8' }}>{wl}</div>}
-                              <div className="flex gap-3 mt-1 text-xs" style={{ color: '#64748b' }}>
+                              <div className="flex gap-3 mt-1 text-xs" style={{ color: '#8896ae' }}>
                                 {ip && <span>IP: {ip}</span>}
                                 {h != null && <span>H: {h}</span>}
                                 {er != null && <span>ER: {er}</span>}
@@ -300,7 +323,7 @@ export default function StadiumDetailPage() {
                         <div className="overflow-x-auto">
                           <table className="text-sm w-full">
                             <thead>
-                              <tr style={{ color: '#64748b', fontSize: '0.7rem' }}>
+                              <tr style={{ color: '#8896ae', fontSize: '0.7rem' }}>
                                 <th className="text-left pb-1">Team</th>
                                 <th className="text-center pb-1 px-3">R</th>
                                 <th className="text-center pb-1 px-3">H</th>
@@ -335,9 +358,9 @@ export default function StadiumDetailPage() {
                           <table className="text-xs">
                             <thead>
                               <tr>
-                                <th className="text-left pr-3 pb-1" style={{ color: '#64748b' }}>Team</th>
+                                <th className="text-left pr-3 pb-1" style={{ color: '#8896ae' }}>Team</th>
                                 {visit.inning_scores.map((inn) => (
-                                  <th key={inn.inning} className="text-center px-2 pb-1" style={{ color: '#64748b' }}>
+                                  <th key={inn.inning} className="text-center px-2 pb-1" style={{ color: '#8896ae' }}>
                                     {inn.inning}
                                   </th>
                                 ))}
@@ -390,12 +413,26 @@ export default function StadiumDetailPage() {
                     {(visit.hp_umpire || visit.first_base_umpire) && (
                       <div className="mb-4">
                         <div className="label mb-1">Umpires</div>
-                        <div className="flex flex-wrap gap-3 text-xs" style={{ color: '#64748b' }}>
+                        <div className="flex flex-wrap gap-3 text-xs" style={{ color: '#8896ae' }}>
                           {visit.hp_umpire && <span>HP: {visit.hp_umpire}</span>}
                           {visit.first_base_umpire && <span>1B: {visit.first_base_umpire}</span>}
                           {visit.second_base_umpire && <span>2B: {visit.second_base_umpire}</span>}
                           {visit.third_base_umpire && <span>3B: {visit.third_base_umpire}</span>}
                         </div>
+                      </div>
+                    )}
+
+                    {/* Photo */}
+                    {visit.photo_url && (
+                      <div className="mb-4">
+                        <div className="label mb-1">Photo</div>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={visit.photo_url}
+                          alt="Game photo"
+                          className="rounded-lg"
+                          style={{ maxHeight: 220, objectFit: 'cover', width: '100%' }}
+                        />
                       </div>
                     )}
 
@@ -415,6 +452,55 @@ export default function StadiumDetailPage() {
           })}
         </div>
       )}
+
+      {/* Stadium notes / wishlist */}
+      <div className="card p-6 mt-6">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2 font-semibold" style={{ color: '#f1f5f9' }}>
+            <NotebookPen size={16} style={{ color: '#f59e0b' }} />
+            Notes &amp; Wishlist
+          </div>
+          {!editingNote && (
+            <button
+              onClick={() => { setNoteInput(stadiumNote); setEditingNote(true) }}
+              className="btn-secondary"
+              style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+            >
+              <Pencil size={12} /> {stadiumNote ? 'Edit' : 'Add Notes'}
+            </button>
+          )}
+        </div>
+
+        {editingNote ? (
+          <div>
+            <textarea
+              className="input mb-3"
+              rows={4}
+              placeholder={`Things to do at ${stadium.name}, food recommendations, seat wishlist...`}
+              value={noteInput}
+              onChange={(e) => setNoteInput(e.target.value)}
+              style={{ resize: 'vertical' }}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button onClick={saveNote} disabled={savingNote} className="btn-primary" style={{ fontSize: '0.8rem', padding: '6px 14px' }}>
+                <Save size={13} /> {savingNote ? 'Saving...' : 'Save Notes'}
+              </button>
+              <button onClick={() => setEditingNote(false)} className="btn-secondary" style={{ fontSize: '0.8rem', padding: '6px 14px' }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : stadiumNote ? (
+          <div className="text-sm whitespace-pre-wrap p-3 rounded-lg" style={{ color: '#94a3b8', backgroundColor: '#0d1424' }}>
+            {stadiumNote}
+          </div>
+        ) : (
+          <div className="text-sm" style={{ color: '#8896ae' }}>
+            No notes yet. Add a wishlist, food recommendations, or anything you want to remember about this stadium.
+          </div>
+        )}
+      </div>
 
       {showForm && stadium && (
         <GameDayForm

@@ -1,22 +1,24 @@
 import { createClient } from '@/lib/supabase-server'
 import AppShell from '@/components/AppShell'
 import { MILESTONES } from '@/lib/milestones'
-import type { Stadium, StadiumVisit } from '@/types'
+import type { Stadium, StadiumVisit, SpecialEvent } from '@/types'
 import { Trophy, Lock } from 'lucide-react'
 
 export default async function MilestonesPage() {
   const supabase = await createClient()
 
-  const [{ data: stadiums }, { data: visits }] = await Promise.all([
+  const [{ data: stadiums }, { data: visits }, { data: events }] = await Promise.all([
     supabase.from('stadiums').select('*'),
     supabase.from('stadium_visits').select('*'),
+    supabase.from('special_events').select('*'),
   ])
 
   const allStadiums: Stadium[] = stadiums ?? []
   const allVisits: StadiumVisit[] = visits ?? []
+  const allEvents: SpecialEvent[] = events ?? []
 
-  const earned = MILESTONES.filter((m) => m.check(allVisits, allStadiums))
-  const unearned = MILESTONES.filter((m) => !m.check(allVisits, allStadiums))
+  const earned = MILESTONES.filter((m) => m.check(allVisits, allStadiums, allEvents))
+  const unearned = MILESTONES.filter((m) => !m.check(allVisits, allStadiums, allEvents))
 
   return (
     <AppShell>
@@ -24,14 +26,14 @@ export default async function MilestonesPage() {
         <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>
           Milestones
         </h1>
-        <p className="text-sm mt-1" style={{ color: '#64748b' }}>
+        <p className="text-sm mt-1" style={{ color: '#8896ae' }}>
           {earned.length} of {MILESTONES.length} earned
         </p>
       </div>
 
       {/* Progress */}
       <div className="card p-4 mb-8">
-        <div className="flex justify-between text-xs mb-2" style={{ color: '#64748b' }}>
+        <div className="flex justify-between text-xs mb-2" style={{ color: '#8896ae' }}>
           <span>{earned.length} earned</span>
           <span>{unearned.length} remaining</span>
         </div>
@@ -88,7 +90,7 @@ export default async function MilestonesPage() {
       {/* Unearned */}
       {unearned.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: '#64748b' }}>
+          <h2 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: '#8896ae' }}>
             <Lock size={16} /> Locked ({unearned.length})
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -107,12 +109,12 @@ export default async function MilestonesPage() {
                   <div className="font-semibold text-sm" style={{ color: '#94a3b8' }}>
                     {m.name}
                   </div>
-                  <div className="text-xs mt-0.5" style={{ color: '#64748b' }}>
+                  <div className="text-xs mt-0.5" style={{ color: '#8896ae' }}>
                     {m.description}
                   </div>
                   <div
                     className="inline-flex items-center gap-1 mt-2 text-xs px-2 py-0.5 rounded-full"
-                    style={{ backgroundColor: '#1f2937', color: '#64748b' }}
+                    style={{ backgroundColor: '#1f2937', color: '#8896ae' }}
                   >
                     <Lock size={10} /> Locked
                   </div>
@@ -124,7 +126,7 @@ export default async function MilestonesPage() {
       )}
 
       {earned.length === 0 && (
-        <div className="text-center py-16" style={{ color: '#64748b' }}>
+        <div className="text-center py-16" style={{ color: '#8896ae' }}>
           <div className="text-5xl mb-4">🏆</div>
           <div className="font-medium mb-1" style={{ color: '#94a3b8' }}>
             No milestones earned yet

@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import type { Stadium, StadiumVisit, InningScore } from '@/types'
-import { X, Plus, Minus } from 'lucide-react'
+import { X, Plus, Minus, ImagePlus, Trash2 } from 'lucide-react'
 
 interface Props {
   stadium: Stadium
@@ -71,6 +71,9 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
   )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(visit?.photo_url ?? null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -95,6 +98,19 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
     if (innings.length > 9) setInnings((prev) => prev.slice(0, -1))
   }
 
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
+  }
+
+  function removePhoto() {
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
@@ -102,6 +118,25 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
 
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
+
+    let uploadedPhotoUrl: string | null = visit?.photo_url ?? null
+
+    if (photoFile) {
+      const ext = photoFile.name.split('.').pop()
+      const path = `${Date.now()}.${ext}`
+      const { data: uploadData, error: uploadErr } = await supabase.storage
+        .from('game-photos')
+        .upload(path, photoFile, { contentType: photoFile.type, upsert: false })
+      if (uploadErr) {
+        setError(`Photo upload failed: ${uploadErr.message}`)
+        setSaving(false)
+        return
+      }
+      const { data: urlData } = supabase.storage.from('game-photos').getPublicUrl(uploadData.path)
+      uploadedPhotoUrl = urlData.publicUrl
+    } else if (!photoPreview && visit?.photo_url) {
+      uploadedPhotoUrl = null
+    }
 
     const payload = {
       stadium_id: stadium.id,
@@ -149,6 +184,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
       second_base_umpire: form.second_base_umpire || null,
       third_base_umpire: form.third_base_umpire || null,
       notes: form.notes || null,
+      photo_url: uploadedPhotoUrl,
       created_by: user?.id ?? null,
     }
 
@@ -201,11 +237,11 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
             <div className="font-semibold" style={{ color: '#f1f5f9' }}>
               {visit ? 'Edit GameDay Record' : 'Log a Game'}
             </div>
-            <div className="text-sm" style={{ color: '#64748b' }}>
+            <div className="text-sm" style={{ color: '#8896ae' }}>
               {stadium.name}
             </div>
           </div>
-          <button onClick={onClose} style={{ color: '#64748b' }}>
+          <button onClick={onClose} style={{ color: '#8896ae' }}>
             <X size={20} />
           </button>
         </div>
@@ -438,7 +474,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                 <tr>
                   <th
                     className="text-left py-1 pr-3 text-xs font-medium"
-                    style={{ color: '#64748b', width: 70 }}
+                    style={{ color: '#8896ae', width: 70 }}
                   >
                     Team
                   </th>
@@ -446,7 +482,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                     <th
                       key={inn.inning}
                       className="text-center px-1 text-xs font-medium"
-                      style={{ color: '#64748b', minWidth: 36 }}
+                      style={{ color: '#8896ae', minWidth: 36 }}
                     >
                       {inn.inning}
                     </th>
@@ -496,7 +532,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                     <th
                       key={h}
                       className="text-left py-1 pr-2 text-xs font-medium"
-                      style={{ color: '#64748b' }}
+                      style={{ color: '#8896ae' }}
                     >
                       {h}
                     </th>
@@ -569,6 +605,51 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                 />
               ))
             ))}
+          </div>
+
+          {sectionHead('Photo')}
+          <div className="mb-2">
+            {photoPreview ? (
+              <div className="relative inline-block">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={photoPreview}
+                  alt="Game photo preview"
+                  className="rounded-lg"
+                  style={{ maxHeight: 180, objectFit: 'cover', maxWidth: '100%' }}
+                />
+                <button
+                  type="button"
+                  onClick={removePhoto}
+                  className="absolute top-2 right-2 p-1 rounded-full"
+                  style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#f87171' }}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ) : (
+              <label
+                className="flex flex-col items-center justify-center gap-2 rounded-xl cursor-pointer transition-colors"
+                style={{
+                  border: '2px dashed #2d3748',
+                  backgroundColor: '#1a2235',
+                  padding: '2rem 1rem',
+                  color: '#8896ae',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#3b82f6')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#2d3748')}
+              >
+                <ImagePlus size={28} />
+                <span className="text-sm">Click to upload a game photo</span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoChange}
+                />
+              </label>
+            )}
           </div>
 
           {sectionHead('Story & Notes')}

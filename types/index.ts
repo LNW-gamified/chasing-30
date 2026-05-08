@@ -96,12 +96,59 @@ export interface Trip {
   stadium?: Stadium
 }
 
+export interface StadiumNote {
+  id: string
+  stadium_id: string
+  notes: string | null
+  updated_by: string | null
+  updated_at: string
+}
+
+export type SpecialEventType =
+  | 'world_series'
+  | 'all_star_game'
+  | 'postseason'
+  | 'spring_training'
+  | 'minor_league'
+  | 'historic_ballpark'
+  | 'international'
+  | 'other'
+
+export interface SpecialEvent {
+  id: string
+  event_type: SpecialEventType
+  event_date: string
+  seat_section: string | null
+  seat_row: string | null
+  seat_number: string | null
+  weather: string | null
+  temperature: number | null
+  attendance: number | null
+  notes: string | null
+  photo_url: string | null
+  home_team: string | null
+  visiting_team: string | null
+  event_year: number | null
+  game_number: number | null
+  series_round: string | null
+  stadium_name: string | null
+  city: string | null
+  state: string | null
+  country: string | null
+  ml_level: string | null
+  venue_name: string | null
+  series_name: string | null
+  custom_title: string | null
+  created_by: string | null
+  created_at: string
+}
+
 export interface Milestone {
   id: string
   name: string
   description: string
   icon: string
-  check: (visits: StadiumVisit[], stadiums: Stadium[]) => boolean
+  check: (visits: StadiumVisit[], stadiums: Stadium[], events?: SpecialEvent[]) => boolean
   earned_at?: string | null
 }
 

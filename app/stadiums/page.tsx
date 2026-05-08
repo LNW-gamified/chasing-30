@@ -38,6 +38,12 @@ export default function StadiumsPage() {
 
   const visitedIds = useMemo(() => new Set(visits.map((v) => v.stadium_id)), [visits])
 
+  const visitCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    visits.forEach((v) => { counts[v.stadium_id] = (counts[v.stadium_id] ?? 0) + 1 })
+    return counts
+  }, [visits])
+
   const filtered = useMemo(() => {
     let list = stadiums.filter((s) => {
       const q = search.toLowerCase()
@@ -66,14 +72,14 @@ export default function StadiumsPage() {
         <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>
           Stadiums
         </h1>
-        <p className="text-sm mt-1" style={{ color: '#64748b' }}>
+        <p className="text-sm mt-1" style={{ color: '#8896ae' }}>
           {visitedCount} of 30 visited
         </p>
       </div>
 
       {/* Progress bar */}
       <div className="card p-4 mb-6">
-        <div className="flex justify-between text-xs mb-2" style={{ color: '#64748b' }}>
+        <div className="flex justify-between text-xs mb-2" style={{ color: '#8896ae' }}>
           <span>{visitedCount} visited</span>
           <span>{30 - visitedCount} remaining</span>
         </div>
@@ -89,7 +95,7 @@ export default function StadiumsPage() {
       <div className="mb-6">
         {/* Search — full width on all screens */}
         <div className="relative mb-3">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748b' }} />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#8896ae' }} />
           <input
             type="text"
             className="input"
@@ -132,12 +138,12 @@ export default function StadiumsPage() {
       </div>
 
       {/* Count */}
-      <div className="text-xs mb-4" style={{ color: '#64748b' }}>
+      <div className="text-xs mb-4" style={{ color: '#8896ae' }}>
         Showing {filtered.length} of 30 stadiums
       </div>
 
       {loading ? (
-        <div className="text-center py-12" style={{ color: '#64748b' }}>
+        <div className="text-center py-12" style={{ color: '#8896ae' }}>
           Loading stadiums...
         </div>
       ) : (
@@ -191,12 +197,12 @@ export default function StadiumsPage() {
                 {/* Content with team logo */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <TeamLogo abbreviation={stadium.abbreviation} size={20} />
+                    <TeamLogo abbreviation={stadium.abbreviation} size={30} />
                     <div className="font-semibold text-sm truncate" style={{ color: '#f1f5f9' }}>
                       {stadium.name}
                     </div>
                   </div>
-                  <div className="text-xs truncate" style={{ color: '#64748b' }}>
+                  <div className="text-xs truncate" style={{ color: '#8896ae' }}>
                     {stadium.team}
                   </div>
                   <div className="flex gap-2 mt-1 items-center flex-wrap">
@@ -206,13 +212,18 @@ export default function StadiumsPage() {
                     <span className="badge badge-gray" style={{ fontSize: '0.65rem' }}>
                       {stadium.division}
                     </span>
-                    <span className="text-xs" style={{ color: '#64748b' }}>
+                    <span className="text-xs" style={{ color: '#8896ae' }}>
                       {stadium.city}, {stadium.state}
                     </span>
+                    {visited && visitCounts[stadium.id] > 0 && (
+                      <span className="text-xs font-medium" style={{ color: '#22c55e' }}>
+                        {visitCounts[stadium.id]} game{visitCounts[stadium.id] !== 1 ? 's' : ''}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                <ChevronRight size={16} style={{ color: '#374151', flexShrink: 0 }} />
+                <ChevronRight size={16} style={{ color: '#536476', flexShrink: 0 }} />
               </Link>
             )
           })}

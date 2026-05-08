@@ -1,4 +1,4 @@
-import type { Milestone, StadiumVisit, Stadium } from '@/types'
+import type { Milestone, StadiumVisit, Stadium, SpecialEvent } from '@/types'
 
 function visitedIds(visits: StadiumVisit[]): Set<string> {
   return new Set(visits.map((v) => v.stadium_id))
@@ -188,5 +188,97 @@ export const MILESTONES: Milestone[] = [
     description: 'Attend 10 total games',
     icon: '🤩',
     check: (visits) => visits.length >= 10,
+  },
+
+  // Special event milestones
+  {
+    id: 'first_special_event',
+    name: 'Beyond the Diamond',
+    description: 'Log your first special baseball experience',
+    icon: '🌟',
+    check: (_v, _s, events) => (events ?? []).length >= 1,
+  },
+  {
+    id: 'world_series_attendance',
+    name: 'World Series Witness',
+    description: 'Attend a World Series game',
+    icon: '🏆',
+    check: (_v, _s, events) => (events ?? []).some((e: SpecialEvent) => e.event_type === 'world_series'),
+  },
+  {
+    id: 'all_star_attendance',
+    name: 'Midsummer Classic',
+    description: 'Attend the MLB All-Star Game',
+    icon: '⭐',
+    check: (_v, _s, events) => (events ?? []).some((e: SpecialEvent) => e.event_type === 'all_star_game'),
+  },
+  {
+    id: 'postseason_attendance',
+    name: 'October Baseball',
+    description: 'Attend any MLB postseason game',
+    icon: '🍂',
+    check: (_v, _s, events) => (events ?? []).some((e: SpecialEvent) => e.event_type === 'postseason'),
+  },
+  {
+    id: 'spring_training_attendance',
+    name: 'Spring Awakening',
+    description: 'Attend a spring training game',
+    icon: '🌸',
+    check: (_v, _s, events) => (events ?? []).some((e: SpecialEvent) => e.event_type === 'spring_training'),
+  },
+  {
+    id: 'minor_league_attendance',
+    name: 'Minor League Maven',
+    description: 'Attend a minor league game',
+    icon: '🌱',
+    check: (_v, _s, events) => (events ?? []).some((e: SpecialEvent) => e.event_type === 'minor_league'),
+  },
+  {
+    id: 'hall_of_fame_visit',
+    name: 'Cooperstown Pilgrim',
+    description: 'Visit the National Baseball Hall of Fame',
+    icon: '🏛️',
+    check: (_v, _s, events) =>
+      (events ?? []).some((e: SpecialEvent) =>
+        e.event_type === 'historic_ballpark' && e.venue_name === 'National Baseball Hall of Fame'
+      ),
+  },
+  {
+    id: 'field_of_dreams_visit',
+    name: 'Build It, They Come',
+    description: 'Visit Field of Dreams in Iowa',
+    icon: '🌽',
+    check: (_v, _s, events) =>
+      (events ?? []).some((e: SpecialEvent) =>
+        e.event_type === 'historic_ballpark' && e.venue_name === 'Field of Dreams'
+      ),
+  },
+  {
+    id: 'international_game',
+    name: 'Global Ambassador',
+    description: 'Attend an international MLB game',
+    icon: '🌍',
+    check: (_v, _s, events) => (events ?? []).some((e: SpecialEvent) => e.event_type === 'international'),
+  },
+  {
+    id: 'historic_ballparks_all',
+    name: 'Baseball Historian',
+    description: 'Visit all 5 historic baseball destinations',
+    icon: '📜',
+    check: (_v, _s, events) => {
+      const HISTORIC_VENUES = [
+        'Louisville Slugger Museum & Factory',
+        'National Baseball Hall of Fame',
+        'Negro Leagues Baseball Museum',
+        'Field of Dreams',
+        'Rickwood Field',
+      ]
+      const visited = new Set(
+        (events ?? [])
+          .filter((e: SpecialEvent) => e.event_type === 'historic_ballpark' && e.venue_name)
+          .map((e: SpecialEvent) => e.venue_name as string)
+      )
+      return HISTORIC_VENUES.every((v) => visited.has(v))
+    },
   },
 ]

@@ -32,7 +32,7 @@ const UNVISITED_ICON = L.divIcon({
     width:13px;height:13px;
     background:#4b5563;
     border-radius:50%;
-    border:2px solid #374151;
+    border:2px solid #536476;
     opacity:0.6;
     cursor:pointer;
   "></div>`,
@@ -89,7 +89,7 @@ export default function StadiumMapInner({ stadiums }: Props) {
                 </div>
               </div>
 
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: 8 }}>
+              <div style={{ fontSize: '0.75rem', color: '#8896ae', marginBottom: 8 }}>
                 {stadium.city}, {stadium.state} · {stadium.league} {stadium.division}
               </div>
 
@@ -107,7 +107,7 @@ export default function StadiumMapInner({ stadiums }: Props) {
                   ✓ Visited{stadium.visits.length > 0 ? ` · ${stadium.visits.length} game${stadium.visits.length !== 1 ? 's' : ''}` : ''}
                 </div>
               ) : (
-                <div style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: 10 }}>
+                <div style={{ fontSize: '0.7rem', color: '#8896ae', marginBottom: 10 }}>
                   Not yet visited
                 </div>
               )}

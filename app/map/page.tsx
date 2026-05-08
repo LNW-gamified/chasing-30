@@ -35,9 +35,9 @@ export default async function MapPage() {
         <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>
           Stadium Map
         </h1>
-        <p className="text-sm mt-1" style={{ color: '#64748b' }}>
+        <p className="text-sm mt-1" style={{ color: '#8896ae' }}>
           <span style={{ color: '#22c55e' }}>●</span> Visited ({visitedCount}) &nbsp;
-          <span style={{ color: '#64748b' }}>●</span> Not Visited ({30 - visitedCount})
+          <span style={{ color: '#8896ae' }}>●</span> Not Visited ({30 - visitedCount})
         </p>
       </div>
 

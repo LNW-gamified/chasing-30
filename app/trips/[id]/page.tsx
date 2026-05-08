@@ -8,7 +8,7 @@ import TripForm from '@/components/TripForm'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip } from '@/types'
 import Link from 'next/link'
-import { ArrowLeft, Pencil, Trash2, DollarSign } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X } from 'lucide-react'
 
 type TripWithStadium = Trip & { stadium: Stadium }
 
@@ -29,6 +29,9 @@ export default function TripDetailPage() {
   const [stadiums, setStadiums] = useState<Stadium[]>([])
   const [loading, setLoading] = useState(true)
   const [showEdit, setShowEdit] = useState(false)
+  const [showComplete, setShowComplete] = useState(false)
+  const [completeDate, setCompleteDate] = useState('')
+  const [completing, setCompleting] = useState(false)
 
   async function load() {
     const supabase = createClient()
@@ -50,12 +53,24 @@ export default function TripDetailPage() {
     router.push('/trips')
   }
 
+  async function handleMarkComplete() {
+    setCompleting(true)
+    const supabase = createClient()
+    await supabase
+      .from('trips')
+      .update({ status: 'completed', trip_date: completeDate || null })
+      .eq('id', id)
+    setCompleting(false)
+    setShowComplete(false)
+    await load()
+  }
+
   if (loading) {
-    return <AppShell><div className="text-center py-12" style={{ color: '#64748b' }}>Loading...</div></AppShell>
+    return <AppShell><div className="text-center py-12" style={{ color: '#8896ae' }}>Loading...</div></AppShell>
   }
 
   if (!trip) {
-    return <AppShell><div className="text-center py-12" style={{ color: '#64748b' }}>Trip not found.</div></AppShell>
+    return <AppShell><div className="text-center py-12" style={{ color: '#8896ae' }}>Trip not found.</div></AppShell>
   }
 
   const estTotal = CATEGORIES.reduce((sum, c) => sum + (trip[`est_${c.key}` as keyof Trip] as number), 0)
@@ -70,7 +85,7 @@ export default function TripDetailPage() {
 
   return (
     <AppShell>
-      <Link href="/trips" className="inline-flex items-center gap-2 text-sm mb-6" style={{ color: '#64748b' }}>
+      <Link href="/trips" className="inline-flex items-center gap-2 text-sm mb-6" style={{ color: '#8896ae' }}>
         <ArrowLeft size={16} /> Back to Trips
       </Link>
 
@@ -97,12 +112,21 @@ export default function TripDetailPage() {
               {trip.trip_date && ` · ${formatDate(trip.trip_date)}`}
             </div>
             {trip.stadium && (
-              <div className="text-xs mt-1" style={{ color: '#64748b' }}>
+              <div className="text-xs mt-1" style={{ color: '#8896ae' }}>
                 {trip.stadium.league} {trip.stadium.division} · {trip.stadium.city}, {trip.stadium.state}
               </div>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {trip.status === 'planned' && (
+              <button
+                onClick={() => { setCompleteDate(new Date().toISOString().split('T')[0]); setShowComplete(true) }}
+                className="btn-secondary"
+                style={{ color: '#22c55e', borderColor: 'rgba(34,197,94,0.3)' }}
+              >
+                <CheckCircle size={14} /> Mark Complete
+              </button>
+            )}
             <button onClick={() => setShowEdit(true)} className="btn-secondary">
               <Pencil size={14} /> Edit
             </button>
@@ -114,6 +138,32 @@ export default function TripDetailPage() {
               <Trash2 size={14} /> Delete
             </button>
           </div>
+
+          {/* Mark complete inline panel */}
+          {showComplete && (
+            <div
+              className="w-full mt-4 p-4 rounded-xl flex flex-wrap items-end gap-3"
+              style={{ backgroundColor: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)' }}
+            >
+              <div className="flex-1 min-w-40">
+                <label className="label">Completion Date</label>
+                <input
+                  type="date"
+                  className="input"
+                  value={completeDate}
+                  onChange={(e) => setCompleteDate(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2">
+                <button onClick={handleMarkComplete} disabled={completing} className="btn-primary" style={{ backgroundColor: '#22c55e' }}>
+                  {completing ? 'Saving...' : 'Confirm'}
+                </button>
+                <button onClick={() => setShowComplete(false)} className="btn-secondary">
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -128,7 +178,7 @@ export default function TripDetailPage() {
             <thead>
               <tr>
                 {['Category', 'Estimated', 'Actual', 'Difference'].map((h) => (
-                  <th key={h} className="text-left pb-3 pr-4 text-xs font-medium" style={{ color: '#64748b' }}>
+                  <th key={h} className="text-left pb-3 pr-4 text-xs font-medium" style={{ color: '#8896ae' }}>
                     {h}
                   </th>
                 ))}
@@ -148,7 +198,7 @@ export default function TripDetailPage() {
                     <td className="py-3 pr-4" style={{ color: '#f1f5f9' }}>
                       {formatCurrency(est)}
                     </td>
-                    <td className="py-3 pr-4" style={{ color: actual > 0 ? '#f1f5f9' : '#64748b' }}>
+                    <td className="py-3 pr-4" style={{ color: actual > 0 ? '#f1f5f9' : '#8896ae' }}>
                       {actual > 0 ? formatCurrency(actual) : '—'}
                     </td>
                     <td className="py-3">
@@ -157,7 +207,7 @@ export default function TripDetailPage() {
                           {diff > 0 ? '+' : ''}{formatCurrency(diff)}
                         </span>
                       ) : (
-                        <span style={{ color: '#64748b' }}>—</span>
+                        <span style={{ color: '#8896ae' }}>—</span>
                       )}
                     </td>
                   </tr>
@@ -169,7 +219,7 @@ export default function TripDetailPage() {
                 <td className="py-3 pr-4 font-bold text-base" style={{ color: '#f59e0b' }}>
                   {formatCurrency(estTotal)}
                 </td>
-                <td className="py-3 pr-4 font-bold text-base" style={{ color: actualTotal > 0 ? '#f1f5f9' : '#64748b' }}>
+                <td className="py-3 pr-4 font-bold text-base" style={{ color: actualTotal > 0 ? '#f1f5f9' : '#8896ae' }}>
                   {actualTotal > 0 ? formatCurrency(actualTotal) : '—'}
                 </td>
                 <td className="py-3 font-bold text-base" style={{ color: overBudget ? '#ef4444' : '#22c55e' }}>
