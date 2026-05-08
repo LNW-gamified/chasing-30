@@ -1,0 +1,111 @@
+export interface Stadium {
+  id: string
+  name: string
+  team: string
+  abbreviation: string
+  city: string
+  state: string
+  lat: number
+  lng: number
+  capacity: number | null
+  opened: number | null
+  surface: string | null
+  league: 'AL' | 'NL'
+  division: 'East' | 'Central' | 'West'
+  created_at: string
+}
+
+export interface InningScore {
+  inning: number
+  home: number | null
+  away: number | null
+}
+
+export interface StadiumVisit {
+  id: string
+  stadium_id: string
+  visit_date: string
+  home_team: string
+  visiting_team: string
+  home_team_record: string | null
+  visiting_team_record: string | null
+  seat_section: string | null
+  seat_row: string | null
+  seat_number: string | null
+  first_pitch_time: string | null
+  game_duration: string | null
+  temperature: number | null
+  weather: string | null
+  attendance: number | null
+  home_starter_name: string | null
+  home_starter_wl: string | null
+  home_starter_ip: string | null
+  home_starter_h: number | null
+  home_starter_er: number | null
+  home_starter_bb: number | null
+  home_starter_k: number | null
+  away_starter_name: string | null
+  away_starter_wl: string | null
+  away_starter_ip: string | null
+  away_starter_h: number | null
+  away_starter_er: number | null
+  away_starter_bb: number | null
+  away_starter_k: number | null
+  inning_scores: InningScore[]
+  home_runs: number | null
+  home_hits: number | null
+  home_errors: number | null
+  home_lob: number | null
+  away_runs: number | null
+  away_hits: number | null
+  away_errors: number | null
+  away_lob: number | null
+  winning_pitcher: string | null
+  losing_pitcher: string | null
+  save_pitcher: string | null
+  hp_umpire: string | null
+  first_base_umpire: string | null
+  second_base_umpire: string | null
+  third_base_umpire: string | null
+  photo_url: string | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  stadium?: Stadium
+}
+
+export interface Trip {
+  id: string
+  stadium_id: string
+  name: string
+  trip_date: string | null
+  status: 'planned' | 'completed' | 'cancelled'
+  est_tickets: number
+  est_travel: number
+  est_hotel: number
+  est_food: number
+  est_parking: number
+  actual_tickets: number
+  actual_travel: number
+  actual_hotel: number
+  actual_food: number
+  actual_parking: number
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  stadium?: Stadium
+}
+
+export interface Milestone {
+  id: string
+  name: string
+  description: string
+  icon: string
+  check: (visits: StadiumVisit[], stadiums: Stadium[]) => boolean
+  earned_at?: string | null
+}
+
+export interface StadiumWithVisit extends Stadium {
+  visited: boolean
+  visits: StadiumVisit[]
+}
