@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Trophy, Lock, X, MapPin, Calendar } from 'lucide-react'
-import type { Milestone, StadiumVisit, Stadium, SpecialEvent } from '@/types'
+import type { SerializableMilestone, StadiumVisit, Stadium, SpecialEvent } from '@/types'
 
 interface EarningContext {
   date: string
@@ -36,8 +36,8 @@ function getCompletionContext(group: Stadium[], sorted: StadiumVisit[], stadiums
   return null
 }
 
-function getMilestoneContext(
-  milestone: Milestone,
+function getSerializableMilestoneContext(
+  milestone: SerializableMilestone,
   allVisits: StadiumVisit[],
   allStadiums: Stadium[],
   allEvents: SpecialEvent[]
@@ -124,21 +124,21 @@ function formatDate(dateStr: string) {
 }
 
 interface Props {
-  earned: Milestone[]
-  unearned: Milestone[]
+  earned: SerializableMilestone[]
+  unearned: SerializableMilestone[]
   allVisits: StadiumVisit[]
   allStadiums: Stadium[]
   allEvents: SpecialEvent[]
 }
 
-export default function MilestoneGrid({ earned, unearned, allVisits, allStadiums, allEvents }: Props) {
-  const [selected, setSelected] = useState<{ milestone: Milestone; isEarned: boolean } | null>(null)
+export default function SerializableMilestoneGrid({ earned, unearned, allVisits, allStadiums, allEvents }: Props) {
+  const [selected, setSelected] = useState<{ milestone: SerializableMilestone; isEarned: boolean } | null>(null)
 
   const context = selected?.isEarned
-    ? getMilestoneContext(selected.milestone, allVisits, allStadiums, allEvents)
+    ? getSerializableMilestoneContext(selected.milestone, allVisits, allStadiums, allEvents)
     : null
 
-  function MilestoneCard({ m, isEarned }: { m: Milestone; isEarned: boolean }) {
+  function SerializableMilestoneCard({ m, isEarned }: { m: SerializableMilestone; isEarned: boolean }) {
     return (
       <button
         onClick={() => setSelected({ milestone: m, isEarned })}
@@ -185,7 +185,7 @@ export default function MilestoneGrid({ earned, unearned, allVisits, allStadiums
             <Trophy size={16} /> Earned ({earned.length})
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {earned.map(m => <MilestoneCard key={m.id} m={m} isEarned />)}
+            {earned.map(m => <SerializableMilestoneCard key={m.id} m={m} isEarned />)}
           </div>
         </div>
       )}
@@ -196,7 +196,7 @@ export default function MilestoneGrid({ earned, unearned, allVisits, allStadiums
             <Lock size={16} /> Locked ({unearned.length})
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {unearned.map(m => <MilestoneCard key={m.id} m={m} isEarned={false} />)}
+            {unearned.map(m => <SerializableMilestoneCard key={m.id} m={m} isEarned={false} />)}
           </div>
         </div>
       )}

@@ -2,7 +2,11 @@ import { createClient } from '@/lib/supabase-server'
 import AppShell from '@/components/AppShell'
 import MilestoneGrid from '@/components/MilestoneGrid'
 import { MILESTONES } from '@/lib/milestones'
-import type { Stadium, StadiumVisit, SpecialEvent } from '@/types'
+import type { Stadium, StadiumVisit, SpecialEvent, SerializableMilestone } from '@/types'
+
+function toSerializable(ms: typeof MILESTONES): SerializableMilestone[] {
+  return ms.map(({ id, name, description, icon }) => ({ id, name, description, icon }))
+}
 
 export default async function MilestonesPage() {
   const supabase = await createClient()
@@ -49,8 +53,8 @@ export default async function MilestonesPage() {
       </div>
 
       <MilestoneGrid
-        earned={earned}
-        unearned={unearned}
+        earned={toSerializable(earned)}
+        unearned={toSerializable(unearned)}
         allVisits={allVisits}
         allStadiums={allStadiums}
         allEvents={allEvents}

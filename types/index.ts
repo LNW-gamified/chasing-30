@@ -171,6 +171,13 @@ export interface Milestone {
   earned_at?: string | null
 }
 
+export interface SerializableMilestone {
+  id: string
+  name: string
+  description: string
+  icon: string
+}
+
 export interface StadiumWithVisit extends Stadium {
   visited: boolean
   visits: StadiumVisit[]
