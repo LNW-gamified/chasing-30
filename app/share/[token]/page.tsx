@@ -32,6 +32,52 @@ interface ProgressData {
 
 const DIVISIONS = ['AL East', 'AL Central', 'AL West', 'NL East', 'NL Central', 'NL West']
 
+interface ShareMilestone {
+  icon: string
+  name: string
+  description: string
+}
+
+function computeEarnedMilestones(
+  visitedCount: number,
+  gamesAttended: number,
+  visitedIds: string[],
+  allStadiums: StadiumRow[],
+  specialEventsCount: number
+): ShareMilestone[] {
+  const visitedSet = new Set(visitedIds)
+  const earned: ShareMilestone[] = []
+
+  const addIf = (condition: boolean, icon: string, name: string, description: string) => {
+    if (condition) earned.push({ icon, name, description })
+  }
+
+  addIf(gamesAttended >= 1, '⚾', 'First Pitch', 'Attend your first MLB game')
+  addIf(gamesAttended >= 5, '🎯', '5 Games Attended', 'Attend 5 games total')
+  addIf(gamesAttended >= 10, '🔥', '10 Games Attended', 'Attend 10 games total')
+  addIf(visitedCount >= 5, '🏟️', '5 Stadiums', 'Visit 5 different stadiums')
+  addIf(visitedCount >= 10, '🗺️', '10 Stadiums', 'Visit 10 different stadiums')
+  addIf(visitedCount >= 15, '✈️', '15 Stadiums', 'Visit 15 different stadiums')
+  addIf(visitedCount >= 20, '🌎', '20 Stadiums', 'Visit 20 different stadiums')
+  addIf(visitedCount >= 25, '🏆', '25 Stadiums', 'Visit 25 different stadiums')
+  addIf(visitedCount >= 30, '⭐', 'Chasing 30 Complete!', 'Visit all 30 MLB stadiums')
+  addIf(specialEventsCount >= 1, '🎉', 'Special Event', 'Attend a special baseball event')
+
+  for (const div of DIVISIONS) {
+    const [league, division] = div.split(' ')
+    const group = allStadiums.filter((s) => s.league === league && s.division === division)
+    if (group.length > 0 && group.every((s) => visitedSet.has(s.id))) {
+      const icons: Record<string, string> = {
+        'AL East': '🔵', 'AL Central': '🟡', 'AL West': '🟠',
+        'NL East': '🔴', 'NL Central': '🟢', 'NL West': '🟣',
+      }
+      addIf(true, icons[div] ?? '🏅', `${div} Complete`, `Visit all stadiums in the ${div}`)
+    }
+  }
+
+  return earned
+}
+
 function formatDateStr(d: string) {
   return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
@@ -63,6 +109,13 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
   const visitedSet = new Set(progress.visited_ids ?? [])
   const visitedCount = progress.stadiums_visited
   const pct = Math.round((visitedCount / 30) * 100)
+  const earnedMilestones = computeEarnedMilestones(
+    visitedCount,
+    progress.games_attended,
+    progress.visited_ids ?? [],
+    progress.all_stadiums ?? [],
+    progress.special_events_count
+  )
 
   const divisionBreakdown = DIVISIONS.map((div) => {
     const [league, division] = div.split(' ')
@@ -217,6 +270,33 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
             })}
           </div>
         </div>
+
+        {/* Milestones */}
+        {earnedMilestones.length > 0 && (
+          <div
+            className="rounded-2xl p-5 mt-6"
+            style={{ backgroundColor: '#111827', border: '1px solid #1f2937' }}
+          >
+            <div className="font-semibold mb-4" style={{ color: '#f1f5f9' }}>
+              🏆 Milestones Earned ({earnedMilestones.length})
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {earnedMilestones.map((m) => (
+                <div
+                  key={m.name}
+                  className="flex items-center gap-3 p-3 rounded-xl"
+                  style={{ backgroundColor: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.15)' }}
+                >
+                  <span style={{ fontSize: '1.4rem' }}>{m.icon}</span>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium" style={{ color: '#f1f5f9' }}>{m.name}</div>
+                    <div className="text-xs" style={{ color: '#a8b8c8' }}>{m.description}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="text-center mt-8 text-xs" style={{ color: '#536476' }}>
           Shared via Chasing 30 · Read-only view

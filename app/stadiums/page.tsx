@@ -155,6 +155,10 @@ export default function StadiumsPage() {
                 key={stadium.id}
                 href={`/stadiums/${stadium.id}`}
                 className="card card-hover p-4 flex items-center gap-3"
+                style={visited ? {
+                  borderLeft: '3px solid #22c55e',
+                  boxShadow: '0 0 14px rgba(34,197,94,0.1), inset 0 0 0 1px rgba(34,197,94,0.08)',
+                } : {}}
               >
                 {/* Visited stamp or empty placeholder */}
                 <div className="flex-shrink-0" style={{ width: 44 }}>

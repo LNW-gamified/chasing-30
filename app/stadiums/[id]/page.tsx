@@ -7,6 +7,7 @@ import AppShell from '@/components/AppShell'
 import GameDayForm from '@/components/GameDayForm'
 import { formatDate } from '@/lib/utils'
 import type { Stadium, StadiumVisit, StadiumNote } from '@/types'
+import { fetchUpcomingHomeGames, type UpcomingGame } from '@/lib/mlb-api'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -18,8 +19,27 @@ import {
   Calendar,
   NotebookPen,
   Save,
+  CalendarDays,
 } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
+
+const TEAM_GRADIENTS: Record<string, [string, string]> = {
+  LAA: ['#003263', '#BA0021'], ARI: ['#A71930', '#1A1A1A'],
+  BAL: ['#1A1A1A', '#DF4601'], BOS: ['#0C2340', '#BD3039'],
+  CHC: ['#0E3386', '#CC3433'], CWS: ['#27251F', '#C4CED4'],
+  CIN: ['#C6011F', '#1A1A1A'], CLE: ['#00385D', '#E31937'],
+  COL: ['#33006F', '#C4CED4'], DET: ['#0C2C56', '#FA4616'],
+  HOU: ['#002D62', '#EB6E1F'], KC:  ['#004687', '#BD9B60'],
+  LAD: ['#005A9C', '#EF3E42'], MIA: ['#00A3E0', '#EF3340'],
+  MIL: ['#12284B', '#FFC52F'], MIN: ['#002B5C', '#D31145'],
+  NYM: ['#002D72', '#FF5910'], NYY: ['#003087', '#C4CED4'],
+  OAK: ['#003831', '#EFB21E'], PHI: ['#002D72', '#E81828'],
+  PIT: ['#27251F', '#FDB827'], SD:  ['#2F241D', '#FFC425'],
+  SF:  ['#27251F', '#FD5A1E'], SEA: ['#0C2C56', '#005C5C'],
+  STL: ['#0C2340', '#C41E3A'], TB:  ['#092C5C', '#8FBCE6'],
+  TEX: ['#003278', '#C0111F'], TOR: ['#134A8E', '#1D2D5C'],
+  WSH: ['#14225A', '#AB0003'], ATL: ['#13274F', '#CE1141'],
+}
 
 export default function StadiumDetailPage() {
   const params = useParams()
@@ -35,6 +55,7 @@ export default function StadiumDetailPage() {
   const [editingNote, setEditingNote] = useState(false)
   const [noteInput, setNoteInput] = useState('')
   const [savingNote, setSavingNote] = useState(false)
+  const [upcomingGames, setUpcomingGames] = useState<UpcomingGame[]>([])
 
   async function load() {
     const supabase = createClient()
@@ -65,6 +86,11 @@ export default function StadiumDetailPage() {
   }
 
   useEffect(() => { load() }, [id])
+
+  useEffect(() => {
+    if (!stadium) return
+    fetchUpcomingHomeGames(stadium.abbreviation).then(setUpcomingGames)
+  }, [stadium])
 
   async function deleteVisit(visitId: string) {
     if (!confirm('Delete this game record?')) return
@@ -115,6 +141,31 @@ export default function StadiumDetailPage() {
       >
         <ArrowLeft size={16} /> Back to Stadiums
       </Link>
+
+      {/* Hero banner */}
+      {(() => {
+        const colors = TEAM_GRADIENTS[stadium.abbreviation] ?? ['#0d1424', '#1f2937']
+        return (
+          <div
+            className="rounded-2xl mb-4 flex items-end p-5 overflow-hidden"
+            style={{
+              height: 120,
+              background: `linear-gradient(135deg, ${colors[0]} 0%, ${colors[1]} 100%)`,
+              position: 'relative',
+            }}
+          >
+            <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.35)' }} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div className="font-bold text-xl" style={{ color: '#f1f5f9', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
+                {stadium.name}
+              </div>
+              <div className="text-sm" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                {stadium.city}, {stadium.state} · {stadium.league} {stadium.division}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Stadium header */}
       <div className="card p-6 mb-6">
@@ -450,6 +501,46 @@ export default function StadiumDetailPage() {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Upcoming home games */}
+      {upcomingGames.length > 0 && (
+        <div className="card p-6 mt-6">
+          <div className="flex items-center gap-2 font-semibold mb-4" style={{ color: '#f1f5f9' }}>
+            <CalendarDays size={16} style={{ color: '#3b82f6' }} />
+            Upcoming Home Games
+            <span className="text-xs font-normal ml-1" style={{ color: '#a8b8c8' }}>next 14 days</span>
+          </div>
+          <div className="flex flex-col gap-3">
+            {upcomingGames.map((g) => {
+              const dt = new Date(g.gameDate)
+              const dateStr = dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+              const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+              return (
+                <div
+                  key={g.gamePk}
+                  className="flex items-center justify-between gap-3 p-3 rounded-xl"
+                  style={{ backgroundColor: '#0d1424' }}
+                >
+                  <div>
+                    <div className="text-sm font-medium" style={{ color: '#f1f5f9' }}>
+                      {g.awayTeam} @ {g.homeTeam}
+                    </div>
+                    <div className="text-xs mt-0.5" style={{ color: '#a8b8c8' }}>
+                      {dateStr} · {timeStr}
+                    </div>
+                  </div>
+                  <div
+                    className="text-xs px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: 'rgba(59,130,246,0.15)', color: '#60a5fa' }}
+                  >
+                    {g.status === 'Preview' ? 'Upcoming' : g.status}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
 

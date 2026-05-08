@@ -11,26 +11,22 @@ import {
   Trophy,
   Plane,
   LogOut,
-  Menu,
-  X,
   Star,
 } from 'lucide-react'
-import { useState } from 'react'
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
   { href: '/map', label: 'Map', icon: Map },
-  { href: '/stadiums', label: 'Stadiums', icon: Building2 },
+  { href: '/stadiums', label: 'Parks', icon: Building2 },
   { href: '/special-events', label: 'Events', icon: Star },
   { href: '/stats', label: 'Stats', icon: BarChart3 },
-  { href: '/milestones', label: 'Milestones', icon: Trophy },
+  { href: '/milestones', label: 'Goals', icon: Trophy },
   { href: '/trips', label: 'Trips', icon: Plane },
 ]
 
 export default function Navigation() {
   const pathname = usePathname()
   const router = useRouter()
-  const [mobileOpen, setMobileOpen] = useState(false)
 
   async function handleLogout() {
     const supabase = createClient()
@@ -40,62 +36,37 @@ export default function Navigation() {
 
   return (
     <>
-      {/* Mobile header */}
+      {/* Mobile top bar — logo only */}
       <header
-        className="md:hidden flex items-center justify-between px-4 py-3"
+        className="md:hidden flex items-center px-4 py-3"
         style={{ backgroundColor: '#0d1424', borderBottom: '1px solid #1f2937' }}
       >
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">⚾</span>
-          <span className="font-bold text-lg" style={{ color: '#f1f5f9' }}>
-            Chasing 30
-          </span>
-        </div>
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          style={{ color: '#b8c8d8' }}
-          className="p-1"
-        >
-          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <span className="text-xl mr-2">⚾</span>
+        <span className="font-bold text-base" style={{ color: '#f1f5f9' }}>Chasing 30</span>
       </header>
 
-      {/* Mobile menu */}
-      {mobileOpen && (
-        <div
-          className="md:hidden fixed inset-0 z-50 pt-14"
-          style={{ backgroundColor: '#0a0e1a' }}
-        >
-          <nav className="flex flex-col p-4 gap-1">
-            {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-              const active = pathname === href || pathname.startsWith(href + '/')
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors"
-                  style={{
-                    backgroundColor: active ? 'rgba(59,130,246,0.15)' : 'transparent',
-                    color: active ? '#60a5fa' : '#b8c8d8',
-                  }}
-                >
-                  <Icon size={22} />
-                  <span className="font-medium text-base">{label}</span>
-                </Link>
-              )
-            })}
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg mt-4"
-              style={{ color: '#ef4444' }}
+      {/* Mobile bottom nav */}
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex"
+        style={{ backgroundColor: '#0d1424', borderTop: '1px solid #1f2937' }}
+      >
+        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href + '/'))
+          return (
+            <Link
+              key={href}
+              href={href}
+              className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5"
+              style={{ color: active ? '#60a5fa' : '#536476' }}
             >
-              <LogOut size={22} />
-              <span className="font-medium text-base">Sign Out</span>
-            </button>
-          </nav>
-        </div>
-      )}
+              <Icon size={18} strokeWidth={active ? 2.5 : 1.8} />
+              <span style={{ fontSize: '0.6rem', fontWeight: active ? 600 : 400, lineHeight: 1 }}>
+                {label}
+              </span>
+            </Link>
+          )
+        })}
+      </nav>
 
       {/* Desktop sidebar */}
       <aside

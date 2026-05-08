@@ -52,6 +52,28 @@ export default async function MilestonesPage() {
         </div>
       </div>
 
+      {earned.length === 1 && (
+        <div
+          className="card p-5 mb-6 flex items-center gap-4"
+          style={{
+            borderColor: 'rgba(251,191,36,0.4)',
+            backgroundColor: 'rgba(251,191,36,0.06)',
+            boxShadow: '0 0 24px rgba(251,191,36,0.1)',
+          }}
+        >
+          <div className="text-4xl flex-shrink-0">🎉</div>
+          <div>
+            <div className="font-bold text-base" style={{ color: '#fbbf24' }}>
+              First milestone unlocked!
+            </div>
+            <div className="text-sm mt-0.5" style={{ color: '#b8c8d8' }}>
+              You earned <strong style={{ color: '#f1f5f9' }}>{earned[0].name}</strong> — the journey has begun.
+            </div>
+          </div>
+          <div className="ml-auto text-2xl flex-shrink-0">🏆</div>
+        </div>
+      )}
+
       <MilestoneGrid
         earned={toSerializable(earned)}
         unearned={toSerializable(unearned)}

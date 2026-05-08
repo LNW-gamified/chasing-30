@@ -295,7 +295,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
               <input
                 type="text"
                 className="input"
-                placeholder="45-32"
+                placeholder="W-L record"
                 value={form.home_team_record}
                 onChange={(e) => set('home_team_record', e.target.value)}
               />
@@ -305,7 +305,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
               <input
                 type="text"
                 className="input"
-                placeholder="38-39"
+                placeholder="W-L record"
                 value={form.visiting_team_record}
                 onChange={(e) => set('visiting_team_record', e.target.value)}
               />
@@ -315,7 +315,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
               <input
                 type="text"
                 className="input"
-                placeholder="3:12"
+                placeholder="e.g. 3h 12m"
                 value={form.game_duration}
                 onChange={(e) => set('game_duration', e.target.value)}
               />

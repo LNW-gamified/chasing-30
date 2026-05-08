@@ -97,6 +97,49 @@ export default async function StatsPage() {
     return { label: div, visited, total: group.length }
   })
 
+  // Consecutive years with at least one game attended
+  const yearsWithGames = [...new Set(allVisits.map((v) => new Date(v.visit_date + 'T12:00:00').getFullYear()))].sort()
+  let longestYearStreak = 0
+  let currentYearStreak = 0
+  let prevYear: number | null = null
+  for (const yr of yearsWithGames) {
+    if (prevYear === null || yr === prevYear + 1) {
+      currentYearStreak++
+    } else {
+      longestYearStreak = Math.max(longestYearStreak, currentYearStreak)
+      currentYearStreak = 1
+    }
+    prevYear = yr
+  }
+  longestYearStreak = Math.max(longestYearStreak, currentYearStreak)
+
+  // Longest consecutive-day stadium streak (unique stadiums on consecutive dates)
+  const visitsByDate = new Map<string, Set<string>>()
+  for (const v of allVisits) {
+    if (!visitsByDate.has(v.visit_date)) visitsByDate.set(v.visit_date, new Set())
+    visitsByDate.get(v.visit_date)!.add(v.stadium_id)
+  }
+  const sortedDates = [...visitsByDate.keys()].sort()
+  let longestTripStreak = 0
+  const uniqueInStreak = new Set<string>()
+  for (let i = 0; i < sortedDates.length; i++) {
+    const d = new Date(sortedDates[i] + 'T12:00:00')
+    if (i === 0) {
+      visitsByDate.get(sortedDates[i])!.forEach((id) => uniqueInStreak.add(id))
+    } else {
+      const prev = new Date(sortedDates[i - 1] + 'T12:00:00')
+      const dayDiff = (d.getTime() - prev.getTime()) / 86400000
+      if (dayDiff <= 2) {
+        visitsByDate.get(sortedDates[i])!.forEach((id) => uniqueInStreak.add(id))
+      } else {
+        longestTripStreak = Math.max(longestTripStreak, uniqueInStreak.size)
+        uniqueInStreak.clear()
+        visitsByDate.get(sortedDates[i])!.forEach((id) => uniqueInStreak.add(id))
+      }
+    }
+  }
+  longestTripStreak = Math.max(longestTripStreak, uniqueInStreak.size)
+
   const statCards = [
     {
       icon: <BarChart3 size={20} />,
@@ -109,7 +152,7 @@ export default async function StatsPage() {
       icon: <TrendingUp size={20} />,
       label: 'Games Attended',
       value: allVisits.length.toString(),
-      sub: `across ${visitedIds.size} stadiums`,
+      sub: `across ${visitedIds.size} stadium${visitedIds.size !== 1 ? 's' : ''}`,
       color: '#3b82f6',
     },
     {
@@ -123,7 +166,7 @@ export default async function StatsPage() {
       icon: <Trophy size={20} />,
       label: 'Favorite Division',
       value: favDivision,
-      sub: divisionCounts[favDivision] ? `${divisionCounts[favDivision]} stadiums visited` : 'Visit more stadiums',
+      sub: divisionCounts[favDivision] ? `${divisionCounts[favDivision]} stadium${divisionCounts[favDivision] !== 1 ? 's' : ''} visited` : 'Visit more stadiums',
       color: '#a78bfa',
     },
     {
@@ -306,6 +349,53 @@ export default async function StatsPage() {
           )}
         </div>
       </div>
+
+      {/* Streaks */}
+      {allVisits.length > 0 && (
+        <div className="mt-6 card p-6">
+          <div className="flex items-center gap-2 font-semibold mb-4" style={{ color: '#f1f5f9' }}>
+            <TrendingUp size={18} style={{ color: '#3b82f6' }} />
+            Streaks &amp; Records
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
+              <div className="text-2xl font-bold" style={{ color: '#3b82f6' }}>
+                {longestYearStreak}
+              </div>
+              <div className="text-sm mt-1" style={{ color: '#b8c8d8' }}>
+                Consecutive year{longestYearStreak !== 1 ? 's' : ''} with a game
+              </div>
+              {yearsWithGames.length > 0 && (
+                <div className="text-xs mt-1" style={{ color: '#a8b8c8' }}>
+                  {yearsWithGames[0]}–{yearsWithGames[yearsWithGames.length - 1]}
+                </div>
+              )}
+            </div>
+            <div className="p-4 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
+              <div className="text-2xl font-bold" style={{ color: '#a78bfa' }}>
+                {longestTripStreak}
+              </div>
+              <div className="text-sm mt-1" style={{ color: '#b8c8d8' }}>
+                Stadiums in one road trip
+              </div>
+              <div className="text-xs mt-1" style={{ color: '#a8b8c8' }}>
+                consecutive-day streak
+              </div>
+            </div>
+            <div className="p-4 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
+              <div className="text-2xl font-bold" style={{ color: '#22c55e' }}>
+                {yearsWithGames.length}
+              </div>
+              <div className="text-sm mt-1" style={{ color: '#b8c8d8' }}>
+                Season{yearsWithGames.length !== 1 ? 's' : ''} attended
+              </div>
+              <div className="text-xs mt-1" style={{ color: '#a8b8c8' }}>
+                unique calendar years
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Special Events section */}
       {allEvents.length > 0 && (
