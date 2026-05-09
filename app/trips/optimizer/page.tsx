@@ -58,6 +58,7 @@ interface TripStop {
   abbreviation: string
   gameDate: string
   dayOfTrip: number
+  gapToNext: number | null
 }
 
 interface TripOption {
@@ -406,10 +407,7 @@ export default function OptimizerPage() {
                     <div className="px-5 pb-4">
                       <div className="flex flex-col gap-2">
                         {opt.stops.map((stop, si) => {
-                          const nextStop = opt.stops[si + 1]
-                          const gapDays = nextStop
-                            ? Math.round((new Date(nextStop.gameDate + 'T12:00:00').getTime() - new Date(stop.gameDate + 'T12:00:00').getTime()) / 86400000)
-                            : null
+                          const gapDays = stop.gapToNext
 
                           return (
                             <div key={si}>
