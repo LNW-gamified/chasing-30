@@ -2,9 +2,8 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
-import AppShell from '@/components/AppShell'
 import Link from 'next/link'
-import { Search, Check, ChevronRight } from 'lucide-react'
+import { Search, Check, ChevronRight, Home, MapPin, Map, Trophy, Plane, X } from 'lucide-react'
 import type { Stadium, StadiumVisit } from '@/types'
 import TeamLogo from '@/components/TeamLogo'
 
@@ -12,23 +11,53 @@ type SortKey = 'name' | 'team' | 'state' | 'league' | 'division'
 type FilterLeague = 'all' | 'AL' | 'NL'
 type FilterDivision = 'all' | 'East' | 'Central' | 'West'
 type FilterVisited = 'all' | 'visited' | 'unvisited'
+type Category = 'mlb' | 'historical' | 'spring'
 
-const TEAM_GRADIENTS: Record<string, [string, string]> = {
-  LAA: ['#003263', '#BA0021'], ARI: ['#A71930', '#1A1A1A'],
-  BAL: ['#1A1A1A', '#DF4601'], BOS: ['#0C2340', '#BD3039'],
-  CHC: ['#0E3386', '#CC3433'], CWS: ['#27251F', '#C4CED4'],
-  CIN: ['#C6011F', '#1A1A1A'], CLE: ['#00385D', '#E31937'],
-  COL: ['#33006F', '#C4CED4'], DET: ['#0C2C56', '#FA4616'],
-  HOU: ['#002D62', '#EB6E1F'], KC:  ['#004687', '#BD9B60'],
-  LAD: ['#005A9C', '#EF3E42'], MIA: ['#00A3E0', '#EF3340'],
-  MIL: ['#12284B', '#FFC52F'], MIN: ['#002B5C', '#D31145'],
-  NYM: ['#002D72', '#FF5910'], NYY: ['#003087', '#C4CED4'],
-  OAK: ['#003831', '#EFB21E'], PHI: ['#002D72', '#E81828'],
-  PIT: ['#27251F', '#FDB827'], SD:  ['#2F241D', '#FFC425'],
-  SF:  ['#27251F', '#FD5A1E'], SEA: ['#0C2C56', '#005C5C'],
-  STL: ['#0C2340', '#C41E3A'], TB:  ['#092C5C', '#8FBCE6'],
-  TEX: ['#003278', '#C0111F'], TOR: ['#134A8E', '#1D2D5C'],
-  WSH: ['#14225A', '#AB0003'], ATL: ['#13274F', '#CE1141'],
+const TEAM_ACCENT: Record<string, string> = {
+  NYY: '#003087', BOS: '#BD3039', LAD: '#005A9C', CHC: '#0E3386',
+  CWS: '#27251F', STL: '#C41E3A', ATL: '#CE1141', NYM: '#002D72',
+  PHI: '#E81828', WSH: '#AB0003', MIA: '#00A3E0', PIT: '#FDB827',
+  CIN: '#C6011F', MIL: '#FFC52F', HOU: '#EB6E1F', TEX: '#003278',
+  LAA: '#BA0021', OAK: '#003831', SEA: '#0C2C56', SD:  '#2F241D',
+  COL: '#33006F', ARI: '#A71930', SF:  '#FD5A1E', MIN: '#002B5C',
+  CLE: '#E31937', DET: '#0C2340', KC:  '#004687', BAL: '#DF4601',
+  TB:  '#092C5C', TOR: '#134A8E',
+}
+
+const NAV = [
+  { label: 'Home',  href: '/dashboard',  icon: Home },
+  { label: 'Parks', href: '/stadiums',   icon: MapPin },
+  { label: 'Map',   href: '/map',        icon: Map },
+  { label: 'Goals', href: '/milestones', icon: Trophy },
+  { label: 'Trips', href: '/trips',      icon: Plane },
+]
+
+function HeaderRing({ visited, total }: { visited: number; total: number }) {
+  const size = 52
+  const sw = 4
+  const r = (size - sw * 2) / 2
+  const circ = 2 * Math.PI * r
+  const pct = total === 0 ? 0 : visited / total
+  const dash = pct * circ
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0 }}>
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth={sw} />
+      <circle
+        cx={size / 2} cy={size / 2} r={r} fill="none"
+        stroke="#ffffff" strokeWidth={sw}
+        strokeDasharray={`${dash} ${circ - dash}`}
+        strokeLinecap="round"
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+      />
+      <text
+        x={size / 2} y={size / 2}
+        textAnchor="middle" dominantBaseline="central"
+        fill="white" fontSize={10} fontWeight={700}
+      >
+        {Math.round(pct * 100)}%
+      </text>
+    </svg>
+  )
 }
 
 export default function StadiumsPage() {
@@ -37,15 +66,17 @@ export default function StadiumsPage() {
   const [loading, setLoading] = useState(true)
 
   const [search, setSearch] = useState('')
-  const [sortKey, setSortKey] = useState<SortKey>('name')
+  const [showSearch, setShowSearch] = useState(false)
+  const [sortKey, setSortKey] = useState<SortKey>('team')
   const [filterLeague, setFilterLeague] = useState<FilterLeague>('all')
   const [filterDivision, setFilterDivision] = useState<FilterDivision>('all')
   const [filterVisited, setFilterVisited] = useState<FilterVisited>('all')
+  const [activeCategory, setActiveCategory] = useState<Category>('mlb')
 
   useEffect(() => {
     const supabase = createClient()
     Promise.all([
-      supabase.from('stadiums').select('*').order('name'),
+      supabase.from('stadiums').select('*').order('team'),
       supabase.from('stadium_visits').select('stadium_id'),
     ]).then(([{ data: s }, { data: v }]) => {
       setStadiums(s ?? [])
@@ -63,6 +94,7 @@ export default function StadiumsPage() {
   }, [visits])
 
   const filtered = useMemo(() => {
+    if (activeCategory !== 'mlb') return []
     let list = stadiums.filter((s) => {
       const q = search.toLowerCase()
       if (q && !s.name.toLowerCase().includes(q) && !s.team.toLowerCase().includes(q) && !s.city.toLowerCase().includes(q)) return false
@@ -72,194 +104,366 @@ export default function StadiumsPage() {
       if (filterVisited === 'unvisited' && visitedIds.has(s.id)) return false
       return true
     })
-
-    list.sort((a, b) => {
-      const av = a[sortKey] as string
-      const bv = b[sortKey] as string
-      return av.localeCompare(bv)
-    })
-
+    list.sort((a, b) => (a[sortKey] as string).localeCompare(b[sortKey] as string))
     return list
-  }, [stadiums, visits, search, sortKey, filterLeague, filterDivision, filterVisited, visitedIds])
+  }, [stadiums, search, sortKey, filterLeague, filterDivision, filterVisited, visitedIds, activeCategory])
 
   const visitedCount = visitedIds.size
+  const notVisitedCount = 30 - visitedCount
+
+  const CATEGORIES: { key: Category; label: string }[] = [
+    { key: 'mlb', label: 'MLB' },
+    { key: 'historical', label: 'Historical' },
+    { key: 'spring', label: 'Spring Training' },
+  ]
+
+  const VISIT_FILTERS: { key: FilterVisited; label: string; count: number }[] = [
+    { key: 'all', label: 'All', count: 30 },
+    { key: 'visited', label: 'Visited', count: visitedCount },
+    { key: 'unvisited', label: 'Not Yet', count: notVisitedCount },
+  ]
 
   return (
-    <AppShell>
-      {/* Header */}
-      <div className="mb-5">
-        <h1 className="text-2xl font-black tracking-tight" style={{ color: '#ffffff' }}>
-          Stadiums
-        </h1>
-        <p className="text-base mt-0.5" style={{ color: '#64748b' }}>
-          {visitedCount} of 30 visited
-        </p>
-      </div>
+    <div style={{ minHeight: '100vh', backgroundColor: '#ffffff', color: '#111111' }}>
 
-      {/* Progress strip */}
-      <div className="mb-5">
-        <div className="flex justify-between text-base mb-1.5" style={{ color: '#64748b' }}>
-          <span style={{ color: '#22c55e', fontWeight: 600 }}>{visitedCount} visited</span>
-          <span>{30 - visitedCount} remaining</span>
+      {/* ── Desktop sidebar ───────────────────────────────────────── */}
+      <aside
+        className="hidden md:flex flex-col"
+        style={{
+          position: 'fixed', top: 0, left: 0, bottom: 0, width: 240,
+          backgroundColor: '#ffffff', borderRight: '1px solid #e5e7eb', zIndex: 40,
+        }}
+      >
+        <div style={{ padding: '24px 20px 16px' }}>
+          <div style={{ fontWeight: 900, fontSize: 20, color: '#111827', letterSpacing: '-0.5px' }}>
+            ⚾ Chasing 30
+          </div>
         </div>
-        <div className="rounded-full overflow-hidden" style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.06)' }}>
-          <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{
-              width: `${(visitedCount / 30) * 100}%`,
-              background: 'linear-gradient(90deg, #16a34a, #22c55e)',
-              boxShadow: visitedCount > 0 ? '0 0 12px rgba(34,197,94,0.4)' : 'none',
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="mb-5">
-        <div className="relative mb-3">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#64748b' }} />
-          <input
-            type="text"
-            className="input"
-            style={{ paddingLeft: '2.25rem' }}
-            placeholder="Search stadium, team, city..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        <div className="filters-scroll flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-          <select className="input flex-shrink-0" style={{ width: 'auto', minWidth: '8rem' }} value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)}>
-            <option value="name">Sort: Name</option>
-            <option value="team">Sort: Team</option>
-            <option value="state">Sort: State</option>
-            <option value="league">Sort: League</option>
-            <option value="division">Sort: Division</option>
-          </select>
-          <select className="input flex-shrink-0" style={{ width: 'auto', minWidth: '5.5rem' }} value={filterLeague} onChange={(e) => setFilterLeague(e.target.value as FilterLeague)}>
-            <option value="all">All Leagues</option>
-            <option value="AL">AL</option>
-            <option value="NL">NL</option>
-          </select>
-          <select className="input flex-shrink-0" style={{ width: 'auto', minWidth: '6.5rem' }} value={filterDivision} onChange={(e) => setFilterDivision(e.target.value as FilterDivision)}>
-            <option value="all">All Divisions</option>
-            <option value="East">East</option>
-            <option value="Central">Central</option>
-            <option value="West">West</option>
-          </select>
-          <select className="input flex-shrink-0" style={{ width: 'auto', minWidth: '6.5rem' }} value={filterVisited} onChange={(e) => setFilterVisited(e.target.value as FilterVisited)}>
-            <option value="all">All</option>
-            <option value="visited">Visited</option>
-            <option value="unvisited">Not Visited</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="text-base mb-4" style={{ color: '#64748b' }}>
-        Showing {filtered.length} of 30 parks
-      </div>
-
-      {loading ? (
-        <div className="text-center py-16" style={{ color: '#64748b' }}>
-          Loading stadiums...
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
-          {filtered.map((stadium) => {
-            const visited = visitedIds.has(stadium.id)
-            const colors = TEAM_GRADIENTS[stadium.abbreviation] ?? ['#0f1729', '#131d35']
+        <nav style={{ flex: 1, padding: '4px 12px' }}>
+          {NAV.map(({ label, href, icon: Icon }) => {
+            const active = href === '/stadiums'
             return (
               <Link
-                key={stadium.id}
-                href={`/stadiums/${stadium.id}`}
-                className="card card-hover flex items-stretch overflow-hidden"
+                key={href}
+                href={href}
                 style={{
-                  height: 88,
-                  ...(visited
-                    ? {
-                        borderLeft: '3px solid #22c55e',
-                        boxShadow: '0 0 24px rgba(34,197,94,0.08), 0 4px 24px rgba(0,0,0,0.25)',
-                      }
-                    : {}),
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '10px 12px', borderRadius: 10, marginBottom: 2,
+                  color: active ? '#1a472a' : '#6b7280',
+                  backgroundColor: active ? 'rgba(26,71,42,0.08)' : 'transparent',
+                  fontWeight: active ? 700 : 500, fontSize: 15,
+                  textDecoration: 'none',
                 }}
               >
-                {/* Team color strip */}
-                <div
-                  style={{
-                    width: 76,
-                    background: `linear-gradient(160deg, ${colors[0]} 0%, ${colors[1]} 100%)`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    position: 'relative',
-                  }}
-                >
-                  <div style={{
-                    position: 'absolute', inset: 0,
-                    backgroundColor: 'rgba(0,0,0,0.25)',
-                  }} />
-                  <TeamLogo
-                    abbreviation={stadium.abbreviation}
-                    size={46}
-                    style={{ position: 'relative', zIndex: 1 }}
-                  />
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0 flex items-center gap-3 px-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-base truncate" style={{ color: '#ffffff' }}>
-                      {stadium.name}
-                    </div>
-                    <div className="text-base truncate mt-0.5" style={{ color: '#94a3b8' }}>
-                      {stadium.team}
-                    </div>
-                    <div className="flex gap-2 mt-1 items-center">
-                      <span className="badge badge-blue" style={{ fontSize: '0.72rem', padding: '1px 7px' }}>
-                        {stadium.league} {stadium.division}
-                      </span>
-                      <span className="text-base" style={{ color: '#4a5568' }}>
-                        {stadium.city}, {stadium.state}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Right: visited badge */}
-                  <div className="flex-shrink-0 flex flex-col items-end gap-1">
-                    {visited ? (
-                      <div className="stamp-visited">
-                        <div style={{
-                          border: '1.5px dashed rgba(34,197,94,0.65)',
-                          backgroundColor: 'rgba(34,197,94,0.08)',
-                          borderRadius: 4,
-                          padding: '3px 8px',
-                          transform: 'rotate(-3deg)',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                        }}>
-                          <Check size={11} style={{ color: '#22c55e', strokeWidth: 3 }} />
-                          <span style={{ fontSize: '0.68rem', color: '#22c55e', fontWeight: 700, letterSpacing: '0.1em' }}>
-                            VISITED
-                          </span>
-                        </div>
-                        {visitCounts[stadium.id] > 0 && (
-                          <div className="text-base text-right mt-1" style={{ color: '#22c55e', fontWeight: 600 }}>
-                            {visitCounts[stadium.id]}×
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <ChevronRight size={18} style={{ color: '#4a5568' }} />
-                    )}
-                  </div>
-                </div>
+                <Icon size={20} color={active ? '#1a472a' : '#9ca3af'} />
+                {label}
               </Link>
             )
           })}
+        </nav>
+        <div style={{ padding: '16px 20px', borderTop: '1px solid #f3f4f6' }}>
+          <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Progress
+          </div>
+          <div style={{ fontWeight: 800, fontSize: 22, color: '#111827' }}>
+            {visitedCount}
+            <span style={{ fontWeight: 400, fontSize: 14, color: '#9ca3af' }}> / 30</span>
+          </div>
+          <div style={{ height: 4, backgroundColor: '#f3f4f6', borderRadius: 4, marginTop: 8, overflow: 'hidden' }}>
+            <div style={{
+              height: '100%', borderRadius: 4, transition: 'width 0.5s',
+              width: `${(visitedCount / 30) * 100}%`,
+              background: 'linear-gradient(90deg, #1a472a, #2d6a4f)',
+            }} />
+          </div>
         </div>
-      )}
-    </AppShell>
+      </aside>
+
+      {/* ── Main content ─────────────────────────────────────────── */}
+      <main className="md:ml-[240px]" style={{ minHeight: '100vh', paddingBottom: 80 }}>
+
+        {/* Green gradient header */}
+        <div style={{ background: 'linear-gradient(180deg, #1a472a 0%, #2d6a4f 100%)' }}>
+          <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 16px 0' }}>
+
+            {/* Title row */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div>
+                <h1 style={{ margin: 0, fontSize: 36, fontWeight: 800, color: '#ffffff', lineHeight: 1.1 }}>
+                  Parks
+                </h1>
+                <p style={{ margin: '5px 0 0', fontSize: 15, color: 'rgba(255,255,255,0.72)' }}>
+                  {visitedCount} of 30 visited
+                </p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 2 }}>
+                <button
+                  onClick={() => { setShowSearch(v => !v); if (showSearch) setSearch('') }}
+                  aria-label="Toggle search"
+                  style={{
+                    background: 'rgba(255,255,255,0.18)', border: 'none',
+                    borderRadius: '50%', width: 36, height: 36,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  {showSearch
+                    ? <X size={17} color="white" />
+                    : <Search size={17} color="white" />
+                  }
+                </button>
+                <HeaderRing visited={visitedCount} total={30} />
+              </div>
+            </div>
+
+            {/* Category tabs */}
+            <div style={{ display: 'flex', gap: 8, paddingBottom: 18 }}>
+              {CATEGORIES.map(({ key, label }) => {
+                const active = activeCategory === key
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setActiveCategory(key)}
+                    style={{
+                      padding: '7px 18px', borderRadius: 20, fontSize: 14, fontWeight: 600,
+                      cursor: 'pointer', transition: 'all 0.15s',
+                      backgroundColor: active ? '#ffffff' : 'transparent',
+                      color: active ? '#1a472a' : '#ffffff',
+                      border: active ? 'none' : '1.5px solid rgba(255,255,255,0.5)',
+                    }}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Filter row (white, sticky) */}
+        <div style={{
+          backgroundColor: '#ffffff', borderBottom: '1px solid #f3f4f6',
+          position: 'sticky', top: 0, zIndex: 30,
+        }}>
+          <div style={{ maxWidth: 800, margin: '0 auto', padding: '10px 16px' }}>
+
+            {/* Search input (toggled) */}
+            {showSearch && (
+              <div style={{ marginBottom: 10 }}>
+                <input
+                  type="text"
+                  placeholder="Search team, stadium, city..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  autoFocus
+                  style={{
+                    width: '100%', padding: '9px 14px', borderRadius: 8,
+                    border: '1.5px solid #d1d5db', fontSize: 14,
+                    backgroundColor: '#f9fafb', color: '#111827',
+                    outline: 'none', boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Chips + sort */}
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              {VISIT_FILTERS.map(({ key, label, count }) => {
+                const active = filterVisited === key
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setFilterVisited(key)}
+                    style={{
+                      padding: '6px 14px', borderRadius: 20, fontSize: 14, fontWeight: 600,
+                      cursor: 'pointer', transition: 'all 0.15s',
+                      backgroundColor: active ? '#111827' : 'transparent',
+                      color: active ? '#ffffff' : '#6b7280',
+                      border: active ? '1.5px solid #111827' : '1.5px solid #e5e7eb',
+                    }}
+                  >
+                    {label} <span style={{ fontWeight: 400 }}>[{count}]</span>
+                  </button>
+                )
+              })}
+
+              {/* Sort */}
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+                <select
+                  value={filterLeague}
+                  onChange={e => setFilterLeague(e.target.value as FilterLeague)}
+                  style={{
+                    padding: '6px 8px', borderRadius: 8, border: '1.5px solid #e5e7eb',
+                    fontSize: 13, color: '#6b7280', backgroundColor: '#ffffff', cursor: 'pointer',
+                  }}
+                >
+                  <option value="all">All</option>
+                  <option value="AL">AL</option>
+                  <option value="NL">NL</option>
+                </select>
+                <select
+                  value={sortKey}
+                  onChange={e => setSortKey(e.target.value as SortKey)}
+                  style={{
+                    padding: '6px 8px', borderRadius: 8, border: '1.5px solid #e5e7eb',
+                    fontSize: 13, color: '#6b7280', backgroundColor: '#ffffff', cursor: 'pointer',
+                  }}
+                >
+                  <option value="team">Team</option>
+                  <option value="name">Stadium</option>
+                  <option value="state">State</option>
+                  <option value="division">Division</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stadium list */}
+        <div style={{ maxWidth: 800, margin: '0 auto', backgroundColor: '#ffffff' }}>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '56px 16px', color: '#9ca3af', fontSize: 15 }}>
+              Loading parks...
+            </div>
+          ) : activeCategory !== 'mlb' ? (
+            <div style={{ textAlign: 'center', padding: '56px 16px', color: '#9ca3af', fontSize: 15 }}>
+              {activeCategory === 'historical'
+                ? 'No historical ballparks tracked yet.'
+                : 'No spring training parks tracked yet.'}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '56px 16px', color: '#9ca3af', fontSize: 15 }}>
+              No parks match your filters.
+            </div>
+          ) : (
+            filtered.map((stadium) => {
+              const visited = visitedIds.has(stadium.id)
+              const accent = TEAM_ACCENT[stadium.abbreviation] ?? '#1a472a'
+              return (
+                <Link
+                  key={stadium.id}
+                  href={`/stadiums/${stadium.id}`}
+                  style={{ textDecoration: 'none', display: 'block' }}
+                >
+                  <div
+                    style={{
+                      display: 'flex', alignItems: 'center',
+                      padding: '14px 16px',
+                      borderBottom: '1px solid #f3f4f6',
+                      backgroundColor: '#ffffff',
+                      opacity: visited ? 1 : 0.9,
+                    }}
+                    className="parks-row"
+                  >
+                    {/* Left accent bar */}
+                    <div style={{
+                      width: 4, borderRadius: 2, alignSelf: 'stretch',
+                      backgroundColor: accent, flexShrink: 0, marginRight: 14,
+                    }} />
+
+                    {/* Thumbnail + checkmark */}
+                    <div style={{ position: 'relative', marginRight: 14, flexShrink: 0 }}>
+                      <div style={{
+                        width: 60, height: 60, borderRadius: 12,
+                        backgroundColor: '#f3f4f6',
+                        border: '1px solid #e5e7eb',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        overflow: 'hidden',
+                      }}>
+                        <TeamLogo abbreviation={stadium.abbreviation} size={46} />
+                      </div>
+                      {visited && (
+                        <div style={{
+                          position: 'absolute', bottom: -4, right: -4,
+                          width: 20, height: 20, borderRadius: '50%',
+                          backgroundColor: '#22c55e',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          border: '2px solid #ffffff',
+                        }}>
+                          <Check size={11} color="white" strokeWidth={3} />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Text */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 16, color: '#111827', lineHeight: 1.2 }}>
+                        {stadium.team}
+                      </div>
+                      <div style={{
+                        fontSize: 14, color: '#6b7280', marginTop: 2,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {stadium.name}
+                      </div>
+                      <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>
+                        {stadium.city}, {stadium.state}
+                      </div>
+                    </div>
+
+                    {/* Chevron */}
+                    <ChevronRight size={18} color="#d1d5db" style={{ flexShrink: 0, marginLeft: 8 }} />
+                  </div>
+                </Link>
+              )
+            })
+          )}
+        </div>
+      </main>
+
+      {/* ── Floating Map button ───────────────────────────────────── */}
+      <Link
+        href="/map"
+        className="fixed right-4 z-50 bottom-20 md:bottom-6"
+        style={{ textDecoration: 'none' }}
+      >
+        <div style={{
+          backgroundColor: '#0f172a', color: '#ffffff',
+          padding: '10px 20px', borderRadius: 24,
+          fontWeight: 700, fontSize: 15,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+          display: 'flex', alignItems: 'center', gap: 8,
+          whiteSpace: 'nowrap',
+        }}>
+          🗺 Map
+        </div>
+      </Link>
+
+      {/* ── Mobile bottom tab bar ─────────────────────────────────── */}
+      <div
+        className="md:hidden"
+        style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
+          backgroundColor: '#ffffff', borderTop: '1px solid #e5e7eb',
+          display: 'flex', paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        }}
+      >
+        {NAV.map(({ label, href, icon: Icon }) => {
+          const active = href === '/stadiums'
+          return (
+            <Link
+              key={href}
+              href={href}
+              style={{
+                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+                justifyContent: 'center', textDecoration: 'none',
+                padding: '10px 0', minHeight: 56,
+                color: active ? '#1a472a' : '#9ca3af', gap: 3,
+              }}
+            >
+              <Icon size={22} color={active ? '#1a472a' : '#9ca3af'} />
+              {active && (
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#1a472a' }}>
+                  {label}
+                </span>
+              )}
+            </Link>
+          )
+        })}
+      </div>
+
+      <style>{`
+        .parks-row:hover { background-color: #fafafa !important; }
+      `}</style>
+    </div>
   )
 }
