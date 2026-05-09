@@ -32,9 +32,18 @@ export default async function DashboardPage() {
   const nextMilestone = MILESTONES.find((m) => !m.check(allVisits, allStadiums, allEvents))
 
   const recentVisits = allVisits.slice(0, 4)
-  const upcomingTrips = allTrips.filter(
-    (t) => t.status === 'planned' && t.trip_date && t.trip_date >= new Date().toISOString().split('T')[0]
-  ).slice(0, 3)
+  const today = new Date().toISOString().split('T')[0]
+  const upcomingTrips = allTrips
+    .filter((t) => {
+      const date = t.start_date ?? t.trip_date
+      return t.status === 'planned' && date && date >= today
+    })
+    .sort((a, b) => {
+      const da = a.start_date ?? a.trip_date ?? ''
+      const db = b.start_date ?? b.trip_date ?? ''
+      return da.localeCompare(db)
+    })
+    .slice(0, 3)
 
   const divisionProgress = [
     { label: 'AL East', short: 'ALE', league: 'AL', division: 'East' },
@@ -229,7 +238,7 @@ export default async function DashboardPage() {
                         {trip.name}
                       </div>
                       <div className="text-base" style={{ color: '#64748b' }}>
-                        {trip.stadium?.name}{trip.trip_date && ` · ${formatDate(trip.trip_date)}`}
+                        {trip.stadium?.name}{(trip.start_date ?? trip.trip_date) && ` · ${formatDate(trip.start_date ?? trip.trip_date ?? '')}`}
                       </div>
                     </div>
                     <div className="text-base font-bold flex-shrink-0" style={{ color: '#f59e0b' }}>

@@ -7,7 +7,7 @@ import TripForm from '@/components/TripForm'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip, TripStop } from '@/types'
 import Link from 'next/link'
-import { Plus, Plane, ChevronRight } from 'lucide-react'
+import { Plus, Plane, ChevronRight, Route } from 'lucide-react'
 
 type TripWithExtras = Trip & { stadium: Stadium | null; trip_stops: { id: string }[] }
 
@@ -67,9 +67,14 @@ export default function TripsPage() {
             {trips.length} total · {planned.length} planned
           </p>
         </div>
-        <button onClick={() => setShowForm(true)} className="btn-primary">
-          <Plus size={16} /> Plan a Trip
-        </button>
+        <div className="flex gap-2 flex-wrap">
+          <Link href="/trips/optimizer" className="btn-secondary">
+            <Route size={16} /> Road Trip Optimizer
+          </Link>
+          <button onClick={() => setShowForm(true)} className="btn-primary">
+            <Plus size={16} /> Plan a Trip
+          </button>
+        </div>
       </div>
 
       {/* Summary stat strip */}

@@ -330,7 +330,7 @@ export default function MilestoneGrid({ earned, unearned, allVisits, allStadiums
 
             <button
               onClick={() => setSelected(null)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg z-10 transition-colors"
+              className="absolute top-4 right-4 p-1.5 rounded-lg z-20 transition-colors"
               style={{ color: '#64748b', backgroundColor: 'rgba(255,255,255,0.04)' }}
               onMouseEnter={(e) => { e.currentTarget.style.color = '#94a3b8' }}
               onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b' }}

@@ -8,7 +8,8 @@
       "Bash(xargs sed -i 's/fontSize: '\\\\''0\\\\.48rem'\\\\''/fontSize: '\\\\''0.62rem'\\\\''/g;    s/fontSize: '\\\\''0\\\\.6rem'\\\\''/fontSize: '\\\\''0.78rem'\\\\''/g;    s/fontSize: '\\\\''0\\\\.65rem'\\\\''/fontSize: '\\\\''0.82rem'\\\\''/g;    s/fontSize: '\\\\''0\\\\.7rem'\\\\''/fontSize: '\\\\''0.88rem'\\\\''/g;    s/fontSize: '\\\\''0\\\\.75rem'\\\\''/fontSize: '\\\\''0.92rem'\\\\''/g;    s/fontSize: '\\\\''0\\\\.8rem'\\\\''/fontSize: '\\\\''0.96rem'\\\\''/g;    s/fontSize: '\\\\''0\\\\.85rem'\\\\''/fontSize: '\\\\''1.0rem'\\\\''/g;    s/fontSize: '\\\\''0\\\\.875rem'\\\\''/fontSize: '\\\\''1.0rem'\\\\''/g')",
       "Bash(git commit *)",
       "Bash(git push *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(node *)"
     ]
   }
 }
