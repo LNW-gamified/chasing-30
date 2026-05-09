@@ -52,15 +52,14 @@ export default async function StatsPage() {
   const favDivision =
     Object.entries(divisionCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'N/A'
 
-  // Most visited opponent
-  const opponentCounts: Record<string, number> = {}
+  // Most seen team (home + away appearances)
+  const teamSeenCounts: Record<string, number> = {}
   for (const v of allVisits) {
-    if (v.visiting_team) {
-      opponentCounts[v.visiting_team] = (opponentCounts[v.visiting_team] ?? 0) + 1
-    }
+    if (v.visiting_team) teamSeenCounts[v.visiting_team] = (teamSeenCounts[v.visiting_team] ?? 0) + 1
+    if (v.home_team) teamSeenCounts[v.home_team] = (teamSeenCounts[v.home_team] ?? 0) + 1
   }
-  const topOpponent =
-    Object.entries(opponentCounts).sort((a, b) => b[1] - a[1])[0] ?? ['N/A', 0]
+  const topTeamSeen =
+    Object.entries(teamSeenCounts).sort((a, b) => b[1] - a[1])[0] ?? ['N/A', 0]
 
   // Farthest trip — from first visited stadium to all others
   let farthestStadium: Stadium | null = null
@@ -84,8 +83,8 @@ export default async function StatsPage() {
   }
   const monthlyData = Object.entries(monthCounts).sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
 
-  // Games by team (visiting)
-  const teamOpponentData = Object.entries(opponentCounts)
+  // Top teams seen
+  const teamSeenData = Object.entries(teamSeenCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8)
 
@@ -171,9 +170,9 @@ export default async function StatsPage() {
     },
     {
       icon: <Users size={20} />,
-      label: 'Most Visited Opponent',
-      value: topOpponent[0] as string,
-      sub: topOpponent[1] ? `${topOpponent[1]} game${(topOpponent[1] as number) !== 1 ? 's' : ''}` : 'No games yet',
+      label: 'Most Seen Team',
+      value: topTeamSeen[0] as string,
+      sub: topTeamSeen[1] ? `${topTeamSeen[1]} game${(topTeamSeen[1] as number) !== 1 ? 's' : ''}` : 'No games yet',
       color: '#f97316',
     },
     {
@@ -187,30 +186,72 @@ export default async function StatsPage() {
 
   return (
     <AppShell>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>
-          Stats
-        </h1>
-        <p className="text-sm mt-1" style={{ color: '#a8b8c8' }}>
-          Your complete MLB journey by the numbers
-        </p>
+      {/* ESPN-style hero stat */}
+      <div
+        className="card mb-8 p-8 text-center"
+        style={{
+          background: 'linear-gradient(135deg, #131d35 0%, #0f1729 100%)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'radial-gradient(circle at 50% 0%, rgba(34,197,94,0.08) 0%, transparent 60%)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div className="text-base font-bold uppercase tracking-widest mb-3" style={{ color: '#64748b', letterSpacing: '0.2em' }}>
+            MLB Parks Visited
+          </div>
+          <div
+            style={{
+              fontSize: '6rem',
+              fontWeight: 900,
+              color: '#22c55e',
+              lineHeight: 1,
+              letterSpacing: '-0.06em',
+              textShadow: '0 0 60px rgba(34,197,94,0.35)',
+            }}
+          >
+            {visitedIds.size}
+          </div>
+          <div className="text-2xl font-bold mt-2" style={{ color: '#ffffff' }}>
+            of 30 stadiums
+          </div>
+          <div className="text-lg mt-1" style={{ color: '#64748b' }}>
+            {Math.round((visitedIds.size / 30) * 100)}% of your MLB journey complete
+          </div>
+          <div className="rounded-full overflow-hidden mt-5 mx-auto" style={{ height: 6, maxWidth: 320, backgroundColor: 'rgba(255,255,255,0.06)' }}>
+            <div
+              style={{
+                width: `${(visitedIds.size / 30) * 100}%`,
+                height: '100%',
+                background: 'linear-gradient(90deg, #16a34a, #22c55e)',
+                borderRadius: 9999,
+                boxShadow: visitedIds.size > 0 ? '0 0 12px rgba(34,197,94,0.5)' : 'none',
+                transition: 'width 0.8s ease',
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
         {statCards.map(({ icon, label, value, sub, color }) => (
           <div key={label} className="card p-5">
-            <div className="flex items-center gap-2 mb-3" style={{ color }}>
-              {icon}
-              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: '#a8b8c8' }}>
+            <div className="flex items-center gap-1.5 mb-3">
+              <span style={{ color }}>{icon}</span>
+              <span className="text-base font-bold uppercase tracking-wider" style={{ color: '#64748b' }}>
                 {label}
               </span>
             </div>
-            <div className="text-xl font-bold leading-tight" style={{ color: '#f1f5f9' }}>
+            <div className="text-3xl font-black leading-tight truncate" style={{ color: '#ffffff' }}>
               {value}
             </div>
             {sub && (
-              <div className="text-xs mt-1" style={{ color: '#a8b8c8' }}>
+              <div className="text-base mt-1.5" style={{ color: '#64748b' }}>
                 {sub}
               </div>
             )}
@@ -221,7 +262,7 @@ export default async function StatsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Division breakdown */}
         <div className="card p-6">
-          <div className="font-semibold mb-4" style={{ color: '#f1f5f9' }}>
+          <div className="font-semibold mb-4" style={{ color: '#ffffff' }}>
             Progress by Division
           </div>
           <div className="flex flex-col gap-4">
@@ -248,25 +289,25 @@ export default async function StatsPage() {
           </div>
         </div>
 
-        {/* Most visited opponents */}
+        {/* Most seen teams */}
         <div className="card p-6">
-          <div className="font-semibold mb-4" style={{ color: '#f1f5f9' }}>
-            Most Seen Opponents
+          <div className="font-semibold mb-4" style={{ color: '#ffffff' }}>
+            Most Seen Teams
           </div>
-          {teamOpponentData.length === 0 ? (
+          {teamSeenData.length === 0 ? (
             <div className="text-sm" style={{ color: '#a8b8c8' }}>
-              Log some games to see opponent stats
+              Log some games to see team stats
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {teamOpponentData.map(([team, count]) => {
-                const max = teamOpponentData[0][1] as number
+              {teamSeenData.map(([team, count]) => {
+                const max = teamSeenData[0][1] as number
                 return (
                   <div key={team} className="flex items-center gap-3">
                     <div className="text-sm w-36 truncate" style={{ color: '#b8c8d8' }}>
                       {team}
                     </div>
-                    <div className="flex-1 rounded-full overflow-hidden" style={{ height: 6, backgroundColor: '#1f2937' }}>
+                    <div className="flex-1 rounded-full overflow-hidden" style={{ height: 8, backgroundColor: '#1f2937' }}>
                       <div
                         className="h-full rounded-full"
                         style={{
@@ -275,7 +316,7 @@ export default async function StatsPage() {
                         }}
                       />
                     </div>
-                    <div className="text-sm font-medium w-6 text-right" style={{ color: '#f97316' }}>
+                    <div className="text-sm font-bold w-6 text-right" style={{ color: '#f97316' }}>
                       {count}
                     </div>
                   </div>
@@ -288,10 +329,10 @@ export default async function StatsPage() {
         {/* Games over time */}
         {monthlyData.length > 0 && (
           <div className="card p-6 lg:col-span-2">
-            <div className="font-semibold mb-4" style={{ color: '#f1f5f9' }}>
+            <div className="font-semibold mb-4" style={{ color: '#ffffff' }}>
               Games Over Time
             </div>
-            <div className="flex items-end gap-2" style={{ height: 100 }}>
+            <div className="flex items-end gap-2" style={{ height: 140 }}>
               {monthlyData.map(([month, count]) => {
                 const max = Math.max(...monthlyData.map(([, c]) => c as number))
                 return (
@@ -302,7 +343,7 @@ export default async function StatsPage() {
                     <div
                       className="w-full rounded-t"
                       style={{
-                        height: `${((count as number) / max) * 70}px`,
+                        height: `${((count as number) / max) * 100}px`,
                         backgroundColor: '#3b82f6',
                         minHeight: 4,
                       }}
@@ -359,7 +400,7 @@ export default async function StatsPage() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="p-4 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
-              <div className="text-2xl font-bold" style={{ color: '#3b82f6' }}>
+              <div className="text-4xl font-bold" style={{ color: '#3b82f6' }}>
                 {longestYearStreak}
               </div>
               <div className="text-sm mt-1" style={{ color: '#b8c8d8' }}>
@@ -372,7 +413,7 @@ export default async function StatsPage() {
               )}
             </div>
             <div className="p-4 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
-              <div className="text-2xl font-bold" style={{ color: '#a78bfa' }}>
+              <div className="text-4xl font-bold" style={{ color: '#a78bfa' }}>
                 {longestTripStreak}
               </div>
               <div className="text-sm mt-1" style={{ color: '#b8c8d8' }}>
@@ -383,7 +424,7 @@ export default async function StatsPage() {
               </div>
             </div>
             <div className="p-4 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
-              <div className="text-2xl font-bold" style={{ color: '#22c55e' }}>
+              <div className="text-4xl font-bold" style={{ color: '#22c55e' }}>
                 {yearsWithGames.length}
               </div>
               <div className="text-sm mt-1" style={{ color: '#b8c8d8' }}>
@@ -410,7 +451,7 @@ export default async function StatsPage() {
               if (count === 0) return null
               return (
                 <div key={type} className="text-center p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
-                  <div className="text-2xl font-bold" style={{ color: '#f59e0b' }}>{count}</div>
+                  <div className="text-4xl font-bold" style={{ color: '#f59e0b' }}>{count}</div>
                   <div className="text-xs mt-1" style={{ color: '#a8b8c8' }}>{label}</div>
                 </div>
               )

@@ -131,46 +131,135 @@ interface Props {
   allEvents: SpecialEvent[]
 }
 
-export default function SerializableMilestoneGrid({ earned, unearned, allVisits, allStadiums, allEvents }: Props) {
+export default function MilestoneGrid({ earned, unearned, allVisits, allStadiums, allEvents }: Props) {
   const [selected, setSelected] = useState<{ milestone: SerializableMilestone; isEarned: boolean } | null>(null)
 
   const context = selected?.isEarned
     ? getSerializableMilestoneContext(selected.milestone, allVisits, allStadiums, allEvents)
     : null
 
-  function SerializableMilestoneCard({ m, isEarned }: { m: SerializableMilestone; isEarned: boolean }) {
+  function EarnedCard({ m }: { m: SerializableMilestone }) {
     return (
       <button
-        onClick={() => setSelected({ milestone: m, isEarned })}
-        className="card p-5 flex items-center gap-4 w-full text-left transition-all duration-150"
-        style={
-          isEarned
-            ? { borderColor: 'rgba(167,139,250,0.3)', backgroundColor: 'rgba(167,139,250,0.05)' }
-            : { opacity: 0.65 }
-        }
-        onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.borderColor = isEarned ? 'rgba(167,139,250,0.5)' : 'rgba(255,255,255,0.15)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.opacity = isEarned ? '1' : '0.65'; e.currentTarget.style.borderColor = isEarned ? 'rgba(167,139,250,0.3)' : '' }}
+        onClick={() => setSelected({ milestone: m, isEarned: true })}
+        className="w-full text-left achievement-earned transition-all duration-200"
+        style={{
+          backgroundColor: 'rgba(20,28,50,0.9)',
+          border: '1px solid rgba(167,139,250,0.3)',
+          borderRadius: 12,
+          padding: '1.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+          cursor: 'pointer',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'rgba(167,139,250,0.6)'
+          e.currentTarget.style.backgroundColor = 'rgba(167,139,250,0.08)'
+          e.currentTarget.style.transform = 'translateY(-2px)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'rgba(167,139,250,0.3)'
+          e.currentTarget.style.backgroundColor = 'rgba(20,28,50,0.9)'
+          e.currentTarget.style.transform = 'translateY(0)'
+        }}
       >
         <div
-          className="text-3xl w-14 h-14 flex items-center justify-center rounded-xl flex-shrink-0"
-          style={{ backgroundColor: isEarned ? 'rgba(167,139,250,0.15)' : '#1f2937', filter: isEarned ? undefined : 'grayscale(100%)' }}
+          style={{
+            width: 72, height: 72,
+            borderRadius: 16,
+            background: 'linear-gradient(135deg, rgba(167,139,250,0.2) 0%, rgba(139,92,246,0.15) 100%)',
+            border: '1px solid rgba(167,139,250,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '2.2rem',
+            flexShrink: 0,
+            boxShadow: '0 0 20px rgba(167,139,250,0.2)',
+          }}
         >
           {m.icon}
         </div>
-        <div className="min-w-0">
-          <div className="font-semibold text-sm" style={{ color: isEarned ? '#f1f5f9' : '#b8c8d8' }}>
+        <div className="min-w-0 flex-1">
+          <div className="font-bold text-base mb-0.5" style={{ color: '#ffffff' }}>
             {m.name}
           </div>
-          <div className="text-xs mt-0.5" style={{ color: '#a8b8c8' }}>
+          <div className="text-base" style={{ color: '#94a3b8' }}>
             {m.description}
           </div>
           <div
-            className="inline-flex items-center gap-1 mt-2 text-xs px-2 py-0.5 rounded-full"
-            style={isEarned
-              ? { backgroundColor: 'rgba(167,139,250,0.2)', color: '#a78bfa' }
-              : { backgroundColor: '#1f2937', color: '#a8b8c8' }}
+            className="inline-flex items-center gap-1.5 mt-2 text-base px-2.5 py-0.5 rounded-full font-semibold"
+            style={{ backgroundColor: 'rgba(167,139,250,0.15)', color: '#a78bfa' }}
           >
-            {isEarned ? <><Trophy size={10} /> Earned</> : <><Lock size={10} /> Locked</>}
+            <Trophy size={11} /> Earned
+          </div>
+        </div>
+      </button>
+    )
+  }
+
+  function LockedCard({ m }: { m: SerializableMilestone }) {
+    return (
+      <button
+        onClick={() => setSelected({ milestone: m, isEarned: false })}
+        className="w-full text-left transition-all duration-200"
+        style={{
+          backgroundColor: 'rgba(15,23,41,0.6)',
+          border: '1px solid rgba(255,255,255,0.05)',
+          borderRadius: 12,
+          padding: '1.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+          cursor: 'pointer',
+          opacity: 0.65,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.opacity = '0.85'
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.opacity = '0.65'
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'
+        }}
+      >
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div
+            style={{
+              width: 72, height: 72,
+              borderRadius: 16,
+              backgroundColor: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '2.2rem',
+              filter: 'grayscale(100%) brightness(0.5)',
+            }}
+          >
+            {m.icon}
+          </div>
+          <div
+            style={{
+              position: 'absolute', bottom: -4, right: -4,
+              width: 22, height: 22,
+              backgroundColor: '#0a0f1e',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <Lock size={11} style={{ color: '#4a5568' }} />
+          </div>
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="font-bold text-base mb-0.5" style={{ color: '#64748b' }}>
+            {m.name}
+          </div>
+          <div className="text-base" style={{ color: '#4a5568' }}>
+            {m.description}
+          </div>
+          <div
+            className="inline-flex items-center gap-1.5 mt-2 text-base px-2.5 py-0.5 rounded-full font-semibold"
+            style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: '#4a5568' }}
+          >
+            <Lock size={11} /> Locked
           </div>
         </div>
       </button>
@@ -181,31 +270,33 @@ export default function SerializableMilestoneGrid({ earned, unearned, allVisits,
     <>
       {earned.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: '#a78bfa' }}>
-            <Trophy size={16} /> Earned ({earned.length})
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {earned.map(m => <SerializableMilestoneCard key={m.id} m={m} isEarned />)}
+          <div className="flex items-center gap-2 mb-4">
+            <Trophy size={18} style={{ color: '#a78bfa' }} />
+            <span className="text-lg font-bold" style={{ color: '#a78bfa' }}>Earned ({earned.length})</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {earned.map(m => <EarnedCard key={m.id} m={m} />)}
           </div>
         </div>
       )}
 
       {unearned.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: '#a8b8c8' }}>
-            <Lock size={16} /> Locked ({unearned.length})
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {unearned.map(m => <SerializableMilestoneCard key={m.id} m={m} isEarned={false} />)}
+          <div className="flex items-center gap-2 mb-4">
+            <Lock size={18} style={{ color: '#4a5568' }} />
+            <span className="text-lg font-bold" style={{ color: '#4a5568' }}>Locked ({unearned.length})</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {unearned.map(m => <LockedCard key={m.id} m={m} />)}
           </div>
         </div>
       )}
 
       {earned.length === 0 && unearned.length === 0 && (
-        <div className="text-center py-16" style={{ color: '#a8b8c8' }}>
-          <div className="text-5xl mb-4">🏆</div>
-          <div className="font-medium mb-1" style={{ color: '#b8c8d8' }}>No milestones earned yet</div>
-          <div className="text-sm">Start visiting stadiums and logging games to earn achievements</div>
+        <div className="text-center py-20" style={{ color: '#64748b' }}>
+          <div className="text-6xl mb-4">🏆</div>
+          <div className="text-lg font-semibold mb-1" style={{ color: '#94a3b8' }}>No milestones yet</div>
+          <div className="text-base">Start visiting stadiums to earn achievements</div>
         </div>
       )}
 
@@ -213,68 +304,105 @@ export default function SerializableMilestoneGrid({ earned, unearned, allVisits,
       {selected && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}
+          style={{ backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)' }}
           onClick={() => setSelected(null)}
         >
           <div
-            className="card p-7 max-w-sm w-full relative"
-            style={selected.isEarned ? { borderColor: 'rgba(167,139,250,0.4)' } : {}}
+            className="w-full max-w-sm relative overflow-hidden"
+            style={{
+              backgroundColor: '#131d35',
+              border: selected.isEarned ? '1px solid rgba(167,139,250,0.4)' : '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 16,
+              boxShadow: selected.isEarned
+                ? '0 0 60px rgba(167,139,250,0.2), 0 24px 64px rgba(0,0,0,0.6)'
+                : '0 24px 64px rgba(0,0,0,0.6)',
+            }}
             onClick={e => e.stopPropagation()}
           >
+            {/* Header gradient for earned */}
+            {selected.isEarned && (
+              <div style={{
+                position: 'absolute', top: 0, left: 0, right: 0, height: 120,
+                background: 'linear-gradient(180deg, rgba(139,92,246,0.2) 0%, transparent 100%)',
+                pointerEvents: 'none',
+              }} />
+            )}
+
             <button
               onClick={() => setSelected(null)}
-              className="absolute top-4 right-4 p-1 rounded"
-              style={{ color: '#a8b8c8' }}
+              className="absolute top-4 right-4 p-1.5 rounded-lg z-10 transition-colors"
+              style={{ color: '#64748b', backgroundColor: 'rgba(255,255,255,0.04)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = '#94a3b8' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b' }}
             >
               <X size={18} />
             </button>
 
-            <div className="text-5xl text-center mb-4">{selected.milestone.icon}</div>
-            <div className="text-xl font-bold text-center mb-2" style={{ color: '#f1f5f9' }}>
-              {selected.milestone.name}
-            </div>
-            <div className="text-sm text-center mb-5" style={{ color: '#b8c8d8' }}>
-              {selected.milestone.description}
-            </div>
-
-            {selected.isEarned ? (
-              <>
-                <div className="flex justify-center mb-4">
-                  <div
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium"
-                    style={{ backgroundColor: 'rgba(167,139,250,0.2)', color: '#a78bfa' }}
-                  >
-                    <Trophy size={13} /> Earned
-                  </div>
-                </div>
-                {context && (
-                  <div
-                    className="flex flex-col gap-3 p-4 rounded-xl"
-                    style={{ backgroundColor: '#0d1424' }}
-                  >
-                    <div className="flex items-center gap-2.5 text-sm" style={{ color: '#f1f5f9' }}>
-                      <Calendar size={15} style={{ color: '#a78bfa', flexShrink: 0 }} />
-                      {formatDate(context.date)}
-                    </div>
-                    {context.location && (
-                      <div className="flex items-center gap-2.5 text-sm" style={{ color: '#f1f5f9' }}>
-                        <MapPin size={15} style={{ color: '#a78bfa', flexShrink: 0 }} />
-                        {context.location}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="flex justify-center mt-2">
-                <div
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm"
-                  style={{ backgroundColor: '#1f2937', color: '#a8b8c8' }}
-                >
-                  <Lock size={13} /> Not yet earned
-                </div>
+            <div className="p-7 relative z-10">
+              {/* Icon */}
+              <div
+                className="mx-auto mb-5 flex items-center justify-center"
+                style={{
+                  width: 88, height: 88,
+                  borderRadius: 20,
+                  background: selected.isEarned
+                    ? 'linear-gradient(135deg, rgba(167,139,250,0.25) 0%, rgba(139,92,246,0.15) 100%)'
+                    : 'rgba(255,255,255,0.04)',
+                  border: selected.isEarned ? '1px solid rgba(167,139,250,0.4)' : '1px solid rgba(255,255,255,0.06)',
+                  fontSize: '3rem',
+                  filter: selected.isEarned ? 'none' : 'grayscale(100%) brightness(0.5)',
+                  boxShadow: selected.isEarned ? '0 0 30px rgba(167,139,250,0.3)' : 'none',
+                }}
+              >
+                {selected.milestone.icon}
               </div>
-            )}
+
+              <div className="text-xl font-black text-center mb-2" style={{ color: '#ffffff' }}>
+                {selected.milestone.name}
+              </div>
+              <div className="text-base text-center mb-5" style={{ color: '#94a3b8' }}>
+                {selected.milestone.description}
+              </div>
+
+              {selected.isEarned ? (
+                <>
+                  <div className="flex justify-center mb-4">
+                    <div
+                      className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-base font-bold"
+                      style={{ backgroundColor: 'rgba(167,139,250,0.2)', color: '#a78bfa' }}
+                    >
+                      <Trophy size={14} /> Achievement Unlocked
+                    </div>
+                  </div>
+                  {context && (
+                    <div
+                      className="flex flex-col gap-3 p-4 rounded-xl"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                    >
+                      <div className="flex items-center gap-2.5 text-base" style={{ color: '#ffffff' }}>
+                        <Calendar size={15} style={{ color: '#a78bfa', flexShrink: 0 }} />
+                        {formatDate(context.date)}
+                      </div>
+                      {context.location && (
+                        <div className="flex items-center gap-2.5 text-base" style={{ color: '#ffffff' }}>
+                          <MapPin size={15} style={{ color: '#a78bfa', flexShrink: 0 }} />
+                          {context.location}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex justify-center">
+                  <div
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-base font-semibold"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: '#4a5568', border: '1px solid rgba(255,255,255,0.06)' }}
+                  >
+                    <Lock size={14} /> Not yet earned — keep going
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

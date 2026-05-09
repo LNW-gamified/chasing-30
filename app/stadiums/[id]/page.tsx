@@ -8,15 +8,13 @@ import GameDayForm from '@/components/GameDayForm'
 import { formatDate } from '@/lib/utils'
 import type { Stadium, StadiumVisit, StadiumNote } from '@/types'
 import { fetchUpcomingHomeGames, type UpcomingGame } from '@/lib/mlb-api'
+import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 import Link from 'next/link'
 import {
   ArrowLeft,
   Plus,
   Pencil,
   Trash2,
-  MapPin,
-  Users,
-  Calendar,
   NotebookPen,
   Save,
   CalendarDays,
@@ -56,6 +54,7 @@ export default function StadiumDetailPage() {
   const [noteInput, setNoteInput] = useState('')
   const [savingNote, setSavingNote] = useState(false)
   const [upcomingGames, setUpcomingGames] = useState<UpcomingGame[]>([])
+  const [stadiumPhoto, setStadiumPhoto] = useState<string | null>(null)
 
   async function load() {
     const supabase = createClient()
@@ -90,6 +89,7 @@ export default function StadiumDetailPage() {
   useEffect(() => {
     if (!stadium) return
     fetchUpcomingHomeGames(stadium.abbreviation).then(setUpcomingGames)
+    fetchStadiumPhoto(stadium.abbreviation).then(setStadiumPhoto)
   }, [stadium])
 
   async function deleteVisit(visitId: string) {
@@ -136,8 +136,10 @@ export default function StadiumDetailPage() {
       {/* Back */}
       <Link
         href="/stadiums"
-        className="inline-flex items-center gap-2 text-sm mb-6"
-        style={{ color: '#a8b8c8' }}
+        className="inline-flex items-center gap-2 text-base mb-5 font-medium"
+        style={{ color: '#64748b' }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = '#94a3b8')}
+        onMouseLeave={(e) => (e.currentTarget.style.color = '#64748b')}
       >
         <ArrowLeft size={16} /> Back to Stadiums
       </Link>
@@ -167,58 +169,97 @@ export default function StadiumDetailPage() {
         )
       })()}
 
+      {/* Stadium photo from Wikipedia */}
+      {stadiumPhoto && (
+        <div className="rounded-2xl overflow-hidden mb-4" style={{ height: 260 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={stadiumPhoto}
+            alt={stadium.name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            onError={() => setStadiumPhoto(null)}
+          />
+        </div>
+      )}
+
       {/* Stadium header */}
       <div className="card p-6 mb-6">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex items-start gap-4 min-w-0">
-            <TeamLogo
-              abbreviation={stadium.abbreviation}
-              size={96}
-              style={{ borderRadius: 12, flexShrink: 0 }}
-            />
-            <div className="min-w-0">
-              <h1 className="text-xl font-bold mb-1" style={{ color: '#f1f5f9' }}>
-                {stadium.name}
-              </h1>
-              <div className="text-sm mb-2" style={{ color: '#b8c8d8' }}>
-                {stadium.team}
+        <div className="flex flex-col sm:flex-row gap-5 items-start">
+          <TeamLogo
+            abbreviation={stadium.abbreviation}
+            size={128}
+            style={{ borderRadius: 16, flexShrink: 0 }}
+          />
+          <div className="flex-1 min-w-0 w-full">
+            <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+              <div>
+                <h1 className="text-2xl font-bold mb-0.5" style={{ color: '#f1f5f9' }}>
+                  {stadium.name}
+                </h1>
+                <div className="text-base mb-2" style={{ color: '#b8c8d8' }}>
+                  {stadium.team}
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {visited ? (
+                    <span className="badge badge-green">
+                      ✓ Visited · {visits.length} game{visits.length !== 1 ? 's' : ''}
+                    </span>
+                  ) : (
+                    <span className="badge badge-gray">Not yet visited</span>
+                  )}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2 items-center">
-                {visited ? (
-                  <span className="badge badge-green">
-                    ✓ Visited · {visits.length} game{visits.length !== 1 ? 's' : ''}
-                  </span>
-                ) : (
-                  <span className="badge badge-gray">Not yet visited</span>
-                )}
-                <span className="badge badge-blue">
+              <button onClick={openAdd} className="btn-primary flex-shrink-0">
+                <Plus size={16} /> Log a Game
+              </button>
+            </div>
+
+            {/* Fact grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
+              <div className="p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
+                <div className="label mb-1">Location</div>
+                <div className="text-sm font-medium" style={{ color: '#f1f5f9' }}>
+                  {stadium.city}, {stadium.state}
+                </div>
+              </div>
+              <div className="p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
+                <div className="label mb-1">League</div>
+                <div className="text-sm font-medium" style={{ color: '#f1f5f9' }}>
                   {stadium.league} {stadium.division}
-                </span>
-                <span className="flex items-center gap-1 text-xs" style={{ color: '#a8b8c8' }}>
-                  <MapPin size={12} /> {stadium.city}, {stadium.state}
-                </span>
-                {stadium.capacity && (
-                  <span className="flex items-center gap-1 text-xs" style={{ color: '#a8b8c8' }}>
-                    <Users size={12} /> {stadium.capacity.toLocaleString()} capacity
-                  </span>
-                )}
-                {stadium.opened && (
-                  <span className="flex items-center gap-1 text-xs" style={{ color: '#a8b8c8' }}>
-                    <Calendar size={12} /> Opened {stadium.opened}
-                  </span>
-                )}
+                </div>
               </div>
+              {stadium.capacity && (
+                <div className="p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
+                  <div className="label mb-1">Capacity</div>
+                  <div className="text-sm font-medium" style={{ color: '#f1f5f9' }}>
+                    {stadium.capacity.toLocaleString()}
+                  </div>
+                </div>
+              )}
+              {stadium.opened && (
+                <div className="p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
+                  <div className="label mb-1">Opened</div>
+                  <div className="text-sm font-medium" style={{ color: '#f1f5f9' }}>
+                    {stadium.opened}
+                  </div>
+                </div>
+              )}
+              {stadium.surface && (
+                <div className="p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
+                  <div className="label mb-1">Surface</div>
+                  <div className="text-sm font-medium" style={{ color: '#f1f5f9' }}>
+                    {stadium.surface}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-          <button onClick={openAdd} className="btn-primary flex-shrink-0">
-            <Plus size={16} /> Log a Game
-          </button>
         </div>
       </div>
 
       {/* Visits */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-semibold" style={{ color: '#f1f5f9' }}>
+        <h2 className="text-lg font-bold" style={{ color: '#ffffff' }}>
           Game Records ({visits.length})
         </h2>
       </div>
@@ -317,11 +358,20 @@ export default function StadiumDetailPage() {
                           <div className="text-sm" style={{ color: '#f1f5f9' }}>{visit.weather}{visit.temperature ? ` · ${visit.temperature}°F` : ''}</div>
                         </div>
                       )}
-                      {(visit.seat_section || visit.seat_row || visit.seat_number) && (
+                      {(visit.seat_section || visit.seat_row || visit.seat_number || (visit.additional_seats && visit.additional_seats.length > 0)) && (
                         <div>
                           <div className="label">Seating</div>
                           <div className="text-sm" style={{ color: '#f1f5f9' }}>
-                            Sec {visit.seat_section}, Row {visit.seat_row}, Seat {visit.seat_number}
+                            {[
+                              visit.seat_section || visit.seat_row || visit.seat_number
+                                ? `Sec ${visit.seat_section}, Row ${visit.seat_row}, Seat ${visit.seat_number}`
+                                : null,
+                              ...(visit.additional_seats ?? []).map(
+                                (s) => `Sec ${s.section}, Row ${s.row}, Seat ${s.number}`
+                              ),
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
                           </div>
                         </div>
                       )}

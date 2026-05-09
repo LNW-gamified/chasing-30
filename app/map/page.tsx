@@ -28,21 +28,61 @@ export default async function MapPage() {
   }))
 
   const visitedCount = stadiumsWithVisit.filter((s) => s.visited).length
+  const pct = Math.round((visitedCount / 30) * 100)
 
   return (
     <AppShell>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>
-          Stadium Map
-        </h1>
-        <p className="text-sm mt-1" style={{ color: '#a8b8c8' }}>
-          <span style={{ color: '#22c55e' }}>●</span> Visited ({visitedCount}) &nbsp;
-          <span style={{ color: '#a8b8c8' }}>●</span> Not Visited ({30 - visitedCount})
-        </p>
+      {/* Minimal header */}
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <h1 className="text-xl font-black tracking-tight" style={{ color: '#ffffff' }}>Stadium Map</h1>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5 text-base font-semibold" style={{ color: '#22c55e' }}>
+            <span style={{ fontSize: '0.6rem' }}>●</span> {visitedCount} visited
+          </span>
+          <span className="flex items-center gap-1.5 text-base" style={{ color: '#4a5568' }}>
+            <span style={{ fontSize: '0.6rem' }}>●</span> {30 - visitedCount} remaining
+          </span>
+        </div>
       </div>
 
-      <div style={{ height: 'calc(100vh - 11rem)', minHeight: 400 }}>
+      {/* Map container with floating progress card */}
+      <div
+        style={{ height: 'calc(100svh - 150px)', minHeight: 480, position: 'relative', borderRadius: 12, overflow: 'hidden' }}
+      >
         <StadiumMap stadiums={stadiumsWithVisit} />
+
+        {/* Floating progress card */}
+        <div
+          className="absolute top-3 right-3 z-10 card p-4"
+          style={{
+            minWidth: 150,
+            backgroundColor: 'rgba(19,29,53,0.94)',
+            backdropFilter: 'blur(12px)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          }}
+        >
+          <div className="text-base font-bold uppercase tracking-widest mb-1" style={{ color: '#4a5568', letterSpacing: '0.12em' }}>
+            Journey
+          </div>
+          <div className="flex items-end gap-1 mb-2">
+            <span className="font-black" style={{ color: '#22c55e', fontSize: '2.5rem', lineHeight: 1, letterSpacing: '-0.04em' }}>
+              {visitedCount}
+            </span>
+            <span className="text-lg font-semibold mb-1" style={{ color: '#4a5568' }}>/30</span>
+          </div>
+          <div className="rounded-full overflow-hidden mb-1.5" style={{ height: 4, backgroundColor: 'rgba(255,255,255,0.06)' }}>
+            <div
+              style={{
+                width: `${pct}%`,
+                height: '100%',
+                background: 'linear-gradient(90deg, #16a34a, #22c55e)',
+                borderRadius: 9999,
+                boxShadow: visitedCount > 0 ? '0 0 8px rgba(34,197,94,0.5)' : 'none',
+              }}
+            />
+          </div>
+          <div className="text-base" style={{ color: '#64748b' }}>{pct}% complete</div>
+        </div>
       </div>
     </AppShell>
   )

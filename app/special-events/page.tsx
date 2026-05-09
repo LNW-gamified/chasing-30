@@ -68,6 +68,7 @@ export default function SpecialEventsPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingEvent, setEditingEvent] = useState<SpecialEvent | undefined>()
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [activeFilter, setActiveFilter] = useState<SpecialEventType | null>(null)
 
   async function load() {
     const supabase = createClient()
@@ -92,13 +93,14 @@ export default function SpecialEventsPage() {
   function openEdit(e: SpecialEvent) { setEditingEvent(e); setShowForm(true) }
 
   const byType = Object.keys(EVENT_META) as SpecialEventType[]
+  const filteredEvents = activeFilter ? events.filter((e) => e.event_type === activeFilter) : events
 
   return (
     <AppShell>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>Special Events</h1>
-          <p className="text-sm mt-1" style={{ color: '#a8b8c8' }}>
+          <h1 className="text-2xl font-black tracking-tight" style={{ color: '#ffffff' }}>Special Events</h1>
+          <p className="text-base mt-0.5" style={{ color: '#64748b' }}>
             {events.length} experience{events.length !== 1 ? 's' : ''} logged
           </p>
         </div>
@@ -107,33 +109,57 @@ export default function SpecialEventsPage() {
         </button>
       </div>
 
-      {/* Summary chips */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {byType.map((type) => {
-          const count = events.filter((e) => e.event_type === type).length
-          if (count === 0) return null
-          const meta = EVENT_META[type]
-          return (
-            <div
-              key={type}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm"
-              style={{ backgroundColor: `${meta.color}15`, color: meta.color, border: `1px solid ${meta.color}30` }}
-            >
-              <span>{meta.icon}</span>
-              <span className="font-medium">{count}</span>
-              <span style={{ opacity: 0.8 }}>{meta.label}</span>
-            </div>
-          )
-        })}
-      </div>
+      {/* Category grid */}
+      {events.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {byType.map((type) => {
+            const count = events.filter((e) => e.event_type === type).length
+            if (count === 0) return null
+            const meta = EVENT_META[type]
+            const active = activeFilter === type
+            return (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setActiveFilter(active ? null : type)}
+                className="card p-4 text-left transition-all"
+                style={{
+                  border: active ? `2px solid ${meta.color}` : '1px solid #1f2937',
+                  backgroundColor: active ? `${meta.color}18` : '#111827',
+                  cursor: 'pointer',
+                }}
+              >
+                <div className="text-2xl mb-2">{meta.icon}</div>
+                <div className="text-3xl font-bold leading-none" style={{ color: meta.color }}>{count}</div>
+                <div className="text-xs mt-1.5 leading-snug" style={{ color: '#b8c8d8' }}>{meta.label}</div>
+              </button>
+            )
+          })}
+        </div>
+      )}
+      {activeFilter && (
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-sm" style={{ color: '#a8b8c8' }}>
+            Showing: <span style={{ color: EVENT_META[activeFilter].color }}>{EVENT_META[activeFilter].label}</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => setActiveFilter(null)}
+            className="text-xs px-2 py-0.5 rounded-full"
+            style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#a8b8c8' }}
+          >
+            Clear filter
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-12" style={{ color: '#a8b8c8' }}>Loading...</div>
       ) : events.length === 0 ? (
-        <div className="card p-12 text-center" style={{ borderStyle: 'dashed', borderColor: '#1f2937' }}>
-          <div className="text-4xl mb-3">⭐</div>
-          <div className="font-medium mb-1" style={{ color: '#b8c8d8' }}>No special events yet</div>
-          <div className="text-sm mb-4" style={{ color: '#a8b8c8' }}>
+        <div className="card p-16 text-center" style={{ borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="text-6xl mb-4">⭐</div>
+          <div className="text-lg font-semibold mb-1" style={{ color: '#94a3b8' }}>No special events yet</div>
+          <div className="text-base mb-5" style={{ color: '#64748b' }}>
             Log a World Series, All-Star Game, minor league game, historic ballpark visit, and more
           </div>
           <button onClick={openAdd} className="btn-primary mx-auto">
@@ -142,26 +168,33 @@ export default function SpecialEventsPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {events.map((e) => {
+          {filteredEvents.map((e) => {
             const meta = EVENT_META[e.event_type]
             const expanded = expandedId === e.id
             const useMlbLogo = e.event_type === 'world_series' || e.event_type === 'all_star_game'
             const historicIcon = e.event_type === 'historic_ballpark' ? HISTORIC_ICONS[e.venue_name ?? ''] : null
 
             return (
-              <div key={e.id} className="card overflow-hidden">
+              <div
+                key={e.id}
+                className="card overflow-hidden"
+                style={{ borderLeft: `3px solid ${meta.color}40` }}
+              >
                 <div
                   className="p-4 flex items-center gap-4 cursor-pointer"
                   onClick={() => setExpandedId(expanded ? null : e.id)}
                 >
                   {/* Icon */}
                   <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-xl overflow-hidden"
-                    style={{ backgroundColor: `${meta.color}20` }}
+                    className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl overflow-hidden"
+                    style={{
+                      background: `linear-gradient(135deg, ${meta.color}20 0%, ${meta.color}10 100%)`,
+                      border: `1px solid ${meta.color}25`,
+                    }}
                   >
                     {useMlbLogo ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={MLB_LOGO} alt="MLB" width={32} height={32} style={{ objectFit: 'contain' }} />
+                      <img src={MLB_LOGO} alt="MLB" width={34} height={34} style={{ objectFit: 'contain' }} />
                     ) : historicIcon ? (
                       <span>{historicIcon}</span>
                     ) : (
@@ -170,15 +203,15 @@ export default function SpecialEventsPage() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm" style={{ color: '#f1f5f9' }}>
+                    <div className="font-bold text-base" style={{ color: '#ffffff' }}>
                       {eventTitle(e)}
                     </div>
-                    <div className="text-xs mt-0.5 flex flex-wrap gap-2" style={{ color: '#a8b8c8' }}>
+                    <div className="text-base mt-0.5 flex flex-wrap gap-2" style={{ color: '#64748b' }}>
                       <span>{formatDate(e.event_date)}</span>
-                      {eventSubtitle(e) && <span>{eventSubtitle(e)}</span>}
+                      {eventSubtitle(e) && <span>· {eventSubtitle(e)}</span>}
                     </div>
                     <span
-                      className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full"
+                      className="inline-block mt-1 text-base px-2.5 py-0.5 rounded-full font-semibold"
                       style={{ backgroundColor: `${meta.color}15`, color: meta.color }}
                     >
                       {meta.label}

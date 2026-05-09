@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import type { Stadium, StadiumVisit, InningScore } from '@/types'
-import { X, Plus, Minus, ImagePlus, Trash2 } from 'lucide-react'
+import { X, Plus, Minus, ImagePlus, Trash2, CloudSun, Loader2 } from 'lucide-react'
+
+interface ExtraSeat { section: string; row: string; number: string }
 
 interface Props {
   stadium: Stadium
@@ -74,9 +76,64 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(visit?.photo_url ?? null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [weatherLoading, setWeatherLoading] = useState(false)
+  const [weatherNote, setWeatherNote] = useState<string | null>(null)
+  const [additionalSeats, setAdditionalSeats] = useState<ExtraSeat[]>(
+    () => (visit?.additional_seats as ExtraSeat[] | null) ?? []
+  )
+
+  async function fetchWeather(date: string, force = false) {
+    if (!date) return
+    if (!force && (form.temperature || form.weather)) return
+    setWeatherLoading(true)
+    setWeatherNote(null)
+    try {
+      const params = new URLSearchParams({
+        lat: stadium.lat.toString(),
+        lng: stadium.lng.toString(),
+        date,
+      })
+      const res = await fetch(`/api/weather?${params}`)
+      if (!res.ok) { setWeatherLoading(false); return }
+      const data = await res.json()
+      if (data.outOfRange) {
+        setWeatherNote('Auto-fill works for today, yesterday, and the next 4 days.')
+      } else if (data.temp != null) {
+        setForm((prev) => ({
+          ...prev,
+          temperature: String(data.temp),
+          weather: data.description ?? prev.weather,
+        }))
+        setWeatherNote('Auto-filled')
+      }
+    } catch {
+      // silently fail — weather is optional
+    }
+    setWeatherLoading(false)
+  }
+
+  useEffect(() => {
+    if (visit) return // don't auto-fill when editing an existing record
+    if (form.visit_date) fetchWeather(form.visit_date)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.visit_date])
 
   function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
+  }
+
+  function addExtraSeat() {
+    setAdditionalSeats((prev) => [...prev, { section: '', row: '', number: '' }])
+  }
+  function removeExtraSeat(idx: number) {
+    setAdditionalSeats((prev) => prev.filter((_, i) => i !== idx))
+  }
+  function updateExtraSeat(idx: number, key: keyof ExtraSeat, value: string) {
+    setAdditionalSeats((prev) => {
+      const next = [...prev]
+      next[idx] = { ...next[idx], [key]: value }
+      return next
+    })
   }
 
   function setInning(idx: number, side: 'home' | 'away', value: string) {
@@ -185,6 +242,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
       third_base_umpire: form.third_base_umpire || null,
       notes: form.notes || null,
       photo_url: uploadedPhotoUrl,
+      additional_seats: additionalSeats.filter((s) => s.section || s.row || s.number),
       created_by: user?.id ?? null,
     }
 
@@ -333,40 +391,83 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
           </div>
 
           {sectionHead('Seating')}
-          <div className="grid grid-cols-3 gap-3">
-            {field(
-              'Section',
-              <input
-                type="text"
-                className="input"
-                placeholder="114"
-                value={form.seat_section}
-                onChange={(e) => set('seat_section', e.target.value)}
-              />
-            )}
-            {field(
-              'Row',
-              <input
-                type="text"
-                className="input"
-                placeholder="G"
-                value={form.seat_row}
-                onChange={(e) => set('seat_row', e.target.value)}
-              />
-            )}
-            {field(
-              'Seat',
-              <input
-                type="text"
-                className="input"
-                placeholder="12"
-                value={form.seat_number}
-                onChange={(e) => set('seat_number', e.target.value)}
-              />
-            )}
+          {/* Primary seat */}
+          <div className="mb-3">
+            <div className="text-xs font-medium mb-2" style={{ color: '#b8c8d8' }}>Seat 1</div>
+            <div className="grid grid-cols-3 gap-3">
+              {field('Section', <input type="text" className="input" placeholder="114" value={form.seat_section} onChange={(e) => set('seat_section', e.target.value)} />)}
+              {field('Row', <input type="text" className="input" placeholder="G" value={form.seat_row} onChange={(e) => set('seat_row', e.target.value)} />)}
+              {field('Seat', <input type="text" className="input" placeholder="12" value={form.seat_number} onChange={(e) => set('seat_number', e.target.value)} />)}
+            </div>
           </div>
+          {/* Additional seats */}
+          {additionalSeats.map((seat, idx) => (
+            <div key={idx} className="mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs font-medium" style={{ color: '#b8c8d8' }}>Seat {idx + 2}</div>
+                <button
+                  type="button"
+                  onClick={() => removeExtraSeat(idx)}
+                  className="p-1 rounded"
+                  style={{ color: '#a8b8c8' }}
+                >
+                  <X size={12} />
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="label">Section</label>
+                  <input type="text" className="input" placeholder="114" value={seat.section} onChange={(e) => updateExtraSeat(idx, 'section', e.target.value)} />
+                </div>
+                <div>
+                  <label className="label">Row</label>
+                  <input type="text" className="input" placeholder="G" value={seat.row} onChange={(e) => updateExtraSeat(idx, 'row', e.target.value)} />
+                </div>
+                <div>
+                  <label className="label">Seat</label>
+                  <input type="text" className="input" placeholder="12" value={seat.number} onChange={(e) => updateExtraSeat(idx, 'number', e.target.value)} />
+                </div>
+              </div>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addExtraSeat}
+            className="btn-secondary mb-2"
+            style={{ padding: '4px 10px', fontSize: '0.92rem' }}
+          >
+            <Plus size={12} /> Add Another Seat
+          </button>
 
-          {sectionHead('Conditions')}
+          <div className="flex items-center justify-between pt-4 pb-1 mb-2" style={{ borderBottom: '1px solid #1f2937' }}>
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#3b82f6' }}>
+              Conditions
+            </span>
+            <button
+              type="button"
+              onClick={() => fetchWeather(form.visit_date, true)}
+              disabled={weatherLoading || !form.visit_date}
+              className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg transition-colors"
+              style={{ color: '#60a5fa', backgroundColor: 'rgba(59,130,246,0.1)' }}
+              title="Fetch weather for this date and stadium"
+            >
+              {weatherLoading
+                ? <Loader2 size={11} className="animate-spin" />
+                : <CloudSun size={11} />}
+              {weatherLoading ? 'Fetching…' : 'Auto-fill weather'}
+            </button>
+          </div>
+          {weatherNote && (
+            <div
+              className="text-xs mb-2 px-2 py-1 rounded"
+              style={{
+                color: weatherNote === 'Auto-filled' ? '#22c55e' : '#a8b8c8',
+                backgroundColor: weatherNote === 'Auto-filled' ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.04)',
+              }}
+            >
+              {weatherNote === 'Auto-filled' ? '✓ Weather auto-filled from OpenWeatherMap' : `ℹ ${weatherNote}`}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             {field(
               'Temperature (°F)',
@@ -375,7 +476,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                 className="input"
                 placeholder="72"
                 value={form.temperature}
-                onChange={(e) => set('temperature', e.target.value)}
+                onChange={(e) => { set('temperature', e.target.value); setWeatherNote(null) }}
               />
             )}
             {field(
@@ -383,9 +484,9 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
               <input
                 type="text"
                 className="input"
-                placeholder="Clear, 72°F"
+                placeholder="Clear, sunny"
                 value={form.weather}
-                onChange={(e) => set('weather', e.target.value)}
+                onChange={(e) => { set('weather', e.target.value); setWeatherNote(null) }}
               />
             )}
           </div>

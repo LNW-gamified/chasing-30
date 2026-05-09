@@ -45,8 +45,8 @@ const UNVISITED_ICON = L.divIcon({
 export default function StadiumMapInner({ stadiums }: Props) {
   return (
     <MapContainer
-      center={[38.5, -96.5]}
-      zoom={3}
+      center={[39.5, -98.35]}
+      zoom={4}
       style={{ height: '100%', width: '100%', borderRadius: '0.75rem' }}
       zoomControl={true}
     >
@@ -61,12 +61,13 @@ export default function StadiumMapInner({ stadiums }: Props) {
           icon={stadium.visited ? VISITED_ICON : UNVISITED_ICON}
         >
           <Popup>
-            <div style={{ minWidth: 200, maxWidth: 240 }}>
+            <div style={{ minWidth: 210, maxWidth: 250 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                 <div style={{
-                  width: 40, height: 40,
-                  borderRadius: 6,
-                  backgroundColor: 'rgba(255, 255, 255, 0.18)',
+                  width: 44, height: 44,
+                  borderRadius: 10,
+                  backgroundColor: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.1)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   overflow: 'hidden', flexShrink: 0,
                 }}>
@@ -74,40 +75,43 @@ export default function StadiumMapInner({ stadiums }: Props) {
                   <img
                     src={getTeamLogoUrl(stadium.abbreviation)}
                     alt={stadium.abbreviation}
-                    width={34}
-                    height={34}
+                    width={36}
+                    height={36}
                     style={{ objectFit: 'contain', display: 'block' }}
                   />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: '1.0rem', color: '#f1f5f9', lineHeight: 1.25 }}>
+                  <div style={{ fontWeight: 700, fontSize: '1rem', color: '#ffffff', lineHeight: 1.2 }}>
                     {stadium.name}
                   </div>
-                  <div style={{ fontSize: '0.92rem', color: '#b8c8d8', marginTop: 2 }}>
+                  <div style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: 2 }}>
                     {stadium.team}
                   </div>
                 </div>
               </div>
 
-              <div style={{ fontSize: '0.92rem', color: '#a8b8c8', marginBottom: 8 }}>
+              <div style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: 8 }}>
                 {stadium.city}, {stadium.state} · {stadium.league} {stadium.division}
               </div>
 
               {stadium.visited ? (
                 <div style={{
-                  display: 'inline-block',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
                   fontSize: '0.88rem',
                   color: '#22c55e',
-                  backgroundColor: 'rgba(34,197,94,0.1)',
-                  borderRadius: 4,
-                  padding: '2px 8px',
+                  backgroundColor: 'rgba(34,197,94,0.12)',
+                  border: '1px solid rgba(34,197,94,0.25)',
+                  borderRadius: 6,
+                  padding: '3px 10px',
                   marginBottom: 10,
                   fontWeight: 600,
                 }}>
                   ✓ Visited{stadium.visits.length > 0 ? ` · ${stadium.visits.length} game${stadium.visits.length !== 1 ? 's' : ''}` : ''}
                 </div>
               ) : (
-                <div style={{ fontSize: '0.88rem', color: '#a8b8c8', marginBottom: 10 }}>
+                <div style={{ fontSize: '0.88rem', color: '#4a5568', marginBottom: 10 }}>
                   Not yet visited
                 </div>
               )}
@@ -118,11 +122,12 @@ export default function StadiumMapInner({ stadiums }: Props) {
                   display: 'inline-block',
                   backgroundColor: '#3b82f6',
                   color: 'white',
-                  padding: '5px 14px',
-                  borderRadius: 6,
-                  fontSize: '0.92rem',
-                  fontWeight: 500,
+                  padding: '6px 16px',
+                  borderRadius: 8,
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
                   textDecoration: 'none',
+                  transition: 'opacity 0.15s',
                 }}
               >
                 View Stadium →

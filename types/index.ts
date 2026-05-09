@@ -69,6 +69,7 @@ export interface StadiumVisit {
   third_base_umpire: string | null
   photo_url: string | null
   notes: string | null
+  additional_seats: { section: string; row: string; number: string }[] | null
   created_by: string | null
   created_at: string
   stadium?: Stadium

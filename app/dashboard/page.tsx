@@ -6,7 +6,7 @@ import { MILESTONES } from '@/lib/milestones'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, StadiumVisit, Trip, SpecialEvent } from '@/types'
 import Link from 'next/link'
-import { Trophy, Plane, Calendar } from 'lucide-react'
+import { Trophy, Plane, Calendar, ChevronRight } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 
 export default async function DashboardPage() {
@@ -31,152 +31,163 @@ export default async function DashboardPage() {
   const earnedMilestones = MILESTONES.filter((m) => m.check(allVisits, allStadiums, allEvents))
   const nextMilestone = MILESTONES.find((m) => !m.check(allVisits, allStadiums, allEvents))
 
-  const recentVisits = allVisits.slice(0, 3)
+  const recentVisits = allVisits.slice(0, 4)
   const upcomingTrips = allTrips.filter(
     (t) => t.status === 'planned' && t.trip_date && t.trip_date >= new Date().toISOString().split('T')[0]
   ).slice(0, 3)
 
-  const totalSpent = allTrips
-    .filter((t) => t.status === 'completed')
-    .reduce(
-      (sum, t) =>
-        sum + t.actual_tickets + t.actual_travel + t.actual_hotel + t.actual_food + t.actual_parking,
-      0
-    )
-
-  // Stadiums by division for the division grid
   const divisionProgress = [
-    { label: 'AL East', league: 'AL', division: 'East' },
-    { label: 'AL Central', league: 'AL', division: 'Central' },
-    { label: 'AL West', league: 'AL', division: 'West' },
-    { label: 'NL East', league: 'NL', division: 'East' },
-    { label: 'NL Central', league: 'NL', division: 'Central' },
-    { label: 'NL West', league: 'NL', division: 'West' },
-  ].map(({ label, league, division }) => {
+    { label: 'AL East', short: 'ALE', league: 'AL', division: 'East' },
+    { label: 'AL Central', short: 'ALC', league: 'AL', division: 'Central' },
+    { label: 'AL West', short: 'ALW', league: 'AL', division: 'West' },
+    { label: 'NL East', short: 'NLE', league: 'NL', division: 'East' },
+    { label: 'NL Central', short: 'NLC', league: 'NL', division: 'Central' },
+    { label: 'NL West', short: 'NLW', league: 'NL', division: 'West' },
+  ].map(({ label, short, league, division }) => {
     const div = allStadiums.filter((s) => s.league === league && s.division === division)
     const visited = div.filter((s) => visitedIds.has(s.id)).length
-    return { label, total: div.length, visited }
+    return { label, short, total: div.length, visited }
   })
 
   return (
     <AppShell>
       {/* Header */}
-      <div className="mb-8 flex items-start justify-between flex-wrap gap-4">
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>
+          <h1 className="text-2xl font-black tracking-tight" style={{ color: '#ffffff' }}>
             Dashboard
           </h1>
-          <p style={{ color: '#a8b8c8' }} className="text-sm mt-1">
-            Your MLB stadium journey at a glance
+          <p style={{ color: '#64748b' }} className="text-base mt-0.5">
+            Your MLB stadium journey
           </p>
         </div>
         <ShareButton />
       </div>
 
-      {/* Top stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {[
-          { label: 'Stadiums Visited', value: visitedCount, sub: `of 30 (${pct}%)`, color: '#22c55e' },
-          { label: 'Games Attended', value: allVisits.length, sub: 'total games', color: '#3b82f6' },
-          { label: 'Milestones Earned', value: earnedMilestones.length, sub: `of ${MILESTONES.length}`, color: '#a78bfa' },
-          { label: 'Total Spent', value: formatCurrency(totalSpent), sub: 'across all trips', color: '#f59e0b' },
-        ].map(({ label, value, sub, color }) => (
-          <div key={label} className="card p-5">
-            <div className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: '#a8b8c8' }}>
-              {label}
-            </div>
-            <div className="text-2xl font-bold" style={{ color }}>
-              {value}
-            </div>
-            <div className="text-xs mt-1" style={{ color: '#a8b8c8' }}>
-              {sub}
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* HERO — Progress Ring */}
+      <div
+        className="card mb-6 flex flex-col items-center justify-center"
+        style={{
+          padding: '2.5rem 2rem',
+          background: 'linear-gradient(135deg, #131d35 0%, #0f1729 100%)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Background decoration */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(59,130,246,0.06) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Progress ring + division grid */}
-        <div className="card p-6 flex flex-col items-center">
-          <div className="text-sm font-medium mb-4" style={{ color: '#b8c8d8' }}>
+        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+          <div className="text-base font-bold uppercase tracking-widest mb-5" style={{ color: '#64748b', letterSpacing: '0.15em' }}>
             Overall Progress
           </div>
-          <ProgressRing visited={visitedCount} total={30} size={160} />
-          <div className="mt-4 w-full grid grid-cols-2 gap-2">
-            {divisionProgress.map(({ label, visited, total }) => (
-              <div key={label} className="flex flex-col gap-1">
-                <div className="flex justify-between text-xs" style={{ color: '#a8b8c8' }}>
-                  <span>{label}</span>
-                  <span style={{ color: '#b8c8d8' }}>
-                    {visited}/{total}
-                  </span>
-                </div>
-                <div className="rounded-full overflow-hidden" style={{ height: 4, backgroundColor: '#1f2937' }}>
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${(visited / total) * 100}%`,
-                      backgroundColor: visited === total ? '#22c55e' : '#3b82f6',
-                      transition: 'width 0.4s',
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
+          <ProgressRing visited={visitedCount} total={30} size={220} />
+          <div className="mt-5">
+            <div className="text-lg font-semibold" style={{ color: '#94a3b8' }}>
+              {visitedCount === 0
+                ? 'Start your journey — visit your first park'
+                : visitedCount === 30
+                ? '🏆 You\'ve chased all 30! Legend status.'
+                : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} remaining`}
+            </div>
+            <div className="text-base mt-1" style={{ color: '#64748b' }}>
+              {pct}% of your MLB journey complete
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Recent visits */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="text-sm font-semibold" style={{ color: '#f1f5f9' }}>
-              Recent Games
+      {/* Division Grid — 2×3 */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+        {divisionProgress.map(({ label, visited, total }) => {
+          const done = visited === total
+          return (
+            <div
+              key={label}
+              className="card p-4"
+              style={done ? { borderColor: 'rgba(34,197,94,0.25)', backgroundColor: 'rgba(34,197,94,0.04)' } : {}}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-base font-bold" style={{ color: done ? '#22c55e' : '#ffffff' }}>
+                  {label}
+                </div>
+                <div className="text-xl font-black" style={{ color: done ? '#22c55e' : '#3b82f6' }}>
+                  {visited}<span className="text-base font-normal" style={{ color: '#64748b' }}>/{total}</span>
+                </div>
+              </div>
+              <div className="rounded-full overflow-hidden" style={{ height: 5, backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${(visited / total) * 100}%`,
+                    backgroundColor: done ? '#22c55e' : '#3b82f6',
+                    boxShadow: done ? '0 0 8px rgba(34,197,94,0.4)' : 'none',
+                  }}
+                />
+              </div>
             </div>
-            <Link href="/stadiums" className="text-xs" style={{ color: '#3b82f6' }}>
-              View all
+          )
+        })}
+      </div>
+
+      {/* Recent Games + Upcoming Trips */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        {/* Recent Games */}
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-lg font-bold" style={{ color: '#ffffff' }}>Recent Games</div>
+            <Link href="/stadiums" className="text-base font-medium" style={{ color: '#3b82f6' }}>
+              All parks →
             </Link>
           </div>
           {recentVisits.length === 0 ? (
-            <div className="text-center py-8" style={{ color: '#a8b8c8' }}>
-              <Calendar size={32} className="mx-auto mb-2 opacity-40" />
-              <p className="text-sm">No games logged yet</p>
-              <Link href="/stadiums" className="text-xs mt-2 block" style={{ color: '#3b82f6' }}>
-                Log your first game
+            <div className="text-center py-10" style={{ color: '#64748b' }}>
+              <Calendar size={36} className="mx-auto mb-3 opacity-40" />
+              <p className="text-base">No games logged yet</p>
+              <Link href="/stadiums" className="text-base mt-2 block" style={{ color: '#3b82f6' }}>
+                Log your first game →
               </Link>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               {recentVisits.map((visit) => {
                 const stadium = allStadiums.find((s) => s.id === visit.stadium_id)
                 return (
                   <Link
                     key={visit.id}
                     href={`/stadiums/${visit.stadium_id}`}
-                    className="flex items-center gap-3 p-3 rounded-lg"
-                    style={{ backgroundColor: '#0d1424' }}
+                    className="flex items-center gap-3 p-3 rounded-xl transition-colors"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)')}
                   >
                     {stadium ? (
                       <TeamLogo
                         abbreviation={stadium.abbreviation}
-                        size={48}
+                        size={44}
                         style={{ borderRadius: '50%', flexShrink: 0 }}
                       />
                     ) : (
-                      <div className="text-xl">⚾</div>
+                      <div className="text-2xl">⚾</div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate" style={{ color: '#f1f5f9' }}>
+                      <div className="text-base font-semibold truncate" style={{ color: '#ffffff' }}>
                         {visit.home_team} vs {visit.visiting_team}
                       </div>
-                      <div className="text-xs" style={{ color: '#a8b8c8' }}>
-                        {stadium?.name} &bull; {formatDate(visit.visit_date)}
+                      <div className="text-base" style={{ color: '#64748b' }}>
+                        {stadium?.name} · {formatDate(visit.visit_date)}
                       </div>
                     </div>
                     {visit.home_runs != null && visit.away_runs != null && (
-                      <div className="text-sm font-bold" style={{ color: '#b8c8d8' }}>
-                        {visit.away_runs}-{visit.home_runs}
+                      <div className="text-base font-black flex-shrink-0" style={{ color: '#94a3b8' }}>
+                        {visit.away_runs}–{visit.home_runs}
                       </div>
                     )}
+                    <ChevronRight size={16} style={{ color: '#4a5568', flexShrink: 0 }} />
                   </Link>
                 )
               })}
@@ -184,47 +195,50 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Upcoming trips */}
-        <div className="card p-6">
+        {/* Upcoming Trips */}
+        <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
-            <div className="text-sm font-semibold" style={{ color: '#f1f5f9' }}>
-              Upcoming Trips
-            </div>
-            <Link href="/trips" className="text-xs" style={{ color: '#3b82f6' }}>
-              View all
+            <div className="text-lg font-bold" style={{ color: '#ffffff' }}>Upcoming Trips</div>
+            <Link href="/trips" className="text-base font-medium" style={{ color: '#3b82f6' }}>
+              All trips →
             </Link>
           </div>
           {upcomingTrips.length === 0 ? (
-            <div className="text-center py-8" style={{ color: '#a8b8c8' }}>
-              <Plane size={32} className="mx-auto mb-2 opacity-40" />
-              <p className="text-sm">No upcoming trips</p>
-              <Link href="/trips" className="text-xs mt-2 block" style={{ color: '#3b82f6' }}>
-                Plan a trip
+            <div className="text-center py-10" style={{ color: '#64748b' }}>
+              <Plane size={36} className="mx-auto mb-3 opacity-40" />
+              <p className="text-base">No upcoming trips</p>
+              <Link href="/trips" className="text-base mt-2 block" style={{ color: '#3b82f6' }}>
+                Plan a trip →
               </Link>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               {upcomingTrips.map((trip) => {
-                const est =
-                  trip.est_tickets + trip.est_travel + trip.est_hotel + trip.est_food + trip.est_parking
+                const est = trip.est_tickets + trip.est_travel + trip.est_hotel + trip.est_food + trip.est_parking
                 return (
                   <Link
                     key={trip.id}
                     href={`/trips/${trip.id}`}
-                    className="flex items-center gap-3 p-3 rounded-lg"
-                    style={{ backgroundColor: '#0d1424' }}
+                    className="flex items-center gap-3 p-3 rounded-xl transition-colors"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)')}
                   >
-                    <div className="text-xl">✈️</div>
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-xl"
+                      style={{ backgroundColor: 'rgba(59,130,246,0.12)' }}
+                    >
+                      ✈️
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate" style={{ color: '#f1f5f9' }}>
+                      <div className="text-base font-semibold truncate" style={{ color: '#ffffff' }}>
                         {trip.name}
                       </div>
-                      <div className="text-xs" style={{ color: '#a8b8c8' }}>
-                        {trip.stadium?.name}
-                        {trip.trip_date && ` · ${formatDate(trip.trip_date)}`}
+                      <div className="text-base" style={{ color: '#64748b' }}>
+                        {trip.stadium?.name}{trip.trip_date && ` · ${formatDate(trip.trip_date)}`}
                       </div>
                     </div>
-                    <div className="text-sm font-medium" style={{ color: '#f59e0b' }}>
+                    <div className="text-base font-bold flex-shrink-0" style={{ color: '#f59e0b' }}>
                       {formatCurrency(est)}
                     </div>
                   </Link>
@@ -235,23 +249,69 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Next milestone */}
+      {/* Milestones + Quick stats row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+        <div className="card p-5 flex items-center gap-4" style={{ backgroundColor: 'rgba(167,139,250,0.06)', borderColor: 'rgba(167,139,250,0.15)' }}>
+          <div className="text-4xl font-black" style={{ color: '#a78bfa' }}>{earnedMilestones.length}</div>
+          <div>
+            <div className="text-base font-semibold" style={{ color: '#ffffff' }}>Milestones</div>
+            <div className="text-base" style={{ color: '#64748b' }}>of {MILESTONES.length} earned</div>
+          </div>
+          <Link href="/milestones" className="ml-auto flex-shrink-0" style={{ color: '#a78bfa' }}>
+            <ChevronRight size={20} />
+          </Link>
+        </div>
+
+        <div className="card p-5 flex items-center gap-4" style={{ backgroundColor: 'rgba(59,130,246,0.06)', borderColor: 'rgba(59,130,246,0.15)' }}>
+          <div className="text-4xl font-black" style={{ color: '#60a5fa' }}>{allVisits.length}</div>
+          <div>
+            <div className="text-base font-semibold" style={{ color: '#ffffff' }}>Games</div>
+            <div className="text-base" style={{ color: '#64748b' }}>total attended</div>
+          </div>
+          <Link href="/stats" className="ml-auto flex-shrink-0" style={{ color: '#60a5fa' }}>
+            <ChevronRight size={20} />
+          </Link>
+        </div>
+
+        <div className="card p-5 flex items-center gap-4" style={{ backgroundColor: 'rgba(245,158,11,0.06)', borderColor: 'rgba(245,158,11,0.15)' }}>
+          <div className="text-4xl font-black" style={{ color: '#f59e0b' }}>{allEvents.length}</div>
+          <div>
+            <div className="text-base font-semibold" style={{ color: '#ffffff' }}>Special Events</div>
+            <div className="text-base" style={{ color: '#64748b' }}>logged</div>
+          </div>
+          <Link href="/special-events" className="ml-auto flex-shrink-0" style={{ color: '#f59e0b' }}>
+            <ChevronRight size={20} />
+          </Link>
+        </div>
+      </div>
+
+      {/* Next milestone CTA */}
       {nextMilestone && (
         <div
-          className="card p-5 flex items-center gap-4"
-          style={{ borderColor: 'rgba(139,92,246,0.3)', backgroundColor: 'rgba(139,92,246,0.05)' }}
+          className="card p-5 flex items-center gap-5"
+          style={{
+            background: 'linear-gradient(135deg, rgba(139,92,246,0.12) 0%, rgba(59,130,246,0.08) 100%)',
+            borderColor: 'rgba(139,92,246,0.25)',
+          }}
         >
-          <Trophy size={24} style={{ color: '#a78bfa', flexShrink: 0 }} />
-          <div>
-            <div className="text-sm font-semibold" style={{ color: '#f1f5f9' }}>
-              Next Milestone: {nextMilestone.name}
+          <div className="text-4xl flex-shrink-0">{nextMilestone.icon}</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-base font-bold uppercase tracking-wider mb-0.5" style={{ color: '#a78bfa' }}>
+              Next Milestone
             </div>
-            <div className="text-xs" style={{ color: '#b8c8d8' }}>
+            <div className="text-lg font-bold truncate" style={{ color: '#ffffff' }}>
+              {nextMilestone.name}
+            </div>
+            <div className="text-base" style={{ color: '#94a3b8' }}>
               {nextMilestone.description}
             </div>
           </div>
-          <Link href="/milestones" className="ml-auto btn-secondary" style={{ fontSize: '0.92rem', padding: '6px 12px' }}>
-            View All
+          <Link
+            href="/milestones"
+            className="btn-primary flex-shrink-0"
+            style={{ backgroundColor: 'rgba(139,92,246,0.8)', fontSize: '1rem' }}
+          >
+            <Trophy size={16} /> View All
           </Link>
         </div>
       )}

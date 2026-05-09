@@ -8,9 +8,9 @@ const StadiumMapInner = dynamic(() => import('./StadiumMapInner'), {
   loading: () => (
     <div
       className="flex items-center justify-center rounded-xl"
-      style={{ height: '100%', backgroundColor: '#0d1424', border: '1px solid #1f2937' }}
+      style={{ height: '100%', backgroundColor: '#0f1729', border: '1px solid rgba(255,255,255,0.06)' }}
     >
-      <div style={{ color: '#a8b8c8' }}>Loading map...</div>
+      <div style={{ color: '#64748b', fontWeight: 500 }}>Loading map...</div>
     </div>
   ),
 })
