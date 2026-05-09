@@ -36,7 +36,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="text-5xl mb-3">⚾</div>
+          <div className="text-4xl mb-3">⚾</div>
           <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>
             Chasing 30
           </h1>

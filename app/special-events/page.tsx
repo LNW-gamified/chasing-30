@@ -157,7 +157,7 @@ export default function SpecialEventsPage() {
         <div className="text-center py-12" style={{ color: '#a8b8c8' }}>Loading...</div>
       ) : events.length === 0 ? (
         <div className="card p-16 text-center" style={{ borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.06)' }}>
-          <div className="text-6xl mb-4">⭐</div>
+          <div className="text-4xl mb-4">⭐</div>
           <div className="text-lg font-semibold mb-1" style={{ color: '#94a3b8' }}>No special events yet</div>
           <div className="text-base mb-5" style={{ color: '#64748b' }}>
             Log a World Series, All-Star Game, minor league game, historic ballpark visit, and more

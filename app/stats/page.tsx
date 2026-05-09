@@ -206,12 +206,12 @@ export default async function StatsPage() {
           </div>
           <div
             style={{
-              fontSize: '6rem',
+              fontSize: '2.25rem',
               fontWeight: 900,
               color: '#22c55e',
               lineHeight: 1,
-              letterSpacing: '-0.06em',
-              textShadow: '0 0 60px rgba(34,197,94,0.35)',
+              letterSpacing: '-0.04em',
+              textShadow: '0 0 40px rgba(34,197,94,0.35)',
             }}
           >
             {visitedIds.size}

@@ -27,7 +27,7 @@
 }
 
 html {
-  font-size: 20px;
+  font-size: 16px;
 }
 
 body {
@@ -229,6 +229,15 @@ select.input {
 
 .achievement-earned {
   animation: achievement-glow 3s ease-in-out infinite;
+}
+
+/* Row hover — used in server components where event handlers aren't allowed */
+.row-hover {
+  background-color: rgba(255,255,255,0.03);
+  transition: background-color 0.15s;
+}
+.row-hover:hover {
+  background-color: rgba(255,255,255,0.06);
 }
 
 /* Hide scrollbar for horizontal filter scroll */

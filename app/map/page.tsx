@@ -65,7 +65,7 @@ export default async function MapPage() {
             Journey
           </div>
           <div className="flex items-end gap-1 mb-2">
-            <span className="font-black" style={{ color: '#22c55e', fontSize: '2.5rem', lineHeight: 1, letterSpacing: '-0.04em' }}>
+            <span className="font-black" style={{ color: '#22c55e', fontSize: '2.25rem', lineHeight: 1, letterSpacing: '-0.04em' }}>
               {visitedCount}
             </span>
             <span className="text-lg font-semibold mb-1" style={{ color: '#4a5568' }}>/30</span>

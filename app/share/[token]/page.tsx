@@ -149,7 +149,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
           className="rounded-2xl p-6 mb-6 text-center"
           style={{ backgroundColor: '#111827', border: '1px solid #1f2937' }}
         >
-          <div className="text-5xl font-bold mb-1" style={{ color: '#22c55e' }}>
+          <div className="text-4xl font-bold mb-1" style={{ color: '#22c55e' }}>
             {visitedCount} / 30
           </div>
           <div className="text-base mb-4" style={{ color: '#b8c8d8' }}>

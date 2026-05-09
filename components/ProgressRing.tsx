@@ -46,7 +46,7 @@ export default function ProgressRing({ visited, total, size = 220 }: ProgressRin
       <div className="absolute flex flex-col items-center justify-center">
         <span
           style={{
-            fontSize: size >= 200 ? '3.5rem' : '2rem',
+            fontSize: size >= 200 ? '2.25rem' : '1.75rem',
             fontWeight: 900,
             color: '#ffffff',
             lineHeight: 1,

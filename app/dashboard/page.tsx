@@ -160,10 +160,7 @@ export default async function DashboardPage() {
                   <Link
                     key={visit.id}
                     href={`/stadiums/${visit.stadium_id}`}
-                    className="flex items-center gap-3 p-3 rounded-xl transition-colors"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)')}
+                    className="row-hover flex items-center gap-3 p-3 rounded-xl"
                   >
                     {stadium ? (
                       <TeamLogo
@@ -219,10 +216,7 @@ export default async function DashboardPage() {
                   <Link
                     key={trip.id}
                     href={`/trips/${trip.id}`}
-                    className="flex items-center gap-3 p-3 rounded-xl transition-colors"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)')}
+                    className="row-hover flex items-center gap-3 p-3 rounded-xl"
                   >
                     <div
                       className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-xl"

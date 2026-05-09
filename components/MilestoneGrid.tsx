@@ -294,7 +294,7 @@ export default function MilestoneGrid({ earned, unearned, allVisits, allStadiums
 
       {earned.length === 0 && unearned.length === 0 && (
         <div className="text-center py-20" style={{ color: '#64748b' }}>
-          <div className="text-6xl mb-4">🏆</div>
+          <div className="text-4xl mb-4">🏆</div>
           <div className="text-lg font-semibold mb-1" style={{ color: '#94a3b8' }}>No milestones yet</div>
           <div className="text-base">Start visiting stadiums to earn achievements</div>
         </div>
