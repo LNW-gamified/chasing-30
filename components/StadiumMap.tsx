@@ -6,11 +6,12 @@ import type { StadiumWithVisit } from '@/types'
 const StadiumMapInner = dynamic(() => import('./StadiumMapInner'), {
   ssr: false,
   loading: () => (
-    <div
-      className="flex items-center justify-center rounded-xl"
-      style={{ height: '100%', backgroundColor: '#0f1729', border: '1px solid rgba(255,255,255,0.06)' }}
-    >
-      <div style={{ color: '#64748b', fontWeight: 500 }}>Loading map...</div>
+    <div style={{
+      height: '100%', width: '100%',
+      backgroundColor: '#e8eff6',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{ color: '#6b7280', fontWeight: 500, fontSize: 14 }}>Loading map…</div>
     </div>
   ),
 })

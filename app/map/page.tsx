@@ -1,7 +1,16 @@
 import { createClient } from '@/lib/supabase-server'
-import AppShell from '@/components/AppShell'
 import StadiumMap from '@/components/StadiumMap'
 import type { Stadium, StadiumVisit, StadiumWithVisit } from '@/types'
+import Link from 'next/link'
+import { Home, MapPin, Map as MapIcon, Trophy, Plane } from 'lucide-react'
+
+const NAV = [
+  { label: 'Home',  href: '/dashboard',  icon: Home    },
+  { label: 'Parks', href: '/stadiums',   icon: MapPin  },
+  { label: 'Map',   href: '/map',        icon: MapIcon },
+  { label: 'Goals', href: '/milestones', icon: Trophy  },
+  { label: 'Trips', href: '/trips',      icon: Plane   },
+]
 
 export default async function MapPage() {
   const supabase = await createClient()
@@ -11,8 +20,8 @@ export default async function MapPage() {
     supabase.from('stadium_visits').select('*'),
   ])
 
-  const allStadiums: Stadium[] = stadiums ?? []
-  const allVisits: StadiumVisit[] = visits ?? []
+  const allStadiums: Stadium[]    = stadiums ?? []
+  const allVisits:   StadiumVisit[] = visits ?? []
 
   const visitMap = new Map<string, StadiumVisit[]>()
   for (const v of allVisits) {
@@ -21,69 +30,82 @@ export default async function MapPage() {
     visitMap.set(v.stadium_id, list)
   }
 
-  const stadiumsWithVisit: StadiumWithVisit[] = allStadiums.map((s) => ({
+  const stadiumsWithVisit: StadiumWithVisit[] = allStadiums.map(s => ({
     ...s,
     visited: visitMap.has(s.id),
-    visits: visitMap.get(s.id) ?? [],
+    visits:  visitMap.get(s.id) ?? [],
   }))
 
-  const visitedCount = stadiumsWithVisit.filter((s) => s.visited).length
-  const pct = Math.round((visitedCount / 30) * 100)
+  const visitedCount = stadiumsWithVisit.filter(s => s.visited).length
 
   return (
-    <AppShell>
-      {/* Minimal header */}
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-        <h1 className="text-xl font-black tracking-tight" style={{ color: '#ffffff' }}>Stadium Map</h1>
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5 text-base font-semibold" style={{ color: '#22c55e' }}>
-            <span style={{ fontSize: '0.6rem' }}>●</span> {visitedCount} visited
-          </span>
-          <span className="flex items-center gap-1.5 text-base" style={{ color: '#4a5568' }}>
-            <span style={{ fontSize: '0.6rem' }}>●</span> {30 - visitedCount} remaining
-          </span>
-        </div>
-      </div>
+    <div style={{ position: 'relative', height: '100svh', overflow: 'hidden', backgroundColor: '#f0f4f8' }}>
 
-      {/* Map container with floating progress card */}
-      <div
-        style={{ height: 'calc(100svh - 150px)', minHeight: 480, position: 'relative', borderRadius: 12, overflow: 'hidden' }}
-      >
+      {/* ── Desktop sidebar (fixed left, 240px) ──────────────────────── */}
+      <aside className="hidden md:flex flex-col" style={{
+        position: 'fixed', top: 0, left: 0, bottom: 0, width: 240, zIndex: 50,
+        backgroundColor: '#ffffff', borderRight: '1px solid #e5e7eb',
+      }}>
+        <div style={{ padding: '24px 20px 16px' }}>
+          <div style={{ fontWeight: 900, fontSize: 20, color: '#111827', letterSpacing: '-0.5px' }}>
+            ⚾ Chasing 30
+          </div>
+        </div>
+        <nav style={{ flex: 1, padding: '4px 12px' }}>
+          {NAV.map(({ label, href, icon: Icon }) => {
+            const active = href === '/map'
+            return (
+              <Link key={href} href={href} style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '10px 12px', borderRadius: 10, marginBottom: 2,
+                color: active ? '#0f172a' : '#6b7280',
+                backgroundColor: active ? 'rgba(15,23,42,0.08)' : 'transparent',
+                fontWeight: active ? 700 : 500, fontSize: 15, textDecoration: 'none',
+              }}>
+                <Icon size={20} color={active ? '#0f172a' : '#9ca3af'} />
+                {label}
+              </Link>
+            )
+          })}
+        </nav>
+        <div style={{ padding: '16px 20px', borderTop: '1px solid #f3f4f6' }}>
+          <div style={{ fontSize: 12, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+            Progress
+          </div>
+          <div style={{ fontWeight: 800, fontSize: 22, color: '#111827' }}>
+            {visitedCount}<span style={{ fontWeight: 400, fontSize: 14, color: '#9ca3af' }}> / 30</span>
+          </div>
+          <div style={{ marginTop: 8, height: 5, backgroundColor: '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
+            <div style={{ width: `${(visitedCount / 30) * 100}%`, height: '100%', backgroundColor: '#22c55e', borderRadius: 3 }} />
+          </div>
+        </div>
+      </aside>
+
+      {/* ── Map area (full height, offset for sidebar on desktop) ─────── */}
+      <div className="md:ml-[240px]" style={{ height: '100svh', position: 'relative' }}>
         <StadiumMap stadiums={stadiumsWithVisit} />
-
-        {/* Floating progress card */}
-        <div
-          className="absolute top-3 right-3 z-10 card p-4"
-          style={{
-            minWidth: 150,
-            backgroundColor: 'rgba(19,29,53,0.94)',
-            backdropFilter: 'blur(12px)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-          }}
-        >
-          <div className="text-base font-bold uppercase tracking-widest mb-1" style={{ color: '#4a5568', letterSpacing: '0.12em' }}>
-            Journey
-          </div>
-          <div className="flex items-end gap-1 mb-2">
-            <span className="font-black" style={{ color: '#22c55e', fontSize: '2.25rem', lineHeight: 1, letterSpacing: '-0.04em' }}>
-              {visitedCount}
-            </span>
-            <span className="text-lg font-semibold mb-1" style={{ color: '#4a5568' }}>/30</span>
-          </div>
-          <div className="rounded-full overflow-hidden mb-1.5" style={{ height: 4, backgroundColor: 'rgba(255,255,255,0.06)' }}>
-            <div
-              style={{
-                width: `${pct}%`,
-                height: '100%',
-                background: 'linear-gradient(90deg, #16a34a, #22c55e)',
-                borderRadius: 9999,
-                boxShadow: visitedCount > 0 ? '0 0 8px rgba(34,197,94,0.5)' : 'none',
-              }}
-            />
-          </div>
-          <div className="text-base" style={{ color: '#64748b' }}>{pct}% complete</div>
-        </div>
       </div>
-    </AppShell>
+
+      {/* ── Mobile bottom tab bar ────────────────────────────────────── */}
+      <div className="md:hidden" style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
+        backgroundColor: '#ffffff', borderTop: '1px solid #e5e7eb',
+        display: 'flex', paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}>
+        {NAV.map(({ label, href, icon: Icon }) => {
+          const active = href === '/map'
+          return (
+            <Link key={href} href={href} style={{
+              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+              justifyContent: 'center', textDecoration: 'none', padding: '10px 0', minHeight: 56,
+              color: active ? '#0f172a' : '#9ca3af', gap: 3,
+            }}>
+              <Icon size={22} color={active ? '#0f172a' : '#9ca3af'} />
+              {active && <span style={{ fontSize: 11, fontWeight: 700, color: '#0f172a' }}>{label}</span>}
+            </Link>
+          )
+        })}
+      </div>
+    </div>
   )
 }
