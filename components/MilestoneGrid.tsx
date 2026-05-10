@@ -1,8 +1,64 @@
 'use client'
 
 import { useState } from 'react'
-import { Trophy, Lock, X, MapPin, Calendar } from 'lucide-react'
+import { Check, X, Share2, Calendar, MapPin, Search } from 'lucide-react'
 import type { SerializableMilestone, StadiumVisit, Stadium, SpecialEvent } from '@/types'
+
+// ── Constants ──────────────────────────────────────────────────────────────
+
+const MILESTONE_POINTS: Record<string, number> = {
+  first_game: 25, five_stadiums: 50, ten_stadiums: 75,
+  fifteen_stadiums: 100, twenty_stadiums: 125, twentyfive_stadiums: 150, all_stadiums: 300,
+  al_east: 50, al_central: 50, al_west: 50, nl_east: 50, nl_central: 50, nl_west: 50,
+  american_league: 100, national_league: 100,
+  east_coast: 100, midwest: 100, west_coast: 100,
+  five_games: 35, ten_games: 50,
+  world_series_attendance: 150, all_star_attendance: 100, postseason_attendance: 100,
+  spring_training_attendance: 50, minor_league_attendance: 50,
+  hall_of_fame_visit: 75, field_of_dreams_visit: 75,
+  international_game: 100, historic_ballparks_all: 200,
+  first_special_event: 30,
+}
+
+const PLACES_IDS = new Set([
+  'five_stadiums', 'ten_stadiums', 'fifteen_stadiums', 'twenty_stadiums',
+  'twentyfive_stadiums', 'all_stadiums',
+  'al_east', 'al_central', 'al_west',
+  'nl_east', 'nl_central', 'nl_west',
+  'american_league', 'national_league',
+  'east_coast', 'midwest', 'west_coast',
+])
+
+const EXPERIENCE_IDS = new Set([
+  'first_game', 'five_games', 'ten_games',
+  'first_special_event', 'world_series_attendance', 'all_star_attendance',
+  'postseason_attendance', 'spring_training_attendance', 'minor_league_attendance',
+  'hall_of_fame_visit', 'field_of_dreams_visit', 'international_game', 'historic_ballparks_all',
+])
+
+interface StaticExperience {
+  id: string
+  name: string
+  description: string
+  icon: string
+}
+
+const STATIC_EXPERIENCES: StaticExperience[] = [
+  { id: 'rain_delay',      name: 'Rain Delay',             description: 'Sit through a rain delay at a ballpark',           icon: '🌧️' },
+  { id: 'walk_off_win',    name: 'Walk-Off Win',            description: 'Witness a walk-off victory in person',             icon: '🎉' },
+  { id: 'foul_ball',       name: 'Foul Ball',               description: 'Catch or retrieve a foul ball at a game',          icon: '⚾' },
+  { id: 'bobblehead',      name: 'Bobblehead Night',        description: 'Score a bobblehead giveaway at the park',          icon: '🪆' },
+  { id: 'fireworks_night', name: 'Fireworks Night',         description: 'Stay for post-game fireworks',                     icon: '🎆' },
+  { id: 'opening_day',     name: 'Opening Day',             description: 'Attend Opening Day for any team',                  icon: '🌱' },
+  { id: 'rivalry_game',    name: 'Rivalry Game',            description: 'Attend a heated rivalry matchup',                  icon: '⚔️' },
+  { id: 'enemy_territory', name: 'Enemy Territory',         description: 'Cheer for the visiting team at a ballpark',        icon: '🕵️' },
+  { id: 'seventh_inning',  name: 'Seventh Inning Stretch',  description: 'Sing Take Me Out to the Ballgame',                 icon: '🎵' },
+  { id: 'early_bird',      name: 'Early Bird',              description: 'Arrive early to watch batting practice',           icon: '🌅' },
+  { id: 'jersey_day',      name: 'Jersey Day',              description: 'Wear your team jersey to a game',                  icon: '👕' },
+  { id: 'night_owl',       name: 'Night Owl',               description: 'Stay until the very last out of a night game',     icon: '🦉' },
+]
+
+// ── Helper functions ───────────────────────────────────────────────────────
 
 interface EarningContext {
   date: string
@@ -47,26 +103,26 @@ function getSerializableMilestoneContext(
   const sn = (id: string) => allStadiums.find(s => s.id === id)?.name
 
   switch (milestone.id) {
-    case 'first_game': return sv[0] ? { date: sv[0].visit_date, location: sn(sv[0].stadium_id) } : null
-    case 'five_games': return sv[4] ? { date: sv[4].visit_date, location: sn(sv[4].stadium_id) } : null
-    case 'ten_games': return sv[9] ? { date: sv[9].visit_date, location: sn(sv[9].stadium_id) } : null
-    case 'five_stadiums': return getNthUniqueVisit(5, sv, allStadiums)
-    case 'ten_stadiums': return getNthUniqueVisit(10, sv, allStadiums)
-    case 'fifteen_stadiums': return getNthUniqueVisit(15, sv, allStadiums)
-    case 'twenty_stadiums': return getNthUniqueVisit(20, sv, allStadiums)
+    case 'first_game':  return sv[0] ? { date: sv[0].visit_date, location: sn(sv[0].stadium_id) } : null
+    case 'five_games':  return sv[4] ? { date: sv[4].visit_date, location: sn(sv[4].stadium_id) } : null
+    case 'ten_games':   return sv[9] ? { date: sv[9].visit_date, location: sn(sv[9].stadium_id) } : null
+    case 'five_stadiums':       return getNthUniqueVisit(5,  sv, allStadiums)
+    case 'ten_stadiums':        return getNthUniqueVisit(10, sv, allStadiums)
+    case 'fifteen_stadiums':    return getNthUniqueVisit(15, sv, allStadiums)
+    case 'twenty_stadiums':     return getNthUniqueVisit(20, sv, allStadiums)
     case 'twentyfive_stadiums': return getNthUniqueVisit(25, sv, allStadiums)
-    case 'all_stadiums': return getNthUniqueVisit(30, sv, allStadiums)
-    case 'al_east': return getCompletionContext(allStadiums.filter(s => s.league === 'AL' && s.division === 'East'), sv, allStadiums)
+    case 'all_stadiums':        return getNthUniqueVisit(30, sv, allStadiums)
+    case 'al_east':    return getCompletionContext(allStadiums.filter(s => s.league === 'AL' && s.division === 'East'),    sv, allStadiums)
     case 'al_central': return getCompletionContext(allStadiums.filter(s => s.league === 'AL' && s.division === 'Central'), sv, allStadiums)
-    case 'al_west': return getCompletionContext(allStadiums.filter(s => s.league === 'AL' && s.division === 'West'), sv, allStadiums)
-    case 'nl_east': return getCompletionContext(allStadiums.filter(s => s.league === 'NL' && s.division === 'East'), sv, allStadiums)
+    case 'al_west':    return getCompletionContext(allStadiums.filter(s => s.league === 'AL' && s.division === 'West'),    sv, allStadiums)
+    case 'nl_east':    return getCompletionContext(allStadiums.filter(s => s.league === 'NL' && s.division === 'East'),    sv, allStadiums)
     case 'nl_central': return getCompletionContext(allStadiums.filter(s => s.league === 'NL' && s.division === 'Central'), sv, allStadiums)
-    case 'nl_west': return getCompletionContext(allStadiums.filter(s => s.league === 'NL' && s.division === 'West'), sv, allStadiums)
+    case 'nl_west':    return getCompletionContext(allStadiums.filter(s => s.league === 'NL' && s.division === 'West'),    sv, allStadiums)
     case 'american_league': return getCompletionContext(allStadiums.filter(s => s.league === 'AL'), sv, allStadiums)
     case 'national_league': return getCompletionContext(allStadiums.filter(s => s.league === 'NL'), sv, allStadiums)
-    case 'east_coast': return getCompletionContext(allStadiums.filter(s => s.division === 'East'), sv, allStadiums)
-    case 'midwest': return getCompletionContext(allStadiums.filter(s => s.division === 'Central'), sv, allStadiums)
-    case 'west_coast': return getCompletionContext(allStadiums.filter(s => s.division === 'West'), sv, allStadiums)
+    case 'east_coast':  return getCompletionContext(allStadiums.filter(s => s.division === 'East'),    sv, allStadiums)
+    case 'midwest':     return getCompletionContext(allStadiums.filter(s => s.division === 'Central'), sv, allStadiums)
+    case 'west_coast':  return getCompletionContext(allStadiums.filter(s => s.division === 'West'),    sv, allStadiums)
     case 'first_special_event': {
       const e = se[0]
       return e ? { date: e.event_date, location: e.stadium_name ?? e.venue_name ?? undefined } : null
@@ -117,11 +173,59 @@ function getSerializableMilestoneContext(
   }
 }
 
+function getMilestoneProgress(
+  id: string,
+  allVisits: StadiumVisit[],
+  allStadiums: Stadium[],
+  allEvents: SpecialEvent[]
+): { current: number; total: number } | null {
+  const visitedCount = new Set(allVisits.map(v => v.stadium_id)).size
+  const visitedIds   = new Set(allVisits.map(v => v.stadium_id))
+
+  const divCount = (lg: string, dv: string) => allStadiums.filter(s => s.league === lg && s.division === dv).length
+  const divVis   = (lg: string, dv: string) => allStadiums.filter(s => s.league === lg && s.division === dv && visitedIds.has(s.id)).length
+  const lgCount  = (lg: string) => allStadiums.filter(s => s.league    === lg).length
+  const lgVis    = (lg: string) => allStadiums.filter(s => s.league    === lg && visitedIds.has(s.id)).length
+  const regCount = (dv: string) => allStadiums.filter(s => s.division  === dv).length
+  const regVis   = (dv: string) => allStadiums.filter(s => s.division  === dv && visitedIds.has(s.id)).length
+
+  switch (id) {
+    case 'first_game':          return { current: Math.min(allVisits.length, 1),  total: 1  }
+    case 'five_stadiums':       return { current: Math.min(visitedCount, 5),       total: 5  }
+    case 'ten_stadiums':        return { current: Math.min(visitedCount, 10),      total: 10 }
+    case 'fifteen_stadiums':    return { current: Math.min(visitedCount, 15),      total: 15 }
+    case 'twenty_stadiums':     return { current: Math.min(visitedCount, 20),      total: 20 }
+    case 'twentyfive_stadiums': return { current: Math.min(visitedCount, 25),      total: 25 }
+    case 'all_stadiums':        return { current: visitedCount,                    total: 30 }
+    case 'five_games':          return { current: Math.min(allVisits.length, 5),  total: 5  }
+    case 'ten_games':           return { current: Math.min(allVisits.length, 10), total: 10 }
+    case 'al_east':    return { current: divVis('AL', 'East'),    total: divCount('AL', 'East')    }
+    case 'al_central': return { current: divVis('AL', 'Central'), total: divCount('AL', 'Central') }
+    case 'al_west':    return { current: divVis('AL', 'West'),    total: divCount('AL', 'West')    }
+    case 'nl_east':    return { current: divVis('NL', 'East'),    total: divCount('NL', 'East')    }
+    case 'nl_central': return { current: divVis('NL', 'Central'), total: divCount('NL', 'Central') }
+    case 'nl_west':    return { current: divVis('NL', 'West'),    total: divCount('NL', 'West')    }
+    case 'american_league': return { current: lgVis('AL'), total: lgCount('AL') }
+    case 'national_league': return { current: lgVis('NL'), total: lgCount('NL') }
+    case 'east_coast':  return { current: regVis('East'),    total: regCount('East')    }
+    case 'midwest':     return { current: regVis('Central'), total: regCount('Central') }
+    case 'west_coast':  return { current: regVis('West'),    total: regCount('West')    }
+    case 'historic_ballparks_all': {
+      const VENUES = ['Louisville Slugger Museum & Factory', 'National Baseball Hall of Fame', 'Negro Leagues Baseball Museum', 'Field of Dreams', 'Rickwood Field']
+      const visited = new Set(allEvents.filter(e => e.event_type === 'historic_ballpark' && e.venue_name).map(e => e.venue_name!))
+      return { current: VENUES.filter(v => visited.has(v)).length, total: VENUES.length }
+    }
+    default: return null
+  }
+}
+
 function formatDate(dateStr: string) {
   return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric',
   })
 }
+
+// ── Types ──────────────────────────────────────────────────────────────────
 
 interface Props {
   earned: SerializableMilestone[]
@@ -129,277 +233,461 @@ interface Props {
   allVisits: StadiumVisit[]
   allStadiums: Stadium[]
   allEvents: SpecialEvent[]
+  currentRankName: string
+  rankTiers: Array<{ name: string; minPts: number; icon: string }>
 }
 
-export default function MilestoneGrid({ earned, unearned, allVisits, allStadiums, allEvents }: Props) {
-  const [selected, setSelected] = useState<{ milestone: SerializableMilestone; isEarned: boolean } | null>(null)
+type SelectedItem =
+  | { type: 'milestone'; milestone: SerializableMilestone; isEarned: boolean }
+  | { type: 'static'; experience: StaticExperience }
 
-  const context = selected?.isEarned
+// ── Component ──────────────────────────────────────────────────────────────
+
+export default function MilestoneGrid({
+  earned, unearned, allVisits, allStadiums, allEvents, currentRankName, rankTiers,
+}: Props) {
+  const [filter, setFilter] = useState<'all' | 'earned' | 'places' | 'experiences'>('all')
+  const [search, setSearch]   = useState('')
+  const [selected, setSelected] = useState<SelectedItem | null>(null)
+
+  const earnedIds    = new Set(earned.map(m => m.id))
+  const currentRankIdx = rankTiers.findIndex(r => r.name === currentRankName)
+
+  // Filter milestone list
+  const allMilestones = [...earned, ...unearned]
+  const filteredMilestones = allMilestones.filter(m => {
+    if (filter === 'earned')      return earnedIds.has(m.id)
+    if (filter === 'places')      return PLACES_IDS.has(m.id)
+    if (filter === 'experiences') return EXPERIENCE_IDS.has(m.id)
+    return true
+  }).filter(m => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return m.name.toLowerCase().includes(q) || m.description.toLowerCase().includes(q)
+  })
+
+  // Static experiences shown in Experiences and All tabs
+  const showStatics = filter === 'all' || filter === 'experiences'
+  const filteredStatics = showStatics ? STATIC_EXPERIENCES.filter(s => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
+  }) : []
+
+  // Modal context (earned milestones only)
+  const context = selected?.type === 'milestone' && selected.isEarned
     ? getSerializableMilestoneContext(selected.milestone, allVisits, allStadiums, allEvents)
     : null
 
-  function EarnedCard({ m }: { m: SerializableMilestone }) {
-    return (
-      <button
-        onClick={() => setSelected({ milestone: m, isEarned: true })}
-        className="w-full text-left achievement-earned transition-all duration-200"
-        style={{
-          backgroundColor: 'rgba(20,28,50,0.9)',
-          border: '1px solid rgba(167,139,250,0.3)',
-          borderRadius: 12,
-          padding: '1.25rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem',
-          cursor: 'pointer',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = 'rgba(167,139,250,0.6)'
-          e.currentTarget.style.backgroundColor = 'rgba(167,139,250,0.08)'
-          e.currentTarget.style.transform = 'translateY(-2px)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = 'rgba(167,139,250,0.3)'
-          e.currentTarget.style.backgroundColor = 'rgba(20,28,50,0.9)'
-          e.currentTarget.style.transform = 'translateY(0)'
-        }}
-      >
-        <div
-          style={{
-            width: 72, height: 72,
-            borderRadius: 16,
-            background: 'linear-gradient(135deg, rgba(167,139,250,0.2) 0%, rgba(139,92,246,0.15) 100%)',
-            border: '1px solid rgba(167,139,250,0.3)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '2.2rem',
-            flexShrink: 0,
-            boxShadow: '0 0 20px rgba(167,139,250,0.2)',
-          }}
-        >
-          {m.icon}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="font-bold text-base mb-0.5" style={{ color: '#ffffff' }}>
-            {m.name}
-          </div>
-          <div className="text-base" style={{ color: '#94a3b8' }}>
-            {m.description}
-          </div>
-          <div
-            className="inline-flex items-center gap-1.5 mt-2 text-base px-2.5 py-0.5 rounded-full font-semibold"
-            style={{ backgroundColor: 'rgba(167,139,250,0.15)', color: '#a78bfa' }}
-          >
-            <Trophy size={11} /> Earned
-          </div>
-        </div>
-      </button>
-    )
-  }
-
-  function LockedCard({ m }: { m: SerializableMilestone }) {
-    return (
-      <button
-        onClick={() => setSelected({ milestone: m, isEarned: false })}
-        className="w-full text-left transition-all duration-200"
-        style={{
-          backgroundColor: 'rgba(15,23,41,0.6)',
-          border: '1px solid rgba(255,255,255,0.05)',
-          borderRadius: 12,
-          padding: '1.25rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem',
-          cursor: 'pointer',
-          opacity: 0.65,
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.opacity = '0.85'
-          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.opacity = '0.65'
-          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'
-        }}
-      >
-        <div style={{ position: 'relative', flexShrink: 0 }}>
-          <div
-            style={{
-              width: 72, height: 72,
-              borderRadius: 16,
-              backgroundColor: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '2.2rem',
-              filter: 'grayscale(100%) brightness(0.5)',
-            }}
-          >
-            {m.icon}
-          </div>
-          <div
-            style={{
-              position: 'absolute', bottom: -4, right: -4,
-              width: 22, height: 22,
-              backgroundColor: '#0a0f1e',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            <Lock size={11} style={{ color: '#4a5568' }} />
-          </div>
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="font-bold text-base mb-0.5" style={{ color: '#64748b' }}>
-            {m.name}
-          </div>
-          <div className="text-base" style={{ color: '#4a5568' }}>
-            {m.description}
-          </div>
-          <div
-            className="inline-flex items-center gap-1.5 mt-2 text-base px-2.5 py-0.5 rounded-full font-semibold"
-            style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: '#4a5568' }}
-          >
-            <Lock size={11} /> Locked
-          </div>
-        </div>
-      </button>
-    )
-  }
+  // ── Render ─────────────────────────────────────────────────────────────
 
   return (
     <>
-      {earned.length > 0 && (
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Trophy size={18} style={{ color: '#a78bfa' }} />
-            <span className="text-lg font-bold" style={{ color: '#a78bfa' }}>Earned ({earned.length})</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            {earned.map(m => <EarnedCard key={m.id} m={m} />)}
-          </div>
-        </div>
-      )}
+      <div style={{ maxWidth: 800, margin: '0 auto', padding: '28px 16px 0' }}>
 
-      {unearned.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Lock size={18} style={{ color: '#4a5568' }} />
-            <span className="text-lg font-bold" style={{ color: '#4a5568' }}>Locked ({unearned.length})</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            {unearned.map(m => <LockedCard key={m.id} m={m} />)}
-          </div>
+        {/* Rank progression strip */}
+        <div style={{
+          overflowX: 'auto', display: 'flex', alignItems: 'center',
+          marginBottom: 28, paddingBottom: 4,
+          msOverflowStyle: 'none', scrollbarWidth: 'none',
+        }}>
+          {rankTiers.map((tier, i) => {
+            const isCurrent = tier.name === currentRankName
+            const isPast    = i < currentRankIdx
+            return (
+              <div key={tier.name} style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                <div style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                  padding: '8px 10px', borderRadius: 12,
+                  backgroundColor: isCurrent ? 'rgba(245,158,11,0.1)' : 'transparent',
+                  border: `1.5px solid ${isCurrent ? 'rgba(245,158,11,0.35)' : 'transparent'}`,
+                }}>
+                  <div style={{
+                    width: 38, height: 38, borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: isPast ? 0 : 17,
+                    backgroundColor: isCurrent
+                      ? 'rgba(245,158,11,0.15)'
+                      : isPast ? 'rgba(34,197,94,0.1)' : 'rgba(0,0,0,0.05)',
+                    border: `2px solid ${
+                      isCurrent ? '#f59e0b'
+                      : isPast ? 'rgba(34,197,94,0.35)' : 'rgba(0,0,0,0.07)'}`,
+                  }}>
+                    {isPast
+                      ? <Check size={15} color="#22c55e" strokeWidth={3} />
+                      : tier.icon}
+                  </div>
+                  <span style={{
+                    fontSize: 11, fontWeight: isCurrent ? 700 : 500,
+                    color: isCurrent ? '#f59e0b' : isPast ? '#6b7280' : '#9ca3af',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {tier.name}
+                  </span>
+                </div>
+                {/* Connector line */}
+                {i < rankTiers.length - 1 && (
+                  <div style={{
+                    width: 18, height: 2, flexShrink: 0,
+                    backgroundColor: i < currentRankIdx ? 'rgba(34,197,94,0.3)' : 'rgba(0,0,0,0.07)',
+                  }} />
+                )}
+              </div>
+            )
+          })}
         </div>
-      )}
 
-      {earned.length === 0 && unearned.length === 0 && (
-        <div className="text-center py-20" style={{ color: '#64748b' }}>
-          <div className="text-4xl mb-4">🏆</div>
-          <div className="text-lg font-semibold mb-1" style={{ color: '#94a3b8' }}>No milestones yet</div>
-          <div className="text-base">Start visiting stadiums to earn achievements</div>
+        {/* Filter tabs + search */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {(['all', 'earned', 'places', 'experiences'] as const).map(f => (
+              <button key={f} onClick={() => setFilter(f)} style={{
+                padding: '7px 15px', borderRadius: 20, fontSize: 13, fontWeight: 600,
+                backgroundColor: filter === f ? '#0f172a' : '#f3f4f6',
+                color: filter === f ? '#ffffff' : '#6b7280',
+                border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+              }}>
+                {f === 'earned'
+                  ? `Earned (${earned.length})`
+                  : f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
+          {/* Search */}
+          <div style={{ position: 'relative', flex: 1, minWidth: 140, maxWidth: 220 }}>
+            <Search size={14} style={{
+              position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
+              color: '#9ca3af', pointerEvents: 'none',
+            }} />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search..."
+              style={{
+                width: '100%', padding: '7px 10px 7px 30px', borderRadius: 20,
+                border: '1px solid #e5e7eb', fontSize: 13, color: '#111827',
+                backgroundColor: '#ffffff', outline: 'none', boxSizing: 'border-box',
+              }}
+            />
+          </div>
         </div>
-      )}
+
+        {/* Achievement list */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 32 }}>
+
+          {filteredMilestones.map(m => {
+            const isEarned  = earnedIds.has(m.id)
+            const isPlace   = PLACES_IDS.has(m.id)
+            const pts       = MILESTONE_POINTS[m.id] ?? 25
+            const progress  = getMilestoneProgress(m.id, allVisits, allStadiums, allEvents)
+            const pct       = progress ? Math.round((progress.current / progress.total) * 100) : 0
+            const barColor  = isPlace ? '#3b82f6' : '#f97316'
+
+            return (
+              <button
+                key={m.id}
+                onClick={() => setSelected({ type: 'milestone', milestone: m, isEarned })}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  padding: '12px 10px', borderRadius: 12, border: 'none',
+                  backgroundColor: 'transparent', cursor: 'pointer',
+                  textAlign: 'left', width: '100%',
+                  transition: 'background-color 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#f8fafc' }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
+              >
+                {/* Icon square */}
+                <div style={{
+                  width: 44, height: 44, borderRadius: 10, flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 20, position: 'relative',
+                  backgroundColor: isEarned
+                    ? 'rgba(245,158,11,0.12)'
+                    : isPlace ? 'rgba(59,130,246,0.07)' : 'rgba(249,115,22,0.07)',
+                  border: `1.5px solid ${
+                    isEarned ? 'rgba(245,158,11,0.25)' : 'rgba(0,0,0,0.06)'}`,
+                  filter: isEarned ? 'none' : 'grayscale(55%)',
+                }}>
+                  {m.icon}
+                  {isEarned && (
+                    <div style={{
+                      position: 'absolute', bottom: -4, right: -4,
+                      width: 16, height: 16, borderRadius: '50%',
+                      backgroundColor: '#22c55e', border: '2px solid #ffffff',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Check size={8} color="#ffffff" strokeWidth={3.5} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Text + progress */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: 15, fontWeight: 600,
+                    color: isEarned ? '#111827' : '#374151',
+                    marginBottom: 1,
+                  }}>
+                    {m.name}
+                  </div>
+                  <div style={{
+                    fontSize: 13, color: '#9ca3af',
+                    marginBottom: progress && !isEarned ? 6 : 0,
+                  }}>
+                    {m.description}
+                  </div>
+                  {progress && !isEarned && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{
+                        flex: 1, height: 4, borderRadius: 4,
+                        backgroundColor: 'rgba(0,0,0,0.06)', overflow: 'hidden',
+                      }}>
+                        <div style={{
+                          height: '100%', borderRadius: 4,
+                          width: `${pct}%`, backgroundColor: barColor,
+                          transition: 'width 0.4s ease',
+                        }} />
+                      </div>
+                      <span style={{ fontSize: 11, color: '#9ca3af', flexShrink: 0 }}>
+                        {progress.current}/{progress.total}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Points */}
+                <div style={{ flexShrink: 0 }}>
+                  {isEarned ? (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center',
+                      padding: '3px 10px', borderRadius: 20,
+                      backgroundColor: 'rgba(34,197,94,0.1)',
+                      fontSize: 12, fontWeight: 700, color: '#16a34a',
+                    }}>
+                      +{pts}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: 12, color: '#d1d5db', fontWeight: 600 }}>
+                      +{pts}
+                    </span>
+                  )}
+                </div>
+              </button>
+            )
+          })}
+
+          {/* Static experiences */}
+          {filteredStatics.map(s => (
+            <button
+              key={s.id}
+              onClick={() => setSelected({ type: 'static', experience: s })}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '12px 10px', borderRadius: 12, border: 'none',
+                backgroundColor: 'transparent', cursor: 'pointer',
+                textAlign: 'left', width: '100%',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#f8fafc' }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
+            >
+              <div style={{
+                width: 44, height: 44, borderRadius: 10, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 20, filter: 'grayscale(60%)',
+                backgroundColor: 'rgba(107,114,128,0.07)',
+                border: '1.5px solid rgba(0,0,0,0.06)',
+              }}>
+                {s.icon}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#374151', marginBottom: 1 }}>
+                  {s.name}
+                </div>
+                <div style={{ fontSize: 13, color: '#9ca3af' }}>{s.description}</div>
+              </div>
+              <span style={{ fontSize: 11, color: '#d1d5db', fontWeight: 500, flexShrink: 0 }}>
+                Bucket list
+              </span>
+            </button>
+          ))}
+
+          {/* Empty state */}
+          {filteredMilestones.length === 0 && filteredStatics.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '48px 0' }}>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>🔍</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: '#374151', marginBottom: 4 }}>
+                No matches
+              </div>
+              <div style={{ fontSize: 14, color: '#9ca3af' }}>
+                Try a different filter or search term
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Modal */}
       {selected && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)' }}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 50,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 16, backgroundColor: 'rgba(0,0,0,0.72)',
+            backdropFilter: 'blur(4px)',
+          }}
           onClick={() => setSelected(null)}
         >
           <div
-            className="w-full max-w-sm relative overflow-hidden"
             style={{
-              backgroundColor: '#131d35',
-              border: selected.isEarned ? '1px solid rgba(167,139,250,0.4)' : '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 16,
-              boxShadow: selected.isEarned
-                ? '0 0 60px rgba(167,139,250,0.2), 0 24px 64px rgba(0,0,0,0.6)'
-                : '0 24px 64px rgba(0,0,0,0.6)',
+              width: '100%', maxWidth: 360, borderRadius: 20,
+              backgroundColor: '#131d35', position: 'relative',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+              border: selected.type === 'milestone' && selected.isEarned
+                ? '1px solid rgba(245,158,11,0.3)'
+                : '1px solid rgba(255,255,255,0.07)',
             }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Header gradient for earned */}
-            {selected.isEarned && (
-              <div style={{
-                position: 'absolute', top: 0, left: 0, right: 0, height: 120,
-                background: 'linear-gradient(180deg, rgba(139,92,246,0.2) 0%, transparent 100%)',
-                pointerEvents: 'none',
-              }} />
-            )}
-
+            {/* Close button */}
             <button
               onClick={() => setSelected(null)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg z-20 transition-colors"
-              style={{ color: '#64748b', backgroundColor: 'rgba(255,255,255,0.04)' }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = '#94a3b8' }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b' }}
+              style={{
+                position: 'absolute', top: 14, right: 14, zIndex: 10,
+                width: 30, height: 30, borderRadius: '50%', border: 'none',
+                backgroundColor: 'rgba(255,255,255,0.08)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#94a3b8',
+              }}
             >
-              <X size={18} />
+              <X size={15} />
             </button>
 
-            <div className="p-7 relative z-10">
-              {/* Icon */}
-              <div
-                className="mx-auto mb-5 flex items-center justify-center"
-                style={{
-                  width: 88, height: 88,
-                  borderRadius: 20,
-                  background: selected.isEarned
-                    ? 'linear-gradient(135deg, rgba(167,139,250,0.25) 0%, rgba(139,92,246,0.15) 100%)'
-                    : 'rgba(255,255,255,0.04)',
-                  border: selected.isEarned ? '1px solid rgba(167,139,250,0.4)' : '1px solid rgba(255,255,255,0.06)',
-                  fontSize: '3rem',
-                  filter: selected.isEarned ? 'none' : 'grayscale(100%) brightness(0.5)',
-                  boxShadow: selected.isEarned ? '0 0 30px rgba(167,139,250,0.3)' : 'none',
-                }}
-              >
-                {selected.milestone.icon}
+            <div style={{ padding: '28px 24px 24px', textAlign: 'center' }}>
+              {/* Icon circle */}
+              <div style={{
+                width: 80, height: 80, borderRadius: '50%',
+                margin: '0 auto 16px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 34,
+                backgroundColor: selected.type === 'milestone' && selected.isEarned
+                  ? 'rgba(245,158,11,0.18)' : 'rgba(255,255,255,0.06)',
+                border: `2px solid ${
+                  selected.type === 'milestone' && selected.isEarned
+                    ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.09)'}`,
+              }}>
+                {selected.type === 'milestone' ? selected.milestone.icon : selected.experience.icon}
               </div>
 
-              <div className="text-xl font-black text-center mb-2" style={{ color: '#ffffff' }}>
-                {selected.milestone.name}
-              </div>
-              <div className="text-base text-center mb-5" style={{ color: '#94a3b8' }}>
-                {selected.milestone.description}
+              {/* "Achievement Unlocked" label */}
+              {selected.type === 'milestone' && selected.isEarned && (
+                <div style={{
+                  fontSize: 10, fontWeight: 800, letterSpacing: '0.12em',
+                  color: '#f59e0b', textTransform: 'uppercase', marginBottom: 8,
+                }}>
+                  Achievement Unlocked!
+                </div>
+              )}
+
+              {/* Name */}
+              <div style={{ fontSize: 19, fontWeight: 800, color: '#ffffff', marginBottom: 6 }}>
+                {selected.type === 'milestone' ? selected.milestone.name : selected.experience.name}
               </div>
 
-              {selected.isEarned ? (
-                <>
-                  <div className="flex justify-center mb-4">
-                    <div
-                      className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-base font-bold"
-                      style={{ backgroundColor: 'rgba(167,139,250,0.2)', color: '#a78bfa' }}
-                    >
-                      <Trophy size={14} /> Achievement Unlocked
+              {/* Description */}
+              <div style={{ fontSize: 14, color: '#94a3b8', marginBottom: 18 }}>
+                {selected.type === 'milestone' ? selected.milestone.description : selected.experience.description}
+              </div>
+
+              {/* Earned milestone */}
+              {selected.type === 'milestone' && selected.isEarned && (() => {
+                const m = selected.milestone
+                const pts = MILESTONE_POINTS[m.id] ?? 25
+                return (
+                  <>
+                    <div style={{ marginBottom: 14 }}>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                        padding: '4px 14px', borderRadius: 20,
+                        backgroundColor: 'rgba(34,197,94,0.14)', color: '#4ade80',
+                        fontSize: 13, fontWeight: 700,
+                      }}>
+                        ⚡ +{pts} pts
+                      </span>
                     </div>
-                  </div>
-                  {context && (
-                    <div
-                      className="flex flex-col gap-3 p-4 rounded-xl"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
-                    >
-                      <div className="flex items-center gap-2.5 text-base" style={{ color: '#ffffff' }}>
-                        <Calendar size={15} style={{ color: '#a78bfa', flexShrink: 0 }} />
-                        {formatDate(context.date)}
-                      </div>
-                      {context.location && (
-                        <div className="flex items-center gap-2.5 text-base" style={{ color: '#ffffff' }}>
-                          <MapPin size={15} style={{ color: '#a78bfa', flexShrink: 0 }} />
-                          {context.location}
+                    {context && (
+                      <div style={{
+                        padding: '12px 14px', borderRadius: 12, marginBottom: 18,
+                        backgroundColor: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.06)',
+                        textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 8,
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#e2e8f0' }}>
+                          <Calendar size={13} color="#f59e0b" style={{ flexShrink: 0 }} />
+                          {formatDate(context.date)}
                         </div>
-                      )}
+                        {context.location && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#e2e8f0' }}>
+                            <MapPin size={13} color="#f59e0b" style={{ flexShrink: 0 }} />
+                            {context.location}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button
+                        onClick={() => {
+                          navigator.share?.({
+                            title: 'Achievement Unlocked!',
+                            text: `I just earned "${m.name}" on Chasing 30! 🏆`,
+                          }).catch(() => {})
+                        }}
+                        style={{
+                          flex: 1, padding: '11px 0', borderRadius: 12,
+                          backgroundColor: 'rgba(255,255,255,0.08)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          color: '#e2e8f0', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        }}
+                      >
+                        <Share2 size={14} /> Share
+                      </button>
+                      <button
+                        onClick={() => setSelected(null)}
+                        style={{
+                          flex: 1, padding: '11px 0', borderRadius: 12,
+                          backgroundColor: '#f59e0b', border: 'none',
+                          color: '#000000', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                        }}
+                      >
+                        Awesome!
+                      </button>
                     </div>
-                  )}
-                </>
-              ) : (
-                <div className="flex justify-center">
-                  <div
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-base font-semibold"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: '#4a5568', border: '1px solid rgba(255,255,255,0.06)' }}
-                  >
-                    <Lock size={14} /> Not yet earned — keep going
-                  </div>
+                  </>
+                )
+              })()}
+
+              {/* Unearned milestone */}
+              {selected.type === 'milestone' && !selected.isEarned && (
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '8px 18px', borderRadius: 20,
+                  backgroundColor: 'rgba(255,255,255,0.06)',
+                  color: '#64748b', fontSize: 13, fontWeight: 600,
+                }}>
+                  🔒 Keep going — you&apos;ll get there
+                </div>
+              )}
+
+              {/* Static / bucket list */}
+              {selected.type === 'static' && (
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '8px 18px', borderRadius: 20,
+                  backgroundColor: 'rgba(255,255,255,0.06)',
+                  color: '#64748b', fontSize: 13, fontWeight: 600,
+                }}>
+                  ⭐ Add this to your bucket list
                 </div>
               )}
             </div>
