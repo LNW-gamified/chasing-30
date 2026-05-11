@@ -8,10 +8,10 @@ const StadiumMapInner = dynamic(() => import('./StadiumMapInner'), {
   loading: () => (
     <div style={{
       height: '100%', width: '100%',
-      backgroundColor: '#e8eff6',
+      backgroundColor: '#0B1117',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
-      <div style={{ color: '#6b7280', fontWeight: 500, fontSize: 14 }}>Loading map…</div>
+      <div style={{ color: '#8B949E', fontWeight: 500, fontSize: 14 }}>Loading map…</div>
     </div>
   ),
 })

@@ -25,7 +25,6 @@ function favFirst(games: TodayGame[]): TodayGame[] {
 }
 
 function inPollWindow(): boolean {
-  // Only poll 12pm–midnight ET
   const etDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }))
   return etDate.getHours() >= 12
 }
@@ -40,9 +39,9 @@ function fmtTime(iso: string): string {
 }
 
 export default function TodayGames({ initialGames, favAbbr }: Props) {
-  const [games, setGames]           = useState<TodayGame[]>(() => favFirst(initialGames))
+  const [games, setGames]             = useState<TodayGame[]>(() => favFirst(initialGames))
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
-  const [secsAgo, setSecsAgo]       = useState(0)
+  const [secsAgo, setSecsAgo]         = useState(0)
 
   const poll = useCallback(async () => {
     if (!inPollWindow()) return
@@ -60,14 +59,12 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
     } catch { /* keep existing data */ }
   }, [favAbbr])
 
-  // 60-second polling loop (only active in poll window)
   useEffect(() => {
     if (!inPollWindow()) return
     const id = setInterval(poll, 60_000)
     return () => clearInterval(id)
   }, [poll])
 
-  // Seconds-ago ticker
   useEffect(() => {
     if (!lastUpdated) return
     const id = setInterval(() => {
@@ -92,18 +89,18 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div
             className="animate-pulse"
-            style={{ width: 8, height: 8, backgroundColor: '#EF4444', borderRadius: '50%', flexShrink: 0 }}
+            style={{ width: 8, height: 8, backgroundColor: '#F85149', borderRadius: '50%', flexShrink: 0 }}
           />
           <span style={{
-            fontSize: 12, fontWeight: 600, color: '#888888',
+            fontSize: 12, fontWeight: 600, color: '#8B949E',
             textTransform: 'uppercase', letterSpacing: '0.1em',
           }}>
             Today&apos;s Games
           </span>
-          <span style={{ fontSize: 12, color: '#BBBBBB' }}>· {games.length} games</span>
+          <span style={{ fontSize: 12, color: '#8B949E' }}>· {games.length} games</span>
         </div>
         {updatedLabel && (
-          <span style={{ fontSize: 12, color: '#BBBBBB' }}>{updatedLabel}</span>
+          <span style={{ fontSize: 12, color: '#8B949E' }}>{updatedLabel}</span>
         )}
       </div>
 
@@ -117,39 +114,32 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
           <div
             key={g.gamePk}
             style={{
-              background: '#FFFFFF',
+              backgroundColor: '#161B22',
               borderRadius: 12,
               padding: 16,
               minWidth: 160,
               flexShrink: 0,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-              border: g.isFavorite ? '2px solid #93C5FD' : '1px solid #F0F0F0',
+              border: g.isFavorite ? '2px solid #1F6FEB' : '1px solid #30363D',
             }}
           >
             {/* Team row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={getTeamLogoUrl(g.awayAbbr)} alt={g.awayAbbr} width={20} height={20} style={{ objectFit: 'contain' }} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#111111' }}>{g.awayAbbr}</span>
-              <span style={{ fontSize: 11, color: '#BBBBBB' }}>@</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>{g.awayAbbr}</span>
+              <span style={{ fontSize: 11, color: '#8B949E' }}>@</span>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={getTeamLogoUrl(g.homeAbbr)} alt={g.homeAbbr} width={20} height={20} style={{ objectFit: 'contain' }} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#111111' }}>{g.homeAbbr}</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>{g.homeAbbr}</span>
             </div>
 
             {/* Score or scheduled time */}
             {(g.isLive || g.isFinal) && g.awayScore !== null ? (
-              <div style={{
-                fontSize: 24, fontWeight: 700, color: '#111111',
-                lineHeight: 1, marginBottom: 8,
-              }}>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#E6EDF3', lineHeight: 1, marginBottom: 8 }}>
                 {g.awayScore} – {g.homeScore}
               </div>
             ) : (
-              <div style={{
-                fontSize: 14, color: '#555555', fontWeight: 600,
-                marginBottom: 8,
-              }}>
+              <div style={{ fontSize: 14, color: '#8B949E', fontWeight: 600, marginBottom: 8 }}>
                 {fmtTime(g.gameDate)}
               </div>
             )}
@@ -159,12 +149,12 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
               {g.isLive && (
                 <div style={{
                   width: 7, height: 7, borderRadius: '50%',
-                  backgroundColor: '#EF4444', flexShrink: 0,
+                  backgroundColor: '#F85149', flexShrink: 0,
                 }} />
               )}
               <span style={{
                 fontSize: 12, fontWeight: 600,
-                color: g.isLive ? '#EF4444' : '#BBBBBB',
+                color: g.isLive ? '#F85149' : '#8B949E',
                 textTransform: 'uppercase', letterSpacing: '0.04em',
               }}>
                 {g.isLive ? 'LIVE' : g.isFinal ? 'Final' : 'Preview'}

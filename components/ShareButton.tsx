@@ -102,8 +102,8 @@ export default function ShareButton() {
       >
         {copied ? (
           <>
-            <Check size={14} style={{ color: '#22c55e' }} />
-            <span style={{ color: '#22c55e' }}>Link copied!</span>
+            <Check size={14} style={{ color: '#3FB950' }} />
+            <span style={{ color: '#3FB950' }}>Link copied!</span>
           </>
         ) : busy ? (
           <>
@@ -118,7 +118,7 @@ export default function ShareButton() {
         )}
       </button>
       {error && (
-        <div className="flex items-center gap-1.5 text-xs max-w-xs" style={{ color: '#f87171' }}>
+        <div className="flex items-center gap-1.5 text-xs max-w-xs" style={{ color: '#F85149' }}>
           <AlertCircle size={12} style={{ flexShrink: 0 }} />
           <span className="break-all">{error}</span>
         </div>

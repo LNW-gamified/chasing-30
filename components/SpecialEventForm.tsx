@@ -88,7 +88,7 @@ export default function SpecialEventForm({ event, onClose, onSaved }: Props) {
   const sectionHead = (label: string) => (
     <div
       className="text-xs font-semibold uppercase tracking-wider pt-4 pb-1 mb-2"
-      style={{ color: '#3b82f6', borderBottom: '1px solid #1f2937' }}
+      style={{ color: '#1F6FEB', borderBottom: '1px solid #30363D' }}
     >
       {label}
     </div>
@@ -176,20 +176,20 @@ export default function SpecialEventForm({ event, onClose, onSaved }: Props) {
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-8 px-4"
       style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
     >
-      <div className="card w-full max-w-2xl" style={{ backgroundColor: '#111827' }}>
+      <div className="card w-full max-w-2xl" style={{ backgroundColor: '#161B22' }}>
         <div
           className="flex items-center justify-between px-6 py-4"
-          style={{ borderBottom: '1px solid #1f2937' }}
+          style={{ borderBottom: '1px solid #30363D' }}
         >
           <div>
-            <div className="font-semibold" style={{ color: '#f1f5f9' }}>
+            <div className="font-semibold" style={{ color: '#E6EDF3' }}>
               {event ? 'Edit Special Event' : 'Log a Special Event'}
             </div>
-            <div className="text-sm" style={{ color: '#a8b8c8' }}>
+            <div className="text-sm" style={{ color: '#8B949E' }}>
               {currentType?.icon} {currentType?.label}
             </div>
           </div>
-          <button onClick={onClose} style={{ color: '#a8b8c8' }}>
+          <button onClick={onClose} style={{ color: '#8B949E' }}>
             <X size={20} />
           </button>
         </div>
@@ -204,9 +204,9 @@ export default function SpecialEventForm({ event, onClose, onSaved }: Props) {
                 onClick={() => set('event_type', et.value)}
                 className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
                 style={{
-                  backgroundColor: form.event_type === et.value ? 'rgba(59,130,246,0.2)' : '#1a2235',
-                  border: `1.5px solid ${form.event_type === et.value ? '#3b82f6' : '#2d3748'}`,
-                  color: form.event_type === et.value ? '#60a5fa' : '#b8c8d8',
+                  backgroundColor: form.event_type === et.value ? 'rgba(31,111,235,0.2)' : '#1C2430',
+                  border: `1.5px solid ${form.event_type === et.value ? '#1F6FEB' : '#30363D'}`,
+                  color: form.event_type === et.value ? '#1F6FEB' : '#8B949E',
                 }}
               >
                 <span>{et.icon}</span>
@@ -380,16 +380,16 @@ export default function SpecialEventForm({ event, onClose, onSaved }: Props) {
                 <img src={photoPreview} alt="Event photo" className="rounded-lg"
                   style={{ maxHeight: 180, objectFit: 'cover', maxWidth: '100%' }} />
                 <button type="button" onClick={removePhoto} className="absolute top-2 right-2 p-1 rounded-full"
-                  style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#f87171' }}>
+                  style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#F85149' }}>
                   <Trash2 size={14} />
                 </button>
               </div>
             ) : (
               <label
                 className="flex flex-col items-center justify-center gap-2 rounded-xl cursor-pointer transition-colors"
-                style={{ border: '2px dashed #2d3748', backgroundColor: '#1a2235', padding: '1.5rem 1rem', color: '#a8b8c8' }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#3b82f6')}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#2d3748')}
+                style={{ border: '2px dashed #30363D', backgroundColor: '#1C2430', padding: '1.5rem 1rem', color: '#8B949E' }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#1F6FEB')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#30363D')}
               >
                 <ImagePlus size={24} />
                 <span className="text-sm">Upload a photo</span>
@@ -409,7 +409,7 @@ export default function SpecialEventForm({ event, onClose, onSaved }: Props) {
 
           {error && (
             <div className="mt-4 p-3 rounded-lg text-sm"
-              style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#f87171' }}>
+              style={{ backgroundColor: 'rgba(248,81,73,0.1)', color: '#F85149' }}>
               {error}
             </div>
           )}

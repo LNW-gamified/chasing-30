@@ -176,12 +176,12 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-8 px-4"
       style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
     >
-      <div className="card w-full max-w-2xl" style={{ backgroundColor: '#111827' }}>
-        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #1f2937' }}>
-          <div className="font-semibold" style={{ color: '#f1f5f9' }}>
+      <div className="card w-full max-w-2xl" style={{ backgroundColor: '#161B22' }}>
+        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #30363D' }}>
+          <div className="font-semibold" style={{ color: '#E6EDF3' }}>
             {trip ? 'Edit Trip' : 'Plan a Trip'}
           </div>
-          <button onClick={onClose} style={{ color: '#a8b8c8' }}>
+          <button onClick={onClose} style={{ color: '#8B949E' }}>
             <X size={20} />
           </button>
         </div>
@@ -219,7 +219,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
             {/* Stops */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#3b82f6' }}>
+                <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#1F6FEB' }}>
                   Stadiums &amp; Schedule
                 </div>
                 <button type="button" onClick={addStop} className="btn-secondary"
@@ -230,13 +230,13 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
 
               <div className="flex flex-col gap-3">
                 {stops.map((stop, i) => (
-                  <div key={i} className="p-4 rounded-xl" style={{ backgroundColor: '#0d1424', border: '1px solid #1f2937' }}>
+                  <div key={i} className="p-4 rounded-xl" style={{ backgroundColor: '#0d1424', border: '1px solid #30363D' }}>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="text-sm font-semibold" style={{ color: '#b8c8d8' }}>
+                      <div className="text-sm font-semibold" style={{ color: '#8B949E' }}>
                         Stop {i + 1}
                       </div>
                       {stops.length > 1 && (
-                        <button type="button" onClick={() => removeStop(i)} className="p-1" style={{ color: '#ef4444' }}>
+                        <button type="button" onClick={() => removeStop(i)} className="p-1" style={{ color: '#F85149' }}>
                           <Trash2 size={15} />
                         </button>
                       )}
@@ -260,15 +260,15 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                     <table className="w-full">
                       <thead>
                         <tr>
-                          <th className="text-left pb-1.5 text-xs font-medium" style={{ color: '#a8b8c8' }}>Category</th>
-                          <th className="text-left pb-1.5 pl-2 text-xs font-medium" style={{ color: '#a8b8c8' }}>Est ($)</th>
-                          <th className="text-left pb-1.5 pl-2 text-xs font-medium" style={{ color: '#a8b8c8' }}>Actual ($)</th>
+                          <th className="text-left pb-1.5 text-xs font-medium" style={{ color: '#8B949E' }}>Category</th>
+                          <th className="text-left pb-1.5 pl-2 text-xs font-medium" style={{ color: '#8B949E' }}>Est ($)</th>
+                          <th className="text-left pb-1.5 pl-2 text-xs font-medium" style={{ color: '#8B949E' }}>Actual ($)</th>
                         </tr>
                       </thead>
                       <tbody>
                         {STOP_CATS.map(cat => (
                           <tr key={cat.key}>
-                            <td className="py-1 pr-2 text-sm" style={{ color: '#b8c8d8' }}>{cat.label}</td>
+                            <td className="py-1 pr-2 text-sm" style={{ color: '#8B949E' }}>{cat.label}</td>
                             <td className="py-1 pl-2">
                               <input type="number" min={0} step={0.01} className="input"
                                 style={{ padding: '3px 8px', fontSize: '0.9rem' }}
@@ -292,21 +292,21 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
 
             {/* Trip-level costs */}
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#3b82f6' }}>
+              <div className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#1F6FEB' }}>
                 Trip Costs (Travel &amp; Hotel)
               </div>
               <table className="w-full">
                 <thead>
                   <tr>
-                    <th className="text-left pb-2 text-xs font-medium" style={{ color: '#a8b8c8' }}>Category</th>
-                    <th className="text-left pb-2 pl-2 text-xs font-medium" style={{ color: '#a8b8c8' }}>Estimated ($)</th>
-                    <th className="text-left pb-2 pl-2 text-xs font-medium" style={{ color: '#a8b8c8' }}>Actual ($)</th>
+                    <th className="text-left pb-2 text-xs font-medium" style={{ color: '#8B949E' }}>Category</th>
+                    <th className="text-left pb-2 pl-2 text-xs font-medium" style={{ color: '#8B949E' }}>Estimated ($)</th>
+                    <th className="text-left pb-2 pl-2 text-xs font-medium" style={{ color: '#8B949E' }}>Actual ($)</th>
                   </tr>
                 </thead>
                 <tbody>
                   {([{ key: 'travel', label: 'Travel ✈️' }, { key: 'hotel', label: 'Hotel 🏨' }] as const).map(cat => (
                     <tr key={cat.key}>
-                      <td className="py-1.5 pr-2 text-sm" style={{ color: '#b8c8d8' }}>{cat.label}</td>
+                      <td className="py-1.5 pr-2 text-sm" style={{ color: '#8B949E' }}>{cat.label}</td>
                       <td className="py-1.5 pl-2">
                         <input type="number" min={0} step={0.01} className="input"
                           style={{ padding: '4px 8px', fontSize: '0.9rem' }}
@@ -321,10 +321,10 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                       </td>
                     </tr>
                   ))}
-                  <tr style={{ borderTop: '1px solid #1f2937' }}>
-                    <td className="pt-2.5 text-sm font-semibold" style={{ color: '#f1f5f9' }}>Grand Total</td>
-                    <td className="pt-2.5 pl-2 font-bold" style={{ color: '#22c55e' }}>${grandEst.toFixed(0)}</td>
-                    <td className="pt-2.5 pl-2 font-bold" style={{ color: grandActual > grandEst ? '#ef4444' : '#22c55e' }}>${grandActual.toFixed(0)}</td>
+                  <tr style={{ borderTop: '1px solid #30363D' }}>
+                    <td className="pt-2.5 text-sm font-semibold" style={{ color: '#E6EDF3' }}>Grand Total</td>
+                    <td className="pt-2.5 pl-2 font-bold" style={{ color: '#3FB950' }}>${grandEst.toFixed(0)}</td>
+                    <td className="pt-2.5 pl-2 font-bold" style={{ color: grandActual > grandEst ? '#F85149' : '#3FB950' }}>${grandActual.toFixed(0)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -340,7 +340,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
             </div>
 
             {error && (
-              <div className="p-3 rounded-lg text-sm" style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#f87171' }}>
+              <div className="p-3 rounded-lg text-sm" style={{ backgroundColor: 'rgba(248,81,73,0.1)', color: '#F85149' }}>
                 {error}
               </div>
             )}

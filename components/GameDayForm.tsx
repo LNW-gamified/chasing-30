@@ -267,7 +267,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
   const sectionHead = (label: string) => (
     <div
       className="text-xs font-semibold uppercase tracking-wider pt-4 pb-1 mb-2"
-      style={{ color: '#3b82f6', borderBottom: '1px solid #1f2937' }}
+      style={{ color: '#1F6FEB', borderBottom: '1px solid #30363D' }}
     >
       {label}
     </div>
@@ -285,21 +285,21 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-8 px-4"
       style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
     >
-      <div className="card w-full max-w-3xl" style={{ backgroundColor: '#111827' }}>
+      <div className="card w-full max-w-3xl" style={{ backgroundColor: '#161B22' }}>
         {/* Header */}
         <div
           className="flex items-center justify-between px-6 py-4"
-          style={{ borderBottom: '1px solid #1f2937' }}
+          style={{ borderBottom: '1px solid #30363D' }}
         >
           <div>
-            <div className="font-semibold" style={{ color: '#f1f5f9' }}>
+            <div className="font-semibold" style={{ color: '#E6EDF3' }}>
               {visit ? 'Edit GameDay Record' : 'Log a Game'}
             </div>
-            <div className="text-sm" style={{ color: '#a8b8c8' }}>
+            <div className="text-sm" style={{ color: '#8B949E' }}>
               {stadium.name}
             </div>
           </div>
-          <button onClick={onClose} style={{ color: '#a8b8c8' }}>
+          <button onClick={onClose} style={{ color: '#8B949E' }}>
             <X size={20} />
           </button>
         </div>
@@ -393,7 +393,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
           {sectionHead('Seating')}
           {/* Primary seat */}
           <div className="mb-3">
-            <div className="text-xs font-medium mb-2" style={{ color: '#b8c8d8' }}>Seat 1</div>
+            <div className="text-xs font-medium mb-2" style={{ color: '#8B949E' }}>Seat 1</div>
             <div className="grid grid-cols-3 gap-3">
               {field('Section', <input type="text" className="input" placeholder="114" value={form.seat_section} onChange={(e) => set('seat_section', e.target.value)} />)}
               {field('Row', <input type="text" className="input" placeholder="G" value={form.seat_row} onChange={(e) => set('seat_row', e.target.value)} />)}
@@ -404,12 +404,12 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
           {additionalSeats.map((seat, idx) => (
             <div key={idx} className="mb-3">
               <div className="flex items-center justify-between mb-2">
-                <div className="text-xs font-medium" style={{ color: '#b8c8d8' }}>Seat {idx + 2}</div>
+                <div className="text-xs font-medium" style={{ color: '#8B949E' }}>Seat {idx + 2}</div>
                 <button
                   type="button"
                   onClick={() => removeExtraSeat(idx)}
                   className="p-1 rounded"
-                  style={{ color: '#a8b8c8' }}
+                  style={{ color: '#8B949E' }}
                 >
                   <X size={12} />
                 </button>
@@ -439,8 +439,8 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
             <Plus size={12} /> Add Another Seat
           </button>
 
-          <div className="flex items-center justify-between pt-4 pb-1 mb-2" style={{ borderBottom: '1px solid #1f2937' }}>
-            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#3b82f6' }}>
+          <div className="flex items-center justify-between pt-4 pb-1 mb-2" style={{ borderBottom: '1px solid #30363D' }}>
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#1F6FEB' }}>
               Conditions
             </span>
             <button
@@ -448,7 +448,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
               onClick={() => fetchWeather(form.visit_date, true)}
               disabled={weatherLoading || !form.visit_date}
               className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg transition-colors"
-              style={{ color: '#60a5fa', backgroundColor: 'rgba(59,130,246,0.1)' }}
+              style={{ color: '#1F6FEB', backgroundColor: 'rgba(31,111,235,0.1)' }}
               title="Fetch weather for this date and stadium"
             >
               {weatherLoading
@@ -461,8 +461,8 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
             <div
               className="text-xs mb-2 px-2 py-1 rounded"
               style={{
-                color: weatherNote === 'Auto-filled' ? '#22c55e' : '#a8b8c8',
-                backgroundColor: weatherNote === 'Auto-filled' ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.04)',
+                color: weatherNote === 'Auto-filled' ? '#3FB950' : '#8B949E',
+                backgroundColor: weatherNote === 'Auto-filled' ? 'rgba(63,185,80,0.08)' : 'rgba(255,255,255,0.04)',
               }}
             >
               {weatherNote === 'Auto-filled' ? '✓ Weather auto-filled from OpenWeatherMap' : `ℹ ${weatherNote}`}
@@ -495,7 +495,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Home starter */}
             <div>
-              <div className="text-xs font-medium mb-2" style={{ color: '#b8c8d8' }}>
+              <div className="text-xs font-medium mb-2" style={{ color: '#8B949E' }}>
                 Home Starter
               </div>
               <div className="flex flex-col gap-2">
@@ -532,7 +532,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
 
             {/* Away starter */}
             <div>
-              <div className="text-xs font-medium mb-2" style={{ color: '#b8c8d8' }}>
+              <div className="text-xs font-medium mb-2" style={{ color: '#8B949E' }}>
                 Away Starter
               </div>
               <div className="flex flex-col gap-2">
@@ -575,7 +575,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                 <tr>
                   <th
                     className="text-left py-1 pr-3 text-xs font-medium"
-                    style={{ color: '#a8b8c8', width: 70 }}
+                    style={{ color: '#8B949E', width: 70 }}
                   >
                     Team
                   </th>
@@ -583,7 +583,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                     <th
                       key={inn.inning}
                       className="text-center px-1 text-xs font-medium"
-                      style={{ color: '#a8b8c8', minWidth: 36 }}
+                      style={{ color: '#8B949E', minWidth: 36 }}
                     >
                       {inn.inning}
                     </th>
@@ -593,7 +593,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
               <tbody>
                 {(['away', 'home'] as const).map((side) => (
                   <tr key={side}>
-                    <td className="py-1 pr-3 text-xs" style={{ color: '#b8c8d8' }}>
+                    <td className="py-1 pr-3 text-xs" style={{ color: '#8B949E' }}>
                       {side === 'away' ? form.visiting_team || 'Away' : form.home_team || 'Home'}
                     </td>
                     {innings.map((inn, idx) => (
@@ -633,7 +633,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                     <th
                       key={h}
                       className="text-left py-1 pr-2 text-xs font-medium"
-                      style={{ color: '#a8b8c8' }}
+                      style={{ color: '#8B949E' }}
                     >
                       {h}
                     </th>
@@ -646,7 +646,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                   { label: form.home_team || 'Home', prefix: 'home' },
                 ].map(({ label, prefix }) => (
                   <tr key={prefix}>
-                    <td className="py-1 pr-2 text-xs" style={{ color: '#b8c8d8', width: 80 }}>
+                    <td className="py-1 pr-2 text-xs" style={{ color: '#8B949E', width: 80 }}>
                       {label}
                     </td>
                     {['runs', 'hits', 'errors', 'lob'].map((stat) => (
@@ -723,7 +723,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                   type="button"
                   onClick={removePhoto}
                   className="absolute top-2 right-2 p-1 rounded-full"
-                  style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#f87171' }}
+                  style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#F85149' }}
                 >
                   <Trash2 size={14} />
                 </button>
@@ -732,13 +732,13 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
               <label
                 className="flex flex-col items-center justify-center gap-2 rounded-xl cursor-pointer transition-colors"
                 style={{
-                  border: '2px dashed #2d3748',
+                  border: '2px dashed #30363D',
                   backgroundColor: '#1a2235',
                   padding: '2rem 1rem',
-                  color: '#a8b8c8',
+                  color: '#8B949E',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#3b82f6')}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#2d3748')}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#1F6FEB')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#30363D')}
               >
                 <ImagePlus size={28} />
                 <span className="text-sm">Click to upload a game photo</span>
@@ -769,7 +769,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
           {error && (
             <div
               className="mt-4 p-3 rounded-lg text-sm"
-              style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#f87171' }}
+              style={{ backgroundColor: 'rgba(248,81,73,0.1)', color: '#F85149' }}
             >
               {error}
             </div>

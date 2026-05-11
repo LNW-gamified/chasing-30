@@ -40,7 +40,6 @@ async function fetchTodayGames(favAbbr: string | null): Promise<TodayGame[]> {
         isFavorite: favAbbr !== null && (awayAbbr === favAbbr || homeAbbr === favAbbr),
       }
     })
-    // Favorite team's game first
     return games.sort((a, b) => (b.isFavorite ? 1 : 0) - (a.isFavorite ? 1 : 0))
   } catch {
     return []
@@ -86,10 +85,10 @@ function getMilestonePoints(id: string): number {
 // ─── Quest icon ───────────────────────────────────────────────────────────────
 
 function questStyle(id: string): { emoji: string; bg: string } {
-  if (id === 'five_stadiums')    return { emoji: '🚗', bg: 'rgba(249,115,22,0.13)'  }
-  if (id === 'ten_stadiums')     return { emoji: '🔟', bg: 'rgba(59,130,246,0.13)'  }
-  if (id === 'fifteen_stadiums') return { emoji: '🏟️', bg: 'rgba(34,197,94,0.13)'  }
-  return                                { emoji: '⚡', bg: 'rgba(139,92,246,0.13)'  }
+  if (id === 'five_stadiums')    return { emoji: '🚗', bg: 'rgba(245,166,35,0.12)'  }
+  if (id === 'ten_stadiums')     return { emoji: '🔟', bg: 'rgba(31,111,235,0.12)'  }
+  if (id === 'fifteen_stadiums') return { emoji: '🏟️', bg: 'rgba(63,185,80,0.12)'  }
+  return                                { emoji: '⚡', bg: 'rgba(139,92,246,0.12)'  }
 }
 
 // ─── User helpers ─────────────────────────────────────────────────────────────
@@ -108,9 +107,9 @@ function getGreeting(): string {
   return 'Good evening'
 }
 
-// ─── Progress ring (SVG, no hooks — server component safe) ────────────────────
+// ─── Progress ring ────────────────────────────────────────────────────────────
 
-function LightRing({ visited, total }: { visited: number; total: number }) {
+function ProgressRing({ visited, total }: { visited: number; total: number }) {
   const size = 120
   const sw   = 8
   const r    = (size - sw * 2) / 2
@@ -121,15 +120,12 @@ function LightRing({ visited, total }: { visited: number; total: number }) {
   return (
     <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#30363D" strokeWidth={sw} />
         <circle
           cx={size / 2} cy={size / 2} r={r}
-          fill="none" stroke="#E5E7EB" strokeWidth={sw}
-        />
-        <circle
-          cx={size / 2} cy={size / 2} r={r}
-          fill="none" stroke="#22C55E" strokeWidth={sw} strokeLinecap="round"
+          fill="none" stroke="#3FB950" strokeWidth={sw} strokeLinecap="round"
           strokeDasharray={circ} strokeDashoffset={offset}
-          style={{ filter: 'drop-shadow(0 0 5px rgba(34,197,94,0.4))' }}
+          style={{ filter: 'drop-shadow(0 0 5px rgba(63,185,80,0.4))' }}
         />
       </svg>
       <div style={{
@@ -138,10 +134,10 @@ function LightRing({ visited, total }: { visited: number; total: number }) {
         alignItems: 'center', justifyContent: 'center',
         gap: 1,
       }}>
-        <span style={{ fontSize: 48, fontWeight: 800, color: '#111111', lineHeight: 1 }}>
+        <span style={{ fontSize: 48, fontWeight: 800, color: '#E6EDF3', lineHeight: 1 }}>
           {visited}
         </span>
-        <span style={{ fontSize: 16, color: '#888888', fontWeight: 500, lineHeight: 1 }}>
+        <span style={{ fontSize: 16, color: '#8B949E', fontWeight: 500, lineHeight: 1 }}>
           /30
         </span>
       </div>
@@ -159,10 +155,8 @@ const NAV = [
   { label: 'Trips', href: '/trips',      icon: Plane,   active: false },
 ]
 
-// ─── Section label style ──────────────────────────────────────────────────────
-
 const sectionLabel: React.CSSProperties = {
-  fontSize: 12, fontWeight: 600, color: '#888888',
+  fontSize: 12, fontWeight: 600, color: '#8B949E',
   textTransform: 'uppercase', letterSpacing: '0.1em',
 }
 
@@ -198,7 +192,6 @@ export default async function DashboardPage() {
   const name    = getFirstName(user)
   const greeting = getGreeting()
 
-  // Division progress
   const divProgress = [
     { label: 'AL East',    league: 'AL', division: 'East'    },
     { label: 'AL Central', league: 'AL', division: 'Central' },
@@ -212,7 +205,6 @@ export default async function DashboardPage() {
     return { label, total: group.length, vis }
   })
 
-  // Favorite team = most-visited stadium's abbreviation
   const stadiumCounts: Record<string, number> = {}
   for (const v of allVisits) stadiumCounts[v.stadium_id] = (stadiumCounts[v.stadium_id] ?? 0) + 1
   const topId   = Object.entries(stadiumCounts).sort((a, b) => b[1] - a[1])[0]?.[0]
@@ -221,13 +213,13 @@ export default async function DashboardPage() {
   const todayGames = await fetchTodayGames(favAbbr)
 
   const card: React.CSSProperties = {
-    background: '#FFFFFF',
+    background: '#161B22',
     borderRadius: 16,
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    border: '1px solid #30363D',
   }
 
   return (
-    <div style={{ background: '#F8F8F8', color: '#111111', minHeight: '100vh' }}>
+    <div style={{ background: '#0B1117', color: '#E6EDF3', minHeight: '100vh' }}>
       <div style={{ display: 'flex' }}>
 
         {/* ── Desktop sidebar ──────────────────────────────────────────── */}
@@ -235,39 +227,39 @@ export default async function DashboardPage() {
           className="hidden md:flex flex-col"
           style={{
             position: 'fixed', top: 0, left: 0, bottom: 0, width: 240, zIndex: 30,
-            background: '#FFFFFF', borderRight: '1px solid #EEEEEE', overflowY: 'auto',
+            background: '#161B22', borderRight: '1px solid #30363D', overflowY: 'auto',
           }}
         >
-          <div style={{ padding: '1.5rem 1.25rem', borderBottom: '1px solid #EEEEEE' }}>
-            <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#111111' }}>⚾ Chasing 30</div>
-            <div style={{ fontSize: '0.75rem', color: '#888888', marginTop: 2 }}>MLB Stadium Tracker</div>
+          <div style={{ padding: '1.5rem 1.25rem', borderBottom: '1px solid #30363D' }}>
+            <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#E6EDF3' }}>⚾ Chasing 30</div>
+            <div style={{ fontSize: '0.75rem', color: '#8B949E', marginTop: 2 }}>MLB Stadium Tracker</div>
           </div>
           <nav style={{ flex: 1, padding: '1rem 0.75rem' }}>
             {NAV.map(({ label, href, icon: Icon, active }) => (
               <Link key={href} href={href} style={{
                 display: 'flex', alignItems: 'center', gap: '0.75rem',
                 padding: '0.625rem 0.875rem', borderRadius: 12, marginBottom: 4,
-                backgroundColor: active ? 'rgba(59,130,246,0.09)' : 'transparent',
-                color: active ? '#3B82F6' : '#888888',
+                backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent',
+                color: active ? '#1F6FEB' : '#8B949E',
                 fontWeight: active ? 700 : 500,
                 fontSize: '0.9rem', textDecoration: 'none',
-                borderLeft: active ? '3px solid #3B82F6' : '3px solid transparent',
+                borderLeft: active ? '3px solid #1F6FEB' : '3px solid transparent',
               }}>
                 <Icon size={18} />
                 <span>{label}</span>
               </Link>
             ))}
           </nav>
-          <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #EEEEEE' }}>
+          <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #30363D' }}>
             <div style={{ ...sectionLabel, marginBottom: 4 }}>Overall</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#111111', lineHeight: 1 }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>
               {visitedCount}
-              <span style={{ fontSize: '0.85rem', fontWeight: 400, color: '#888888' }}> / 30</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 400, color: '#8B949E' }}> / 30</span>
             </div>
-            <div style={{ marginTop: 8, height: 5, background: '#E5E7EB', borderRadius: 3, overflow: 'hidden' }}>
-              <div style={{ width: `${(visitedCount / 30) * 100}%`, height: '100%', background: '#22C55E', borderRadius: 3 }} />
+            <div style={{ marginTop: 8, height: 5, background: '#30363D', borderRadius: 3, overflow: 'hidden' }}>
+              <div style={{ width: `${(visitedCount / 30) * 100}%`, height: '100%', background: '#3FB950', borderRadius: 3 }} />
             </div>
-            <div style={{ fontSize: '0.72rem', color: '#888888', marginTop: 4 }}>
+            <div style={{ fontSize: '0.72rem', color: '#8B949E', marginTop: 4 }}>
               {Math.round((visitedCount / 30) * 100)}% complete
             </div>
           </div>
@@ -280,23 +272,23 @@ export default async function DashboardPage() {
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
               <div>
-                <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#111111', lineHeight: 1.15, margin: 0 }}>
+                <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#E6EDF3', lineHeight: 1.15, margin: 0 }}>
                   {greeting},<br />{name}
                 </h1>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-                  <span style={{ fontSize: '0.8rem', background: '#F0F0F0', color: '#555555', padding: '3px 10px', borderRadius: 999, fontWeight: 600 }}>
+                  <span style={{ fontSize: '0.8rem', background: 'rgba(139,148,158,0.12)', color: '#8B949E', padding: '3px 10px', borderRadius: 999, fontWeight: 600 }}>
                     🏟️ {rank} · {points} pts
                   </span>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                 <button
-                  style={{ width: 40, height: 40, borderRadius: '50%', background: '#FFFFFF', border: '1px solid #EEEEEE', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                  style={{ width: 40, height: 40, borderRadius: '50%', background: '#161B22', border: '1px solid #30363D', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                   aria-label="Notifications"
                 >
-                  <Bell size={17} style={{ color: '#888888' }} />
+                  <Bell size={17} style={{ color: '#8B949E' }} />
                 </button>
-                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontWeight: 800, fontSize: '1rem', flexShrink: 0 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #1F6FEB, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E6EDF3', fontWeight: 800, fontSize: '1rem', flexShrink: 0 }}>
                   {name.charAt(0).toUpperCase()}
                 </div>
               </div>
@@ -304,26 +296,26 @@ export default async function DashboardPage() {
 
             {/* Mission card */}
             <div style={{
-              background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)',
+              background: 'linear-gradient(135deg, #1F6FEB 0%, #7c3aed 100%)',
               borderRadius: 16, padding: '1.25rem 1.5rem', marginBottom: '1.25rem',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                 <div>
-                  <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 5 }}>
+                  <div style={{ color: 'rgba(230,237,243,0.7)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 5 }}>
                     YOUR MISSION
                   </div>
-                  <div style={{ color: '#FFFFFF', fontWeight: 800, fontSize: '1.1rem', lineHeight: 1.3 }}>
+                  <div style={{ color: '#E6EDF3', fontWeight: 800, fontSize: '1.1rem', lineHeight: 1.3 }}>
                     Chasing 30 · {visitedCount} of 30 stadiums
                   </div>
-                  <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.8rem', marginTop: 4 }}>
+                  <div style={{ color: 'rgba(230,237,243,0.65)', fontSize: '0.8rem', marginTop: 4 }}>
                     {visitedCount === 30 ? 'Legend status achieved!' : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} remaining`}
                   </div>
                 </div>
                 <Link href="/stadiums" style={{
-                  background: 'rgba(255,255,255,0.2)', color: '#FFFFFF',
+                  background: 'rgba(230,237,243,0.2)', color: '#E6EDF3',
                   padding: '8px 18px', borderRadius: 999, fontWeight: 700,
                   fontSize: '0.875rem', textDecoration: 'none', flexShrink: 0,
-                  border: '1px solid rgba(255,255,255,0.3)',
+                  border: '1px solid rgba(230,237,243,0.3)',
                   backdropFilter: 'blur(4px)',
                 }}>
                   Plan →
@@ -338,16 +330,16 @@ export default async function DashboardPage() {
               <div style={{ ...card, padding: '1.25rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
                   <span style={{ fontSize: '1rem' }}>🏟️</span>
-                  <span style={{ fontWeight: 700, color: '#111111', fontSize: '0.9rem' }}>My Stadiums</span>
+                  <span style={{ fontWeight: 700, color: '#E6EDF3', fontSize: '0.9rem' }}>My Stadiums</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                  <LightRing visited={visitedCount} total={30} />
+                  <ProgressRing visited={visitedCount} total={30} />
                   <div>
-                    <div style={{ color: '#888888', fontSize: '0.78rem', marginBottom: 6 }}>stadiums visited</div>
-                    <div style={{ color: '#22C55E', fontSize: '0.82rem', fontWeight: 700 }}>
+                    <div style={{ color: '#8B949E', fontSize: '0.78rem', marginBottom: 6 }}>stadiums visited</div>
+                    <div style={{ color: '#3FB950', fontSize: '0.82rem', fontWeight: 700 }}>
                       {Math.round((visitedCount / 30) * 100)}% complete
                     </div>
-                    <Link href="/milestones" style={{ color: '#3B82F6', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'none', marginTop: 6, display: 'block' }}>
+                    <Link href="/milestones" style={{ color: '#1F6FEB', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'none', marginTop: 6, display: 'block' }}>
                       {earnedMilestones.length} milestone{earnedMilestones.length !== 1 ? 's' : ''} earned →
                     </Link>
                   </div>
@@ -356,22 +348,22 @@ export default async function DashboardPage() {
 
               {/* Division Progress card */}
               <div style={{ ...card, padding: '1.25rem' }}>
-                <div style={{ fontWeight: 700, color: '#111111', fontSize: '0.9rem', marginBottom: '0.875rem' }}>
+                <div style={{ fontWeight: 700, color: '#E6EDF3', fontSize: '0.9rem', marginBottom: '0.875rem' }}>
                   Division Progress
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {divProgress.map(({ label, vis, total }) => (
                     <div key={label}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span style={{ fontSize: '0.78rem', color: '#555555' }}>{label}</span>
-                        <span style={{ fontSize: '0.78rem', color: '#888888', fontWeight: 600 }}>
+                        <span style={{ fontSize: '0.78rem', color: '#8B949E' }}>{label}</span>
+                        <span style={{ fontSize: '0.78rem', color: '#8B949E', fontWeight: 600 }}>
                           {vis}/{total}
                         </span>
                       </div>
-                      <div style={{ height: 6, background: '#E5E7EB', borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{ height: 6, background: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
                         <div style={{
                           width: `${(vis / total) * 100}%`, height: '100%',
-                          background: '#3B82F6', borderRadius: 4,
+                          background: '#1F6FEB', borderRadius: 4,
                         }} />
                       </div>
                     </div>
@@ -380,7 +372,7 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            {/* Today's Games — client component handles polling + sorting */}
+            {/* Today's Games */}
             {todayGames.length > 0 && (
               <TodayGames initialGames={todayGames} favAbbr={favAbbr} />
             )}
@@ -390,7 +382,7 @@ export default async function DashboardPage() {
               <div style={{ marginTop: 32 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                   <span style={sectionLabel}>Your Quests</span>
-                  <Link href="/milestones" style={{ fontSize: '0.8rem', color: '#3B82F6', fontWeight: 600, textDecoration: 'none' }}>
+                  <Link href="/milestones" style={{ fontSize: '0.8rem', color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
                     See All
                   </Link>
                 </div>
@@ -405,7 +397,6 @@ export default async function DashboardPage() {
                           display: 'flex', alignItems: 'center', gap: '0.875rem',
                           cursor: 'pointer',
                         }}>
-                          {/* Quest icon: 44px square with colored background */}
                           <div style={{
                             width: 44, height: 44, borderRadius: 10, flexShrink: 0,
                             backgroundColor: bg,
@@ -415,22 +406,22 @@ export default async function DashboardPage() {
                             {emoji}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 700, color: '#111111', fontSize: '0.88rem', marginBottom: 2 }}>
+                            <div style={{ fontWeight: 700, color: '#E6EDF3', fontSize: '0.88rem', marginBottom: 2 }}>
                               {m.name}
                             </div>
-                            <div style={{ color: '#888888', fontSize: '0.78rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <div style={{ color: '#8B949E', fontSize: '0.78rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {m.description}
                             </div>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                             <span style={{
-                              background: 'rgba(34,197,94,0.1)', color: '#16A34A',
+                              background: 'rgba(63,185,80,0.12)', color: '#3FB950',
                               fontSize: '0.72rem', fontWeight: 800,
                               padding: '3px 9px', borderRadius: 999,
                             }}>
                               +{getMilestonePoints(m.id)}
                             </span>
-                            <ChevronRight size={14} style={{ color: '#CCCCCC' }} />
+                            <ChevronRight size={14} style={{ color: '#30363D' }} />
                           </div>
                         </div>
                       </Link>
@@ -449,15 +440,15 @@ export default async function DashboardPage() {
         className="md:hidden"
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
-          background: '#FFFFFF', borderTop: '1px solid #EEEEEE',
+          background: '#161B22', borderTop: '1px solid #30363D',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-around', padding: '0.6rem 0 0.5rem' }}>
           {NAV.map(({ label, href, icon: Icon, active }) => (
             <Link key={href} href={href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 44, textDecoration: 'none' }}>
-              <Icon size={22} style={{ color: active ? '#3B82F6' : '#CCCCCC' }} />
-              {active && <span style={{ fontSize: '0.58rem', color: '#3B82F6', fontWeight: 700, lineHeight: 1 }}>{label}</span>}
+              <Icon size={22} style={{ color: active ? '#1F6FEB' : '#8B949E' }} />
+              {active && <span style={{ fontSize: '0.58rem', color: '#1F6FEB', fontWeight: 700, lineHeight: 1 }}>{label}</span>}
             </Link>
           ))}
         </div>

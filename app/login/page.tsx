@@ -31,16 +31,16 @@ export default function LoginPage() {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4"
-      style={{ backgroundColor: '#0a0e1a' }}
+      style={{ backgroundColor: '#0B1117' }}
     >
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="text-4xl mb-3">⚾</div>
-          <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>
+          <h1 className="text-2xl font-bold" style={{ color: '#E6EDF3' }}>
             Chasing 30
           </h1>
-          <p className="text-sm mt-1" style={{ color: '#a8b8c8' }}>
+          <p className="text-sm mt-1" style={{ color: '#8B949E' }}>
             MLB Stadium Tracker
           </p>
         </div>
@@ -48,9 +48,9 @@ export default function LoginPage() {
         {/* Card */}
         <div
           className="card p-6"
-          style={{ backgroundColor: '#111827', border: '1px solid #1f2937' }}
+          style={{ backgroundColor: '#161B22', border: '1px solid #30363D' }}
         >
-          <h2 className="text-lg font-semibold mb-6" style={{ color: '#f1f5f9' }}>
+          <h2 className="text-lg font-semibold mb-6" style={{ color: '#E6EDF3' }}>
             Sign In
           </h2>
 
@@ -84,7 +84,7 @@ export default function LoginPage() {
             {error && (
               <div
                 className="p-3 rounded-lg text-sm"
-                style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#f87171' }}
+                style={{ backgroundColor: 'rgba(248,81,73,0.1)', color: '#F85149' }}
               >
                 {error}
               </div>

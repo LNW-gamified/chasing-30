@@ -9,14 +9,14 @@ import type { SpecialEvent, SpecialEventType } from '@/types'
 import { Plus, Pencil, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 
 const EVENT_META: Record<SpecialEventType, { label: string; icon: string; color: string }> = {
-  world_series:      { label: 'World Series',              icon: '🏆', color: '#f59e0b' },
-  all_star_game:     { label: 'MLB All-Star Game',          icon: '⭐', color: '#3b82f6' },
-  postseason:        { label: 'MLB Postseason',             icon: '🍂', color: '#f97316' },
-  spring_training:   { label: 'Spring Training',            icon: '🌸', color: '#22c55e' },
+  world_series:      { label: 'World Series',              icon: '🏆', color: '#F5A623' },
+  all_star_game:     { label: 'MLB All-Star Game',          icon: '⭐', color: '#1F6FEB' },
+  postseason:        { label: 'MLB Postseason',             icon: '🍂', color: '#F5A623' },
+  spring_training:   { label: 'Spring Training',            icon: '🌸', color: '#3FB950' },
   minor_league:      { label: 'Minor League',               icon: '🌱', color: '#10b981' },
   historic_ballpark: { label: 'Historic Ballpark',          icon: '🏛️', color: '#8b5cf6' },
   international:     { label: 'International Game',         icon: '🌍', color: '#06b6d4' },
-  other:             { label: 'Other Experience',           icon: '📝', color: '#b8c8d8' },
+  other:             { label: 'Other Experience',           icon: '📝', color: '#8B949E' },
 }
 
 // Use MLB logo from ESPN CDN for WS and All-Star
@@ -99,8 +99,8 @@ export default function SpecialEventsPage() {
     <AppShell>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight" style={{ color: '#ffffff' }}>Special Events</h1>
-          <p className="text-base mt-0.5" style={{ color: '#64748b' }}>
+          <h1 className="text-2xl font-black tracking-tight" style={{ color: '#E6EDF3' }}>Special Events</h1>
+          <p className="text-base mt-0.5" style={{ color: '#8B949E' }}>
             {events.length} experience{events.length !== 1 ? 's' : ''} logged
           </p>
         </div>
@@ -124,14 +124,14 @@ export default function SpecialEventsPage() {
                 onClick={() => setActiveFilter(active ? null : type)}
                 className="card p-4 text-left transition-all"
                 style={{
-                  border: active ? `2px solid ${meta.color}` : '1px solid #1f2937',
-                  backgroundColor: active ? `${meta.color}18` : '#111827',
+                  border: active ? `2px solid ${meta.color}` : '1px solid #30363D',
+                  backgroundColor: active ? `${meta.color}18` : '#161B22',
                   cursor: 'pointer',
                 }}
               >
                 <div className="text-2xl mb-2">{meta.icon}</div>
                 <div className="text-3xl font-bold leading-none" style={{ color: meta.color }}>{count}</div>
-                <div className="text-xs mt-1.5 leading-snug" style={{ color: '#b8c8d8' }}>{meta.label}</div>
+                <div className="text-xs mt-1.5 leading-snug" style={{ color: '#8B949E' }}>{meta.label}</div>
               </button>
             )
           })}
@@ -139,14 +139,14 @@ export default function SpecialEventsPage() {
       )}
       {activeFilter && (
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-sm" style={{ color: '#a8b8c8' }}>
+          <span className="text-sm" style={{ color: '#8B949E' }}>
             Showing: <span style={{ color: EVENT_META[activeFilter].color }}>{EVENT_META[activeFilter].label}</span>
           </span>
           <button
             type="button"
             onClick={() => setActiveFilter(null)}
             className="text-xs px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#a8b8c8' }}
+            style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#8B949E' }}
           >
             Clear filter
           </button>
@@ -154,12 +154,12 @@ export default function SpecialEventsPage() {
       )}
 
       {loading ? (
-        <div className="text-center py-12" style={{ color: '#a8b8c8' }}>Loading...</div>
+        <div className="text-center py-12" style={{ color: '#8B949E' }}>Loading...</div>
       ) : events.length === 0 ? (
         <div className="card p-16 text-center" style={{ borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.06)' }}>
           <div className="text-4xl mb-4">⭐</div>
-          <div className="text-lg font-semibold mb-1" style={{ color: '#94a3b8' }}>No special events yet</div>
-          <div className="text-base mb-5" style={{ color: '#64748b' }}>
+          <div className="text-lg font-semibold mb-1" style={{ color: '#8B949E' }}>No special events yet</div>
+          <div className="text-base mb-5" style={{ color: '#8B949E' }}>
             Log a World Series, All-Star Game, minor league game, historic ballpark visit, and more
           </div>
           <button onClick={openAdd} className="btn-primary mx-auto">
@@ -203,10 +203,10 @@ export default function SpecialEventsPage() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-base" style={{ color: '#ffffff' }}>
+                    <div className="font-bold text-base" style={{ color: '#E6EDF3' }}>
                       {eventTitle(e)}
                     </div>
-                    <div className="text-base mt-0.5 flex flex-wrap gap-2" style={{ color: '#64748b' }}>
+                    <div className="text-base mt-0.5 flex flex-wrap gap-2" style={{ color: '#8B949E' }}>
                       <span>{formatDate(e.event_date)}</span>
                       {eventSubtitle(e) && <span>· {eventSubtitle(e)}</span>}
                     </div>
@@ -221,28 +221,28 @@ export default function SpecialEventsPage() {
                   <div className="flex gap-1 flex-shrink-0">
                     <button
                       onClick={(ev) => { ev.stopPropagation(); openEdit(e) }}
-                      className="p-1.5 rounded" style={{ color: '#a8b8c8' }} title="Edit"
+                      className="p-1.5 rounded" style={{ color: '#8B949E' }} title="Edit"
                     >
                       <Pencil size={14} />
                     </button>
                     <button
                       onClick={(ev) => { ev.stopPropagation(); deleteEvent(e.id) }}
-                      className="p-1.5 rounded" style={{ color: '#a8b8c8' }} title="Delete"
+                      className="p-1.5 rounded" style={{ color: '#8B949E' }} title="Delete"
                     >
                       <Trash2 size={14} />
                     </button>
-                    {expanded ? <ChevronUp size={16} style={{ color: '#a8b8c8' }} /> : <ChevronDown size={16} style={{ color: '#a8b8c8' }} />}
+                    {expanded ? <ChevronUp size={16} style={{ color: '#8B949E' }} /> : <ChevronDown size={16} style={{ color: '#8B949E' }} />}
                   </div>
                 </div>
 
                 {/* Expanded details */}
                 {expanded && (
-                  <div style={{ borderTop: '1px solid #1f2937' }} className="p-4">
+                  <div style={{ borderTop: '1px solid #30363D' }} className="p-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                       {e.weather && (
                         <div>
                           <div className="label">Weather</div>
-                          <div className="text-sm" style={{ color: '#f1f5f9' }}>
+                          <div className="text-sm" style={{ color: '#E6EDF3' }}>
                             {e.weather}{e.temperature ? ` · ${e.temperature}°F` : ''}
                           </div>
                         </div>
@@ -250,13 +250,13 @@ export default function SpecialEventsPage() {
                       {e.attendance && (
                         <div>
                           <div className="label">Attendance</div>
-                          <div className="text-sm" style={{ color: '#f1f5f9' }}>{e.attendance.toLocaleString()}</div>
+                          <div className="text-sm" style={{ color: '#E6EDF3' }}>{e.attendance.toLocaleString()}</div>
                         </div>
                       )}
                       {(e.seat_section || e.seat_row || e.seat_number) && (
                         <div>
                           <div className="label">Seating</div>
-                          <div className="text-sm" style={{ color: '#f1f5f9' }}>
+                          <div className="text-sm" style={{ color: '#E6EDF3' }}>
                             Sec {e.seat_section}, Row {e.seat_row}, Seat {e.seat_number}
                           </div>
                         </div>
@@ -275,7 +275,7 @@ export default function SpecialEventsPage() {
                       <div>
                         <div className="label mb-1">Notes</div>
                         <div className="text-sm whitespace-pre-wrap p-3 rounded-lg"
-                          style={{ color: '#b8c8d8', backgroundColor: '#0d1424' }}>
+                          style={{ color: '#8B949E', backgroundColor: '#0d1424' }}>
                           {e.notes}
                         </div>
                       </div>

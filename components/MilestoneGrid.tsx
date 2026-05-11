@@ -299,27 +299,27 @@ export default function MilestoneGrid({
                 <div style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
                   padding: '8px 10px', borderRadius: 12,
-                  backgroundColor: isCurrent ? 'rgba(245,158,11,0.1)' : 'transparent',
-                  border: `1.5px solid ${isCurrent ? 'rgba(245,158,11,0.35)' : 'transparent'}`,
+                  backgroundColor: isCurrent ? 'rgba(245,166,35,0.1)' : 'transparent',
+                  border: `1.5px solid ${isCurrent ? 'rgba(245,166,35,0.35)' : 'transparent'}`,
                 }}>
                   <div style={{
                     width: 38, height: 38, borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: isPast ? 0 : 17,
                     backgroundColor: isCurrent
-                      ? 'rgba(245,158,11,0.15)'
-                      : isPast ? 'rgba(34,197,94,0.1)' : 'rgba(0,0,0,0.05)',
+                      ? 'rgba(245,166,35,0.15)'
+                      : isPast ? 'rgba(63,185,80,0.1)' : 'rgba(139,148,158,0.08)',
                     border: `2px solid ${
-                      isCurrent ? '#f59e0b'
-                      : isPast ? 'rgba(34,197,94,0.35)' : 'rgba(0,0,0,0.07)'}`,
+                      isCurrent ? '#F5A623'
+                      : isPast ? 'rgba(63,185,80,0.35)' : '#30363D'}`,
                   }}>
                     {isPast
-                      ? <Check size={15} color="#22c55e" strokeWidth={3} />
+                      ? <Check size={15} color="#3FB950" strokeWidth={3} />
                       : tier.icon}
                   </div>
                   <span style={{
                     fontSize: 11, fontWeight: isCurrent ? 700 : 500,
-                    color: isCurrent ? '#f59e0b' : isPast ? '#6b7280' : '#9ca3af',
+                    color: isCurrent ? '#F5A623' : '#8B949E',
                     whiteSpace: 'nowrap',
                   }}>
                     {tier.name}
@@ -329,7 +329,7 @@ export default function MilestoneGrid({
                 {i < rankTiers.length - 1 && (
                   <div style={{
                     width: 18, height: 2, flexShrink: 0,
-                    backgroundColor: i < currentRankIdx ? 'rgba(34,197,94,0.3)' : 'rgba(0,0,0,0.07)',
+                    backgroundColor: i < currentRankIdx ? 'rgba(63,185,80,0.3)' : '#30363D',
                   }} />
                 )}
               </div>
@@ -343,9 +343,9 @@ export default function MilestoneGrid({
             {(['all', 'earned', 'places', 'experiences'] as const).map(f => (
               <button key={f} onClick={() => setFilter(f)} style={{
                 padding: '7px 15px', borderRadius: 20, fontSize: 13, fontWeight: 600,
-                backgroundColor: filter === f ? '#0f172a' : '#f3f4f6',
-                color: filter === f ? '#ffffff' : '#6b7280',
-                border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                backgroundColor: filter === f ? '#1C2430' : 'rgba(139,148,158,0.08)',
+                color: filter === f ? '#E6EDF3' : '#8B949E',
+                border: filter === f ? '1px solid #484F58' : '1px solid transparent', cursor: 'pointer', whiteSpace: 'nowrap',
               }}>
                 {f === 'earned'
                   ? `Earned (${earned.length})`
@@ -357,7 +357,7 @@ export default function MilestoneGrid({
           <div style={{ position: 'relative', flex: 1, minWidth: 140, maxWidth: 220 }}>
             <Search size={14} style={{
               position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
-              color: '#9ca3af', pointerEvents: 'none',
+              color: '#8B949E', pointerEvents: 'none',
             }} />
             <input
               value={search}
@@ -365,8 +365,8 @@ export default function MilestoneGrid({
               placeholder="Search..."
               style={{
                 width: '100%', padding: '7px 10px 7px 30px', borderRadius: 20,
-                border: '1px solid #e5e7eb', fontSize: 13, color: '#111827',
-                backgroundColor: '#ffffff', outline: 'none', boxSizing: 'border-box',
+                border: '1px solid #30363D', fontSize: 13, color: '#E6EDF3',
+                backgroundColor: '#1C2430', outline: 'none', boxSizing: 'border-box',
               }}
             />
           </div>
@@ -381,7 +381,7 @@ export default function MilestoneGrid({
             const pts       = MILESTONE_POINTS[m.id] ?? 25
             const progress  = getMilestoneProgress(m.id, allVisits, allStadiums, allEvents)
             const pct       = progress ? Math.round((progress.current / progress.total) * 100) : 0
-            const barColor  = isPlace ? '#3b82f6' : '#f97316'
+            const barColor  = isPlace ? '#1F6FEB' : '#F5A623'
 
             return (
               <button
@@ -394,7 +394,7 @@ export default function MilestoneGrid({
                   textAlign: 'left', width: '100%',
                   transition: 'background-color 0.15s',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#f8fafc' }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#1C2430' }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
               >
                 {/* Icon square */}
@@ -403,10 +403,10 @@ export default function MilestoneGrid({
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 20, position: 'relative',
                   backgroundColor: isEarned
-                    ? 'rgba(245,158,11,0.12)'
-                    : isPlace ? 'rgba(59,130,246,0.07)' : 'rgba(249,115,22,0.07)',
+                    ? 'rgba(245,166,35,0.12)'
+                    : isPlace ? 'rgba(31,111,235,0.07)' : 'rgba(245,166,35,0.07)',
                   border: `1.5px solid ${
-                    isEarned ? 'rgba(245,158,11,0.25)' : 'rgba(0,0,0,0.06)'}`,
+                    isEarned ? 'rgba(245,166,35,0.25)' : '#30363D'}`,
                   filter: isEarned ? 'none' : 'grayscale(55%)',
                 }}>
                   {m.icon}
@@ -414,10 +414,10 @@ export default function MilestoneGrid({
                     <div style={{
                       position: 'absolute', bottom: -4, right: -4,
                       width: 16, height: 16, borderRadius: '50%',
-                      backgroundColor: '#22c55e', border: '2px solid #ffffff',
+                      backgroundColor: '#3FB950', border: '2px solid #0B1117',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
-                      <Check size={8} color="#ffffff" strokeWidth={3.5} />
+                      <Check size={8} color="#0B1117" strokeWidth={3.5} />
                     </div>
                   )}
                 </div>
@@ -426,13 +426,13 @@ export default function MilestoneGrid({
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     fontSize: 15, fontWeight: 600,
-                    color: isEarned ? '#111827' : '#374151',
+                    color: isEarned ? '#E6EDF3' : '#8B949E',
                     marginBottom: 1,
                   }}>
                     {m.name}
                   </div>
                   <div style={{
-                    fontSize: 13, color: '#9ca3af',
+                    fontSize: 13, color: '#8B949E',
                     marginBottom: progress && !isEarned ? 6 : 0,
                   }}>
                     {m.description}
@@ -441,7 +441,7 @@ export default function MilestoneGrid({
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <div style={{
                         flex: 1, height: 4, borderRadius: 4,
-                        backgroundColor: 'rgba(0,0,0,0.06)', overflow: 'hidden',
+                        backgroundColor: '#30363D', overflow: 'hidden',
                       }}>
                         <div style={{
                           height: '100%', borderRadius: 4,
@@ -449,7 +449,7 @@ export default function MilestoneGrid({
                           transition: 'width 0.4s ease',
                         }} />
                       </div>
-                      <span style={{ fontSize: 11, color: '#9ca3af', flexShrink: 0 }}>
+                      <span style={{ fontSize: 11, color: '#8B949E', flexShrink: 0 }}>
                         {progress.current}/{progress.total}
                       </span>
                     </div>
@@ -462,13 +462,13 @@ export default function MilestoneGrid({
                     <span style={{
                       display: 'inline-flex', alignItems: 'center',
                       padding: '3px 10px', borderRadius: 20,
-                      backgroundColor: 'rgba(34,197,94,0.1)',
-                      fontSize: 12, fontWeight: 700, color: '#16a34a',
+                      backgroundColor: 'rgba(63,185,80,0.12)',
+                      fontSize: 12, fontWeight: 700, color: '#3FB950',
                     }}>
                       +{pts}
                     </span>
                   ) : (
-                    <span style={{ fontSize: 12, color: '#d1d5db', fontWeight: 600 }}>
+                    <span style={{ fontSize: 12, color: '#30363D', fontWeight: 600 }}>
                       +{pts}
                     </span>
                   )}
@@ -495,18 +495,18 @@ export default function MilestoneGrid({
                 width: 44, height: 44, borderRadius: 10, flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 20, filter: 'grayscale(60%)',
-                backgroundColor: 'rgba(107,114,128,0.07)',
-                border: '1.5px solid rgba(0,0,0,0.06)',
+                backgroundColor: 'rgba(139,148,158,0.08)',
+                border: '1.5px solid #30363D',
               }}>
                 {s.icon}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#374151', marginBottom: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#8B949E', marginBottom: 1 }}>
                   {s.name}
                 </div>
-                <div style={{ fontSize: 13, color: '#9ca3af' }}>{s.description}</div>
+                <div style={{ fontSize: 13, color: '#8B949E' }}>{s.description}</div>
               </div>
-              <span style={{ fontSize: 11, color: '#d1d5db', fontWeight: 500, flexShrink: 0 }}>
+              <span style={{ fontSize: 11, color: '#30363D', fontWeight: 500, flexShrink: 0 }}>
                 Bucket list
               </span>
             </button>
@@ -516,10 +516,10 @@ export default function MilestoneGrid({
           {filteredMilestones.length === 0 && filteredStatics.length === 0 && (
             <div style={{ textAlign: 'center', padding: '48px 0' }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>🔍</div>
-              <div style={{ fontSize: 16, fontWeight: 600, color: '#374151', marginBottom: 4 }}>
+              <div style={{ fontSize: 16, fontWeight: 600, color: '#8B949E', marginBottom: 4 }}>
                 No matches
               </div>
-              <div style={{ fontSize: 14, color: '#9ca3af' }}>
+              <div style={{ fontSize: 14, color: '#8B949E' }}>
                 Try a different filter or search term
               </div>
             </div>
@@ -541,11 +541,10 @@ export default function MilestoneGrid({
           <div
             style={{
               width: '100%', maxWidth: 360, borderRadius: 20,
-              backgroundColor: '#131d35', position: 'relative',
-              boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+              backgroundColor: '#161B22', position: 'relative',
               border: selected.type === 'milestone' && selected.isEarned
-                ? '1px solid rgba(245,158,11,0.3)'
-                : '1px solid rgba(255,255,255,0.07)',
+                ? '1px solid rgba(245,166,35,0.3)'
+                : '1px solid #30363D',
             }}
             onClick={e => e.stopPropagation()}
           >
@@ -555,9 +554,9 @@ export default function MilestoneGrid({
               style={{
                 position: 'absolute', top: 14, right: 14, zIndex: 10,
                 width: 30, height: 30, borderRadius: '50%', border: 'none',
-                backgroundColor: 'rgba(255,255,255,0.08)', cursor: 'pointer',
+                backgroundColor: 'rgba(139,148,158,0.12)', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#94a3b8',
+                color: '#8B949E',
               }}
             >
               <X size={15} />
@@ -571,10 +570,10 @@ export default function MilestoneGrid({
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 34,
                 backgroundColor: selected.type === 'milestone' && selected.isEarned
-                  ? 'rgba(245,158,11,0.18)' : 'rgba(255,255,255,0.06)',
+                  ? 'rgba(245,166,35,0.18)' : 'rgba(139,148,158,0.08)',
                 border: `2px solid ${
                   selected.type === 'milestone' && selected.isEarned
-                    ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.09)'}`,
+                    ? 'rgba(245,166,35,0.4)' : '#30363D'}`,
               }}>
                 {selected.type === 'milestone' ? selected.milestone.icon : selected.experience.icon}
               </div>
@@ -583,19 +582,19 @@ export default function MilestoneGrid({
               {selected.type === 'milestone' && selected.isEarned && (
                 <div style={{
                   fontSize: 10, fontWeight: 800, letterSpacing: '0.12em',
-                  color: '#f59e0b', textTransform: 'uppercase', marginBottom: 8,
+                  color: '#F5A623', textTransform: 'uppercase', marginBottom: 8,
                 }}>
                   Achievement Unlocked!
                 </div>
               )}
 
               {/* Name */}
-              <div style={{ fontSize: 19, fontWeight: 800, color: '#ffffff', marginBottom: 6 }}>
+              <div style={{ fontSize: 19, fontWeight: 800, color: '#E6EDF3', marginBottom: 6 }}>
                 {selected.type === 'milestone' ? selected.milestone.name : selected.experience.name}
               </div>
 
               {/* Description */}
-              <div style={{ fontSize: 14, color: '#94a3b8', marginBottom: 18 }}>
+              <div style={{ fontSize: 14, color: '#8B949E', marginBottom: 18 }}>
                 {selected.type === 'milestone' ? selected.milestone.description : selected.experience.description}
               </div>
 
@@ -609,7 +608,7 @@ export default function MilestoneGrid({
                       <span style={{
                         display: 'inline-flex', alignItems: 'center', gap: 4,
                         padding: '4px 14px', borderRadius: 20,
-                        backgroundColor: 'rgba(34,197,94,0.14)', color: '#4ade80',
+                        backgroundColor: 'rgba(63,185,80,0.12)', color: '#3FB950',
                         fontSize: 13, fontWeight: 700,
                       }}>
                         ⚡ +{pts} pts
@@ -618,17 +617,17 @@ export default function MilestoneGrid({
                     {context && (
                       <div style={{
                         padding: '12px 14px', borderRadius: 12, marginBottom: 18,
-                        backgroundColor: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.06)',
+                        backgroundColor: 'rgba(139,148,158,0.06)',
+                        border: '1px solid #30363D',
                         textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 8,
                       }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#e2e8f0' }}>
-                          <Calendar size={13} color="#f59e0b" style={{ flexShrink: 0 }} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#E6EDF3' }}>
+                          <Calendar size={13} color="#F5A623" style={{ flexShrink: 0 }} />
                           {formatDate(context.date)}
                         </div>
                         {context.location && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#e2e8f0' }}>
-                            <MapPin size={13} color="#f59e0b" style={{ flexShrink: 0 }} />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#E6EDF3' }}>
+                            <MapPin size={13} color="#F5A623" style={{ flexShrink: 0 }} />
                             {context.location}
                           </div>
                         )}
@@ -644,9 +643,9 @@ export default function MilestoneGrid({
                         }}
                         style={{
                           flex: 1, padding: '11px 0', borderRadius: 12,
-                          backgroundColor: 'rgba(255,255,255,0.08)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          color: '#e2e8f0', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                          backgroundColor: 'rgba(139,148,158,0.12)',
+                          border: '1px solid #30363D',
+                          color: '#E6EDF3', fontSize: 14, fontWeight: 600, cursor: 'pointer',
                           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                         }}
                       >
@@ -656,8 +655,8 @@ export default function MilestoneGrid({
                         onClick={() => setSelected(null)}
                         style={{
                           flex: 1, padding: '11px 0', borderRadius: 12,
-                          backgroundColor: '#f59e0b', border: 'none',
-                          color: '#000000', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                          backgroundColor: '#F5A623', border: 'none',
+                          color: '#0B1117', fontSize: 14, fontWeight: 700, cursor: 'pointer',
                         }}
                       >
                         Awesome!
@@ -672,8 +671,8 @@ export default function MilestoneGrid({
                 <div style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   padding: '8px 18px', borderRadius: 20,
-                  backgroundColor: 'rgba(255,255,255,0.06)',
-                  color: '#64748b', fontSize: 13, fontWeight: 600,
+                  backgroundColor: 'rgba(139,148,158,0.08)',
+                  color: '#8B949E', fontSize: 13, fontWeight: 600,
                 }}>
                   🔒 Keep going — you&apos;ll get there
                 </div>
@@ -684,8 +683,8 @@ export default function MilestoneGrid({
                 <div style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   padding: '8px 18px', borderRadius: 20,
-                  backgroundColor: 'rgba(255,255,255,0.06)',
-                  color: '#64748b', fontSize: 13, fontWeight: 600,
+                  backgroundColor: 'rgba(139,148,158,0.08)',
+                  color: '#8B949E', fontSize: 13, fontWeight: 600,
                 }}>
                   ⭐ Add this to your bucket list
                 </div>

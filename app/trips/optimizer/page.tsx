@@ -46,9 +46,9 @@ const MONTHS = [
 ]
 
 const DIFFICULTY_STYLES: Record<string, { color: string; bg: string; icon: typeof Zap }> = {
-  'Road Warrior': { color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: Zap },
-  'On the Move':  { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: Clock },
-  'Leisure Tour': { color: '#22c55e', bg: 'rgba(34,197,94,0.1)',  icon: MapPin },
+  'Road Warrior': { color: '#F85149', bg: 'rgba(248,81,73,0.1)', icon: Zap },
+  'On the Move':  { color: '#F5A623', bg: 'rgba(245,166,35,0.1)', icon: Clock },
+  'Leisure Tour': { color: '#3FB950', bg: 'rgba(63,185,80,0.1)',  icon: MapPin },
 }
 
 interface TripStop {
@@ -213,12 +213,12 @@ export default function OptimizerPage() {
     <AppShell>
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/trips" className="p-2 rounded-lg" style={{ color: '#64748b', backgroundColor: 'rgba(255,255,255,0.04)' }}>
+        <Link href="/trips" className="p-2 rounded-lg" style={{ color: '#8B949E', backgroundColor: 'rgba(255,255,255,0.04)' }}>
           <ArrowLeft size={18} />
         </Link>
         <div>
-          <h1 className="text-2xl font-black tracking-tight" style={{ color: '#ffffff' }}>Road Trip Optimizer</h1>
-          <p className="text-base mt-0.5" style={{ color: '#64748b' }}>
+          <h1 className="text-2xl font-black tracking-tight" style={{ color: '#E6EDF3' }}>Road Trip Optimizer</h1>
+          <p className="text-base mt-0.5" style={{ color: '#8B949E' }}>
             Find the perfect window to see multiple teams in one trip
           </p>
         </div>
@@ -227,14 +227,14 @@ export default function OptimizerPage() {
       {/* Team selection */}
       <div className="card p-5 mb-5">
         <div className="flex items-center justify-between mb-4">
-          <div className="text-lg font-bold" style={{ color: '#ffffff' }}>Select Teams</div>
-          <div className="text-base" style={{ color: '#64748b' }}>
+          <div className="text-lg font-bold" style={{ color: '#E6EDF3' }}>Select Teams</div>
+          <div className="text-base" style={{ color: '#8B949E' }}>
             {selected.size} selected
             {selected.size > 0 && (
               <button
                 onClick={() => setSelected(new Set())}
                 className="ml-2 text-base"
-                style={{ color: '#3b82f6' }}
+                style={{ color: '#1F6FEB' }}
               >
                 Clear
               </button>
@@ -260,21 +260,21 @@ export default function OptimizerPage() {
                         onClick={() => toggleTeam(s.abbreviation)}
                         className="flex items-center gap-2 p-2.5 rounded-xl text-left transition-all"
                         style={{
-                          border: isOn ? '1px solid rgba(59,130,246,0.5)' : '1px solid rgba(255,255,255,0.06)',
-                          backgroundColor: isOn ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.02)',
+                          border: isOn ? '1px solid rgba(31,111,235,0.5)' : '1px solid rgba(255,255,255,0.06)',
+                          backgroundColor: isOn ? 'rgba(31,111,235,0.1)' : 'rgba(255,255,255,0.02)',
                           cursor: 'pointer',
                         }}
                       >
                         <TeamLogo abbreviation={s.abbreviation} size={28} style={{ borderRadius: 6, flexShrink: 0 }} />
                         <div className="min-w-0">
-                          <div className="text-base font-bold truncate" style={{ color: isOn ? '#60a5fa' : '#94a3b8' }}>
+                          <div className="text-base font-bold truncate" style={{ color: isOn ? '#1F6FEB' : '#8B949E' }}>
                             {s.abbreviation}
                           </div>
                           <div className="text-base truncate" style={{ color: '#4a5568', fontSize: '0.75rem' }}>
                             {s.city}
                           </div>
                         </div>
-                        {isOn && <CheckCircle2 size={13} style={{ color: '#3b82f6', flexShrink: 0, marginLeft: 'auto' }} />}
+                        {isOn && <CheckCircle2 size={13} style={{ color: '#1F6FEB', flexShrink: 0, marginLeft: 'auto' }} />}
                       </button>
                     )
                   })}
@@ -287,7 +287,7 @@ export default function OptimizerPage() {
 
       {/* Parameters */}
       <div className="card p-5 mb-5">
-        <div className="text-lg font-bold mb-4" style={{ color: '#ffffff' }}>Trip Parameters</div>
+        <div className="text-lg font-bold mb-4" style={{ color: '#E6EDF3' }}>Trip Parameters</div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <label className="label">Year</label>
@@ -343,9 +343,9 @@ export default function OptimizerPage() {
 
       {/* Error */}
       {error && (
-        <div className="card p-4 mb-5 flex items-start gap-3" style={{ borderColor: 'rgba(239,68,68,0.3)', backgroundColor: 'rgba(239,68,68,0.06)' }}>
-          <AlertCircle size={18} style={{ color: '#ef4444', flexShrink: 0, marginTop: 1 }} />
-          <div className="text-base" style={{ color: '#f87171' }}>{error}</div>
+        <div className="card p-4 mb-5 flex items-start gap-3" style={{ borderColor: 'rgba(248,81,73,0.3)', backgroundColor: 'rgba(248,81,73,0.06)' }}>
+          <AlertCircle size={18} style={{ color: '#F85149', flexShrink: 0, marginTop: 1 }} />
+          <div className="text-base" style={{ color: '#F85149' }}>{error}</div>
         </div>
       )}
 
@@ -355,14 +355,14 @@ export default function OptimizerPage() {
           {results.length === 0 ? (
             <div className="card p-10 text-center">
               <div className="text-4xl mb-3">🔍</div>
-              <div className="text-lg font-semibold mb-1" style={{ color: '#94a3b8' }}>No windows found</div>
-              <div className="text-base" style={{ color: '#64748b' }}>
+              <div className="text-lg font-semibold mb-1" style={{ color: '#8B949E' }}>No windows found</div>
+              <div className="text-base" style={{ color: '#8B949E' }}>
                 Try expanding your date range, increasing max days, or selecting fewer teams.
               </div>
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              <div className="text-lg font-bold" style={{ color: '#ffffff' }}>
+              <div className="text-lg font-bold" style={{ color: '#E6EDF3' }}>
                 Top {results.length} Trip Window{results.length !== 1 ? 's' : ''}
               </div>
               {results.map((opt, idx) => {
@@ -374,7 +374,7 @@ export default function OptimizerPage() {
                   <div
                     key={idx}
                     className="card overflow-hidden"
-                    style={{ borderLeft: idx === 0 ? '3px solid #3b82f6' : '3px solid rgba(255,255,255,0.06)' }}
+                    style={{ borderLeft: idx === 0 ? '3px solid #1F6FEB' : '3px solid rgba(255,255,255,0.06)' }}
                   >
                     {/* Option header */}
                     <div className="p-5 pb-3">
@@ -391,14 +391,14 @@ export default function OptimizerPage() {
                             {opt.difficulty}
                           </span>
                         </div>
-                        <div className="text-base font-semibold" style={{ color: '#64748b' }}>
+                        <div className="text-base font-semibold" style={{ color: '#8B949E' }}>
                           {opt.totalDays} day{opt.totalDays !== 1 ? 's' : ''} ·{' '}
                           {opt.stops.length} stadium{opt.stops.length !== 1 ? 's' : ''} ·{' '}
                           avg {opt.avgGapDays.toFixed(1)} days between games
                         </div>
                       </div>
 
-                      <div className="text-xl font-black mb-1" style={{ color: '#ffffff' }}>
+                      <div className="text-xl font-black mb-1" style={{ color: '#E6EDF3' }}>
                         {formatDate(opt.startDate)} → {formatDate(opt.endDate)}
                       </div>
                     </div>
@@ -417,21 +417,21 @@ export default function OptimizerPage() {
                               >
                                 <div
                                   className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-base font-black"
-                                  style={{ backgroundColor: 'rgba(59,130,246,0.15)', color: '#60a5fa' }}
+                                  style={{ backgroundColor: 'rgba(31,111,235,0.15)', color: '#1F6FEB' }}
                                 >
                                   {si + 1}
                                 </div>
                                 <TeamLogo abbreviation={stop.abbreviation} size={32} style={{ borderRadius: 6 }} />
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-base font-bold truncate" style={{ color: '#ffffff' }}>
+                                  <div className="text-base font-bold truncate" style={{ color: '#E6EDF3' }}>
                                     {stop.stadiumName}
                                   </div>
-                                  <div className="text-base" style={{ color: '#64748b' }}>
+                                  <div className="text-base" style={{ color: '#8B949E' }}>
                                     {stop.team}
                                   </div>
                                 </div>
                                 <div className="text-right flex-shrink-0">
-                                  <div className="text-base font-semibold" style={{ color: '#94a3b8' }}>
+                                  <div className="text-base font-semibold" style={{ color: '#8B949E' }}>
                                     {formatDate(stop.gameDate)}
                                   </div>
                                   <div className="text-base" style={{ color: '#4a5568' }}>
@@ -457,10 +457,10 @@ export default function OptimizerPage() {
                     {/* Create button */}
                     <div className="px-5 pb-5">
                       {isDone ? (
-                        <div className="flex items-center gap-2 text-base font-semibold" style={{ color: '#22c55e' }}>
+                        <div className="flex items-center gap-2 text-base font-semibold" style={{ color: '#3FB950' }}>
                           <CheckCircle2 size={16} />
                           Trip created!{' '}
-                          <Link href="/trips" style={{ color: '#3b82f6' }}>
+                          <Link href="/trips" style={{ color: '#1F6FEB' }}>
                             View in Trip Planner →
                           </Link>
                         </div>
@@ -469,7 +469,7 @@ export default function OptimizerPage() {
                           onClick={() => createTrip(opt, idx)}
                           disabled={creating !== null}
                           className="btn-primary"
-                          style={{ backgroundColor: idx === 0 ? '#3b82f6' : 'rgba(59,130,246,0.6)' }}
+                          style={{ backgroundColor: idx === 0 ? '#1F6FEB' : 'rgba(31,111,235,0.6)' }}
                         >
                           {creating === idx ? (
                             <><Loader2 size={15} className="animate-spin" /> Creating...</>

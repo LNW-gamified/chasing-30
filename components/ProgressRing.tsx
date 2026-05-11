@@ -32,14 +32,14 @@ export default function ProgressRing({ visited, total, size = 220 }: ProgressRin
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="#22c55e"
+          stroke="#3FB950"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           style={{
             transition: 'stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1)',
-            filter: 'drop-shadow(0 0 8px rgba(34,197,94,0.6))',
+            filter: 'drop-shadow(0 0 8px rgba(63,185,80,0.6))',
           }}
         />
       </svg>
@@ -48,7 +48,7 @@ export default function ProgressRing({ visited, total, size = 220 }: ProgressRin
           style={{
             fontSize: size >= 200 ? '2.25rem' : '1.75rem',
             fontWeight: 900,
-            color: '#ffffff',
+            color: '#E6EDF3',
             lineHeight: 1,
             letterSpacing: '-0.04em',
           }}
@@ -58,7 +58,7 @@ export default function ProgressRing({ visited, total, size = 220 }: ProgressRin
         <span
           style={{
             fontSize: size >= 200 ? '1.1rem' : '0.85rem',
-            color: '#64748b',
+            color: '#8B949E',
             fontWeight: 600,
             marginTop: 2,
           }}

@@ -95,15 +95,15 @@ export default async function MilestonesPage() {
   const inProgress = computeInProgress(unearned.map(m => m.id), allVisits, allStadiums)
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#0B1117' }}>
 
       {/* ── Desktop sidebar ──────────────────────────────────────── */}
       <aside className="hidden md:flex flex-col" style={{
         position: 'fixed', top: 0, left: 0, bottom: 0, width: 240,
-        backgroundColor: '#ffffff', borderRight: '1px solid #e5e7eb', zIndex: 40,
+        backgroundColor: '#161B22', borderRight: '1px solid #30363D', zIndex: 40,
       }}>
         <div style={{ padding: '24px 20px 16px' }}>
-          <div style={{ fontWeight: 900, fontSize: 20, color: '#111827', letterSpacing: '-0.5px' }}>
+          <div style={{ fontWeight: 900, fontSize: 20, color: '#E6EDF3', letterSpacing: '-0.5px' }}>
             ⚾ Chasing 30
           </div>
         </div>
@@ -114,20 +114,20 @@ export default async function MilestonesPage() {
               <Link key={href} href={href} style={{
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: '10px 12px', borderRadius: 10, marginBottom: 2,
-                color: active ? '#0f172a' : '#6b7280',
-                backgroundColor: active ? 'rgba(15,23,42,0.08)' : 'transparent',
+                color: active ? '#E6EDF3' : '#8B949E',
+                backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent',
                 fontWeight: active ? 700 : 500, fontSize: 15, textDecoration: 'none',
               }}>
-                <Icon size={20} color={active ? '#0f172a' : '#9ca3af'} />
+                <Icon size={20} color={active ? '#1F6FEB' : '#8B949E'} />
                 {label}
               </Link>
             )
           })}
         </nav>
-        <div style={{ padding: '16px 20px', borderTop: '1px solid #f3f4f6' }}>
-          <div style={{ fontSize: 12, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Progress</div>
-          <div style={{ fontWeight: 800, fontSize: 22, color: '#111827' }}>
-            {visitedCount}<span style={{ fontWeight: 400, fontSize: 14, color: '#9ca3af' }}> / 30</span>
+        <div style={{ padding: '16px 20px', borderTop: '1px solid #30363D' }}>
+          <div style={{ fontSize: 12, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Progress</div>
+          <div style={{ fontWeight: 800, fontSize: 22, color: '#E6EDF3' }}>
+            {visitedCount}<span style={{ fontWeight: 400, fontSize: 14, color: '#8B949E' }}> / 30</span>
           </div>
         </div>
       </aside>
@@ -136,22 +136,22 @@ export default async function MilestonesPage() {
       <main className="md:ml-[240px]" style={{ minHeight: '100vh', paddingBottom: 80 }}>
 
         {/* Hero */}
-        <div style={{ background: 'linear-gradient(180deg, #0f172a 0%, #1e3a5f 100%)', padding: '36px 16px 0' }}>
+        <div style={{ backgroundColor: '#161B22', borderBottom: '1px solid #30363D', padding: '36px 16px 0' }}>
           <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
 
             {/* Shield icon */}
             <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', position: 'relative', width: 80, height: 90, marginBottom: 8 }}>
               <svg width={80} height={90} viewBox="0 0 80 90" fill="none" style={{ position: 'absolute', inset: 0 }}>
                 <path d="M40 6L9 20V44C9 62 23 78 40 84C57 78 71 62 71 44V20L40 6Z"
-                  fill="rgba(245,158,11,0.15)" stroke="#f59e0b" strokeWidth={2.5} strokeLinejoin="round" />
+                  fill="rgba(245,166,35,0.15)" stroke="#F5A623" strokeWidth={2.5} strokeLinejoin="round" />
               </svg>
               <span style={{ position: 'relative', zIndex: 1, fontSize: 34 }}>{currentRank.icon}</span>
             </div>
 
-            <h1 style={{ fontSize: 28, fontWeight: 800, color: '#ffffff', margin: '0 0 6px' }}>
+            <h1 style={{ fontSize: 28, fontWeight: 800, color: '#E6EDF3', margin: '0 0 6px' }}>
               {currentRank.name}
             </h1>
-            <div style={{ fontSize: 15, color: '#94a3b8', marginBottom: 24 }}>
+            <div style={{ fontSize: 15, color: '#8B949E', marginBottom: 24 }}>
               {totalPoints.toLocaleString()} points
             </div>
 
@@ -164,11 +164,11 @@ export default async function MilestonesPage() {
               ].map(({ label, value }, i, arr) => (
                 <div key={label} style={{
                   flex: 1, maxWidth: 110, textAlign: 'center',
-                  borderRight: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.12)' : 'none',
+                  borderRight: i < arr.length - 1 ? '1px solid #30363D' : 'none',
                   padding: '0 12px',
                 }}>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#ffffff', lineHeight: 1 }}>{value}</div>
-                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>{label}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#E6EDF3', lineHeight: 1 }}>{value}</div>
+                  <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4 }}>{label}</div>
                 </div>
               ))}
             </div>
@@ -177,12 +177,12 @@ export default async function MilestonesPage() {
             {nextRank && (
               <div style={{
                 display: 'inline-flex', alignItems: 'center', gap: 4,
-                backgroundColor: 'rgba(255,255,255,0.08)', padding: '7px 16px',
-                borderRadius: 20, fontSize: 13, color: 'rgba(255,255,255,0.65)',
+                backgroundColor: 'rgba(139,148,158,0.08)', padding: '7px 16px',
+                borderRadius: 20, fontSize: 13, color: '#8B949E',
                 marginBottom: 28,
               }}>
-                Next:&nbsp;<strong style={{ color: '#ffffff' }}>{nextRank.name}</strong>
-                <span style={{ color: 'rgba(255,255,255,0.3)', margin: '0 2px' }}>·</span>
+                Next:&nbsp;<strong style={{ color: '#E6EDF3' }}>{nextRank.name}</strong>
+                <span style={{ color: '#30363D', margin: '0 2px' }}>·</span>
                 {nextRank.minPts - totalPoints} pts away
               </div>
             )}
@@ -205,7 +205,7 @@ export default async function MilestonesPage() {
       {/* ── Mobile bottom tab bar ────────────────────────────────── */}
       <div className="md:hidden" style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
-        backgroundColor: '#ffffff', borderTop: '1px solid #e5e7eb',
+        backgroundColor: '#161B22', borderTop: '1px solid #30363D',
         display: 'flex', paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}>
         {NAV.map(({ label, href, icon: Icon }) => {
@@ -214,10 +214,10 @@ export default async function MilestonesPage() {
             <Link key={href} href={href} style={{
               flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
               justifyContent: 'center', textDecoration: 'none', padding: '10px 0', minHeight: 56,
-              color: active ? '#0f172a' : '#9ca3af', gap: 3,
+              color: active ? '#1F6FEB' : '#8B949E', gap: 3,
             }}>
-              <Icon size={22} color={active ? '#0f172a' : '#9ca3af'} />
-              {active && <span style={{ fontSize: 11, fontWeight: 700, color: '#0f172a' }}>{label}</span>}
+              <Icon size={22} color={active ? '#1F6FEB' : '#8B949E'} />
+              {active && <span style={{ fontSize: 11, fontWeight: 700, color: '#1F6FEB' }}>{label}</span>}
             </Link>
           )
         })}
