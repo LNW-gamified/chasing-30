@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import { MILESTONES } from '@/lib/milestones'
-import type { Stadium, StadiumVisit, SpecialEvent } from '@/types'
+import type { Stadium, StadiumVisit, SpecialEvent, Trip } from '@/types'
 import Link from 'next/link'
 import { Home, Map, MapPin, Trophy, Plane, Bell, ChevronRight } from 'lucide-react'
 import TodayGames, { type TodayGame } from '@/components/TodayGames'
@@ -85,10 +85,10 @@ function getMilestonePoints(id: string): number {
 // ─── Quest icon ───────────────────────────────────────────────────────────────
 
 function questStyle(id: string): { emoji: string; bg: string } {
-  if (id === 'five_stadiums')    return { emoji: '🚗', bg: 'rgba(245,166,35,0.12)'  }
-  if (id === 'ten_stadiums')     return { emoji: '🔟', bg: 'rgba(31,111,235,0.12)'  }
-  if (id === 'fifteen_stadiums') return { emoji: '🏟️', bg: 'rgba(63,185,80,0.12)'  }
-  return                                { emoji: '⚡', bg: 'rgba(139,92,246,0.12)'  }
+  if (id === 'five_stadiums')    return { emoji: '🚗', bg: 'rgba(249,115,22,0.15)'  }
+  if (id === 'ten_stadiums')     return { emoji: '🔟', bg: 'rgba(31,111,235,0.15)'  }
+  if (id === 'fifteen_stadiums') return { emoji: '🏟️', bg: 'rgba(63,185,80,0.15)'  }
+  return                                { emoji: '⚡', bg: 'rgba(139,92,246,0.15)'  }
 }
 
 // ─── User helpers ─────────────────────────────────────────────────────────────
@@ -100,14 +100,47 @@ function getFirstName(user: any): string {
   return local.charAt(0).toUpperCase() + local.slice(1)
 }
 
-function getGreeting(): string {
-  const h = new Date().getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 17) return 'Good afternoon'
-  return 'Good evening'
+function fmtDate(d: string | null | undefined): string {
+  if (!d) return ''
+  try {
+    return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+    })
+  } catch { return d }
 }
 
-// ─── Progress ring ────────────────────────────────────────────────────────────
+// ─── Progress rings ───────────────────────────────────────────────────────────
+
+function HeroRing({ visited, total }: { visited: number; total: number }) {
+  const size = 80
+  const sw   = 6
+  const r    = (size - sw * 2) / 2
+  const circ = 2 * Math.PI * r
+  const pct  = total > 0 ? visited / total : 0
+  const offset = circ - Math.max(pct, visited > 0 ? 0.04 : 0) * circ
+
+  return (
+    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#30363D" strokeWidth={sw} />
+        <circle
+          cx={size / 2} cy={size / 2} r={r}
+          fill="none" stroke="#F5A623" strokeWidth={sw} strokeLinecap="round"
+          strokeDasharray={circ} strokeDashoffset={offset}
+          style={{ filter: 'drop-shadow(0 0 6px rgba(245,166,35,0.6))' }}
+        />
+      </svg>
+      <div style={{
+        position: 'absolute', inset: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <span style={{ fontSize: 18, fontWeight: 700, color: '#F5A623', lineHeight: 1 }}>
+          {Math.round(pct * 100)}%
+        </span>
+      </div>
+    </div>
+  )
+}
 
 function ProgressRing({ visited, total }: { visited: number; total: number }) {
   const size = 120
@@ -125,7 +158,7 @@ function ProgressRing({ visited, total }: { visited: number; total: number }) {
           cx={size / 2} cy={size / 2} r={r}
           fill="none" stroke="#3FB950" strokeWidth={sw} strokeLinecap="round"
           strokeDasharray={circ} strokeDashoffset={offset}
-          style={{ filter: 'drop-shadow(0 0 5px rgba(63,185,80,0.4))' }}
+          style={{ filter: 'drop-shadow(0 0 5px rgba(63,185,80,0.3))' }}
         />
       </svg>
       <div style={{
@@ -134,10 +167,10 @@ function ProgressRing({ visited, total }: { visited: number; total: number }) {
         alignItems: 'center', justifyContent: 'center',
         gap: 1,
       }}>
-        <span style={{ fontSize: 48, fontWeight: 800, color: '#E6EDF3', lineHeight: 1 }}>
+        <span style={{ fontSize: 56, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>
           {visited}
         </span>
-        <span style={{ fontSize: 16, color: '#8B949E', fontWeight: 500, lineHeight: 1 }}>
+        <span style={{ fontSize: 18, color: '#8B949E', fontWeight: 500, lineHeight: 1 }}>
           /30
         </span>
       </div>
@@ -148,17 +181,12 @@ function ProgressRing({ visited, total }: { visited: number; total: number }) {
 // ─── Nav ──────────────────────────────────────────────────────────────────────
 
 const NAV = [
-  { label: 'Home',  href: '/dashboard',  icon: Home,   active: true  },
-  { label: 'Parks', href: '/stadiums',   icon: MapPin,  active: false },
-  { label: 'Map',   href: '/map',        icon: Map,     active: false },
-  { label: 'Goals', href: '/milestones', icon: Trophy,  active: false },
-  { label: 'Trips', href: '/trips',      icon: Plane,   active: false },
+  { label: 'Home',  href: '/dashboard',  icon: Home   },
+  { label: 'Parks', href: '/stadiums',   icon: MapPin  },
+  { label: 'Map',   href: '/map',        icon: Map     },
+  { label: 'Goals', href: '/milestones', icon: Trophy  },
+  { label: 'Trips', href: '/trips',      icon: Plane   },
 ]
-
-const sectionLabel: React.CSSProperties = {
-  fontSize: 12, fontWeight: 600, color: '#8B949E',
-  textTransform: 'uppercase', letterSpacing: '0.1em',
-}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -169,29 +197,33 @@ export default async function DashboardPage() {
     { data: stadiums },
     { data: visits },
     { data: events },
+    { data: trips },
     { data: { user } },
   ] = await Promise.all([
     supabase.from('stadiums').select('*').order('league').order('division').order('name'),
     supabase.from('stadium_visits').select('*').order('visit_date', { ascending: false }),
     supabase.from('special_events').select('*'),
+    supabase.from('trips').select('*, stadium:stadiums(*)').order('start_date', { ascending: true }),
     supabase.auth.getUser(),
   ])
 
-  const allStadiums: Stadium[]    = stadiums ?? []
+  const allStadiums: Stadium[]     = stadiums ?? []
   const allVisits:   StadiumVisit[] = visits ?? []
   const allEvents:   SpecialEvent[] = events ?? []
+  const allTrips:    Trip[]         = trips ?? []
 
-  const visitedIds    = new Set(allVisits.map(v => v.stadium_id))
-  const visitedCount  = visitedIds.size
+  const visitedIds   = new Set(allVisits.map(v => v.stadium_id))
+  const visitedCount = visitedIds.size
 
   const earnedMilestones = MILESTONES.filter(m => m.check(allVisits, allStadiums, allEvents))
   const nextQuests       = MILESTONES.filter(m => !m.check(allVisits, allStadiums, allEvents)).slice(0, 3)
 
-  const points  = computePoints(visitedCount, allVisits.length, earnedMilestones.length)
-  const rank    = getRank(points)
-  const name    = getFirstName(user)
-  const greeting = getGreeting()
+  const points = computePoints(visitedCount, allVisits.length, earnedMilestones.length)
+  const rank   = getRank(points)
+  const name   = getFirstName(user)
+  const pct    = Math.round((visitedCount / 30) * 100)
 
+  // Division progress
   const divProgress = [
     { label: 'AL East',    league: 'AL', division: 'East'    },
     { label: 'AL Central', league: 'AL', division: 'Central' },
@@ -205,6 +237,7 @@ export default async function DashboardPage() {
     return { label, total: group.length, vis }
   })
 
+  // Fav team abbreviation (for Today's Games)
   const stadiumCounts: Record<string, number> = {}
   for (const v of allVisits) stadiumCounts[v.stadium_id] = (stadiumCounts[v.stadium_id] ?? 0) + 1
   const topId   = Object.entries(stadiumCounts).sort((a, b) => b[1] - a[1])[0]?.[0]
@@ -212,155 +245,257 @@ export default async function DashboardPage() {
 
   const todayGames = await fetchTodayGames(favAbbr)
 
+  // ─── My Stats ───────────────────────────────────────────────────────────────
+
+  const gamesAttended = allVisits.length
+
+  const totalSpent = allTrips
+    .filter(t => t.status === 'completed')
+    .reduce((sum, t) =>
+      sum + t.actual_tickets + t.actual_travel + t.actual_hotel + t.actual_food + t.actual_parking,
+    0)
+
+  const divCounts: Record<string, number> = {}
+  for (const s of allStadiums) {
+    if (visitedIds.has(s.id)) {
+      const key = `${s.league} ${s.division}`
+      divCounts[key] = (divCounts[key] ?? 0) + 1
+    }
+  }
+  const divEntries = Object.entries(divCounts).sort((a, b) => b[1] - a[1])
+  const favDivision =
+    divEntries.length > 0 && (divEntries.length === 1 || divEntries[0][1] > divEntries[1][1])
+      ? divEntries[0][0]
+      : '—'
+
+  const teamCounts: Record<string, number> = {}
+  for (const v of allVisits) {
+    if (v.home_team)     teamCounts[v.home_team]     = (teamCounts[v.home_team] ?? 0) + 1
+    if (v.visiting_team) teamCounts[v.visiting_team] = (teamCounts[v.visiting_team] ?? 0) + 1
+  }
+  const teamEntries  = Object.entries(teamCounts).sort((a, b) => b[1] - a[1])
+  const mostSeenFull = teamEntries.length > 0 ? teamEntries[0][0] : '—'
+  const mostSeenTeam = mostSeenFull === '—' ? '—' : (mostSeenFull.split(' ').pop() ?? mostSeenFull)
+
+  // ─── Next Up ────────────────────────────────────────────────────────────────
+
+  const today = new Date().toISOString().split('T')[0]
+  const nextPlannedTrip = allTrips.find(t =>
+    t.status === 'planned' &&
+    ((t.start_date && t.start_date >= today) || (t.trip_date && t.trip_date >= today))
+  )
+  const nearestUnvisited = allStadiums.find(s => !visitedIds.has(s.id))
+
+  // ─── Shared styles ────────────────────────────────────────────────────────
+
   const card: React.CSSProperties = {
     background: '#161B22',
     borderRadius: 16,
     border: '1px solid #30363D',
   }
 
+  const sectionLabel: React.CSSProperties = {
+    fontSize: 13, fontWeight: 600, color: '#8B949E',
+    textTransform: 'uppercase', letterSpacing: '0.1em',
+  }
+
+  const headerBlock = (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '12px 16px',
+      background: '#0B1117',
+      borderBottom: '1px solid #30363D',
+      position: 'sticky', top: 0, zIndex: 20,
+    }}>
+      <div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.15 }}>
+          ⚾ Chasing 30
+        </div>
+        <div style={{ fontSize: 13, color: '#8B949E', marginTop: 1 }}>
+          {rank} · {points} pts
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <button
+          style={{
+            width: 36, height: 36, borderRadius: '50%',
+            background: 'transparent', border: 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          }}
+          aria-label="Notifications"
+        >
+          <Bell size={18} style={{ color: '#8B949E' }} />
+        </button>
+        <div style={{
+          width: 32, height: 32, borderRadius: '50%',
+          background: 'rgba(31,111,235,0.18)', border: '1px solid rgba(31,111,235,0.3)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#8B949E', fontWeight: 700, fontSize: '0.9rem',
+        }}>
+          {name.charAt(0).toUpperCase()}
+        </div>
+      </div>
+    </div>
+  )
+
   return (
-    <div style={{ background: '#0B1117', color: '#E6EDF3', minHeight: '100vh' }}>
+    <div style={{ background: '#0B1117', color: '#E6EDF3', minHeight: '100vh', overflowX: 'hidden' }}>
       <div style={{ display: 'flex' }}>
 
-        {/* ── Desktop sidebar ──────────────────────────────────────────── */}
+        {/* ── Desktop sidebar ──────────────────────────────────────────────── */}
         <aside
           className="hidden md:flex flex-col"
           style={{
             position: 'fixed', top: 0, left: 0, bottom: 0, width: 240, zIndex: 30,
-            background: '#161B22', borderRight: '1px solid #30363D', overflowY: 'auto',
+            background: '#0B1117', borderRight: '1px solid #30363D', overflowY: 'auto',
           }}
         >
           <div style={{ padding: '1.5rem 1.25rem', borderBottom: '1px solid #30363D' }}>
-            <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#E6EDF3' }}>⚾ Chasing 30</div>
+            <div style={{ fontSize: '1.125rem', fontWeight: 900, color: '#E6EDF3' }}>⚾ Chasing 30</div>
             <div style={{ fontSize: '0.75rem', color: '#8B949E', marginTop: 2 }}>MLB Stadium Tracker</div>
           </div>
-          <nav style={{ flex: 1, padding: '1rem 0.75rem' }}>
-            {NAV.map(({ label, href, icon: Icon, active }) => (
-              <Link key={href} href={href} style={{
-                display: 'flex', alignItems: 'center', gap: '0.75rem',
-                padding: '0.625rem 0.875rem', borderRadius: 12, marginBottom: 4,
-                backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent',
-                color: active ? '#1F6FEB' : '#8B949E',
-                fontWeight: active ? 700 : 500,
-                fontSize: '0.9rem', textDecoration: 'none',
-                borderLeft: active ? '3px solid #1F6FEB' : '3px solid transparent',
-              }}>
-                <Icon size={18} />
-                <span>{label}</span>
-              </Link>
-            ))}
+          <nav style={{ flex: 1, padding: '0.75rem' }}>
+            {NAV.map(({ label, href, icon: Icon }, i) => {
+              const active = i === 0
+              return (
+                <Link key={href} href={href} style={{
+                  display: 'flex', alignItems: 'center', gap: '0.75rem',
+                  padding: '0.625rem 0.875rem', borderRadius: 10, marginBottom: 2,
+                  backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent',
+                  color: active ? '#E6EDF3' : '#8B949E',
+                  fontWeight: active ? 600 : 400,
+                  fontSize: '0.9375rem', textDecoration: 'none',
+                  borderLeft: active ? '3px solid #1F6FEB' : '3px solid transparent',
+                }}>
+                  <Icon size={18} />
+                  <span>{label}</span>
+                </Link>
+              )
+            })}
           </nav>
           <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #30363D' }}>
-            <div style={{ ...sectionLabel, marginBottom: 4 }}>Overall</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>
-              {visitedCount}
-              <span style={{ fontSize: '0.85rem', fontWeight: 400, color: '#8B949E' }}> / 30</span>
+            <div style={{ fontSize: '0.8125rem', color: '#8B949E', marginBottom: 6 }}>
+              {visitedCount} / 30 · {pct}% complete
             </div>
-            <div style={{ marginTop: 8, height: 5, background: '#30363D', borderRadius: 3, overflow: 'hidden' }}>
-              <div style={{ width: `${(visitedCount / 30) * 100}%`, height: '100%', background: '#3FB950', borderRadius: 3 }} />
-            </div>
-            <div style={{ fontSize: '0.72rem', color: '#8B949E', marginTop: 4 }}>
-              {Math.round((visitedCount / 30) * 100)}% complete
+            <div style={{ height: 4, background: '#30363D', borderRadius: 3, overflow: 'hidden' }}>
+              <div style={{ width: `${pct}%`, height: '100%', background: '#3FB950', borderRadius: 3 }} />
             </div>
           </div>
         </aside>
 
-        {/* ── Main ─────────────────────────────────────────────────────── */}
-        <main className="flex-1 md:pl-60" style={{ paddingBottom: '5.5rem' }}>
-          <div style={{ maxWidth: 800, margin: '0 auto', padding: '1.5rem 1rem' }}>
+        {/* ── Main ─────────────────────────────────────────────────────────── */}
+        <main
+          className="flex-1 md:pl-60"
+          style={{ paddingBottom: '5.5rem', maxWidth: '100%', overflowX: 'hidden' }}
+        >
+          {/* Header — mobile only (sidebar takes over on desktop) */}
+          <div className="md:hidden">
+            {headerBlock}
+          </div>
+          {/* Header — desktop (shows in main content area, not sidebar) */}
+          <div className="hidden md:block">
+            {headerBlock}
+          </div>
 
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-              <div>
-                <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#E6EDF3', lineHeight: 1.15, margin: 0 }}>
-                  {greeting},<br />{name}
-                </h1>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-                  <span style={{ fontSize: '0.8rem', background: 'rgba(139,148,158,0.12)', color: '#8B949E', padding: '3px 10px', borderRadius: 999, fontWeight: 600 }}>
-                    🏟️ {rank} · {points} pts
-                  </span>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                <button
-                  style={{ width: 40, height: 40, borderRadius: '50%', background: '#161B22', border: '1px solid #30363D', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                  aria-label="Notifications"
-                >
-                  <Bell size={17} style={{ color: '#8B949E' }} />
-                </button>
-                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #1F6FEB, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E6EDF3', fontWeight: 800, fontSize: '1rem', flexShrink: 0 }}>
-                  {name.charAt(0).toUpperCase()}
-                </div>
-              </div>
-            </div>
+          <div style={{ maxWidth: 800, margin: '0 auto', padding: '1.25rem 1rem', overflowX: 'hidden' }}>
 
-            {/* Mission card */}
-            <div style={{
-              background: 'linear-gradient(135deg, #1F6FEB 0%, #7c3aed 100%)',
-              borderRadius: 16, padding: '1.25rem 1.5rem', marginBottom: '1.25rem',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                <div>
-                  <div style={{ color: 'rgba(230,237,243,0.7)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 5 }}>
-                    YOUR MISSION
-                  </div>
-                  <div style={{ color: '#E6EDF3', fontWeight: 800, fontSize: '1.1rem', lineHeight: 1.3 }}>
+            {/* ── Hero Progress Card ───────────────────────────────────────── */}
+            <div style={{ ...card, padding: '1.25rem 1.5rem', marginBottom: '1rem' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
+                YOUR MISSION
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2, marginBottom: 6 }}>
                     Chasing 30 · {visitedCount} of 30 stadiums
                   </div>
-                  <div style={{ color: 'rgba(230,237,243,0.65)', fontSize: '0.8rem', marginTop: 4 }}>
-                    {visitedCount === 30 ? 'Legend status achieved!' : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} remaining`}
+                  <div style={{ fontSize: 14, color: '#8B949E' }}>
+                    {visitedCount === 30
+                      ? 'Legend status achieved!'
+                      : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} remaining`}
                   </div>
                 </div>
-                <Link href="/stadiums" style={{
-                  background: 'rgba(230,237,243,0.2)', color: '#E6EDF3',
-                  padding: '8px 18px', borderRadius: 999, fontWeight: 700,
-                  fontSize: '0.875rem', textDecoration: 'none', flexShrink: 0,
-                  border: '1px solid rgba(230,237,243,0.3)',
-                  backdropFilter: 'blur(4px)',
-                }}>
-                  Plan →
-                </Link>
+                <HeroRing visited={visitedCount} total={30} />
               </div>
+              <Link href="/trips" style={{
+                display: 'block', textAlign: 'center', marginTop: '1rem',
+                background: '#1F6FEB', color: '#fff',
+                padding: '11px 0', borderRadius: 999,
+                fontWeight: 600, fontSize: '0.9rem', textDecoration: 'none',
+              }}>
+                Plan Next Trip →
+              </Link>
             </div>
 
-            {/* Progress + Division grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginBottom: '1.5rem' }}>
-
-              {/* My Stadiums card */}
-              <div style={{ ...card, padding: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
-                  <span style={{ fontSize: '1rem' }}>🏟️</span>
-                  <span style={{ fontWeight: 700, color: '#E6EDF3', fontSize: '0.9rem' }}>My Stadiums</span>
+            {/* ── Next Up Card ─────────────────────────────────────────────── */}
+            <div style={{
+              ...card,
+              padding: '1rem 1.25rem', marginBottom: '1rem',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
+                  NEXT UP
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                  <ProgressRing visited={visitedCount} total={30} />
+                {nextPlannedTrip ? (
                   <div>
-                    <div style={{ color: '#8B949E', fontSize: '0.78rem', marginBottom: 6 }}>stadiums visited</div>
-                    <div style={{ color: '#3FB950', fontSize: '0.82rem', fontWeight: 700 }}>
-                      {Math.round((visitedCount / 30) * 100)}% complete
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
+                      {(nextPlannedTrip as any).stadium?.name ?? nextPlannedTrip.name}
                     </div>
-                    <Link href="/milestones" style={{ color: '#1F6FEB', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'none', marginTop: 6, display: 'block' }}>
-                      {earnedMilestones.length} milestone{earnedMilestones.length !== 1 ? 's' : ''} earned →
-                    </Link>
+                    <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
+                      {fmtDate(nextPlannedTrip.start_date ?? nextPlannedTrip.trip_date)}
+                    </div>
                   </div>
+                ) : nearestUnvisited ? (
+                  <div>
+                    <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 2 }}>Suggested</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
+                      {nearestUnvisited.name}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 15, fontWeight: 600, color: '#3FB950' }}>
+                    All 30 stadiums visited!
+                  </div>
+                )}
+              </div>
+              <Link href="/trips" style={{ fontSize: 14, fontWeight: 600, color: '#1F6FEB', textDecoration: 'none', flexShrink: 0 }}>
+                View →
+              </Link>
+            </div>
+
+            {/* ── My Stadiums + Division Progress ──────────────────────────── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
+
+              {/* My Stadiums */}
+              <div style={{ ...card, padding: '1.25rem' }}>
+                <div style={{ fontWeight: 600, color: '#E6EDF3', fontSize: 16, marginBottom: '1.25rem' }}>
+                  My Stadiums
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                  <ProgressRing visited={visitedCount} total={30} />
+                  <div style={{ color: '#3FB950', fontSize: 14, fontWeight: 600 }}>
+                    {pct}% complete
+                  </div>
+                  <Link href="/milestones" style={{ color: '#1F6FEB', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+                    {earnedMilestones.length} milestone{earnedMilestones.length !== 1 ? 's' : ''} earned →
+                  </Link>
                 </div>
               </div>
 
-              {/* Division Progress card */}
+              {/* Division Progress */}
               <div style={{ ...card, padding: '1.25rem' }}>
-                <div style={{ fontWeight: 700, color: '#E6EDF3', fontSize: '0.9rem', marginBottom: '0.875rem' }}>
+                <div style={{ fontWeight: 600, color: '#E6EDF3', fontSize: 16, marginBottom: '0.875rem' }}>
                   Division Progress
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {divProgress.map(({ label, vis, total }) => (
                     <div key={label}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span style={{ fontSize: '0.78rem', color: '#8B949E' }}>{label}</span>
-                        <span style={{ fontSize: '0.78rem', color: '#8B949E', fontWeight: 600 }}>
-                          {vis}/{total}
-                        </span>
+                        <span style={{ fontSize: 15, color: '#E6EDF3' }}>{label}</span>
+                        <span style={{ fontSize: 14, color: '#8B949E' }}>{vis}/{total}</span>
                       </div>
-                      <div style={{ height: 6, background: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{ height: 8, background: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
                         <div style={{
                           width: `${(vis / total) * 100}%`, height: '100%',
                           background: '#1F6FEB', borderRadius: 4,
@@ -372,17 +507,41 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            {/* Today's Games */}
+            {/* ── My Stats Card ────────────────────────────────────────────── */}
+            <div style={{ ...card, marginBottom: '1.5rem', overflow: 'hidden' }}>
+              <div style={{ padding: '1.25rem 1.25rem 0.75rem', fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                MY STATS
+              </div>
+              {/* gap-px + dark bg creates 1px dividers between cells at every breakpoint */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-px" style={{ background: '#30363D' }}>
+                {[
+                  { icon: '⚾', value: gamesAttended.toString(),         label: 'Games Attended' },
+                  { icon: '💰', value: `$${totalSpent.toLocaleString()}`, label: 'Total Spent'    },
+                  { icon: '🏆', value: favDivision,                       label: 'Fav Division'   },
+                  { icon: '👁', value: mostSeenTeam,                      label: 'Most Seen'      },
+                ].map(({ icon, value, label }) => (
+                  <div key={label} style={{ background: '#161B22', padding: '0.875rem 1.125rem' }}>
+                    <div style={{ fontSize: 20, marginBottom: 6 }}>{icon}</div>
+                    <div style={{ fontSize: 28, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1, marginBottom: 4 }}>
+                      {value}
+                    </div>
+                    <div style={{ fontSize: 13, color: '#8B949E' }}>{label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Today's Games ────────────────────────────────────────────── */}
             {todayGames.length > 0 && (
               <TodayGames initialGames={todayGames} favAbbr={favAbbr} />
             )}
 
-            {/* Your Quests */}
+            {/* ── Your Quests ───────────────────────────────────────────────── */}
             {nextQuests.length > 0 && (
-              <div style={{ marginTop: 32 }}>
+              <div style={{ marginTop: 24 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                   <span style={sectionLabel}>Your Quests</span>
-                  <Link href="/milestones" style={{ fontSize: '0.8rem', color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
+                  <Link href="/milestones" style={{ fontSize: 13, color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
                     See All
                   </Link>
                 </div>
@@ -392,10 +551,9 @@ export default async function DashboardPage() {
                     return (
                       <Link key={m.id} href="/milestones" style={{ textDecoration: 'none' }}>
                         <div style={{
-                          ...card, borderRadius: 12,
+                          background: '#161B22', borderRadius: 12, border: '1px solid #30363D',
                           padding: '0.875rem 1rem',
                           display: 'flex', alignItems: 'center', gap: '0.875rem',
-                          cursor: 'pointer',
                         }}>
                           <div style={{
                             width: 44, height: 44, borderRadius: 10, flexShrink: 0,
@@ -406,22 +564,18 @@ export default async function DashboardPage() {
                             {emoji}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 700, color: '#E6EDF3', fontSize: '0.88rem', marginBottom: 2 }}>
+                            <div style={{ fontWeight: 600, color: '#E6EDF3', fontSize: 16, marginBottom: 2 }}>
                               {m.name}
                             </div>
-                            <div style={{ color: '#8B949E', fontSize: '0.78rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <div style={{ color: '#8B949E', fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {m.description}
                             </div>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                            <span style={{
-                              background: 'rgba(63,185,80,0.12)', color: '#3FB950',
-                              fontSize: '0.72rem', fontWeight: 800,
-                              padding: '3px 9px', borderRadius: 999,
-                            }}>
+                            <span style={{ color: '#F5A623', fontSize: '0.8rem', fontWeight: 600 }}>
                               +{getMilestonePoints(m.id)}
                             </span>
-                            <ChevronRight size={14} style={{ color: '#30363D' }} />
+                            <ChevronRight size={14} style={{ color: '#8B949E' }} />
                           </div>
                         </div>
                       </Link>
@@ -435,22 +589,38 @@ export default async function DashboardPage() {
         </main>
       </div>
 
-      {/* ── Mobile bottom tab bar ─────────────────────────────────────── */}
+      {/* ── Mobile bottom tab bar ─────────────────────────────────────────── */}
       <nav
         className="md:hidden"
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
-          background: '#161B22', borderTop: '1px solid #30363D',
+          background: 'rgba(11,17,23,0.85)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderTop: '1px solid #30363D',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-around', padding: '0.6rem 0 0.5rem' }}>
-          {NAV.map(({ label, href, icon: Icon, active }) => (
-            <Link key={href} href={href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 44, textDecoration: 'none' }}>
-              <Icon size={22} style={{ color: active ? '#1F6FEB' : '#8B949E' }} />
-              {active && <span style={{ fontSize: '0.58rem', color: '#1F6FEB', fontWeight: 700, lineHeight: 1 }}>{label}</span>}
-            </Link>
-          ))}
+          {NAV.map(({ label, href, icon: Icon }, i) => {
+            const active = i === 0
+            return (
+              <Link
+                key={href}
+                href={href}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                  minWidth: 44, textDecoration: 'none',
+                  color: active ? '#1F6FEB' : '#8B949E',
+                }}
+              >
+                <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+                {active && (
+                  <span style={{ fontSize: '0.6rem', fontWeight: 700, lineHeight: 1 }}>{label}</span>
+                )}
+              </Link>
+            )
+          })}
         </div>
       </nav>
     </div>

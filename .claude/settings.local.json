@@ -12,7 +12,9 @@
       "Bash(node *)",
       "Bash(dir /s /b \"C:\\\\Users\\\\later\\\\chasing-30\\\\types.ts\")",
       "Bash(python3 -c \"import sys,json; lines=sys.stdin.read\\(\\).strip\\(\\).split\\('\\\\n'\\); [print\\(json.loads\\(l\\).get\\('content',''\\)[:500] if isinstance\\(json.loads\\(l\\).get\\('content',''\\),str\\) else ''\\) for l in lines[-10:] if l]\")",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\later\\\\chasing-30\" -Force)",
+      "Bash(Select-Object Name, FullName)"
     ]
   }
 }
