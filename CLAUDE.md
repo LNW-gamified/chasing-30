@@ -21,3 +21,9 @@ Next.js 16 (App Router, Turbopack), Supabase (auth + DB), react-leaflet maps, Ta
 
 ## Architecture note
 Both users share all data (visits, trips). RLS policies allow any authenticated user to read/write all rows — there's no per-user isolation by design.
+
+## Workflow
+After completing any full update or feature, always run:
+git add .
+git commit -m "[brief description of what was changed]"
+git push

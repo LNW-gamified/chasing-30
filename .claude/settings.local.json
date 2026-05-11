@@ -14,7 +14,12 @@
       "Bash(python3 -c \"import sys,json; lines=sys.stdin.read\\(\\).strip\\(\\).split\\('\\\\n'\\); [print\\(json.loads\\(l\\).get\\('content',''\\)[:500] if isinstance\\(json.loads\\(l\\).get\\('content',''\\),str\\) else ''\\) for l in lines[-10:] if l]\")",
       "Bash(git *)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\later\\\\chasing-30\" -Force)",
-      "Bash(Select-Object Name, FullName)"
+      "Bash(Select-Object Name, FullName)",
+      "Bash(sed -n '206,215p' \"C:\\\\Users\\\\later\\\\chasing-30\\\\app\\\\milestones\\\\page.tsx\")",
+      "Bash(sed -n '90,100p' \"C:\\\\Users\\\\later\\\\chasing-30\\\\app\\\\map\\\\page.tsx\")",
+      "Bash(sed -n '170,180p' \"C:\\\\Users\\\\later\\\\chasing-30\\\\app\\\\trips\\\\page.tsx\")",
+      "Bash(sed -n '209,220p' \"C:\\\\Users\\\\later\\\\chasing-30\\\\app\\\\stadiums\\\\[id]\\\\page.tsx\")",
+      "Bash(notepad *)"
     ]
   }
 }

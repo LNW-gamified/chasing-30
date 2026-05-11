@@ -167,10 +167,10 @@ export default function TripsPage() {
 
   // ── Mobile bottom bar (shared) ──────────────────────────────────────────────
   const bottomBar = (
-    <div className="md:hidden" style={{
+    <div className="flex md:hidden" style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
       backgroundColor: '#161B22', borderTop: '1px solid #30363D',
-      display: 'flex', paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      paddingBottom: 'env(safe-area-inset-bottom, 0px)',
     }}>
       {NAV.map(({ label, href, Icon }) => {
         const active = href === '/trips'

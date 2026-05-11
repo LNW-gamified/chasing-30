@@ -3,15 +3,18 @@
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
-import { Search, Check, ChevronRight, Home, MapPin, Map, Trophy, Plane, X } from 'lucide-react'
-import type { Stadium, StadiumVisit } from '@/types'
+import { Search, Home, MapPin, Map, Trophy, Plane, X } from 'lucide-react'
+import type { Stadium } from '@/types'
 import TeamLogo from '@/components/TeamLogo'
 
-type SortKey = 'name' | 'team' | 'state' | 'league' | 'division'
-type FilterLeague = 'all' | 'AL' | 'NL'
-type FilterDivision = 'all' | 'East' | 'Central' | 'West'
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 type FilterVisited = 'all' | 'visited' | 'unvisited'
 type Category = 'mlb' | 'historical' | 'spring'
+type SortKey = 'team' | 'name' | 'state' | 'division'
+interface VisitRow { stadium_id: string; visit_date: string }
+
+// ─── Team colors ──────────────────────────────────────────────────────────────
 
 const TEAM_ACCENT: Record<string, string> = {
   NYY: '#003087', BOS: '#BD3039', LAD: '#005A9C', CHC: '#0E3386',
@@ -24,52 +27,167 @@ const TEAM_ACCENT: Record<string, string> = {
   TB:  '#092C5C', TOR: '#134A8E',
 }
 
+// ─── Real-world capacity & year fallbacks ─────────────────────────────────────
+
+const STADIUM_INFO: Record<string, { capacity: number; opened: number }> = {
+  ARI: { capacity: 48686, opened: 1998 }, ATL: { capacity: 41084, opened: 2017 },
+  BAL: { capacity: 44970, opened: 1992 }, BOS: { capacity: 37755, opened: 1912 },
+  CHC: { capacity: 41649, opened: 1914 }, CWS: { capacity: 40615, opened: 1991 },
+  CIN: { capacity: 42319, opened: 2003 }, CLE: { capacity: 34830, opened: 1994 },
+  COL: { capacity: 46897, opened: 1995 }, DET: { capacity: 41083, opened: 2000 },
+  HOU: { capacity: 41168, opened: 2000 }, KC:  { capacity: 37903, opened: 1973 },
+  LAA: { capacity: 45517, opened: 1966 }, LAD: { capacity: 56000, opened: 1962 },
+  MIA: { capacity: 36742, opened: 2012 }, MIL: { capacity: 41900, opened: 2001 },
+  MIN: { capacity: 38544, opened: 2010 }, NYM: { capacity: 41922, opened: 2009 },
+  NYY: { capacity: 47309, opened: 2009 }, OAK: { capacity: 46765, opened: 1966 },
+  PHI: { capacity: 43651, opened: 2004 }, PIT: { capacity: 38747, opened: 2001 },
+  SD:  { capacity: 40162, opened: 2004 }, SF:  { capacity: 41265, opened: 2000 },
+  SEA: { capacity: 47929, opened: 1999 }, STL: { capacity: 44383, opened: 2006 },
+  TB:  { capacity: 25000, opened: 1990 }, TEX: { capacity: 40518, opened: 2020 },
+  TOR: { capacity: 49286, opened: 1989 }, WSH: { capacity: 41313, opened: 2008 },
+}
+
+// ─── Nav ─────────────────────────────────────────────────────────────────────
+
 const NAV = [
-  { label: 'Home',  href: '/dashboard',  icon: Home },
-  { label: 'Parks', href: '/stadiums',   icon: MapPin },
-  { label: 'Map',   href: '/map',        icon: Map },
-  { label: 'Goals', href: '/milestones', icon: Trophy },
-  { label: 'Trips', href: '/trips',      icon: Plane },
+  { label: 'Home',  href: '/dashboard',  icon: Home   },
+  { label: 'Parks', href: '/stadiums',   icon: MapPin  },
+  { label: 'Map',   href: '/map',        icon: Map     },
+  { label: 'Goals', href: '/milestones', icon: Trophy  },
+  { label: 'Trips', href: '/trips',      icon: Plane   },
 ]
 
-function HeaderRing({ visited, total }: { visited: number; total: number }) {
-  const size = 52
-  const sw = 4
-  const r = (size - sw * 2) / 2
-  const circ = 2 * Math.PI * r
-  const pct = total === 0 ? 0 : visited / total
-  const dash = pct * circ
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function fmtDate(d: string): string {
+  try {
+    return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+    })
+  } catch { return d }
+}
+
+function fmtCap(n: number | null | undefined): string {
+  return n ? n.toLocaleString() : '—'
+}
+
+// ─── Stadium card ─────────────────────────────────────────────────────────────
+
+function StadiumCard({
+  stadium, visited, visitDate,
+}: {
+  stadium: Stadium
+  visited: boolean
+  visitDate?: string
+}) {
+  const accent   = TEAM_ACCENT[stadium.abbreviation] ?? '#1F6FEB'
+  const capacity = stadium.capacity ?? STADIUM_INFO[stadium.abbreviation]?.capacity ?? null
+  const opened   = stadium.opened   ?? STADIUM_INFO[stadium.abbreviation]?.opened   ?? null
+
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0 }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#30363D" strokeWidth={sw} />
-      <circle
-        cx={size / 2} cy={size / 2} r={r} fill="none"
-        stroke="#E6EDF3" strokeWidth={sw}
-        strokeDasharray={`${dash} ${circ - dash}`}
-        strokeLinecap="round"
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-      />
-      <text
-        x={size / 2} y={size / 2}
-        textAnchor="middle" dominantBaseline="central"
-        fill="#E6EDF3" fontSize={10} fontWeight={700}
+    <Link href={`/stadiums/${stadium.id}`} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
+      <div style={{
+        backgroundColor: '#161B22',
+        border: '1px solid #30363D',
+        borderRadius: 12,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        opacity: visited ? 1 : 0.7,
+        transition: 'opacity 0.15s, border-color 0.15s',
+        cursor: 'pointer',
+      }}
+        className="stadium-card"
       >
-        {Math.round(pct * 100)}%
-      </text>
-    </svg>
+        {/* Team color accent bar */}
+        <div style={{ height: 4, backgroundColor: accent, flexShrink: 0 }} />
+
+        {/* Card body */}
+        <div style={{
+          padding: '12px 10px',
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          textAlign: 'center', flex: 1, gap: 0,
+        }}>
+
+          {/* Logo */}
+          <div style={{ marginBottom: 8, marginTop: 2 }}>
+            <TeamLogo abbreviation={stadium.abbreviation} size={44} />
+          </div>
+
+          {/* Team name */}
+          <div style={{
+            fontSize: 13, fontWeight: 700, color: '#E6EDF3',
+            lineHeight: 1.2, marginBottom: 3,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            width: '100%',
+          }}>
+            {stadium.team}
+          </div>
+
+          {/* Stadium name */}
+          <div style={{
+            fontSize: 11, color: '#8B949E', lineHeight: 1.35, marginBottom: 2,
+            display: '-webkit-box', WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical', overflow: 'hidden',
+            width: '100%',
+          }}>
+            {stadium.name}
+          </div>
+
+          {/* City */}
+          <div style={{ fontSize: 11, color: '#8B949E', marginBottom: 8 }}>
+            {stadium.city}, {stadium.state}
+          </div>
+
+          {/* Capacity / Year */}
+          <div style={{ fontSize: 10, color: '#6E7681', marginBottom: 10 }}>
+            {fmtCap(capacity)} cap · Est. {opened ?? '—'}
+          </div>
+
+          {/* Spacer */}
+          <div style={{ flex: 1 }} />
+
+          {/* Visit state */}
+          {visited ? (
+            <div style={{ textAlign: 'center' }}>
+              <span style={{
+                display: 'inline-block',
+                fontSize: 11, fontWeight: 700, color: '#3FB950',
+                backgroundColor: 'rgba(63,185,80,0.12)',
+                padding: '3px 10px', borderRadius: 999,
+                marginBottom: visitDate ? 4 : 0,
+              }}>
+                Visited ✓
+              </span>
+              {visitDate && (
+                <div style={{ fontSize: 10, color: '#8B949E' }}>
+                  {fmtDate(visitDate)}
+                </div>
+              )}
+            </div>
+          ) : (
+            <span style={{ fontSize: 11, color: '#6E7681', fontStyle: 'italic' }}>
+              Not Yet
+            </span>
+          )}
+
+        </div>
+      </div>
+    </Link>
   )
 }
 
-export default function StadiumsPage() {
-  const [stadiums, setStadiums] = useState<Stadium[]>([])
-  const [visits, setVisits] = useState<StadiumVisit[]>([])
-  const [loading, setLoading] = useState(true)
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
-  const [search, setSearch] = useState('')
+export default function StadiumsPage() {
+  const [stadiums, setStadiums]     = useState<Stadium[]>([])
+  const [visits, setVisits]         = useState<VisitRow[]>([])
+  const [loading, setLoading]       = useState(true)
+  const [search, setSearch]         = useState('')
   const [showSearch, setShowSearch] = useState(false)
-  const [sortKey, setSortKey] = useState<SortKey>('team')
-  const [filterLeague, setFilterLeague] = useState<FilterLeague>('all')
-  const [filterDivision, setFilterDivision] = useState<FilterDivision>('all')
+  const [sortKey, setSortKey]       = useState<SortKey>('team')
+  const [filterLeague, setFilterLeague] = useState<'all' | 'AL' | 'NL'>('all')
   const [filterVisited, setFilterVisited] = useState<FilterVisited>('all')
   const [activeCategory, setActiveCategory] = useState<Category>('mlb')
 
@@ -77,69 +195,68 @@ export default function StadiumsPage() {
     const supabase = createClient()
     Promise.all([
       supabase.from('stadiums').select('*').order('team'),
-      supabase.from('stadium_visits').select('stadium_id'),
+      supabase.from('stadium_visits').select('stadium_id, visit_date').order('visit_date', { ascending: false }),
     ]).then(([{ data: s }, { data: v }]) => {
       setStadiums(s ?? [])
-      setVisits((v as StadiumVisit[]) ?? [])
+      setVisits((v as VisitRow[]) ?? [])
       setLoading(false)
     })
   }, [])
 
-  const visitedIds = useMemo(() => new Set(visits.map((v) => v.stadium_id)), [visits])
+  const visitedIds = useMemo(() => new Set(visits.map(v => v.stadium_id)), [visits])
 
-  const visitCounts = useMemo(() => {
-    const counts: Record<string, number> = {}
-    visits.forEach((v) => { counts[v.stadium_id] = (counts[v.stadium_id] ?? 0) + 1 })
-    return counts
+  const latestVisit = useMemo(() => {
+    const map: Record<string, string> = {}
+    visits.forEach(v => { if (!map[v.stadium_id]) map[v.stadium_id] = v.visit_date })
+    return map
   }, [visits])
+
+  const visitedCount = visitedIds.size
+  const pct = Math.round((visitedCount / 30) * 100)
 
   const filtered = useMemo(() => {
     if (activeCategory !== 'mlb') return []
-    let list = stadiums.filter((s) => {
+    let list = stadiums.filter(s => {
       const q = search.toLowerCase()
       if (q && !s.name.toLowerCase().includes(q) && !s.team.toLowerCase().includes(q) && !s.city.toLowerCase().includes(q)) return false
       if (filterLeague !== 'all' && s.league !== filterLeague) return false
-      if (filterDivision !== 'all' && s.division !== filterDivision) return false
       if (filterVisited === 'visited' && !visitedIds.has(s.id)) return false
       if (filterVisited === 'unvisited' && visitedIds.has(s.id)) return false
       return true
     })
     list.sort((a, b) => (a[sortKey] as string).localeCompare(b[sortKey] as string))
     return list
-  }, [stadiums, search, sortKey, filterLeague, filterDivision, filterVisited, visitedIds, activeCategory])
-
-  const visitedCount = visitedIds.size
-  const notVisitedCount = 30 - visitedCount
+  }, [stadiums, search, sortKey, filterLeague, filterVisited, visitedIds, activeCategory])
 
   const CATEGORIES: { key: Category; label: string }[] = [
-    { key: 'mlb', label: 'MLB' },
-    { key: 'historical', label: 'Historical' },
-    { key: 'spring', label: 'Spring Training' },
+    { key: 'mlb',        label: 'MLB'             },
+    { key: 'historical', label: 'Historical'      },
+    { key: 'spring',     label: 'Spring Training' },
   ]
 
   const VISIT_FILTERS: { key: FilterVisited; label: string; count: number }[] = [
-    { key: 'all', label: 'All', count: 30 },
-    { key: 'visited', label: 'Visited', count: visitedCount },
-    { key: 'unvisited', label: 'Not Yet', count: notVisitedCount },
+    { key: 'all',       label: 'All',     count: 30                },
+    { key: 'visited',   label: 'Visited', count: visitedCount      },
+    { key: 'unvisited', label: 'Not Yet', count: 30 - visitedCount },
   ]
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0B1117', color: '#E6EDF3' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#0B1117', color: '#E6EDF3', overflowX: 'hidden' }}>
 
-      {/* ── Desktop sidebar ───────────────────────────────────────── */}
+      {/* ── Desktop sidebar ──────────────────────────────────────── */}
       <aside
         className="hidden md:flex flex-col"
         style={{
           position: 'fixed', top: 0, left: 0, bottom: 0, width: 240,
-          backgroundColor: '#161B22', borderRight: '1px solid #30363D', zIndex: 40,
+          backgroundColor: '#0B1117', borderRight: '1px solid #30363D', zIndex: 40,
+          overflowY: 'auto',
         }}
       >
-        <div style={{ padding: '24px 20px 16px' }}>
-          <div style={{ fontWeight: 900, fontSize: 20, color: '#E6EDF3', letterSpacing: '-0.5px' }}>
-            ⚾ Chasing 30
-          </div>
+        <div style={{ padding: '24px 20px 16px', borderBottom: '1px solid #30363D' }}>
+          <div style={{ fontWeight: 900, fontSize: 18, color: '#E6EDF3' }}>⚾ Chasing 30</div>
+          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>MLB Stadium Tracker</div>
         </div>
-        <nav style={{ flex: 1, padding: '4px 12px' }}>
+        <nav style={{ flex: 1, padding: '8px 12px' }}>
           {NAV.map(({ label, href, icon: Icon }) => {
             const active = href === '/stadiums'
             return (
@@ -151,30 +268,23 @@ export default function StadiumsPage() {
                   padding: '10px 12px', borderRadius: 10, marginBottom: 2,
                   color: active ? '#E6EDF3' : '#8B949E',
                   backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent',
-                  fontWeight: active ? 700 : 500, fontSize: 15,
+                  fontWeight: active ? 600 : 400, fontSize: 15,
                   textDecoration: 'none',
+                  borderLeft: active ? '3px solid #1F6FEB' : '3px solid transparent',
                 }}
               >
-                <Icon size={20} color={active ? '#1F6FEB' : '#8B949E'} />
+                <Icon size={18} color={active ? '#1F6FEB' : '#8B949E'} />
                 {label}
               </Link>
             )
           })}
         </nav>
         <div style={{ padding: '16px 20px', borderTop: '1px solid #30363D' }}>
-          <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Progress
+          <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 6 }}>
+            {visitedCount} / 30 · {pct}% complete
           </div>
-          <div style={{ fontWeight: 800, fontSize: 22, color: '#E6EDF3' }}>
-            {visitedCount}
-            <span style={{ fontWeight: 400, fontSize: 14, color: '#8B949E' }}> / 30</span>
-          </div>
-          <div style={{ height: 4, backgroundColor: '#30363D', borderRadius: 4, marginTop: 8, overflow: 'hidden' }}>
-            <div style={{
-              height: '100%', borderRadius: 4, transition: 'width 0.5s',
-              width: `${(visitedCount / 30) * 100}%`,
-              backgroundColor: '#3FB950',
-            }} />
+          <div style={{ height: 4, backgroundColor: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: 4, width: `${pct}%`, backgroundColor: '#3FB950', transition: 'width 0.5s' }} />
           </div>
         </div>
       </aside>
@@ -182,41 +292,64 @@ export default function StadiumsPage() {
       {/* ── Main content ─────────────────────────────────────────── */}
       <main className="md:ml-[240px]" style={{ minHeight: '100vh', paddingBottom: 80 }}>
 
-        {/* Header */}
+        {/* ── Hero progress banner ─────────────────────────────── */}
         <div style={{ backgroundColor: '#161B22', borderBottom: '1px solid #30363D' }}>
-          <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 16px 0' }}>
+          <div style={{ maxWidth: 960, margin: '0 auto', padding: '20px 16px' }}>
 
-            {/* Title row */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
-              <div>
-                <h1 style={{ margin: 0, fontSize: 36, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1 }}>
-                  Parks
-                </h1>
-                <p style={{ margin: '5px 0 0', fontSize: 15, color: '#8B949E' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
+                  My Parks
+                </div>
+                <div style={{ fontSize: 28, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1, marginBottom: 4 }}>
                   {visitedCount} of 30 visited
-                </p>
+                </div>
+                <div style={{ fontSize: 14, color: '#8B949E' }}>
+                  Chasing all 30 MLB ballparks
+                </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 2 }}>
-                <button
-                  onClick={() => { setShowSearch(v => !v); if (showSearch) setSearch('') }}
-                  aria-label="Toggle search"
-                  style={{
-                    background: 'rgba(139,148,158,0.12)', border: '1px solid #30363D',
-                    borderRadius: '50%', width: 36, height: 36,
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                >
-                  {showSearch
-                    ? <X size={17} color="#8B949E" />
-                    : <Search size={17} color="#8B949E" />
-                  }
-                </button>
-                <HeaderRing visited={visitedCount} total={30} />
-              </div>
+              {/* Search toggle */}
+              <button
+                onClick={() => { setShowSearch(v => !v); if (showSearch) setSearch('') }}
+                aria-label="Toggle search"
+                style={{
+                  background: 'rgba(139,148,158,0.1)', border: '1px solid #30363D',
+                  borderRadius: '50%', width: 36, height: 36, flexShrink: 0,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  marginTop: 2,
+                }}
+              >
+                {showSearch ? <X size={16} color="#8B949E" /> : <Search size={16} color="#8B949E" />}
+              </button>
             </div>
 
-            {/* Category tabs */}
-            <div style={{ display: 'flex', gap: 8, paddingBottom: 18 }}>
+            {/* Progress bar */}
+            <div style={{ height: 8, backgroundColor: '#30363D', borderRadius: 4, marginBottom: 14, overflow: 'hidden' }}>
+              <div style={{ height: '100%', borderRadius: 4, width: `${pct}%`, backgroundColor: '#3FB950', transition: 'width 0.5s' }} />
+            </div>
+
+            {/* Quick stats */}
+            <div style={{ display: 'flex', gap: 20 }}>
+              <div>
+                <span style={{ fontSize: 20, fontWeight: 800, color: '#3FB950' }}>{visitedCount}</span>
+                <span style={{ fontSize: 13, color: '#8B949E', marginLeft: 4 }}>visited</span>
+              </div>
+              <div>
+                <span style={{ fontSize: 20, fontWeight: 800, color: '#E6EDF3' }}>{30 - visitedCount}</span>
+                <span style={{ fontSize: 13, color: '#8B949E', marginLeft: 4 }}>remaining</span>
+              </div>
+              <div>
+                <span style={{ fontSize: 20, fontWeight: 800, color: '#F5A623' }}>{pct}%</span>
+                <span style={{ fontSize: 13, color: '#8B949E', marginLeft: 4 }}>complete</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Category tabs ────────────────────────────────────── */}
+        <div style={{ backgroundColor: '#161B22', borderBottom: '1px solid #30363D' }}>
+          <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 16px' }}>
+            <div style={{ display: 'flex', gap: 0 }}>
               {CATEGORIES.map(({ key, label }) => {
                 const active = activeCategory === key
                 return (
@@ -224,11 +357,11 @@ export default function StadiumsPage() {
                     key={key}
                     onClick={() => setActiveCategory(key)}
                     style={{
-                      padding: '7px 18px', borderRadius: 20, fontSize: 14, fontWeight: 600,
-                      cursor: 'pointer', transition: 'all 0.15s',
-                      backgroundColor: active ? '#1C2430' : 'transparent',
+                      padding: '12px 18px', fontSize: 14, fontWeight: active ? 700 : 500,
+                      cursor: 'pointer', background: 'none', border: 'none',
                       color: active ? '#E6EDF3' : '#8B949E',
-                      border: active ? '1.5px solid #484F58' : '1.5px solid #30363D',
+                      borderBottom: active ? '2px solid #1F6FEB' : '2px solid transparent',
+                      transition: 'color 0.15s, border-color 0.15s',
                     }}
                   >
                     {label}
@@ -239,34 +372,31 @@ export default function StadiumsPage() {
           </div>
         </div>
 
-        {/* Filter row (sticky) */}
+        {/* ── Filters (sticky) ─────────────────────────────────── */}
         <div style={{
+          position: 'sticky', top: 0, zIndex: 20,
           backgroundColor: '#0B1117', borderBottom: '1px solid #30363D',
-          position: 'sticky', top: 0, zIndex: 30,
         }}>
-          <div style={{ maxWidth: 800, margin: '0 auto', padding: '10px 16px' }}>
+          <div style={{ maxWidth: 960, margin: '0 auto', padding: '10px 16px' }}>
 
-            {/* Search input (toggled) */}
             {showSearch && (
-              <div style={{ marginBottom: 10 }}>
-                <input
-                  type="text"
-                  placeholder="Search team, stadium, city..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  autoFocus
-                  style={{
-                    width: '100%', padding: '9px 14px', borderRadius: 8,
-                    border: '1.5px solid #30363D', fontSize: 14,
-                    backgroundColor: '#1C2430', color: '#E6EDF3',
-                    outline: 'none', boxSizing: 'border-box',
-                  }}
-                />
-              </div>
+              <input
+                type="text"
+                placeholder="Search team, stadium, city..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                autoFocus
+                style={{
+                  width: '100%', padding: '8px 12px', borderRadius: 8, marginBottom: 10,
+                  border: '1.5px solid #30363D', fontSize: 14,
+                  backgroundColor: '#1C2430', color: '#E6EDF3',
+                  outline: 'none', boxSizing: 'border-box',
+                }}
+              />
             )}
 
-            {/* Chips + sort */}
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              {/* Visit filter pills */}
               {VISIT_FILTERS.map(({ key, label, count }) => {
                 const active = filterVisited === key
                 return (
@@ -274,25 +404,25 @@ export default function StadiumsPage() {
                     key={key}
                     onClick={() => setFilterVisited(key)}
                     style={{
-                      padding: '6px 14px', borderRadius: 20, fontSize: 14, fontWeight: 600,
+                      padding: '5px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600,
                       cursor: 'pointer', transition: 'all 0.15s',
-                      backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent',
+                      backgroundColor: active ? 'rgba(31,111,235,0.15)' : 'transparent',
                       color: active ? '#E6EDF3' : '#8B949E',
                       border: active ? '1.5px solid #1F6FEB' : '1.5px solid #30363D',
                     }}
                   >
-                    {label} <span style={{ fontWeight: 400 }}>[{count}]</span>
+                    {label} <span style={{ fontWeight: 400, fontSize: 12 }}>({count})</span>
                   </button>
                 )
               })}
 
-              {/* Sort */}
+              {/* Sort + league controls */}
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
                 <select
                   value={filterLeague}
-                  onChange={e => setFilterLeague(e.target.value as FilterLeague)}
+                  onChange={e => setFilterLeague(e.target.value as 'all' | 'AL' | 'NL')}
                   style={{
-                    padding: '6px 8px', borderRadius: 8, border: '1.5px solid #30363D',
+                    padding: '5px 8px', borderRadius: 8, border: '1.5px solid #30363D',
                     fontSize: 13, color: '#8B949E', backgroundColor: '#1C2430', cursor: 'pointer',
                   }}
                 >
@@ -304,7 +434,7 @@ export default function StadiumsPage() {
                   value={sortKey}
                   onChange={e => setSortKey(e.target.value as SortKey)}
                   style={{
-                    padding: '6px 8px', borderRadius: 8, border: '1.5px solid #30363D',
+                    padding: '5px 8px', borderRadius: 8, border: '1.5px solid #30363D',
                     fontSize: 13, color: '#8B949E', backgroundColor: '#1C2430', cursor: 'pointer',
                   }}
                 >
@@ -318,11 +448,11 @@ export default function StadiumsPage() {
           </div>
         </div>
 
-        {/* Stadium list */}
-        <div style={{ maxWidth: 800, margin: '0 auto', backgroundColor: '#0B1117' }}>
+        {/* ── Card grid ────────────────────────────────────────── */}
+        <div style={{ maxWidth: 960, margin: '0 auto', padding: '16px' }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '56px 16px', color: '#8B949E', fontSize: 15 }}>
-              Loading parks...
+              Loading parks…
             </div>
           ) : activeCategory !== 'mlb' ? (
             <div style={{ textAlign: 'center', padding: '56px 16px', color: '#8B949E', fontSize: 15 }}>
@@ -335,106 +465,31 @@ export default function StadiumsPage() {
               No parks match your filters.
             </div>
           ) : (
-            filtered.map((stadium) => {
-              const visited = visitedIds.has(stadium.id)
-              const accent = TEAM_ACCENT[stadium.abbreviation] ?? '#1F6FEB'
-              return (
-                <Link
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {filtered.map(stadium => (
+                <StadiumCard
                   key={stadium.id}
-                  href={`/stadiums/${stadium.id}`}
-                  style={{ textDecoration: 'none', display: 'block' }}
-                >
-                  <div
-                    style={{
-                      display: 'flex', alignItems: 'center',
-                      padding: '14px 16px',
-                      borderBottom: '1px solid #30363D',
-                      backgroundColor: '#0B1117',
-                      opacity: visited ? 1 : 0.9,
-                    }}
-                    className="parks-row"
-                  >
-                    {/* Left accent bar */}
-                    <div style={{
-                      width: 4, borderRadius: 2, alignSelf: 'stretch',
-                      backgroundColor: accent, flexShrink: 0, marginRight: 14,
-                    }} />
-
-                    {/* Thumbnail + checkmark */}
-                    <div style={{ position: 'relative', marginRight: 14, flexShrink: 0 }}>
-                      <div style={{
-                        width: 60, height: 60, borderRadius: 12,
-                        backgroundColor: '#1C2430',
-                        border: '1px solid #30363D',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        overflow: 'hidden',
-                      }}>
-                        <TeamLogo abbreviation={stadium.abbreviation} size={46} />
-                      </div>
-                      {visited && (
-                        <div style={{
-                          position: 'absolute', bottom: -4, right: -4,
-                          width: 20, height: 20, borderRadius: '50%',
-                          backgroundColor: '#3FB950',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          border: '2px solid #0B1117',
-                        }}>
-                          <Check size={11} color="white" strokeWidth={3} />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Text */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: 16, color: '#E6EDF3', lineHeight: 1.2 }}>
-                        {stadium.team}
-                      </div>
-                      <div style={{
-                        fontSize: 14, color: '#8B949E', marginTop: 2,
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>
-                        {stadium.name}
-                      </div>
-                      <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>
-                        {stadium.city}, {stadium.state}
-                      </div>
-                    </div>
-
-                    {/* Chevron */}
-                    <ChevronRight size={18} color="#30363D" style={{ flexShrink: 0, marginLeft: 8 }} />
-                  </div>
-                </Link>
-              )
-            })
+                  stadium={stadium}
+                  visited={visitedIds.has(stadium.id)}
+                  visitDate={latestVisit[stadium.id]}
+                />
+              ))}
+            </div>
           )}
         </div>
+
       </main>
 
-      {/* ── Floating Map button ───────────────────────────────────── */}
-      <Link
-        href="/map"
-        className="fixed right-4 z-50 bottom-20 md:bottom-6"
-        style={{ textDecoration: 'none' }}
-      >
-        <div style={{
-          backgroundColor: '#161B22', color: '#E6EDF3',
-          padding: '10px 20px', borderRadius: 24,
-          fontWeight: 700, fontSize: 15,
-          border: '1px solid #30363D',
-          display: 'flex', alignItems: 'center', gap: 8,
-          whiteSpace: 'nowrap',
-        }}>
-          🗺 Map
-        </div>
-      </Link>
-
-      {/* ── Mobile bottom tab bar ─────────────────────────────────── */}
+      {/* ── Mobile bottom tab bar (flex md:hidden — no inline display) ── */}
       <div
-        className="md:hidden"
+        className="flex md:hidden"
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
-          backgroundColor: '#161B22', borderTop: '1px solid #30363D',
-          display: 'flex', paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          backgroundColor: 'rgba(11,17,23,0.92)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderTop: '1px solid #30363D',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
         {NAV.map(({ label, href, icon: Icon }) => {
@@ -450,9 +505,9 @@ export default function StadiumsPage() {
                 color: active ? '#1F6FEB' : '#8B949E', gap: 3,
               }}
             >
-              <Icon size={22} color={active ? '#1F6FEB' : '#8B949E'} />
+              <Icon size={22} color={active ? '#1F6FEB' : '#8B949E'} strokeWidth={active ? 2.5 : 1.8} />
               {active && (
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#1F6FEB' }}>
+                <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#1F6FEB', lineHeight: 1 }}>
                   {label}
                 </span>
               )}
@@ -461,9 +516,7 @@ export default function StadiumsPage() {
         })}
       </div>
 
-      <style>{`
-        .parks-row:hover { background-color: #1C2430 !important; }
-      `}</style>
+      <style>{`.stadium-card:hover { border-color: #484F58 !important; opacity: 1 !important; }`}</style>
     </div>
   )
 }
