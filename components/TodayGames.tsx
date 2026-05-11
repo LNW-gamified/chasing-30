@@ -80,7 +80,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
     : null
 
   return (
-    <div style={{ marginTop: 32, marginBottom: '1.5rem' }}>
+    <div style={{ marginTop: 24, marginBottom: '1.5rem' }}>
       {/* Section header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -105,11 +105,16 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
       </div>
 
       {/* Horizontal scroll row */}
-      <div style={{
-        display: 'flex', gap: 12,
-        overflowX: 'auto', paddingBottom: 8,
-        scrollbarWidth: 'none',
-      }}>
+      <div
+        className="no-scrollbar"
+        style={{
+          display: 'flex', gap: 16, flexWrap: 'nowrap',
+          overflowX: 'auto', paddingBottom: 8,
+          scrollbarWidth: 'none',
+          scrollSnapType: 'x mandatory',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
         {games.map(g => (
           <div
             key={g.gamePk}
@@ -119,6 +124,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
               padding: 16,
               minWidth: 160,
               flexShrink: 0,
+              scrollSnapAlign: 'start',
               border: g.isFavorite ? '2px solid #1F6FEB' : '1px solid #30363D',
             }}
           >

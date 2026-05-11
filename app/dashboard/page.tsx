@@ -4,6 +4,7 @@ import type { Stadium, StadiumVisit, SpecialEvent, Trip } from '@/types'
 import Link from 'next/link'
 import { Home, Map, MapPin, Trophy, Plane, Bell, ChevronRight } from 'lucide-react'
 import TodayGames, { type TodayGame } from '@/components/TodayGames'
+import Standings from '@/components/Standings'
 
 // ─── MLB API ──────────────────────────────────────────────────────────────────
 
@@ -143,8 +144,8 @@ function HeroRing({ visited, total }: { visited: number; total: number }) {
 }
 
 function ProgressRing({ visited, total }: { visited: number; total: number }) {
-  const size = 120
-  const sw   = 8
+  const size = 130
+  const sw   = 10
   const r    = (size - sw * 2) / 2
   const circ = 2 * Math.PI * r
   const pct  = total > 0 ? visited / total : 0
@@ -158,7 +159,7 @@ function ProgressRing({ visited, total }: { visited: number; total: number }) {
           cx={size / 2} cy={size / 2} r={r}
           fill="none" stroke="#3FB950" strokeWidth={sw} strokeLinecap="round"
           strokeDasharray={circ} strokeDashoffset={offset}
-          style={{ filter: 'drop-shadow(0 0 5px rgba(63,185,80,0.3))' }}
+          style={{ filter: 'drop-shadow(0 0 16px rgba(63,185,80,0.25))' }}
         />
       </svg>
       <div style={{
@@ -167,7 +168,7 @@ function ProgressRing({ visited, total }: { visited: number; total: number }) {
         alignItems: 'center', justifyContent: 'center',
         gap: 1,
       }}>
-        <span style={{ fontSize: 56, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>
+        <span style={{ fontSize: 60, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>
           {visited}
         </span>
         <span style={{ fontSize: 18, color: '#8B949E', fontWeight: 500, lineHeight: 1 }}>
@@ -339,7 +340,7 @@ export default async function DashboardPage() {
   )
 
   return (
-    <div style={{ background: '#0B1117', color: '#E6EDF3', minHeight: '100vh', overflowX: 'hidden' }}>
+    <div style={{ background: '#0B1117', color: '#E6EDF3', minHeight: '100vh', overflowX: 'hidden', maxWidth: '100vw' }}>
       <div style={{ display: 'flex' }}>
 
         {/* ── Desktop sidebar ──────────────────────────────────────────────── */}
@@ -397,7 +398,7 @@ export default async function DashboardPage() {
             {headerBlock}
           </div>
 
-          <div style={{ maxWidth: 800, margin: '0 auto', padding: '1.25rem 1rem', overflowX: 'hidden' }}>
+          <div style={{ maxWidth: 800, width: '100%', margin: '0 auto', padding: '1.25rem 1rem', overflowX: 'hidden', boxSizing: 'border-box' }}>
 
             {/* ── Hero Progress Card ───────────────────────────────────────── */}
             <div style={{ ...card, padding: '1.25rem 1.5rem', marginBottom: '1rem' }}>
@@ -520,12 +521,12 @@ export default async function DashboardPage() {
                   { icon: '🏆', value: favDivision,                       label: 'Fav Division'   },
                   { icon: '👁', value: mostSeenTeam,                      label: 'Most Seen'      },
                 ].map(({ icon, value, label }) => (
-                  <div key={label} style={{ background: '#161B22', padding: '0.875rem 1.125rem' }}>
-                    <div style={{ fontSize: 20, marginBottom: 6 }}>{icon}</div>
-                    <div style={{ fontSize: 28, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1, marginBottom: 4 }}>
+                  <div key={label} style={{ background: '#161B22', padding: 16 }}>
+                    <div style={{ fontSize: 24, marginBottom: 6 }}>{icon}</div>
+                    <div style={{ fontSize: 32, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1, marginBottom: 4 }}>
                       {value}
                     </div>
-                    <div style={{ fontSize: 13, color: '#8B949E' }}>{label}</div>
+                    <div style={{ fontSize: 14, color: '#8B949E' }}>{label}</div>
                   </div>
                 ))}
               </div>
@@ -535,6 +536,9 @@ export default async function DashboardPage() {
             {todayGames.length > 0 && (
               <TodayGames initialGames={todayGames} favAbbr={favAbbr} />
             )}
+
+            {/* ── Standings ────────────────────────────────────────────────── */}
+            <Standings favAbbr={favAbbr} />
 
             {/* ── Your Quests ───────────────────────────────────────────────── */}
             {nextQuests.length > 0 && (

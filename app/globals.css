@@ -220,6 +220,7 @@ select.input { cursor: pointer; }
 
 /* ── Scrollbar utilities ─────────────────────────────────────────────── */
 .filters-scroll::-webkit-scrollbar { display: none; }
+.no-scrollbar::-webkit-scrollbar   { display: none; }
 
 .scrollbar-thin::-webkit-scrollbar       { width: 4px; }
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
