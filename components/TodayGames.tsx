@@ -25,16 +25,16 @@ function favFirst(games: TodayGame[]): TodayGame[] {
 }
 
 function inPollWindow(): boolean {
-  const etDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }))
-  return etDate.getHours() >= 12
+  const ptDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }))
+  return ptDate.getHours() >= 9
 }
 
 function fmtTime(iso: string): string {
   try {
     return new Date(iso).toLocaleTimeString('en-US', {
       hour: 'numeric', minute: '2-digit',
-      timeZone: 'America/New_York', hour12: true,
-    }) + ' ET'
+      timeZone: 'America/Los_Angeles', hour12: true,
+    }) + ' PT'
   } catch { return '' }
 }
 

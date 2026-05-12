@@ -7,7 +7,7 @@ import GameDayForm from '@/components/GameDayForm'
 import { formatDate } from '@/lib/utils'
 import type { Stadium, StadiumVisit, StadiumNote } from '@/types'
 import { fetchUpcomingHomeGames, type UpcomingGame } from '@/lib/mlb-api'
-import { fetchStadiumPhoto, STADIUM_WIKI_ARTICLES } from '@/lib/stadium-wikipedia'
+import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 import Link from 'next/link'
 import {
   ArrowLeft, Plus, Pencil, Trash2, Save,
@@ -254,7 +254,6 @@ export default function StadiumDetailPage() {
 
   const visited = visits.length > 0
   const colors = TEAM_GRADIENTS[stadium.abbreviation] ?? ['#0B1117', '#161B22']
-  const wikiTitle = STADIUM_WIKI_ARTICLES[stadium.abbreviation]
 
   // Achievements
   const divStadiums = allStadiums.filter(s => s.league === stadium.league && s.division === stadium.division)
@@ -835,9 +834,9 @@ export default function StadiumDetailPage() {
                   <div style={{ backgroundColor: '#0B1117' }}>
                     {upcomingGames.map((g, i) => {
                       const dt = new Date(g.gameDate)
-                      const dayAbbr = dt.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/New_York' })
-                      const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' })
-                      const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })
+                      const dayAbbr = dt.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/Los_Angeles' })
+                      const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })
+                      const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
                       return (
                         <div key={g.gamePk} style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -853,7 +852,7 @@ export default function StadiumDetailPage() {
                               {g.awayTeam} @ {g.homeTeam}
                             </div>
                           </div>
-                          <div style={{ fontSize: 13, color: '#8B949E' }}>{timeStr} ET</div>
+                          <div style={{ fontSize: 13, color: '#8B949E' }}>{timeStr} PT</div>
                         </div>
                       )
                     })}
@@ -908,9 +907,9 @@ export default function StadiumDetailPage() {
               </div>
             </section>
 
-            {/* ── FAN TIPS ──────────────────────────────────────── */}
+            {/* ── NOTES ─────────────────────────────────────────── */}
             <section style={{ marginBottom: 32 }}>
-              <SectionTitle icon="💬">Fan Tips</SectionTitle>
+              <SectionTitle icon="💬">Notes</SectionTitle>
               {editingNote ? (
                 <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: 16 }}>
                   <textarea
@@ -935,7 +934,7 @@ export default function StadiumDetailPage() {
                         display: 'flex', alignItems: 'center', gap: 6,
                       }}
                     >
-                      <Save size={14} /> {savingNote ? 'Saving…' : 'Save Tip'}
+                      <Save size={14} /> {savingNote ? 'Saving…' : 'Save Note'}
                     </button>
                     <button
                       onClick={() => setEditingNote(false)}
@@ -984,57 +983,17 @@ export default function StadiumDetailPage() {
                       border: '1.5px solid #30363D', backgroundColor: '#1C2430', cursor: 'pointer', color: '#8B949E',
                     }}
                   >
-                    + Add a Tip
+                    + Add a Note
                   </button>
                 </div>
               )}
             </section>
 
-            {/* ── ABOUT (COLLAPSIBLE) ───────────────────────────── */}
+            {/* ── RETIRED NUMBERS ───────────────────────────────── */}
             <section style={{ marginBottom: 32 }}>
-              <Collapsible title="About ›">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, paddingTop: 12 }}>
-                  {[
-                    { label: 'Location', value: `${stadium.city}, ${stadium.state}` },
-                    { label: 'League', value: `${stadium.league} ${stadium.division}` },
-                    stadium.capacity ? { label: 'Capacity', value: stadium.capacity.toLocaleString() } : null,
-                    stadium.opened ? { label: 'Opened', value: String(stadium.opened) } : null,
-                    stadium.surface ? { label: 'Surface', value: stadium.surface } : null,
-                  ].filter(Boolean).map(item => (
-                    <div key={item!.label}>
-                      <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 3 }}>{item!.label}</div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>{item!.value}</div>
-                    </div>
-                  ))}
-                </div>
-              </Collapsible>
-
               <Collapsible title="Retired Numbers ›">
                 <div style={{ paddingTop: 12, fontSize: 14, color: '#8B949E' }}>
                   Retired number data coming soon.
-                </div>
-              </Collapsible>
-
-              <Collapsible title="Stadium Guide ›">
-                <div style={{ paddingTop: 12 }}>
-                  {wikiTitle && (
-                    <a
-                      href={`https://en.wikipedia.org/wiki/${encodeURIComponent(wikiTitle)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '12px', borderRadius: 8, backgroundColor: '#1C2430',
-                        textDecoration: 'none', color: '#E6EDF3', marginBottom: 12,
-                      }}
-                    >
-                      <span style={{ fontSize: 14, fontWeight: 600 }}>Wikipedia article</span>
-                      <ChevronRight size={16} color="#8B949E" />
-                    </a>
-                  )}
-                  <div style={{ fontSize: 14, color: '#8B949E' }}>
-                    More guide content coming soon.
-                  </div>
                 </div>
               </Collapsible>
             </section>

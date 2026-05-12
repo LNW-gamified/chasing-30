@@ -19,7 +19,7 @@ const MLB_ID_TO_ABBR: Record<number, string> = {
 
 async function fetchTodayGames(favAbbr: string | null): Promise<TodayGame[]> {
   try {
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
     const res = await fetch(
       `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&gameType=R`,
       { next: { revalidate: 300 } }
@@ -280,7 +280,7 @@ export default async function DashboardPage() {
 
   // ─── Next Up ────────────────────────────────────────────────────────────────
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
   const nextPlannedTrip = allTrips.find(t =>
     t.status === 'planned' &&
     ((t.start_date && t.start_date >= today) || (t.trip_date && t.trip_date >= today))
