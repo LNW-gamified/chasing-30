@@ -93,7 +93,6 @@ function statusPill(status: Trip['status']) {
 const sidebarStyle: React.CSSProperties = {
   position: 'fixed', top: 0, left: 0, bottom: 0, width: 240, zIndex: 40,
   backgroundColor: '#161B22', borderRight: '1px solid #30363D',
-  display: 'flex', flexDirection: 'column',
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -135,7 +134,7 @@ export default function TripsPage() {
 
   // ── Sidebar (shared) ────────────────────────────────────────────────────────
   const sidebar = (
-    <aside className="hidden md:flex" style={sidebarStyle}>
+    <aside className="hidden md:flex flex-col" style={sidebarStyle}>
       <div style={{ padding: '24px 20px 16px' }}>
         <div style={{ fontWeight: 900, fontSize: 20, color: '#E6EDF3', letterSpacing: '-0.5px' }}>⚾ Chasing 30</div>
       </div>
