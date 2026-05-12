@@ -116,6 +116,14 @@ export interface Trip {
   stadium?: Stadium
 }
 
+export interface RetiredNumber {
+  id: string
+  team_id: string
+  number: string
+  player_name: string
+  year_retired: number
+}
+
 export interface StadiumNote {
   id: string
   stadium_id: string

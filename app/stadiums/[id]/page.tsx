@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import GameDayForm from '@/components/GameDayForm'
 import { formatDate } from '@/lib/utils'
-import type { Stadium, StadiumVisit, StadiumNote } from '@/types'
+import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber } from '@/types'
 import { fetchUpcomingHomeGames, type UpcomingGame } from '@/lib/mlb-api'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 import Link from 'next/link'
@@ -43,6 +43,11 @@ const NAV = [
 ]
 
 type MiniStadium = { id: string; league: string; division: string }
+
+function hexToRgb(hex: string): string {
+  const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  return r ? `${parseInt(r[1], 16)},${parseInt(r[2], 16)},${parseInt(r[3], 16)}` : '31,111,235'
+}
 
 function SectionTitle({ icon, children }: { icon: string; children: React.ReactNode }) {
   return (
@@ -92,18 +97,20 @@ export default function StadiumDetailPage() {
   const [noteInput, setNoteInput] = useState('')
   const [savingNote, setSavingNote] = useState(false)
   const [upcomingGames, setUpcomingGames] = useState<UpcomingGame[]>([])
+  const [retiredNumbers, setRetiredNumbers] = useState<RetiredNumber[]>([])
   const [stadiumPhoto, setStadiumPhoto] = useState<string | null>(null)
   const [allVisitedIds, setAllVisitedIds] = useState<Set<string>>(new Set())
   const [allStadiums, setAllStadiums] = useState<MiniStadium[]>([])
 
   async function load() {
     const supabase = createClient()
-    const [{ data: s }, { data: v }, { data: n }, { data: av }, { data: as_ }] = await Promise.all([
+    const [{ data: s }, { data: v }, { data: n }, { data: av }, { data: as_ }, { data: rn }] = await Promise.all([
       supabase.from('stadiums').select('*').eq('id', id).single(),
       supabase.from('stadium_visits').select('*').eq('stadium_id', id).order('visit_date', { ascending: false }),
       supabase.from('stadium_notes').select('notes').eq('stadium_id', id).maybeSingle(),
       supabase.from('stadium_visits').select('stadium_id'),
       supabase.from('stadiums').select('id, league, division'),
+      supabase.from('retired_numbers').select('*').eq('team_id', id),
     ])
     setStadium(s)
     setVisits(v ?? [])
@@ -112,6 +119,12 @@ export default function StadiumDetailPage() {
     setNoteInput(note)
     setAllVisitedIds(new Set((av ?? []).map((r: { stadium_id: string }) => r.stadium_id)))
     setAllStadiums((as_ ?? []) as MiniStadium[])
+    const sorted = (rn ?? [] as RetiredNumber[]).sort((a: RetiredNumber, b: RetiredNumber) => {
+      const numA = parseInt(a.number.replace('*', ''), 10)
+      const numB = parseInt(b.number.replace('*', ''), 10)
+      return numA - numB
+    })
+    setRetiredNumbers(sorted as RetiredNumber[])
     setLoading(false)
   }
 
@@ -992,8 +1005,55 @@ export default function StadiumDetailPage() {
             {/* ── RETIRED NUMBERS ───────────────────────────────── */}
             <section style={{ marginBottom: 32 }}>
               <Collapsible title="Retired Numbers ›">
-                <div style={{ paddingTop: 12, fontSize: 14, color: '#8B949E' }}>
-                  Retired number data coming soon.
+                <div style={{ paddingTop: 12 }}>
+                  {retiredNumbers.length === 0 ? (
+                    <div style={{ fontSize: 14, color: '#8B949E', textAlign: 'center', padding: '12px 0' }}>
+                      None retired
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {retiredNumbers.map((rn) => (
+                        <div
+                          key={rn.id}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 14,
+                            padding: '10px 4px',
+                            borderBottom: '1px solid rgba(48,54,61,0.5)',
+                          }}
+                        >
+                          <div style={{
+                            width: 52, height: 52, borderRadius: 10, flexShrink: 0,
+                            backgroundColor: `rgba(${colors[0].startsWith('#') ? hexToRgb(colors[0]) : '31,111,235'}, 0.18)`,
+                            border: `1.5px solid rgba(${colors[0].startsWith('#') ? hexToRgb(colors[0]) : '31,111,235'}, 0.35)`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <span style={{
+                              fontSize: rn.number.length > 2 ? 14 : 20,
+                              fontWeight: 900, color: '#E6EDF3', letterSpacing: '-0.5px',
+                            }}>
+                              {rn.number}
+                            </span>
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 700, fontSize: 15, color: '#E6EDF3', lineHeight: 1.2 }}>
+                              {rn.player_name}
+                            </div>
+                            {rn.number === '42*' && (
+                              <div style={{ fontSize: 11, color: '#F5A623', fontWeight: 600, marginTop: 1 }}>
+                                Universally retired across MLB
+                              </div>
+                            )}
+                          </div>
+                          <div style={{
+                            fontSize: 13, color: '#8B949E', fontWeight: 600,
+                            flexShrink: 0,
+                          }}>
+                            {rn.year_retired}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </Collapsible>
             </section>
