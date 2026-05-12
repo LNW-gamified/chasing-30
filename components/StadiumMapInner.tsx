@@ -31,16 +31,35 @@ function MapInitializer({ mapRef }: { mapRef: React.MutableRefObject<L.Map | nul
 
 // ── Stadium pin icon factory ────────────────────────────────────────────────
 
-function makeStadiumIcon(logoUrl: string, visited: boolean): L.DivIcon {
+function makeStadiumIcon(logoUrl: string, visited: boolean, abbr: string): L.DivIcon {
+  if (abbr === 'SEA') console.log('[StadiumMap] marker logo URL:', logoUrl)
+
   const ring  = visited ? '#3FB950' : '#484F58'
   const badge = visited
-    ? `<div style="position:absolute;top:-3px;right:-3px;width:18px;height:18px;border-radius:50%;background:#3FB950;border:2.5px solid #1C2430;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:900;line-height:1;">✓</div>`
+    ? `<div style="position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:#3FB950;border:2px solid #0B1117;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:900;line-height:1;">✓</div>`
     : ''
+
+  // background-image is used instead of <img> because Leaflet's innerHTML
+  // injection path can suppress img load events in certain browser/CSP contexts;
+  // CSS background loading is handled by the style engine and always fires.
   return L.divIcon({
-    html: `<div style="position:relative;width:44px;height:44px;"><div style="width:44px;height:44px;border-radius:50%;border:2.5px solid ${ring};box-shadow:0 2px 8px rgba(0,0,0,0.45);background:#1C2430;overflow:hidden;display:flex;align-items:center;justify-content:center;"><img src="${logoUrl}" width="30" height="30" style="object-fit:contain;display:block;" onerror="this.style.opacity='0'"/></div>${badge}</div>`,
+    html: `
+      <div style="position:relative;width:40px;height:40px;">
+        <div style="
+          width:40px;height:40px;border-radius:50%;
+          border:2.5px solid ${ring};
+          box-shadow:0 2px 8px rgba(0,0,0,0.5);
+          background-color:#1C2430;
+          background-image:url('${logoUrl}');
+          background-size:72%;
+          background-position:center;
+          background-repeat:no-repeat;
+        "></div>
+        ${badge}
+      </div>`,
     className: '',
-    iconSize:   [44, 44],
-    iconAnchor: [22, 22],
+    iconSize:   [40, 40],
+    iconAnchor: [20, 20],
   })
 }
 
@@ -69,7 +88,7 @@ export default function StadiumMapInner({ stadiums }: Props) {
   const icons = useMemo(() => {
     const m = new Map<string, L.DivIcon>()
     for (const s of stadiums) {
-      m.set(s.id, makeStadiumIcon(getTeamLogoUrl(s.abbreviation), s.visited))
+      m.set(s.id, makeStadiumIcon(getTeamLogoUrl(s.abbreviation), s.visited, s.abbreviation))
     }
     return m
   }, [stadiums])
