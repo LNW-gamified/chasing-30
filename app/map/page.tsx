@@ -81,14 +81,14 @@ export default async function MapPage() {
         </div>
       </aside>
 
-      {/* ── Map area (full height, offset for sidebar on desktop) ─────── */}
-      <div className="md:ml-[240px]" style={{ height: '100svh', position: 'relative' }}>
+      {/* ── Map area — stops above the mobile bottom nav ────────────── */}
+      <div className="md:ml-[240px] h-[calc(100svh-56px)] md:h-screen" style={{ position: 'relative' }}>
         <StadiumMap stadiums={stadiumsWithVisit} />
       </div>
 
       {/* ── Mobile bottom tab bar ────────────────────────────────────── */}
       <div className="flex md:hidden" style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
         backgroundColor: '#161B22', borderTop: '1px solid #30363D',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}>

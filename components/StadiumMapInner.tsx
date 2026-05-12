@@ -1,7 +1,7 @@
 'use client'
 
-import { Fragment, useState, useRef, useMemo, useEffect } from 'react'
-import { MapContainer, TileLayer, Marker, Polyline, useMap, useMapEvents } from 'react-leaflet'
+import { useState, useRef, useMemo, useEffect } from 'react'
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { StadiumWithVisit } from '@/types'
@@ -29,62 +29,20 @@ function MapInitializer({ mapRef }: { mapRef: React.MutableRefObject<L.Map | nul
   return null
 }
 
-function ZoomTracker({ onZoom }: { onZoom: (z: number) => void }) {
-  const map = useMap()
-  useMapEvents({ zoomend: () => onZoom(map.getZoom()) })
-  return null
-}
-
 // ── Stadium pin icon factory ────────────────────────────────────────────────
 
 function makeStadiumIcon(logoUrl: string, visited: boolean): L.DivIcon {
-  const badgeBg  = visited ? '#3FB950' : '#F5A623'
-  const badgeGlyph = visited ? '✓' : '◈'
-
+  const ring  = visited ? '#3FB950' : '#484F58'
+  const badge = visited
+    ? `<div style="position:absolute;top:-3px;right:-3px;width:18px;height:18px;border-radius:50%;background:#3FB950;border:2.5px solid #1C2430;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:900;line-height:1;">✓</div>`
+    : ''
   return L.divIcon({
-    html: `
-      <div style="position:relative;width:44px;height:44px;">
-        <div style="
-          width:44px;height:44px;border-radius:50%;
-          border:3px solid #E6EDF3;
-          box-shadow:0 2px 10px rgba(0,0,0,0.5);
-          background:#1C2430;
-          overflow:hidden;
-          display:flex;align-items:center;justify-content:center;
-          cursor:pointer;
-        ">
-          <img
-            src="${logoUrl}"
-            width="32" height="32"
-            style="object-fit:contain;display:block;"
-            onerror="this.style.opacity='0'"
-          />
-        </div>
-        <div style="
-          position:absolute;top:-2px;right:-2px;
-          width:17px;height:17px;border-radius:50%;
-          background:${badgeBg};
-          border:2.5px solid #1C2430;
-          display:flex;align-items:center;justify-content:center;
-          font-size:7px;color:#0B1117;font-weight:900;line-height:1;
-        ">${badgeGlyph}</div>
-      </div>`,
+    html: `<div style="position:relative;width:44px;height:44px;"><div style="width:44px;height:44px;border-radius:50%;border:2.5px solid ${ring};box-shadow:0 2px 8px rgba(0,0,0,0.45);background:#1C2430;overflow:hidden;display:flex;align-items:center;justify-content:center;"><img src="${logoUrl}" width="30" height="30" style="object-fit:contain;display:block;" onerror="this.style.opacity='0'"/></div>${badge}</div>`,
     className: '',
     iconSize:   [44, 44],
     iconAnchor: [22, 22],
   })
 }
-
-// ── Division groups for achievement overlays ────────────────────────────────
-
-const DIVISIONS = [
-  { label: 'AL East',    league: 'AL', div: 'East'    },
-  { label: 'AL Central', league: 'AL', div: 'Central' },
-  { label: 'AL West',    league: 'AL', div: 'West'    },
-  { label: 'NL East',    league: 'NL', div: 'East'    },
-  { label: 'NL Central', league: 'NL', div: 'Central' },
-  { label: 'NL West',    league: 'NL', div: 'West'    },
-]
 
 // ── Main component ──────────────────────────────────────────────────────────
 
@@ -99,7 +57,6 @@ export default function StadiumMapInner({ stadiums }: Props) {
   const [filter,      setFilter]      = useState<Filter>('all')
   const [selected,    setSelected]    = useState<StadiumWithVisit | null>(null)
   const [showLegend,  setShowLegend]  = useState(false)
-  const [zoom,        setZoom]        = useState(4)
 
   // Filtered stadium list
   const visibleStadiums = useMemo(() => stadiums.filter(s => {
@@ -116,34 +73,6 @@ export default function StadiumMapInner({ stadiums }: Props) {
     }
     return m
   }, [stadiums])
-
-  // Achievement overlay data: divisions with partial progress
-  const divisionOverlays = useMemo(() =>
-    DIVISIONS
-      .map(({ label, league, div }) => {
-        const all       = stadiums.filter(s => s.league === league && s.division === div)
-        const unvisited = all.filter(s => !s.visited)
-        const visited   = all.filter(s => s.visited)
-        return { label, unvisited, visited }
-      })
-      .filter(g => g.visited.length > 0 && g.unvisited.length >= 2)
-  , [stadiums])
-
-  // Achievement label icon factory
-  function makeLabelIcon(text: string): L.DivIcon {
-    return L.divIcon({
-      html: `<div style="
-        background:rgba(31,111,235,0.92);color:#E6EDF3;
-        padding:3px 9px;border-radius:12px;
-        font-size:10px;font-weight:700;white-space:nowrap;
-        border:1px solid rgba(31,111,235,0.5);
-        pointer-events:none;
-      ">${text}</div>`,
-      className: '',
-      iconSize:   [0, 0],
-      iconAnchor: [0, 0],
-    })
-  }
 
   // Location button handler
   function handleLocate() {
@@ -171,7 +100,6 @@ export default function StadiumMapInner({ stadiums }: Props) {
         />
 
         <MapInitializer mapRef={mapRef} />
-        <ZoomTracker onZoom={setZoom} />
 
         {/* Stadium markers */}
         {visibleStadiums.map(s => (
@@ -183,33 +111,6 @@ export default function StadiumMapInner({ stadiums }: Props) {
           />
         ))}
 
-        {/* Achievement overlays — dashed orange lines + labels (zoom ≥ 5) */}
-        {zoom >= 5 && divisionOverlays.map(g => {
-          // Sort unvisited west-to-east for a tidy line path
-          const sorted = [...g.unvisited].sort((a, b) => a.lng - b.lng)
-          const pts = sorted.map(s => [s.lat, s.lng] as [number, number])
-          const midLat = pts.reduce((s, p) => s + p[0], 0) / pts.length
-          const midLng = pts.reduce((s, p) => s + p[1], 0) / pts.length
-          const remaining = g.unvisited.length
-          return (
-            <Fragment key={g.label}>
-              <Polyline
-                positions={pts}
-                pathOptions={{
-                  color: '#1F6FEB',
-                  dashArray: '9 7',
-                  weight: 2.5,
-                  opacity: 0.65,
-                }}
-              />
-              <Marker
-                position={[midLat, midLng + 0.8]}
-                icon={makeLabelIcon(`${remaining} left · ${g.label}`)}
-                interactive={false}
-              />
-            </Fragment>
-          )
-        })}
       </MapContainer>
 
       {/* ── Filter pills row (floating top) ──────────────────────────── */}
@@ -301,26 +202,11 @@ export default function StadiumMapInner({ stadiums }: Props) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
                 width: 32, height: 32, borderRadius: '50%',
-                border: '3px solid #161B22',
+                border: '2.5px solid #484F58',
                 backgroundColor: '#1C2430',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                position: 'relative', flexShrink: 0,
-              }}>
-                <div style={{
-                  position: 'absolute', top: -2, right: -2,
-                  width: 12, height: 12, borderRadius: '50%',
-                  backgroundColor: '#F5A623', border: '2px solid #161B22',
-                }} />
-              </div>
-              <span style={{ fontSize: 13, color: '#8B949E' }}>Not yet visited</span>
-            </div>
-            {/* Dashed line */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{
-                width: 32, height: 3, flexShrink: 0, borderRadius: 2,
-                backgroundImage: 'repeating-linear-gradient(90deg,#1F6FEB 0,#1F6FEB 9px,transparent 9px,transparent 16px)',
+                flexShrink: 0,
               }} />
-              <span style={{ fontSize: 13, color: '#8B949E' }}>Division progress</span>
+              <span style={{ fontSize: 13, color: '#8B949E' }}>Not yet visited</span>
             </div>
           </div>
         </div>
