@@ -13,24 +13,19 @@ import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar
 
 type TripWithStadium = Trip & { stadium: Stadium | null }
 
-const TRIP_CATS = [
-  { key: 'travel', label: 'Travel', icon: '✈️' },
-  { key: 'hotel', label: 'Hotel', icon: '🏨' },
-]
-
 export default function TripDetailPage() {
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
 
-  const [trip, setTrip] = useState<TripWithStadium | null>(null)
-  const [stops, setStops] = useState<TripStop[]>([])
-  const [stadiums, setStadiums] = useState<Stadium[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showEdit, setShowEdit] = useState(false)
-  const [showComplete, setShowComplete] = useState(false)
-  const [completeDate, setCompleteDate] = useState('')
-  const [completing, setCompleting] = useState(false)
+  const [trip,        setTrip]        = useState<TripWithStadium | null>(null)
+  const [stops,       setStops]       = useState<TripStop[]>([])
+  const [stadiums,    setStadiums]    = useState<Stadium[]>([])
+  const [loading,     setLoading]     = useState(true)
+  const [showEdit,    setShowEdit]    = useState(false)
+  const [showComplete,setShowComplete]= useState(false)
+  const [completeDate,setCompleteDate]= useState('')
+  const [completing,  setCompleting]  = useState(false)
 
   async function load() {
     const supabase = createClient()
@@ -65,10 +60,21 @@ export default function TripDetailPage() {
     await load()
   }
 
-  if (loading) return <AppShell><div className="text-center py-12" style={{ color: '#8B949E' }}>Loading...</div></AppShell>
-  if (!trip) return <AppShell><div className="text-center py-12" style={{ color: '#8B949E' }}>Trip not found.</div></AppShell>
+  if (loading) {
+    return (
+      <AppShell>
+        <div style={{ textAlign: 'center', padding: '48px 0', color: '#8B949E' }}>Loading...</div>
+      </AppShell>
+    )
+  }
+  if (!trip) {
+    return (
+      <AppShell>
+        <div style={{ textAlign: 'center', padding: '48px 0', color: '#8B949E' }}>Trip not found.</div>
+      </AppShell>
+    )
+  }
 
-  // Sort stops by game_date, nulls last
   const sortedStops = [...stops].sort((a, b) => {
     if (!a.game_date && !b.game_date) return 0
     if (!a.game_date) return 1
@@ -76,157 +82,331 @@ export default function TripDetailPage() {
     return a.game_date.localeCompare(b.game_date)
   })
 
-  const stopEst = stops.reduce((sum, s) => sum + s.est_tickets + s.est_food + s.est_parking, 0)
-  const stopActual = stops.reduce((sum, s) => sum + s.actual_tickets + s.actual_food + s.actual_parking, 0)
-  const tripEst = trip.est_travel + trip.est_hotel
-  const tripActual = trip.actual_travel + trip.actual_hotel
-  const estTotal = stopEst + tripEst
-  const actualTotal = stopActual + tripActual
-  const overBudget = actualTotal > estTotal && actualTotal > 0
+  const stopEstTotal  = stops.reduce((sum, s) => sum + s.est_tickets + s.est_food + s.est_parking, 0)
+  const stopActTotal  = stops.reduce((sum, s) => sum + s.actual_tickets + s.actual_food + s.actual_parking, 0)
+  const tripEst       = trip.est_travel + trip.est_hotel
+  const tripActual    = trip.actual_travel + trip.actual_hotel
+  const estTotal      = stopEstTotal + tripEst
+  const actualTotal   = stopActTotal + tripActual
+  const overBudget    = actualTotal > estTotal && actualTotal > 0
 
-  function statusColor(status: Trip['status']) {
-    if (status === 'completed') return '#3FB950'
-    if (status === 'cancelled') return '#F85149'
-    return '#1F6FEB'
+  function statusConfig(status: Trip['status']) {
+    if (status === 'completed') return { color: '#3FB950', bg: 'rgba(63,185,80,0.12)',   label: '✓ Completed' }
+    if (status === 'cancelled') return { color: '#8B949E', bg: 'rgba(139,148,158,0.12)', label: 'Cancelled'   }
+    return                             { color: '#1F6FEB', bg: 'rgba(31,111,235,0.12)',   label: '● Planned'   }
   }
 
   function dateRange() {
-    const start = trip!.start_date
-    const end = trip!.end_date
-    if (start && end) return `${formatDate(start)} – ${formatDate(end)}`
-    if (start) return `From ${formatDate(start)}`
-    if (trip!.trip_date) return formatDate(trip!.trip_date)
+    if (trip!.start_date && trip!.end_date) return `${formatDate(trip!.start_date)} – ${formatDate(trip!.end_date)}`
+    if (trip!.start_date) return `From ${formatDate(trip!.start_date)}`
+    if (trip!.trip_date)  return formatDate(trip!.trip_date)
     return null
   }
 
+  const sc = statusConfig(trip.status)
+  const dr = dateRange()
+
   return (
     <AppShell>
-      <Link href="/trips" className="inline-flex items-center gap-2 text-sm mb-6" style={{ color: '#8B949E' }}>
+
+      {/* Back link */}
+      <Link href="/trips" style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        color: '#8B949E', fontSize: 14, textDecoration: 'none', marginBottom: 20,
+      }}>
         <ArrowLeft size={16} /> Back to Trips
       </Link>
 
-      {/* Header */}
-      <div className="card p-6 mb-6">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <div className="flex items-center gap-3 mb-1 flex-wrap">
-              <h1 className="text-xl font-bold" style={{ color: '#E6EDF3' }}>{trip.name}</h1>
-              <span className="badge" style={{ backgroundColor: `${statusColor(trip.status)}20`, color: statusColor(trip.status) }}>
-                {trip.status}
-              </span>
-            </div>
-            {dateRange() && (
-              <div className="flex items-center gap-1.5 text-sm mb-1" style={{ color: '#8B949E' }}>
-                <Calendar size={13} style={{ color: '#8B949E' }} />
-                {dateRange()}
-              </div>
-            )}
-            <div className="text-sm" style={{ color: '#8B949E' }}>
-              {stops.length > 0
-                ? `${stops.length} stadium${stops.length !== 1 ? 's' : ''}`
-                : trip.stadium?.name}
-            </div>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {trip.status === 'planned' && (
-              <button
-                onClick={() => { setCompleteDate(new Date().toISOString().split('T')[0]); setShowComplete(true) }}
-                className="btn-secondary"
-                style={{ color: '#3FB950', borderColor: 'rgba(63,185,80,0.3)' }}
-              >
-                <CheckCircle size={14} /> Mark Complete
-              </button>
-            )}
-            <button onClick={() => setShowEdit(true)} className="btn-secondary">
-              <Pencil size={14} /> Edit
-            </button>
-            <button onClick={handleDelete} className="btn-secondary" style={{ color: '#F85149', borderColor: 'rgba(248,81,73,0.3)' }}>
-              <Trash2 size={14} /> Delete
-            </button>
+      {/* ── Hero header card ───────────────────────────────────────────── */}
+      <div style={{
+        backgroundColor: '#161B22', borderRadius: 16,
+        border: '1px solid #30363D', overflow: 'hidden', marginBottom: 14,
+      }}>
+        {/* Gradient accent bar */}
+        <div style={{ height: 4, background: 'linear-gradient(90deg, #1F6FEB 0%, #7c3aed 100%)' }} />
+
+        <div style={{ padding: '20px 20px 0' }}>
+          {/* Status badge */}
+          <div style={{
+            display: 'inline-flex', alignItems: 'center',
+            padding: '3px 10px', borderRadius: 20,
+            backgroundColor: sc.bg, color: sc.color,
+            fontSize: 12, fontWeight: 700, marginBottom: 10,
+          }}>
+            {sc.label}
           </div>
 
-          {showComplete && (
-            <div className="w-full mt-4 p-4 rounded-xl flex flex-wrap items-end gap-3"
-              style={{ backgroundColor: 'rgba(63,185,80,0.08)', border: '1px solid rgba(63,185,80,0.25)' }}>
-              <div className="flex-1 min-w-40">
-                <label className="label">Completion Date</label>
-                <input type="date" className="input" value={completeDate} onChange={e => setCompleteDate(e.target.value)} />
+          {/* Trip name */}
+          <h1 style={{
+            fontSize: 26, fontWeight: 900, color: '#E6EDF3',
+            margin: '0 0 10px', lineHeight: 1.15,
+          }}>
+            {trip.name}
+          </h1>
+
+          {/* Meta */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: 20 }}>
+            {dr && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#8B949E', fontSize: 13 }}>
+                <Calendar size={13} />
+                {dr}
               </div>
-              <div className="flex gap-2">
-                <button onClick={handleMarkComplete} disabled={completing} className="btn-primary" style={{ backgroundColor: '#3FB950' }}>
-                  {completing ? 'Saving...' : 'Confirm'}
-                </button>
-                <button onClick={() => setShowComplete(false)} className="btn-secondary"><X size={14} /></button>
+            )}
+            {(stops.length > 0 || trip.stadium) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#8B949E', fontSize: 13 }}>
+                <MapPin size={13} />
+                {stops.length > 0
+                  ? `${stops.length} stadium${stops.length !== 1 ? 's' : ''}`
+                  : trip.stadium?.name}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
+
+        {/* Action buttons row — scrollable so nothing clips */}
+        <div style={{
+          display: 'flex', gap: 8, padding: '12px 20px',
+          borderTop: '1px solid #30363D',
+          overflowX: 'auto', scrollbarWidth: 'none',
+        }}>
+          {trip.status === 'planned' && (
+            <button
+              onClick={() => { setCompleteDate(new Date().toISOString().split('T')[0]); setShowComplete(true) }}
+              style={{
+                flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '8px 14px', borderRadius: 8,
+                border: '1px solid rgba(63,185,80,0.35)',
+                backgroundColor: 'rgba(63,185,80,0.08)', color: '#3FB950',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >
+              <CheckCircle size={14} /> Mark Complete
+            </button>
+          )}
+          <button
+            onClick={() => setShowEdit(true)}
+            style={{
+              flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '8px 14px', borderRadius: 8,
+              border: '1px solid #30363D',
+              backgroundColor: '#1C2430', color: '#E6EDF3',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+            }}
+          >
+            <Pencil size={14} /> Edit Trip
+          </button>
+          <button
+            onClick={handleDelete}
+            style={{
+              flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '8px 14px', borderRadius: 8,
+              border: '1px solid rgba(248,81,73,0.3)',
+              backgroundColor: 'rgba(248,81,73,0.08)', color: '#F85149',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+              marginLeft: 'auto',
+            }}
+          >
+            <Trash2 size={14} /> Delete
+          </button>
+        </div>
+
+        {/* Mark complete panel */}
+        {showComplete && (
+          <div style={{
+            margin: '0 20px 20px', padding: 16, borderRadius: 12,
+            backgroundColor: 'rgba(63,185,80,0.08)',
+            border: '1px solid rgba(63,185,80,0.25)',
+            display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: 12,
+          }}>
+            <div style={{ flex: 1, minWidth: 160 }}>
+              <label className="label">Completion Date</label>
+              <input
+                type="date"
+                className="input"
+                value={completeDate}
+                onChange={e => setCompleteDate(e.target.value)}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={handleMarkComplete}
+                disabled={completing}
+                style={{
+                  padding: '9px 18px', borderRadius: 8, border: 'none',
+                  backgroundColor: '#3FB950', color: '#0B1117',
+                  fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                {completing ? 'Saving…' : 'Confirm'}
+              </button>
+              <button
+                onClick={() => setShowComplete(false)}
+                style={{
+                  padding: '9px 12px', borderRadius: 8,
+                  border: '1px solid #30363D', backgroundColor: '#1C2430',
+                  color: '#8B949E', cursor: 'pointer',
+                }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Itinerary */}
-      {sortedStops.length > 0 && (
-        <div className="card p-6 mb-6">
-          <div className="font-semibold mb-5 flex items-center gap-2" style={{ color: '#E6EDF3' }}>
-            <MapPin size={17} style={{ color: '#1F6FEB' }} /> Itinerary
+      {/* ── Cost summary bar ─────────────────────────────────────────────── */}
+      <div style={{
+        backgroundColor: '#161B22', borderRadius: 12,
+        border: '1px solid #30363D', padding: '14px 20px',
+        marginBottom: 14, display: 'flex', gap: 28,
+        overflowX: 'auto', scrollbarWidth: 'none',
+      }}>
+        <div style={{ flexShrink: 0 }}>
+          <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
+            Est. Total
           </div>
-          <div className="flex flex-col gap-5">
+          <div style={{ fontSize: 22, fontWeight: 900, color: '#F5A623' }}>
+            {formatCurrency(estTotal)}
+          </div>
+        </div>
+        {actualTotal > 0 && (
+          <div style={{ flexShrink: 0 }}>
+            <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
+              Actual
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: overBudget ? '#F85149' : '#3FB950' }}>
+              {formatCurrency(actualTotal)}
+            </div>
+          </div>
+        )}
+        {stops.length > 0 && (
+          <div style={{ flexShrink: 0 }}>
+            <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
+              Stadiums
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>
+              {stops.length}
+            </div>
+          </div>
+        )}
+        {tripEst > 0 && (
+          <div style={{ flexShrink: 0 }}>
+            <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
+              Travel + Hotel
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>
+              {formatCurrency(tripEst)}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Itinerary ─────────────────────────────────────────────────────── */}
+      {sortedStops.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 7,
+            fontSize: 11, fontWeight: 700, color: '#8B949E',
+            textTransform: 'uppercase', letterSpacing: '0.08em',
+            marginBottom: 10,
+          }}>
+            <MapPin size={13} style={{ color: '#1F6FEB' }} />
+            Itinerary
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {sortedStops.map((stop, i) => {
-              const stadium = stop.stadium as Stadium | undefined
-              const stopEst = stop.est_tickets + stop.est_food + stop.est_parking
-              const stopAct = stop.actual_tickets + stop.actual_food + stop.actual_parking
+              const stadium  = stop.stadium as Stadium | undefined
+              const stopEst  = stop.est_tickets + stop.est_food + stop.est_parking
+              const stopAct  = stop.actual_tickets + stop.actual_food + stop.actual_parking
               return (
-                <div key={stop.id} className="flex gap-4">
-                  {/* Day marker */}
-                  <div className="flex flex-col items-center flex-shrink-0">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                      style={{ backgroundColor: 'rgba(31,111,235,0.15)', color: '#1F6FEB' }}
-                    >
+                <div key={stop.id} style={{
+                  backgroundColor: '#161B22', borderRadius: 14,
+                  border: '1px solid #30363D', overflow: 'hidden',
+                }}>
+                  {/* Card top row */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
+                    {/* Team logo */}
+                    <div style={{
+                      width: 48, height: 48, borderRadius: 10, flexShrink: 0,
+                      backgroundColor: '#1C2430', border: '1px solid #30363D',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      overflow: 'hidden',
+                    }}>
+                      {stadium && <TeamLogo abbreviation={stadium.abbreviation} size={34} />}
+                    </div>
+
+                    {/* Stadium info */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontWeight: 700, fontSize: 15, color: '#E6EDF3',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {stadium?.name ?? 'Unknown Stadium'}
+                      </div>
+                      {stadium && (
+                        <div style={{ fontSize: 12, color: '#8B949E', marginTop: 1 }}>
+                          {stadium.city}, {stadium.state}
+                        </div>
+                      )}
+                      {stop.game_date && (
+                        <div style={{ fontSize: 12, color: '#8B949E', marginTop: 1 }}>
+                          {new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', {
+                            weekday: 'short', month: 'short', day: 'numeric',
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Stop number badge */}
+                    <div style={{
+                      flexShrink: 0, width: 28, height: 28, borderRadius: '50%',
+                      backgroundColor: 'rgba(31,111,235,0.15)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 12, fontWeight: 800, color: '#1F6FEB',
+                    }}>
                       {i + 1}
                     </div>
-                    {i < sortedStops.length - 1 && (
-                      <div className="flex-1 w-px mt-2" style={{ backgroundColor: '#30363D', minHeight: 24 }} />
-                    )}
                   </div>
 
-                  {/* Stop content */}
-                  <div className="flex-1 pb-2">
-                    {stop.game_date && (
-                      <div className="text-xs font-semibold mb-1" style={{ color: '#8B949E' }}>
-                        {new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2.5 mb-2">
-                      {stadium && <TeamLogo abbreviation={stadium.abbreviation} size={32} style={{ flexShrink: 0 }} />}
-                      <div>
-                        <div className="font-semibold" style={{ color: '#E6EDF3' }}>{stadium?.name ?? 'Unknown Stadium'}</div>
-                        {stadium && (
-                          <div className="text-xs" style={{ color: '#8B949E' }}>{stadium.city}, {stadium.state}</div>
+                  {/* Cost columns */}
+                  <div style={{
+                    display: 'flex', borderTop: '1px solid #30363D',
+                    backgroundColor: '#1C2430',
+                  }}>
+                    {[
+                      { label: '🎟 Tickets', est: stop.est_tickets, actual: stop.actual_tickets },
+                      { label: '🌭 Food',    est: stop.est_food,    actual: stop.actual_food    },
+                      { label: '🚗 Parking', est: stop.est_parking, actual: stop.actual_parking },
+                    ].map(({ label, est, actual }, ci) => (
+                      <div key={label} style={{
+                        flex: 1, padding: '10px 12px',
+                        borderRight: ci < 2 ? '1px solid #30363D' : 'none',
+                      }}>
+                        <div style={{ fontSize: 10, color: '#8B949E', marginBottom: 3 }}>{label}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>
+                          {formatCurrency(est)}
+                        </div>
+                        {actual > 0 && (
+                          <div style={{ fontSize: 11, color: actual > est ? '#F85149' : '#3FB950', marginTop: 1 }}>
+                            {formatCurrency(actual)}
+                          </div>
                         )}
                       </div>
-                    </div>
+                    ))}
 
-                    {/* Per-stop budget mini table */}
-                    <div className="flex flex-wrap gap-3 text-sm">
-                      {[
-                        { label: '🎟️ Tickets', est: stop.est_tickets, actual: stop.actual_tickets },
-                        { label: '🌭 Food', est: stop.est_food, actual: stop.actual_food },
-                        { label: '🚗 Parking', est: stop.est_parking, actual: stop.actual_parking },
-                      ].map(({ label, est, actual }) => (
-                        <div key={label} className="flex flex-col gap-0.5">
-                          <div className="text-xs" style={{ color: '#8B949E' }}>{label}</div>
-                          <div className="text-xs" style={{ color: '#E6EDF3' }}>
-                            Est {formatCurrency(est)}
-                            {actual > 0 && <span style={{ color: actual > est ? '#F85149' : '#3FB950' }}> · {formatCurrency(actual)}</span>}
-                          </div>
-                        </div>
-                      ))}
-                      <div className="flex flex-col gap-0.5">
-                        <div className="text-xs" style={{ color: '#8B949E' }}>Stop Total</div>
-                        <div className="text-xs font-semibold" style={{ color: '#F5A623' }}>
-                          {stopAct > 0 ? formatCurrency(stopAct) : formatCurrency(stopEst) + ' est'}
-                        </div>
+                    {/* Stop total */}
+                    <div style={{
+                      padding: '10px 12px', borderLeft: '1px solid #30363D', flexShrink: 0,
+                      display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-end',
+                    }}>
+                      <div style={{ fontSize: 10, color: '#8B949E', marginBottom: 3 }}>Total</div>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: '#F5A623' }}>
+                        {formatCurrency(stopAct > 0 ? stopAct : stopEst)}
                       </div>
+                      {stopAct === 0 && stopEst > 0 && (
+                        <div style={{ fontSize: 10, color: '#8B949E' }}>est</div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -236,73 +416,115 @@ export default function TripDetailPage() {
         </div>
       )}
 
-      {/* Budget breakdown */}
-      <div className="card p-6 mb-6">
-        <div className="font-semibold mb-4 flex items-center gap-2" style={{ color: '#E6EDF3' }}>
-          <DollarSign size={18} style={{ color: '#F5A623' }} /> Budget Breakdown
+      {/* ── Budget breakdown ──────────────────────────────────────────────── */}
+      <div style={{
+        backgroundColor: '#161B22', borderRadius: 14,
+        border: '1px solid #30363D', marginBottom: 14, overflow: 'hidden',
+      }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '14px 16px', borderBottom: '1px solid #30363D',
+        }}>
+          <DollarSign size={16} style={{ color: '#F5A623' }} />
+          <span style={{ fontWeight: 700, fontSize: 15, color: '#E6EDF3' }}>Budget Breakdown</span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 320 }}>
             <thead>
               <tr>
-                {['Category', 'Estimated', 'Actual', 'Diff'].map(h => (
-                  <th key={h} className="text-left pb-3 pr-4 text-xs font-medium" style={{ color: '#8B949E' }}>{h}</th>
+                {['Category', 'Est', 'Actual', '±'].map((h, hi) => (
+                  <th key={h} style={{
+                    textAlign: hi === 0 ? 'left' : 'right',
+                    padding: '10px 16px', fontSize: 11, fontWeight: 700,
+                    color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.06em',
+                  }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {/* Per-stop rows */}
               {sortedStops.map((stop, i) => {
                 const stadium = stop.stadium as Stadium | undefined
-                const est = stop.est_tickets + stop.est_food + stop.est_parking
-                const actual = stop.actual_tickets + stop.actual_food + stop.actual_parking
-                const diff = actual - est
+                const est     = stop.est_tickets + stop.est_food + stop.est_parking
+                const actual  = stop.actual_tickets + stop.actual_food + stop.actual_parking
+                const diff    = actual - est
                 return (
                   <tr key={stop.id} style={{ borderTop: '1px solid #30363D' }}>
-                    <td className="py-3 pr-4">
-                      <div className="text-xs font-medium" style={{ color: '#8B949E' }}>
-                        Stop {i + 1}{stop.game_date ? ` · ${new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
+                    <td style={{ padding: '11px 16px' }}>
+                      <div style={{ fontWeight: 600, color: '#E6EDF3' }}>
+                        Stop {i + 1}
+                        {stop.game_date && (
+                          <span style={{ color: '#8B949E', fontWeight: 400 }}>
+                            {' · '}{new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        )}
                       </div>
-                      <div className="text-xs" style={{ color: '#8B949E' }}>{stadium?.name}</div>
+                      {stadium?.name && (
+                        <div style={{ fontSize: 12, color: '#8B949E', marginTop: 1 }}>{stadium.name}</div>
+                      )}
                     </td>
-                    <td className="py-3 pr-4" style={{ color: '#E6EDF3' }}>{formatCurrency(est)}</td>
-                    <td className="py-3 pr-4" style={{ color: actual > 0 ? '#E6EDF3' : '#8B949E' }}>{actual > 0 ? formatCurrency(actual) : '—'}</td>
-                    <td className="py-3" style={{ color: actual > 0 ? (diff > 0 ? '#F85149' : '#3FB950') : '#8B949E' }}>
+                    <td style={{ padding: '11px 16px', textAlign: 'right', color: '#E6EDF3', fontWeight: 600 }}>
+                      {formatCurrency(est)}
+                    </td>
+                    <td style={{ padding: '11px 16px', textAlign: 'right', color: actual > 0 ? '#E6EDF3' : '#484F58' }}>
+                      {actual > 0 ? formatCurrency(actual) : '—'}
+                    </td>
+                    <td style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 600, color: actual > 0 ? (diff > 0 ? '#F85149' : '#3FB950') : '#484F58' }}>
                       {actual > 0 ? `${diff > 0 ? '+' : ''}${formatCurrency(diff)}` : '—'}
                     </td>
                   </tr>
                 )
               })}
 
-              {/* Trip-level costs */}
-              {TRIP_CATS.map(cat => {
-                const est = trip[`est_${cat.key}` as keyof Trip] as number
-                const actual = trip[`actual_${cat.key}` as keyof Trip] as number
-                const diff = actual - est
+              {trip.est_travel > 0 && (() => {
+                const diff = trip.actual_travel - trip.est_travel
                 return (
-                  <tr key={cat.key} style={{ borderTop: '1px solid #30363D' }}>
-                    <td className="py-3 pr-4">
-                      <span className="mr-1.5">{cat.icon}</span>
-                      <span style={{ color: '#8B949E' }}>{cat.label}</span>
+                  <tr style={{ borderTop: '1px solid #30363D' }}>
+                    <td style={{ padding: '11px 16px', color: '#8B949E' }}>✈️ Travel</td>
+                    <td style={{ padding: '11px 16px', textAlign: 'right', color: '#E6EDF3', fontWeight: 600 }}>
+                      {formatCurrency(trip.est_travel)}
                     </td>
-                    <td className="py-3 pr-4" style={{ color: '#E6EDF3' }}>{formatCurrency(est)}</td>
-                    <td className="py-3 pr-4" style={{ color: actual > 0 ? '#E6EDF3' : '#8B949E' }}>{actual > 0 ? formatCurrency(actual) : '—'}</td>
-                    <td className="py-3" style={{ color: actual > 0 ? (diff > 0 ? '#F85149' : '#3FB950') : '#8B949E' }}>
-                      {actual > 0 ? `${diff > 0 ? '+' : ''}${formatCurrency(diff)}` : '—'}
+                    <td style={{ padding: '11px 16px', textAlign: 'right', color: trip.actual_travel > 0 ? '#E6EDF3' : '#484F58' }}>
+                      {trip.actual_travel > 0 ? formatCurrency(trip.actual_travel) : '—'}
+                    </td>
+                    <td style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 600, color: trip.actual_travel > 0 ? (diff > 0 ? '#F85149' : '#3FB950') : '#484F58' }}>
+                      {trip.actual_travel > 0 ? `${diff > 0 ? '+' : ''}${formatCurrency(diff)}` : '—'}
                     </td>
                   </tr>
                 )
-              })}
+              })()}
+
+              {trip.est_hotel > 0 && (() => {
+                const diff = trip.actual_hotel - trip.est_hotel
+                return (
+                  <tr style={{ borderTop: '1px solid #30363D' }}>
+                    <td style={{ padding: '11px 16px', color: '#8B949E' }}>🏨 Hotel</td>
+                    <td style={{ padding: '11px 16px', textAlign: 'right', color: '#E6EDF3', fontWeight: 600 }}>
+                      {formatCurrency(trip.est_hotel)}
+                    </td>
+                    <td style={{ padding: '11px 16px', textAlign: 'right', color: trip.actual_hotel > 0 ? '#E6EDF3' : '#484F58' }}>
+                      {trip.actual_hotel > 0 ? formatCurrency(trip.actual_hotel) : '—'}
+                    </td>
+                    <td style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 600, color: trip.actual_hotel > 0 ? (diff > 0 ? '#F85149' : '#3FB950') : '#484F58' }}>
+                      {trip.actual_hotel > 0 ? `${diff > 0 ? '+' : ''}${formatCurrency(diff)}` : '—'}
+                    </td>
+                  </tr>
+                )
+              })()}
 
               {/* Grand total */}
-              <tr style={{ borderTop: '2px solid #30363D' }}>
-                <td className="py-3 pr-4 font-semibold" style={{ color: '#E6EDF3' }}>Total</td>
-                <td className="py-3 pr-4 font-bold text-base" style={{ color: '#F5A623' }}>{formatCurrency(estTotal)}</td>
-                <td className="py-3 pr-4 font-bold text-base" style={{ color: actualTotal > 0 ? '#E6EDF3' : '#8B949E' }}>
+              <tr style={{ borderTop: '2px solid #30363D', backgroundColor: '#1C2430' }}>
+                <td style={{ padding: '13px 16px', fontWeight: 800, color: '#E6EDF3', fontSize: 14 }}>Total</td>
+                <td style={{ padding: '13px 16px', textAlign: 'right', fontWeight: 800, color: '#F5A623', fontSize: 14 }}>
+                  {formatCurrency(estTotal)}
+                </td>
+                <td style={{ padding: '13px 16px', textAlign: 'right', fontWeight: 800, fontSize: 14, color: actualTotal > 0 ? '#E6EDF3' : '#484F58' }}>
                   {actualTotal > 0 ? formatCurrency(actualTotal) : '—'}
                 </td>
-                <td className="py-3 font-bold text-base" style={{ color: overBudget ? '#F85149' : '#3FB950' }}>
+                <td style={{
+                  padding: '13px 16px', textAlign: 'right', fontWeight: 800, fontSize: 14,
+                  color: actualTotal > 0 ? (overBudget ? '#F85149' : '#3FB950') : '#484F58',
+                }}>
                   {actualTotal > 0 ? `${overBudget ? '+' : ''}${formatCurrency(actualTotal - estTotal)}` : '—'}
                 </td>
               </tr>
@@ -311,8 +533,11 @@ export default function TripDetailPage() {
         </div>
 
         {actualTotal > 0 && (
-          <div className="mt-4 p-3 rounded-lg text-sm"
-            style={{ backgroundColor: overBudget ? 'rgba(248,81,73,0.1)' : 'rgba(63,185,80,0.1)', color: overBudget ? '#F85149' : '#3FB950' }}>
+          <div style={{
+            margin: 16, padding: '10px 14px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+            backgroundColor: overBudget ? 'rgba(248,81,73,0.1)' : 'rgba(63,185,80,0.1)',
+            color: overBudget ? '#F85149' : '#3FB950',
+          }}>
             {overBudget
               ? `Over budget by ${formatCurrency(actualTotal - estTotal)}`
               : `Under budget by ${formatCurrency(estTotal - actualTotal)}`}
@@ -320,11 +545,21 @@ export default function TripDetailPage() {
         )}
       </div>
 
-      {/* Notes */}
+      {/* ── Notes ─────────────────────────────────────────────────────────── */}
       {trip.notes && (
-        <div className="card p-6">
-          <div className="font-semibold mb-3" style={{ color: '#E6EDF3' }}>Notes</div>
-          <div className="text-sm whitespace-pre-wrap" style={{ color: '#8B949E' }}>{trip.notes}</div>
+        <div style={{
+          backgroundColor: '#161B22', borderRadius: 14,
+          border: '1px solid #30363D', padding: 16,
+        }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: '#8B949E',
+            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10,
+          }}>
+            Notes
+          </div>
+          <div style={{ fontSize: 14, color: '#E6EDF3', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>
+            {trip.notes}
+          </div>
         </div>
       )}
 
@@ -337,6 +572,7 @@ export default function TripDetailPage() {
           onSaved={() => { setShowEdit(false); load() }}
         />
       )}
+
     </AppShell>
   )
 }

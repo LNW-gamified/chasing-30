@@ -7,21 +7,17 @@ import {
   LayoutDashboard,
   Map,
   Building2,
-  BarChart3,
   Trophy,
   Plane,
   LogOut,
-  Star,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { href: '/dashboard',      label: 'Home',   icon: LayoutDashboard },
-  { href: '/map',            label: 'Map',    icon: Map             },
-  { href: '/stadiums',       label: 'Parks',  icon: Building2       },
-  { href: '/special-events', label: 'Events', icon: Star            },
-  { href: '/stats',          label: 'Stats',  icon: BarChart3       },
-  { href: '/milestones',     label: 'Goals',  icon: Trophy          },
-  { href: '/trips',          label: 'Trips',  icon: Plane           },
+  { href: '/dashboard',  label: 'Home',  icon: LayoutDashboard },
+  { href: '/stadiums',   label: 'Parks', icon: Building2       },
+  { href: '/map',        label: 'Map',   icon: Map             },
+  { href: '/milestones', label: 'Goals', icon: Trophy          },
+  { href: '/trips',      label: 'Trips', icon: Plane           },
 ]
 
 export default function Navigation() {
@@ -36,15 +32,6 @@ export default function Navigation() {
 
   return (
     <>
-      {/* Mobile top bar */}
-      <header
-        className="md:hidden flex items-center px-5 py-3"
-        style={{ backgroundColor: '#0B1117', borderBottom: '1px solid #30363D' }}
-      >
-        <span className="text-2xl mr-2">⚾</span>
-        <span className="font-black text-lg tracking-tight" style={{ color: '#E6EDF3' }}>Chasing 30</span>
-      </header>
-
       {/* Mobile bottom nav */}
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex"
@@ -52,6 +39,7 @@ export default function Navigation() {
           backgroundColor: 'rgba(11,17,23,0.96)',
           borderTop: '1px solid #30363D',
           backdropFilter: 'blur(12px)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
@@ -63,8 +51,8 @@ export default function Navigation() {
               className="flex-1 flex flex-col items-center justify-center py-3 gap-1"
               style={{ color: active ? '#1F6FEB' : '#8B949E' }}
             >
-              <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
-              <span style={{ fontSize: '0.58rem', fontWeight: active ? 700 : 400, lineHeight: 1 }}>
+              <Icon size={21} strokeWidth={active ? 2.5 : 1.8} />
+              <span style={{ fontSize: '0.65rem', fontWeight: active ? 700 : 400, lineHeight: 1 }}>
                 {label}
               </span>
             </Link>
