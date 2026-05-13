@@ -34,10 +34,43 @@ const NAV = [
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function heroGradient(status: Trip['status']): string {
-  if (status === 'completed') return 'linear-gradient(135deg, #3FB950 0%, #1F6FEB 100%)'
+const TEAM_COLORS: Record<string, [string, string]> = {
+  LAA: ['#003263', '#BA0021'], ARI: ['#A71930', '#1A1A1A'],
+  BAL: ['#1A1A1A', '#DF4601'], BOS: ['#0C2340', '#BD3039'],
+  CHC: ['#0E3386', '#CC3433'], CWS: ['#27251F', '#C4CED4'],
+  CIN: ['#C6011F', '#1A1A1A'], CLE: ['#00385D', '#E31937'],
+  COL: ['#33006F', '#C4CED4'], DET: ['#0C2C56', '#FA4616'],
+  HOU: ['#002D62', '#EB6E1F'], KC:  ['#004687', '#BD9B60'],
+  LAD: ['#005A9C', '#EF3E42'], MIA: ['#00A3E0', '#EF3340'],
+  MIL: ['#12284B', '#FFC52F'], MIN: ['#002B5C', '#D31145'],
+  NYM: ['#002D72', '#FF5910'], NYY: ['#003087', '#C4CED4'],
+  OAK: ['#003831', '#EFB21E'], PHI: ['#002D72', '#E81828'],
+  PIT: ['#27251F', '#FDB827'], SD:  ['#2F241D', '#FFC425'],
+  SF:  ['#27251F', '#FD5A1E'], SEA: ['#0C2C56', '#005C5C'],
+  STL: ['#0C2340', '#C41E3A'], TB:  ['#092C5C', '#8FBCE6'],
+  TEX: ['#003278', '#C0111F'], TOR: ['#134A8E', '#1D2D5C'],
+  WSH: ['#14225A', '#AB0003'], ATL: ['#13274F', '#CE1141'],
+}
+
+function heroGradient(status: Trip['status'], abbrs: string[]): string {
   if (status === 'cancelled') return 'linear-gradient(135deg, #30363D 0%, #161B22 100%)'
-  return 'linear-gradient(135deg, #1F6FEB 0%, #7c3aed 100%)'
+  if (abbrs.length === 0) {
+    return status === 'completed'
+      ? 'linear-gradient(135deg, #3FB950 0%, #1F6FEB 100%)'
+      : 'linear-gradient(135deg, #1F6FEB 0%, #7c3aed 100%)'
+  }
+  const [c1, c2] = TEAM_COLORS[abbrs[0]] ?? ['#1F6FEB', '#7c3aed']
+  if (abbrs.length === 1) return `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`
+  const [c3] = TEAM_COLORS[abbrs[1]] ?? [c2]
+  return `linear-gradient(135deg, ${c1} 0%, ${c2} 55%, ${c3} 100%)`
+}
+
+function daysUntil(dateStr: string | null): number | null {
+  if (!dateStr) return null
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+  return Math.ceil(
+    (new Date(dateStr + 'T12:00:00').getTime() - new Date(today + 'T12:00:00').getTime()) / 86400000
+  )
 }
 
 function tripAbbrs(trip: TripWithExtras): string[] {
@@ -315,7 +348,7 @@ export default function TripsPage() {
                           {/* Hero */}
                           <div style={{
                             position: 'relative', height: 140,
-                            background: heroGradient(trip.status), overflow: 'hidden',
+                            background: heroGradient(trip.status, abbrs), overflow: 'hidden',
                           }}>
                             {/* Logo tiles */}
                             <div style={{
@@ -386,6 +419,23 @@ export default function TripsPage() {
                               </div>
                             )}
 
+                            {/* Countdown badge */}
+                            {trip.status === 'planned' && (() => {
+                              const days = daysUntil(trip.start_date)
+                              if (days === null || days < 0) return null
+                              return (
+                                <div style={{
+                                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                                  padding: '3px 10px', borderRadius: 20, marginBottom: 10,
+                                  backgroundColor: days === 0 ? 'rgba(63,185,80,0.12)' : 'rgba(245,166,35,0.1)',
+                                  color: days === 0 ? '#3FB950' : '#F5A623',
+                                  fontSize: 12, fontWeight: 700,
+                                }}>
+                                  {days === 0 ? '🎉 Today!' : `📅 ${days} day${days !== 1 ? 's' : ''} away`}
+                                </div>
+                              )
+                            })()}
+
                             {/* Budget row */}
                             {est > 0 && (
                               <div style={{ marginBottom: 12 }}>
@@ -434,7 +484,7 @@ export default function TripsPage() {
                               </div>
                               <Link href={`/trips/${trip.id}`} style={{
                                 display: 'flex', alignItems: 'center', gap: 3,
-                                fontSize: 13, fontWeight: 600, color: '#1F6FEB', textDecoration: 'none',
+                                fontSize: 13, fontWeight: 600, color: '#F5A623', textDecoration: 'none',
                                 flexShrink: 0,
                               }}>
                                 View Details <ChevronRight size={14} />
