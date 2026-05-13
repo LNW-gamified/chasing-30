@@ -1,0 +1,3 @@
+ALTER TABLE trip_stops ADD COLUMN IF NOT EXISTS game_time   TEXT;
+ALTER TABLE trip_stops ADD COLUMN IF NOT EXISTS opponent     TEXT;
+ALTER TABLE trip_stops ADD COLUMN IF NOT EXISTS opponent_abbr TEXT;

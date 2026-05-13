@@ -80,6 +80,9 @@ export interface TripStop {
   trip_id: string
   stadium_id: string
   game_date: string | null
+  game_time: string | null
+  opponent: string | null
+  opponent_abbr: string | null
   sort_order: number
   est_tickets: number
   est_food: number

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase'
 import AppShell from '@/components/AppShell'
 import TripForm from '@/components/TripForm'
 import TeamLogo from '@/components/TeamLogo'
+import { getTeamLogoUrl } from '@/lib/team-logos'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip, TripStop } from '@/types'
 import Link from 'next/link'
@@ -386,10 +387,29 @@ export default function TripDetailPage() {
                         </div>
                       )}
                       {stop.game_date && (
-                        <div style={{ fontSize: 12, color: '#8B949E', marginTop: 1 }}>
+                        <div style={{ fontSize: 12, color: '#8B949E', marginTop: 3 }}>
                           {new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', {
                             weekday: 'short', month: 'short', day: 'numeric',
                           })}
+                          {stop.game_time && (
+                            <span style={{ color: '#1F6FEB', fontWeight: 600 }}>
+                              {' · '}{stop.game_time}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {stop.opponent && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
+                          {stop.opponent_abbr && (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              src={getTeamLogoUrl(stop.opponent_abbr)}
+                              alt={stop.opponent_abbr}
+                              width={16} height={16}
+                              style={{ objectFit: 'contain', flexShrink: 0 }}
+                            />
+                          )}
+                          <span style={{ fontSize: 12, color: '#8B949E' }}>{stop.opponent}</span>
                         </div>
                       )}
                     </div>
