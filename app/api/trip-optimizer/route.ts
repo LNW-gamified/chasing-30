@@ -261,8 +261,12 @@ export async function POST(req: NextRequest) {
       if (candidates.length >= 50) break
     }
 
-    // Sort by total driving distance (shortest first)
-    candidates.sort((a, b) => a.score - b.score)
+    // Sort chronologically; break ties by shorter trip duration
+    candidates.sort((a, b) =>
+      a.startDate !== b.startDate
+        ? a.startDate.localeCompare(b.startDate)
+        : a.totalDays - b.totalDays
+    )
     return NextResponse.json({ options: candidates, total: candidates.length })
   } catch (e) {
     console.error('Trip optimizer error:', e)

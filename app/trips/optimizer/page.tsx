@@ -443,7 +443,7 @@ export default function OptimizerPage() {
                       <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
                         <div className="flex items-center gap-3">
                           {idx === 0 && (
-                            <span className="badge badge-blue text-base font-bold">Best Option</span>
+                            <span className="badge badge-blue text-base font-bold">Soonest</span>
                           )}
                           <span
                             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-base font-semibold"
