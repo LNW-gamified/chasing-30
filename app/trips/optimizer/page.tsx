@@ -104,6 +104,7 @@ export default function OptimizerPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [results, setResults] = useState<TripOption[] | null>(null)
+  const [totalFound, setTotalFound] = useState<number>(0)
   const [creating, setCreating] = useState<number | null>(null)
   const [created, setCreated] = useState<number | null>(null)
 
@@ -159,7 +160,9 @@ export default function OptimizerPage() {
       if (!res.ok || data.error) {
         setError(data.error ?? 'Failed to find trips.')
       } else {
-        setResults(data.options ?? [])
+        const opts = data.options ?? []
+        setResults(opts)
+        setTotalFound(data.total ?? opts.length)
       }
     } catch {
       setError('Network error — check your connection.')
@@ -394,8 +397,13 @@ export default function OptimizerPage() {
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              <div className="text-lg font-bold" style={{ color: '#E6EDF3' }}>
-                Top {results.length} Trip Window{results.length !== 1 ? 's' : ''}
+              <div className="flex items-baseline gap-3">
+                <div className="text-lg font-bold" style={{ color: '#E6EDF3' }}>
+                  Trip Windows
+                </div>
+                <div className="text-sm" style={{ color: '#8B949E' }}>
+                  Showing {results.length} of {totalFound} window{totalFound !== 1 ? 's' : ''} found
+                </div>
               </div>
               {results.map((opt, idx) => {
                 const diff = DIFFICULTY_STYLES[opt.difficulty]

@@ -268,9 +268,9 @@ export async function POST(req: NextRequest) {
       windowStart = addDays(windowStart, 1)
     }
 
-    // Rank by travel score (lower = less driving), return top 3
+    // Rank by travel score (lower = less driving)
     candidates.sort((a, b) => a.score - b.score)
-    return NextResponse.json({ options: candidates.slice(0, 3) })
+    return NextResponse.json({ options: candidates, total: candidates.length })
   } catch (e) {
     console.error('Trip optimizer error:', e)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
