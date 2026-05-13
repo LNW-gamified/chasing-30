@@ -51,6 +51,28 @@ const DIFFICULTY_STYLES: Record<string, { color: string; bg: string; icon: typeo
   'Leisure Tour': { color: '#3FB950', bg: 'rgba(63,185,80,0.1)',  icon: MapPin },
 }
 
+const ABBR_TO_NICKNAME: Record<string, string> = {
+  ARI: 'D-backs',   ATL: 'Braves',    BAL: 'Orioles',   BOS: 'Red Sox',
+  CHC: 'Cubs',      CWS: 'White Sox', CIN: 'Reds',      CLE: 'Guardians',
+  COL: 'Rockies',   DET: 'Tigers',    HOU: 'Astros',    KC:  'Royals',
+  LAA: 'Angels',    LAD: 'Dodgers',   MIA: 'Marlins',   MIL: 'Brewers',
+  MIN: 'Twins',     NYM: 'Mets',      NYY: 'Yankees',   OAK: 'Athletics',
+  PHI: 'Phillies',  PIT: 'Pirates',   SD:  'Padres',    SF:  'Giants',
+  SEA: 'Mariners',  STL: 'Cardinals', TB:  'Rays',      TEX: 'Rangers',
+  TOR: 'Blue Jays', WSH: 'Nationals',
+}
+
+const TEAM_PRIMARY: Record<string, string> = {
+  ARI: '#A71930', ATL: '#CE1141', BAL: '#DF4601', BOS: '#BD3039',
+  CHC: '#0E3386', CWS: '#C4CED4', CIN: '#C6011F', CLE: '#E31937',
+  COL: '#33006F', DET: '#0C2C56', HOU: '#EB6E1F', KC:  '#004687',
+  LAA: '#BA0021', LAD: '#005A9C', MIA: '#00A3E0', MIL: '#FFC52F',
+  MIN: '#D31145', NYM: '#FF5910', NYY: '#003087', OAK: '#EFB21E',
+  PHI: '#E81828', PIT: '#FDB827', SD:  '#FFC425', SF:  '#FD5A1E',
+  SEA: '#005C5C', STL: '#C41E3A', TB:  '#8FBCE6', TEX: '#C0111F',
+  TOR: '#134A8E', WSH: '#AB0003',
+}
+
 interface TripStop {
   stadiumId: string
   stadiumName: string
@@ -247,34 +269,40 @@ export default function OptimizerPage() {
             const divTeams = stadiums.filter(s => s.league === league && s.division === division)
             return (
               <div key={label}>
-                <div className="text-base font-bold uppercase tracking-wider mb-2" style={{ color: '#4a5568' }}>
+                <div className="text-sm font-bold uppercase tracking-widest mb-2 pb-1" style={{ color: '#8B949E', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                   {label}
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                   {divTeams.map(s => {
                     const isOn = selected.has(s.abbreviation)
+                    const primary = TEAM_PRIMARY[s.abbreviation] ?? '#1F6FEB'
                     return (
                       <button
                         key={s.abbreviation}
                         type="button"
                         onClick={() => toggleTeam(s.abbreviation)}
-                        className="flex items-center gap-2 p-2.5 rounded-xl text-left transition-all"
+                        className="relative flex items-center gap-2.5 rounded-xl text-left transition-all"
                         style={{
-                          border: isOn ? '1px solid rgba(31,111,235,0.5)' : '1px solid rgba(255,255,255,0.06)',
-                          backgroundColor: isOn ? 'rgba(31,111,235,0.1)' : 'rgba(255,255,255,0.02)',
+                          padding: '10px 12px',
+                          border: isOn ? `2px solid ${primary}` : '1px solid rgba(255,255,255,0.08)',
+                          backgroundColor: isOn ? `${primary}18` : 'rgba(255,255,255,0.02)',
                           cursor: 'pointer',
                         }}
                       >
-                        <TeamLogo abbreviation={s.abbreviation} size={28} style={{ borderRadius: 6, flexShrink: 0 }} />
+                        <TeamLogo abbreviation={s.abbreviation} size={30} style={{ borderRadius: 6, flexShrink: 0 }} />
                         <div className="min-w-0">
-                          <div className="text-base font-bold truncate" style={{ color: isOn ? '#1F6FEB' : '#8B949E' }}>
-                            {s.abbreviation}
+                          <div className="truncate" style={{ fontSize: 14, fontWeight: 800, color: isOn ? '#E6EDF3' : '#C9D1D9', lineHeight: 1.2 }}>
+                            {ABBR_TO_NICKNAME[s.abbreviation] ?? s.abbreviation}
                           </div>
-                          <div className="text-base truncate" style={{ color: '#4a5568', fontSize: '0.75rem' }}>
+                          <div className="truncate mt-0.5" style={{ fontSize: 11, color: '#6E7681' }}>
                             {s.city}
                           </div>
                         </div>
-                        {isOn && <CheckCircle2 size={13} style={{ color: '#1F6FEB', flexShrink: 0, marginLeft: 'auto' }} />}
+                        {isOn && (
+                          <div className="absolute top-1.5 right-1.5 flex items-center justify-center rounded-full w-4 h-4" style={{ backgroundColor: primary }}>
+                            <CheckCircle2 size={10} style={{ color: '#fff' }} />
+                          </div>
+                        )}
                       </button>
                     )
                   })}
