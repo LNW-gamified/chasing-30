@@ -6,13 +6,24 @@ import { createClient } from '@/lib/supabase'
 import AppShell from '@/components/AppShell'
 import TripForm from '@/components/TripForm'
 import TeamLogo from '@/components/TeamLogo'
-import { getTeamLogoUrlById } from '@/lib/team-logos'
+import { getTeamLogoUrlById, getTeamAbbrById } from '@/lib/team-logos'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip, TripStop } from '@/types'
 import Link from 'next/link'
 import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar } from 'lucide-react'
 
 type TripWithStadium = Trip & { stadium: Stadium | null }
+
+const TEAM_PRIMARY: Record<string, string> = {
+  ARI: '#A71930', ATL: '#CE1141', BAL: '#DF4601', BOS: '#BD3039',
+  CHC: '#0E3386', CWS: '#C4CED4', CIN: '#C6011F', CLE: '#E31937',
+  COL: '#33006F', DET: '#0C2C56', HOU: '#EB6E1F', KC:  '#004687',
+  LAA: '#BA0021', LAD: '#005A9C', MIA: '#00A3E0', MIL: '#FFC52F',
+  MIN: '#D31145', NYM: '#FF5910', NYY: '#003087', OAK: '#EFB21E',
+  PHI: '#E81828', PIT: '#FDB827', SD:  '#FFC425', SF:  '#FD5A1E',
+  SEA: '#005C5C', STL: '#C41E3A', TB:  '#8FBCE6', TEX: '#C0111F',
+  TOR: '#134A8E', WSH: '#AB0003',
+}
 
 export default function TripDetailPage() {
   const params = useParams()
@@ -353,118 +364,190 @@ export default function TripDetailPage() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {sortedStops.map((stop, i) => {
-              const stadium  = stop.stadium as Stadium | undefined
-              const stopEst  = stop.est_tickets + stop.est_food + stop.est_parking
-              const stopAct  = stop.actual_tickets + stop.actual_food + stop.actual_parking
+              const stadium    = stop.stadium as Stadium | undefined
+              const stopEst    = stop.est_tickets + stop.est_food + stop.est_parking
+              const stopAct    = stop.actual_tickets + stop.actual_food + stop.actual_parking
+              const accentColor = TEAM_PRIMARY[stadium?.abbreviation ?? ''] ?? '#1F6FEB'
+              const hasBudget  = stopEst > 0 || stopAct > 0
+              const seatGeekUrl = `https://seatgeek.com/mlb-tickets?q=${encodeURIComponent(stadium?.team ?? '')}`
+
               return (
                 <div key={stop.id} style={{
-                  backgroundColor: '#161B22', borderRadius: 14,
-                  border: '1px solid #30363D', overflow: 'hidden',
+                  backgroundColor: '#161B22', borderRadius: 14, overflow: 'hidden',
+                  borderTop: '1px solid #30363D', borderRight: '1px solid #30363D',
+                  borderBottom: '1px solid #30363D', borderLeft: `4px solid ${accentColor}`,
                 }}>
-                  {/* Card top row */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
-                    {/* Team logo */}
-                    <div style={{
-                      width: 48, height: 48, borderRadius: 10, flexShrink: 0,
-                      backgroundColor: '#1C2430', border: '1px solid #30363D',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      overflow: 'hidden',
-                    }}>
-                      {stadium && <TeamLogo abbreviation={stadium.abbreviation} size={34} />}
-                    </div>
 
-                    {/* Stadium info */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontWeight: 700, fontSize: 15, color: '#E6EDF3',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>
-                        {stadium?.name ?? 'Unknown Stadium'}
-                      </div>
-                      {stadium && (
-                        <div style={{ fontSize: 12, color: '#8B949E', marginTop: 1 }}>
-                          {stadium.city}, {stadium.state}
-                        </div>
-                      )}
-                      {stop.game_date && (
-                        <div style={{ fontSize: 12, color: '#8B949E', marginTop: 3 }}>
-                          {new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', {
-                            weekday: 'short', month: 'short', day: 'numeric',
-                          })}
-                          {stop.game_time && (
-                            <span style={{ color: '#1F6FEB', fontWeight: 600 }}>
-                              {' · '}{stop.game_time}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      {stop.opponent && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
-                          {stop.opponent_team_id && (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img
-                              src={getTeamLogoUrlById(stop.opponent_team_id)}
-                              alt={stop.opponent}
-                              width={16} height={16}
-                              style={{ objectFit: 'contain', flexShrink: 0 }}
-                            />
-                          )}
-                          <span style={{ fontSize: 12, color: '#8B949E' }}>{stop.opponent}</span>
-                        </div>
-                      )}
-                    </div>
+                  {/* ── Card body ──────────────────────────────────────────── */}
+                  <div style={{ padding: '16px 16px 14px', position: 'relative' }}>
 
-                    {/* Stop number badge */}
+                    {/* Stop # badge — absolute top-right */}
                     <div style={{
-                      flexShrink: 0, width: 28, height: 28, borderRadius: '50%',
+                      position: 'absolute', top: 12, right: 12,
+                      width: 26, height: 26, borderRadius: '50%',
                       backgroundColor: 'rgba(31,111,235,0.15)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 12, fontWeight: 800, color: '#1F6FEB',
+                      fontSize: 11, fontWeight: 800, color: '#1F6FEB',
                     }}>
                       {i + 1}
                     </div>
-                  </div>
 
-                  {/* Cost columns */}
-                  <div style={{
-                    display: 'flex', borderTop: '1px solid #30363D',
-                    backgroundColor: '#1C2430',
-                  }}>
-                    {[
-                      { label: '🎟 Tickets', est: stop.est_tickets, actual: stop.actual_tickets },
-                      { label: '🌭 Food',    est: stop.est_food,    actual: stop.actual_food    },
-                      { label: '🚗 Parking', est: stop.est_parking, actual: stop.actual_parking },
-                    ].map(({ label, est, actual }, ci) => (
-                      <div key={label} style={{
-                        flex: 1, padding: '10px 12px',
-                        borderRight: ci < 2 ? '1px solid #30363D' : 'none',
-                      }}>
-                        <div style={{ fontSize: 10, color: '#8B949E', marginBottom: 3 }}>{label}</div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>
-                          {formatCurrency(est)}
+                    {/* Stadium name */}
+                    <div style={{
+                      fontWeight: 800, fontSize: 17, color: '#E6EDF3',
+                      paddingRight: 36, lineHeight: 1.2, marginBottom: 2,
+                    }}>
+                      {stadium?.name ?? 'Unknown Stadium'}
+                    </div>
+
+                    {/* City / state */}
+                    {stadium && (
+                      <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 12 }}>
+                        {stadium.city}, {stadium.state}
+                      </div>
+                    )}
+
+                    {/* Game date + time */}
+                    {stop.game_date && (
+                      <div style={{ marginBottom: 14 }}>
+                        <div style={{ fontSize: 17, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2 }}>
+                          {new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', {
+                            weekday: 'long', month: 'long', day: 'numeric',
+                          })}
                         </div>
-                        {actual > 0 && (
-                          <div style={{ fontSize: 11, color: actual > est ? '#F85149' : '#3FB950', marginTop: 1 }}>
-                            {formatCurrency(actual)}
+                        {stop.game_time && (
+                          <div style={{ fontSize: 16, fontWeight: 700, color: '#1F6FEB', marginTop: 3 }}>
+                            {stop.game_time}
                           </div>
                         )}
                       </div>
-                    ))}
+                    )}
 
-                    {/* Stop total */}
-                    <div style={{
-                      padding: '10px 12px', borderLeft: '1px solid #30363D', flexShrink: 0,
-                      display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-end',
-                    }}>
-                      <div style={{ fontSize: 10, color: '#8B949E', marginBottom: 3 }}>Total</div>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: '#F5A623' }}>
-                        {formatCurrency(stopAct > 0 ? stopAct : stopEst)}
+                    {/* Logo matchup row — home vs opponent */}
+                    {stadium && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+
+                        {/* Home team logo + abbr */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                          <TeamLogo
+                            abbreviation={stadium.abbreviation}
+                            size={44}
+                            style={{ borderRadius: 10, border: '1px solid #30363D' }}
+                          />
+                          <span style={{ fontSize: 10, fontWeight: 700, color: '#8B949E', letterSpacing: '0.04em' }}>
+                            {stadium.abbreviation}
+                          </span>
+                        </div>
+
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#484F58' }}>vs</span>
+
+                        {/* Opponent logo + abbr (only when opponent is set) */}
+                        {stop.opponent ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                            <div style={{
+                              width: 44, height: 44, borderRadius: 10, flexShrink: 0,
+                              backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid #30363D',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              {stop.opponent_team_id ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img
+                                  src={getTeamLogoUrlById(stop.opponent_team_id)}
+                                  alt={stop.opponent}
+                                  width={30} height={30}
+                                  style={{ objectFit: 'contain' }}
+                                />
+                              ) : (
+                                <span style={{ fontSize: 20 }}>⚾</span>
+                              )}
+                            </div>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: '#8B949E', letterSpacing: '0.04em' }}>
+                              {stop.opponent_team_id
+                                ? getTeamAbbrById(stop.opponent_team_id)
+                                : stop.opponent.replace('vs ', '')}
+                            </span>
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: 12, color: '#484F58' }}>TBD</div>
+                        )}
+
+                        {/* Get Tickets link — pushed right */}
+                        {stop.game_date && (
+                          <a
+                            href={seatGeekUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              marginLeft: 'auto', flexShrink: 0,
+                              display: 'inline-flex', alignItems: 'center', gap: 4,
+                              fontSize: 12, fontWeight: 600, color: '#1F6FEB',
+                              textDecoration: 'none',
+                              padding: '5px 10px', borderRadius: 8,
+                              backgroundColor: 'rgba(31,111,235,0.1)',
+                              border: '1px solid rgba(31,111,235,0.2)',
+                            }}
+                          >
+                            🎫 Tickets
+                          </a>
+                        )}
                       </div>
-                      {stopAct === 0 && stopEst > 0 && (
-                        <div style={{ fontSize: 10, color: '#8B949E' }}>est</div>
-                      )}
-                    </div>
+                    )}
                   </div>
+
+                  {/* ── Budget section ─────────────────────────────────────── */}
+                  {hasBudget ? (
+                    <div style={{ display: 'flex', borderTop: '1px solid #30363D', backgroundColor: '#1C2430' }}>
+                      {[
+                        { label: '🎟 Tickets', est: stop.est_tickets, actual: stop.actual_tickets },
+                        { label: '🌭 Food',    est: stop.est_food,    actual: stop.actual_food    },
+                        { label: '🚗 Parking', est: stop.est_parking, actual: stop.actual_parking },
+                      ].map(({ label, est, actual }, ci) => (
+                        <div key={label} style={{
+                          flex: 1, padding: '10px 12px',
+                          borderRight: ci < 2 ? '1px solid #30363D' : 'none',
+                        }}>
+                          <div style={{ fontSize: 10, color: '#8B949E', marginBottom: 3 }}>{label}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>
+                            {formatCurrency(est)}
+                          </div>
+                          {actual > 0 && (
+                            <div style={{ fontSize: 11, color: actual > est ? '#F85149' : '#3FB950', marginTop: 1 }}>
+                              {formatCurrency(actual)}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      <div style={{
+                        padding: '10px 12px', borderLeft: '1px solid #30363D', flexShrink: 0,
+                        display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-end',
+                      }}>
+                        <div style={{ fontSize: 10, color: '#8B949E', marginBottom: 3 }}>Total</div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: '#F5A623' }}>
+                          {formatCurrency(stopAct > 0 ? stopAct : stopEst)}
+                        </div>
+                        {stopAct === 0 && stopEst > 0 && (
+                          <div style={{ fontSize: 10, color: '#8B949E' }}>est</div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{
+                      borderTop: '1px solid #30363D', backgroundColor: '#1C2430',
+                      padding: '12px 16px',
+                    }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowEdit(true)}
+                        style={{
+                          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                          fontSize: 13, fontWeight: 600, color: '#1F6FEB',
+                          display: 'flex', alignItems: 'center', gap: 4,
+                        }}
+                      >
+                        Add budget →
+                      </button>
+                    </div>
+                  )}
                 </div>
               )
             })}

@@ -15,3 +15,7 @@ export function getTeamLogoUrlById(teamId: number): string {
   const abbr = MLB_ID_TO_ABBR[teamId]
   return abbr ? getTeamLogoUrl(abbr) : ''
 }
+
+export function getTeamAbbrById(teamId: number): string {
+  return MLB_ID_TO_ABBR[teamId] ?? ''
+}
