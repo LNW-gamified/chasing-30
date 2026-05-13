@@ -127,7 +127,7 @@ function StadiumCard({
 
           {/* Stadium name */}
           <div style={{
-            fontSize: 11, color: '#8B949E', lineHeight: 1.35, marginBottom: 2,
+            fontSize: 11, color: '#C9D1D9', lineHeight: 1.35, marginBottom: 2,
             display: '-webkit-box', WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical', overflow: 'hidden',
             width: '100%',
@@ -136,12 +136,12 @@ function StadiumCard({
           </div>
 
           {/* City */}
-          <div style={{ fontSize: 11, color: '#8B949E', marginBottom: 8 }}>
+          <div style={{ fontSize: 11, color: '#C9D1D9', marginBottom: 8 }}>
             {stadium.city}, {stadium.state}
           </div>
 
           {/* Capacity / Year */}
-          <div style={{ fontSize: 10, color: '#6E7681', marginBottom: 10 }}>
+          <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 10 }}>
             {fmtCap(capacity)} cap · Est. {opened ?? '—'}
           </div>
 
@@ -161,13 +161,13 @@ function StadiumCard({
                 Visited ✓
               </span>
               {visitDate && (
-                <div style={{ fontSize: 10, color: '#8B949E' }}>
+                <div style={{ fontSize: 11, color: '#C9D1D9' }}>
                   {fmtDate(visitDate)}
                 </div>
               )}
             </div>
           ) : (
-            <span style={{ fontSize: 11, color: '#6E7681', fontStyle: 'italic' }}>
+            <span style={{ fontSize: 11, color: 'rgba(201,209,217,0.5)', fontStyle: 'italic' }}>
               Not Yet
             </span>
           )}
