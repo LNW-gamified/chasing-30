@@ -14,11 +14,6 @@ const ABBR_TO_MLB_ID: Record<string, number> = {
   STL: 138, TB:  139, TEX: 140, TOR: 141, WSH: 120,
 }
 
-// Reverse map: MLB team ID → abbreviation
-const MLB_ID_TO_ABBR: Record<number, string> = Object.fromEntries(
-  Object.entries(ABBR_TO_MLB_ID).map(([abbr, id]) => [id, abbr])
-)
-
 // Local timezone for each team's home stadium
 const ABBR_TO_TZ: Record<string, { tz: string; label: string }> = {
   // Eastern
@@ -74,10 +69,9 @@ interface GameOption {
   gamePk: number
   gameDate: string
   displayDate: string
-  opponent: string   // "vs Yankees" (home) | "@ Red Sox" (away)
+  opponent: string   // "vs Yankees"
   firstPitch: string // "7:05 PM ET"
   promotions: string
-  isHome: boolean
 }
 
 interface StopSchedule {
@@ -85,7 +79,6 @@ interface StopSchedule {
   games: GameOption[]
   noGames: boolean
   selectedPk: string
-  showAway: boolean
 }
 
 interface Props {
@@ -113,7 +106,7 @@ function defaultStop(stadiums: Stadium[]): StopDraft {
 }
 
 function emptySchedule(): StopSchedule {
-  return { loading: false, games: [], noGames: false, selectedPk: '', showAway: false }
+  return { loading: false, games: [], noGames: false, selectedPk: '' }
 }
 
 function defaultForm(trip?: Trip) {
@@ -176,25 +169,15 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       const games: GameOption[] = []
       for (const date of json.dates ?? []) {
         for (const game of date.games ?? []) {
-          const homeTeamId  = game.teams?.home?.team?.id as number | undefined
-          const awayTeamId  = game.teams?.away?.team?.id as number | undefined
-          const isHome      = homeTeamId === teamId
-          const isAway      = awayTeamId === teamId
-          if (!isHome && !isAway) continue
+          const homeTeamId = game.teams?.home?.team?.id as number | undefined
+          if (homeTeamId !== teamId) continue  // skip away games
 
-          // Always use the home team's timezone — that's the local gate time
-          const homeAbbr    = homeTeamId ? (MLB_ID_TO_ABBR[homeTeamId] ?? '') : ''
-          const tzInfo      = ABBR_TO_TZ[homeAbbr] ?? { tz: 'America/Chicago', label: 'CT' }
-
+          const tzInfo      = ABBR_TO_TZ[stadium.abbreviation] ?? { tz: 'America/Chicago', label: 'CT' }
           const gameDate    = date.date as string
           const displayDate = new Date(gameDate + 'T12:00:00').toLocaleDateString('en-US', {
             weekday: 'short', month: 'short', day: 'numeric',
           })
-
-          // "vs Yankees" for home, "@ Red Sox" for away
-          const opponent = isHome
-            ? `vs ${game.teams?.away?.team?.name ?? 'Unknown'}`
-            : `@ ${game.teams?.home?.team?.name ?? 'Unknown'}`
+          const opponent = `vs ${game.teams?.away?.team?.name ?? 'Unknown'}`
 
           let firstPitch = 'TBD'
           if (game.gameDate) {
@@ -203,11 +186,11 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
             }) + ' ' + tzInfo.label
           }
 
-          const promotions = isHome
-            ? (game.promotions ?? []).map((p: { name: string }) => p.name).join(', ')
-            : ''
+          const promotions = (game.promotions ?? [])
+            .map((p: { name: string }) => p.name)
+            .join(', ')
 
-          games.push({ gamePk: game.gamePk, gameDate, displayDate, opponent, firstPitch, promotions, isHome })
+          games.push({ gamePk: game.gamePk, gameDate, displayDate, opponent, firstPitch, promotions })
         }
       }
 
@@ -242,13 +225,6 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     const game = stopSchedules[stopIdx]?.games.find(g => g.gamePk.toString() === pkStr)
     setStopSchedules(prev => prev.map((ss, i) => i === stopIdx ? { ...ss, selectedPk: pkStr } : ss))
     setStops(prev => prev.map((s, i) => i === stopIdx ? { ...s, game_date: game?.gameDate ?? '' } : s))
-  }
-
-  function toggleShowAway(stopIdx: number) {
-    setStopSchedules(prev => prev.map((ss, i) =>
-      i === stopIdx ? { ...ss, showAway: !ss.showAway, selectedPk: '' } : ss
-    ))
-    setStops(prev => prev.map((s, i) => i === stopIdx ? { ...s, game_date: '' } : s))
   }
 
   function addStop() {
@@ -400,8 +376,6 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
               <div className="flex flex-col gap-4">
                 {stops.map((stop, i) => {
                   const ss           = stopSchedules[i] ?? emptySchedule()
-                  const hasAway      = ss.games.some(g => !g.isHome)
-                  const visibleGames = ss.showAway ? ss.games : ss.games.filter(g => g.isHome)
                   const selectedGame = ss.games.find(g => g.gamePk.toString() === ss.selectedPk)
 
                   return (
@@ -429,32 +403,14 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
 
                       {/* Game picker */}
                       <div className="mb-3">
-                        {/* Label row with away toggle */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                          <label className="label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-                            Select a Game
-                            {ss.loading && <Loader2 size={12} className="animate-spin" style={{ color: '#1F6FEB' }} />}
-                          </label>
-                          {!ss.loading && hasAway && (
-                            <button
-                              type="button"
-                              onClick={() => toggleShowAway(i)}
-                              style={{
-                                fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 6,
-                                border: `1px solid ${ss.showAway ? 'rgba(31,111,235,0.4)' : '#30363D'}`,
-                                backgroundColor: ss.showAway ? 'rgba(31,111,235,0.12)' : 'transparent',
-                                color: ss.showAway ? '#1F6FEB' : '#8B949E',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              ✈️ Away games {ss.showAway ? 'on' : 'off'}
-                            </button>
-                          )}
-                        </div>
+                        <label className="label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          Select a Game
+                          {ss.loading && <Loader2 size={12} className="animate-spin" style={{ color: '#1F6FEB' }} />}
+                        </label>
 
                         {ss.loading ? (
                           <div style={{ fontSize: 13, color: '#8B949E', padding: '8px 0' }}>
-                            Fetching schedule…
+                            Fetching upcoming home games…
                           </div>
                         ) : ss.noGames ? (
                           <div style={{
@@ -463,16 +419,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                             backgroundColor: 'rgba(139,148,158,0.08)',
                             border: '1px solid #30363D',
                           }}>
-                            No upcoming games found — enter date manually below.
-                          </div>
-                        ) : visibleGames.length === 0 ? (
-                          <div style={{
-                            fontSize: 12, color: '#8B949E',
-                            padding: '8px 12px', borderRadius: 8,
-                            backgroundColor: 'rgba(139,148,158,0.08)',
-                            border: '1px solid #30363D',
-                          }}>
-                            No upcoming home games — toggle away games to see road trips.
+                            No upcoming home games found — enter date manually below.
                           </div>
                         ) : (
                           <select
@@ -481,9 +428,9 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                             onChange={e => selectGame(i, e.target.value)}
                           >
                             <option value="">— pick a game (optional) —</option>
-                            {visibleGames.map(g => (
+                            {ss.games.map(g => (
                               <option key={g.gamePk} value={g.gamePk.toString()}>
-                                {g.isHome ? '🏠' : '✈️'} {g.displayDate} · {g.opponent} · {g.firstPitch}
+                                {g.displayDate} · {g.opponent} · {g.firstPitch}
                               </option>
                             ))}
                           </select>
@@ -493,29 +440,15 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                         {selectedGame && (
                           <div style={{
                             marginTop: 8, padding: '10px 12px', borderRadius: 10,
-                            backgroundColor: selectedGame.isHome
-                              ? 'rgba(63,185,80,0.06)'
-                              : 'rgba(31,111,235,0.06)',
-                            border: `1px solid ${selectedGame.isHome
-                              ? 'rgba(63,185,80,0.2)'
-                              : 'rgba(31,111,235,0.2)'}`,
+                            backgroundColor: 'rgba(31,111,235,0.07)',
+                            border: '1px solid rgba(31,111,235,0.2)',
                             display: 'flex', flexDirection: 'column', gap: 5,
                           }}>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                               <span style={{
-                                fontSize: 12, fontWeight: 700,
-                                padding: '2px 8px', borderRadius: 6,
-                                backgroundColor: selectedGame.isHome
-                                  ? 'rgba(63,185,80,0.15)'
-                                  : 'rgba(31,111,235,0.15)',
-                                color: selectedGame.isHome ? '#3FB950' : '#1F6FEB',
-                              }}>
-                                {selectedGame.isHome ? '🏠 Home' : '✈️ Away'}
-                              </span>
-                              <span style={{
                                 fontSize: 12, fontWeight: 600, color: '#E6EDF3',
                                 padding: '2px 8px', borderRadius: 6,
-                                backgroundColor: '#1C2430',
+                                backgroundColor: 'rgba(31,111,235,0.15)',
                               }}>
                                 {selectedGame.opponent}
                               </span>
