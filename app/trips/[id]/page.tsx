@@ -540,7 +540,7 @@ export default function TripDetailPage() {
                         onClick={() => setShowEdit(true)}
                         style={{
                           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                          fontSize: 13, fontWeight: 600, color: '#1F6FEB',
+                          fontSize: 13, fontWeight: 600, color: '#F5A623',
                           display: 'flex', alignItems: 'center', gap: 4,
                         }}
                       >
