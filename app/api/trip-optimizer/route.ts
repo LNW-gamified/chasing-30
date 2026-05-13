@@ -166,6 +166,7 @@ export async function POST(req: NextRequest) {
     // Slide a window of numDays across the search range
     let windowStart = startDate
     while (windowStart <= endDate) {
+      // Window spans exactly numDays calendar days (inclusive on both ends)
       const windowEnd = addDays(windowStart, numDays - 1)
 
       // Home game dates per team in this window — capped at 8 to bound cartesian product
@@ -186,7 +187,7 @@ export async function POST(req: NextRequest) {
       let bestStops: RawStop[] | null = null
 
       for (const combo of combos) {
-        // Constraint 1: each stop must be on a unique date
+        // Each stop must fall on a unique date (can't attend two games simultaneously)
         if (new Set(combo).size < combo.length) continue
 
         // Build stops, then sort chronologically by date
@@ -197,9 +198,8 @@ export async function POST(req: NextRequest) {
         }))
         stops.sort((a, b) => a.date.localeCompare(b.date))
 
-        // Constraint 2: span must fit within numDays
-        const span = daysBetween(stops[0].date, stops[stops.length - 1].date) + 1
-        if (span > numDays) continue
+        // All game dates are already constrained to [windowStart, windowEnd] (numDays wide)
+        // so the first-to-last span is guaranteed ≤ numDays — no additional span check needed.
 
         // Score = total travel distance in chronological order (lower = better)
         const score = travelScore(stops, stadiums, homeLat, homeLng)
@@ -228,10 +228,12 @@ export async function POST(req: NextRequest) {
         const difficulty: TripOption['difficulty'] =
           avgGap <= 1.5 ? 'Road Warrior' : avgGap <= 3 ? 'On the Move' : 'Leisure Tour'
 
-        // Deduplicate: skip if we already have a similar option (same teams, start within 3 days)
+        // Deduplicate: skip if we already have an option with the same teams whose first game
+        // falls on the exact same date (windows sliding one day at a time would otherwise
+        // produce many near-identical results differing only in windowStart).
         const isDuplicate = candidates.some(
           o =>
-            Math.abs(daysBetween(o.startDate, tripStart)) < 3 &&
+            o.startDate === tripStart &&
             o.stops.map(s => s.abbreviation).sort().join() ===
               bestStops!.map(s => s.abbreviation).sort().join()
         )
@@ -264,7 +266,7 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      if (candidates.length >= 30) break
+      if (candidates.length >= 50) break
       windowStart = addDays(windowStart, 1)
     }
 

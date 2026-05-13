@@ -431,10 +431,13 @@ export default function OptimizerPage() {
                             {opt.difficulty}
                           </span>
                         </div>
-                        <div className="text-base font-semibold" style={{ color: '#8B949E' }}>
-                          {opt.totalDays} day{opt.totalDays !== 1 ? 's' : ''} ·{' '}
-                          {opt.stops.length} stadium{opt.stops.length !== 1 ? 's' : ''} ·{' '}
-                          avg {opt.avgGapDays.toFixed(1)} days between games
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-bold" style={{ backgroundColor: 'rgba(245,166,35,0.12)', color: '#F5A623' }}>
+                            {opt.stops.length} game{opt.stops.length !== 1 ? 's' : ''} in {opt.totalDays} day{opt.totalDays !== 1 ? 's' : ''}
+                          </span>
+                          <span className="text-sm" style={{ color: '#6E7681' }}>
+                            avg {opt.avgGapDays.toFixed(1)} days between games
+                          </span>
                         </div>
                       </div>
 
