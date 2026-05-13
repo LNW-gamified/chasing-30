@@ -8,6 +8,24 @@ const MLB_TEAM_IDS: Record<string, number> = {
   SEA: 136, STL: 138, TB:  139, TEX: 140, TOR: 141, WSH: 120,
 }
 
+const ABBR_TO_TZ: Record<string, { tz: string; label: string }> = {
+  ATL: { tz: 'America/New_York',    label: 'ET'  }, BAL: { tz: 'America/New_York',    label: 'ET'  },
+  BOS: { tz: 'America/New_York',    label: 'ET'  }, CIN: { tz: 'America/New_York',    label: 'ET'  },
+  CLE: { tz: 'America/New_York',    label: 'ET'  }, DET: { tz: 'America/New_York',    label: 'ET'  },
+  MIA: { tz: 'America/New_York',    label: 'ET'  }, NYM: { tz: 'America/New_York',    label: 'ET'  },
+  NYY: { tz: 'America/New_York',    label: 'ET'  }, PHI: { tz: 'America/New_York',    label: 'ET'  },
+  PIT: { tz: 'America/New_York',    label: 'ET'  }, TB:  { tz: 'America/New_York',    label: 'ET'  },
+  TOR: { tz: 'America/Toronto',     label: 'ET'  }, WSH: { tz: 'America/New_York',    label: 'ET'  },
+  CHC: { tz: 'America/Chicago',     label: 'CT'  }, CWS: { tz: 'America/Chicago',     label: 'CT'  },
+  HOU: { tz: 'America/Chicago',     label: 'CT'  }, KC:  { tz: 'America/Chicago',     label: 'CT'  },
+  MIL: { tz: 'America/Chicago',     label: 'CT'  }, MIN: { tz: 'America/Chicago',     label: 'CT'  },
+  STL: { tz: 'America/Chicago',     label: 'CT'  }, TEX: { tz: 'America/Chicago',     label: 'CT'  },
+  ARI: { tz: 'America/Phoenix',     label: 'MST' }, COL: { tz: 'America/Denver',      label: 'MT'  },
+  LAA: { tz: 'America/Los_Angeles', label: 'PT'  }, LAD: { tz: 'America/Los_Angeles', label: 'PT'  },
+  OAK: { tz: 'America/Los_Angeles', label: 'PT'  }, SD:  { tz: 'America/Los_Angeles', label: 'PT'  },
+  SF:  { tz: 'America/Los_Angeles', label: 'PT'  }, SEA: { tz: 'America/Los_Angeles', label: 'PT'  },
+}
+
 interface StadiumInput {
   id: string
   abbreviation: string
@@ -17,10 +35,16 @@ interface StadiumInput {
   lng: number
 }
 
+interface GameEntry {
+  date: string      // YYYY-MM-DD
+  localTime: string // e.g. "7:10 PM ET"
+}
+
 interface RawStop {
   stadiumId: string
   abbreviation: string
   date: string
+  localTime: string
 }
 
 interface EnrichedStop {
@@ -29,6 +53,7 @@ interface EnrichedStop {
   team: string
   abbreviation: string
   gameDate: string
+  gameTime: string
   dayOfTrip: number
   gapToNext: number | null
   distFromPrev: number
@@ -68,11 +93,25 @@ function addDays(dateStr: string, n: number): string {
   return d.toISOString().split('T')[0]
 }
 
+function toLocalTime(utcDateStr: string, tz: string, tzLabel: string): string {
+  try {
+    const local = new Date(utcDateStr).toLocaleTimeString('en-US', {
+      timeZone: tz,
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    })
+    return `${local} ${tzLabel}`
+  } catch {
+    return ''
+  }
+}
+
 async function fetchHomeGames(
   abbreviations: string[],
   startDate: string,
   endDate: string
-): Promise<Record<string, string[]>> {
+): Promise<Record<string, GameEntry[]>> {
   const teamIds = abbreviations.map(a => MLB_TEAM_IDS[a]).filter(Boolean)
   if (teamIds.length === 0) return {}
 
@@ -95,22 +134,30 @@ async function fetchHomeGames(
     if (id) idToAbbr[id] = abbr
   }
 
-  const homeDates: Record<string, Set<string>> = {}
-  for (const abbr of abbreviations) homeDates[abbr] = new Set()
+  const homeDates: Record<string, GameEntry[]> = {}
+  for (const abbr of abbreviations) homeDates[abbr] = []
 
   for (const dateEntry of data.dates ?? []) {
     for (const game of dateEntry.games ?? []) {
       const homeId: number = game.teams?.home?.team?.id
       const abbr = idToAbbr[homeId]
-      if (abbr && game.gameDate) {
-        homeDates[abbr].add((game.gameDate as string).slice(0, 10))
-      }
+      if (!abbr || !game.gameDate) continue
+
+      const dateStr = (game.gameDate as string).slice(0, 10)
+      // Skip doubleheader second games — keep only the first game per date
+      if (homeDates[abbr].some(e => e.date === dateStr)) continue
+
+      const tzInfo = ABBR_TO_TZ[abbr] ?? { tz: 'America/New_York', label: 'ET' }
+      const localTime = toLocalTime(game.gameDate as string, tzInfo.tz, tzInfo.label)
+      homeDates[abbr].push({ date: dateStr, localTime })
     }
   }
 
-  const result: Record<string, string[]> = {}
-  for (const abbr of abbreviations) result[abbr] = [...homeDates[abbr]].sort()
-  return result
+  for (const abbr of abbreviations) {
+    homeDates[abbr].sort((a, b) => a.date.localeCompare(b.date))
+  }
+
+  return homeDates
 }
 
 export async function POST(req: NextRequest) {
@@ -146,20 +193,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Starting stadium not found in stadiums list' }, { status: 400 })
     }
 
-    // Other stadiums to visit after the starting stadium
     const otherAbbrs = allAbbrs.filter(a => a !== startingAbbr)
 
-    // Iterate over each home game date of the starting stadium as a potential trip start
-    const startingGameDates = (homeGamesByTeam[startingAbbr] ?? [])
-      .filter(d => d >= startDate && d <= endDate)
+    // Iterate over each home game of the starting stadium as a potential trip start
+    const startingGames = (homeGamesByTeam[startingAbbr] ?? [])
+      .filter(e => e.date >= startDate && e.date <= endDate)
 
     const candidates: TripOption[] = []
 
-    for (const tripStart of startingGameDates) {
+    for (const startEntry of startingGames) {
+      const tripStart = startEntry.date
       const windowEnd = addDays(tripStart, numDays - 1)
 
-      // Nearest-neighbor greedy: from starting stadium, always pick the geographically
-      // closest remaining stadium that has a home game after the current date and within the window.
+      // Nearest-neighbor greedy: always pick the geographically closest remaining stadium
+      // that has a home game strictly after the current date and within the window.
       let currentLat = startingStadium.lat
       let currentLng = startingStadium.lng
       let currentDate = tripStart
@@ -168,12 +215,13 @@ export async function POST(req: NextRequest) {
         stadiumId: startingStadium.id,
         abbreviation: startingAbbr,
         date: tripStart,
+        localTime: startEntry.localTime,
       }]
       let routeValid = true
 
       while (remaining.length > 0) {
         let bestIdx = -1
-        let bestDate = ''
+        let bestEntry: GameEntry | null = null
         let bestDist = Infinity
 
         for (let i = 0; i < remaining.length; i++) {
@@ -181,47 +229,44 @@ export async function POST(req: NextRequest) {
           const stadium = stadiums.find(s => s.abbreviation === abbr)
           if (!stadium) continue
 
-          // Earliest home game for this team strictly after current date and within window
-          const nextGame = (homeGamesByTeam[abbr] ?? []).find(d => d > currentDate && d <= windowEnd)
-          if (!nextGame) continue
+          const nextEntry = (homeGamesByTeam[abbr] ?? []).find(
+            e => e.date > currentDate && e.date <= windowEnd
+          )
+          if (!nextEntry) continue
 
           const dist = haversine(currentLat, currentLng, stadium.lat, stadium.lng)
           if (dist < bestDist) {
             bestDist = dist
             bestIdx = i
-            bestDate = nextGame
+            bestEntry = nextEntry
           }
         }
 
-        if (bestIdx === -1) { routeValid = false; break }
+        if (bestIdx === -1 || !bestEntry) { routeValid = false; break }
 
         const abbr = remaining.splice(bestIdx, 1)[0]
         const stadium = stadiums.find(s => s.abbreviation === abbr)!
-        route.push({ stadiumId: stadium.id, abbreviation: abbr, date: bestDate })
+        route.push({ stadiumId: stadium.id, abbreviation: abbr, date: bestEntry.date, localTime: bestEntry.localTime })
         currentLat = stadium.lat
         currentLng = stadium.lng
-        currentDate = bestDate
+        currentDate = bestEntry.date
       }
 
       if (!routeValid) continue
 
-      // Skip if same first-game date already captured (same starting conditions produce same route)
       if (candidates.some(o => o.startDate === tripStart)) continue
 
       const tripEnd = route[route.length - 1].date
       const totalDays = daysBetween(tripStart, tripEnd) + 1
 
-      // Build enriched stops with per-leg driving distance and estimated time
       const enrichedStops: EnrichedStop[] = route.map((stop, i) => {
         const stadium = stadiums.find(s => s.abbreviation === stop.abbreviation)!
         const prevStop = route[i - 1]
         const prevStadium = prevStop ? stadiums.find(s => s.abbreviation === prevStop.abbreviation)! : null
         const nextStop = route[i + 1] ?? null
-        // Straight-line miles between consecutive stadiums
         const distFromPrev = prevStadium
           ? Math.round(haversine(prevStadium.lat, prevStadium.lng, stadium.lat, stadium.lng))
           : 0
-        // Rough drive time: road distance ≈ 1.4× straight-line at ~60 mph
         const driveMinFromPrev = Math.round(distFromPrev * 1.4)
 
         return {
@@ -230,6 +275,7 @@ export async function POST(req: NextRequest) {
           team: stadium.team,
           abbreviation: stop.abbreviation,
           gameDate: stop.date,
+          gameTime: stop.localTime,
           dayOfTrip: daysBetween(tripStart, stop.date) + 1,
           gapToNext: nextStop ? daysBetween(stop.date, nextStop.date) : null,
           distFromPrev,
@@ -261,7 +307,6 @@ export async function POST(req: NextRequest) {
       if (candidates.length >= 50) break
     }
 
-    // Sort chronologically; break ties by shorter trip duration
     candidates.sort((a, b) =>
       a.startDate !== b.startDate
         ? a.startDate.localeCompare(b.startDate)

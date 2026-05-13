@@ -48,6 +48,7 @@ interface TripStop {
   team: string
   abbreviation: string
   gameDate: string
+  gameTime: string
   dayOfTrip: number
   gapToNext: number | null
   distFromPrev: number
@@ -501,10 +502,15 @@ export default function OptimizerPage() {
                                   </div>
                                 </div>
                                 <div className="text-right flex-shrink-0">
-                                  <div className="text-base font-semibold" style={{ color: '#8B949E' }}>
+                                  <div className="text-sm font-semibold" style={{ color: '#C9D1D9' }}>
                                     {formatDate(stop.gameDate)}
                                   </div>
-                                  <div className="text-base" style={{ color: '#4a5568' }}>
+                                  {stop.gameTime && (
+                                    <div className="text-sm font-semibold" style={{ color: '#F5A623' }}>
+                                      {stop.gameTime}
+                                    </div>
+                                  )}
+                                  <div className="text-xs" style={{ color: '#6E7681' }}>
                                     Day {stop.dayOfTrip}
                                   </div>
                                 </div>
