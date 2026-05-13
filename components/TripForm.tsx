@@ -123,9 +123,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
 
     try {
       const today  = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
-      const endDt  = new Date()
-      endDt.setDate(endDt.getDate() + 90)
-      const endStr = endDt.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+      const endStr = '2026-09-30'
 
       const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=${teamId}&gameType=R&startDate=${today}&endDate=${endStr}&hydrate=promotions`
       const res  = await fetch(url)
