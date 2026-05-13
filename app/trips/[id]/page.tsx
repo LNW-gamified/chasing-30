@@ -103,8 +103,17 @@ export default function TripDetailPage() {
     return null
   }
 
+  function daysUntil(dateStr: string | null): number | null {
+    if (!dateStr) return null
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+    return Math.ceil(
+      (new Date(dateStr + 'T12:00:00').getTime() - new Date(today + 'T12:00:00').getTime()) / 86400000
+    )
+  }
+
   const sc = statusConfig(trip.status)
   const dr = dateRange()
+  const countdownDays = trip.status === 'planned' ? daysUntil(trip.start_date) : null
 
   return (
     <AppShell>
@@ -116,6 +125,33 @@ export default function TripDetailPage() {
       }}>
         <ArrowLeft size={16} /> Back to Trips
       </Link>
+
+      {/* ── Countdown banner ─────────────────────────────────────────────── */}
+      {countdownDays !== null && countdownDays >= 0 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '13px 16px', borderRadius: 12, marginBottom: 14,
+          backgroundColor: countdownDays === 0 ? 'rgba(63,185,80,0.1)' : 'rgba(245,166,35,0.08)',
+          border: `1px solid ${countdownDays === 0 ? 'rgba(63,185,80,0.3)' : 'rgba(245,166,35,0.25)'}`,
+        }}>
+          <span style={{ fontSize: 22, flexShrink: 0 }}>{countdownDays === 0 ? '🎉' : countdownDays === 1 ? '🌟' : '📅'}</span>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: countdownDays === 0 ? '#3FB950' : '#F5A623' }}>
+              {countdownDays === 0
+                ? 'Trip day is today — let\'s go!'
+                : countdownDays === 1
+                  ? 'Trip starts tomorrow!'
+                  : `${countdownDays} days until your trip`}
+            </div>
+            {trip.start_date && countdownDays > 0 && (
+              <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>
+                {formatDate(trip.start_date)}
+                {trip.end_date && trip.end_date !== trip.start_date && ` – ${formatDate(trip.end_date)}`}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Hero header card ───────────────────────────────────────────── */}
       <div style={{
@@ -163,38 +199,39 @@ export default function TripDetailPage() {
           </div>
         </div>
 
-        {/* Action buttons row — scrollable so nothing clips */}
+        {/* Action buttons row */}
         <div style={{
-          display: 'flex', gap: 8, padding: '12px 20px',
-          borderTop: '1px solid #30363D',
-          overflowX: 'auto', scrollbarWidth: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 20px', borderTop: '1px solid #30363D', gap: 8,
         }}>
-          {trip.status === 'planned' && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {trip.status === 'planned' && (
+              <button
+                onClick={() => { setCompleteDate(new Date().toISOString().split('T')[0]); setShowComplete(true) }}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '8px 14px', borderRadius: 8,
+                  border: '1px solid rgba(63,185,80,0.35)',
+                  backgroundColor: 'rgba(63,185,80,0.08)', color: '#3FB950',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+                }}
+              >
+                <CheckCircle size={14} /> Mark Complete
+              </button>
+            )}
             <button
-              onClick={() => { setCompleteDate(new Date().toISOString().split('T')[0]); setShowComplete(true) }}
+              onClick={() => setShowEdit(true)}
               style={{
-                flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6,
+                display: 'inline-flex', alignItems: 'center', gap: 6,
                 padding: '8px 14px', borderRadius: 8,
-                border: '1px solid rgba(63,185,80,0.35)',
-                backgroundColor: 'rgba(63,185,80,0.08)', color: '#3FB950',
+                border: '1px solid #30363D',
+                backgroundColor: '#1C2430', color: '#E6EDF3',
                 fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             >
-              <CheckCircle size={14} /> Mark Complete
+              <Pencil size={14} /> Edit Trip
             </button>
-          )}
-          <button
-            onClick={() => setShowEdit(true)}
-            style={{
-              flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '8px 14px', borderRadius: 8,
-              border: '1px solid #30363D',
-              backgroundColor: '#1C2430', color: '#E6EDF3',
-              fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-            }}
-          >
-            <Pencil size={14} /> Edit Trip
-          </button>
+          </div>
           <button
             onClick={handleDelete}
             style={{
@@ -203,7 +240,6 @@ export default function TripDetailPage() {
               border: '1px solid rgba(248,81,73,0.3)',
               backgroundColor: 'rgba(248,81,73,0.08)', color: '#F85149',
               fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-              marginLeft: 'auto',
             }}
           >
             <Trash2 size={14} /> Delete
@@ -447,6 +483,7 @@ export default function TripDetailPage() {
                 const stadium = stop.stadium as Stadium | undefined
                 const est     = stop.est_tickets + stop.est_food + stop.est_parking
                 const actual  = stop.actual_tickets + stop.actual_food + stop.actual_parking
+                if (est === 0 && actual === 0) return null
                 const diff    = actual - est
                 return (
                   <tr key={stop.id} style={{ borderTop: '1px solid #30363D' }}>
