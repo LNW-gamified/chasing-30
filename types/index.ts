@@ -82,7 +82,7 @@ export interface TripStop {
   game_date: string | null
   game_time: string | null
   opponent: string | null
-  opponent_abbr: string | null
+  opponent_team_id: number | null
   sort_order: number
   est_tickets: number
   est_food: number

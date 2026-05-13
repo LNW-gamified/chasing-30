@@ -14,10 +14,6 @@ const ABBR_TO_MLB_ID: Record<string, number> = {
   STL: 138, TB:  139, TEX: 140, TOR: 141, WSH: 120,
 }
 
-const MLB_ID_TO_ABBR: Record<number, string> = Object.fromEntries(
-  Object.entries(ABBR_TO_MLB_ID).map(([abbr, id]) => [id, abbr])
-)
-
 // Local timezone for each team's home stadium
 const ABBR_TO_TZ: Record<string, { tz: string; label: string }> = {
   // Eastern
@@ -62,7 +58,7 @@ interface StopDraft {
   game_date: string
   game_time: string
   opponent: string
-  opponent_abbr: string
+  opponent_team_id: string  // stored as string for form state, parsed to int on save
   est_tickets: string
   est_food: string
   est_parking: string
@@ -76,9 +72,9 @@ interface GameOption {
   gamePk: number
   gameDate: string
   displayDate: string
-  opponent: string      // "vs New York Yankees"
-  opponentAbbr: string  // "NYY" — for logo lookup
-  firstPitch: string    // "7:05 PM ET"
+  opponent: string         // "vs New York Yankees"
+  opponentTeamId: number   // MLB team ID — for logo lookup
+  firstPitch: string       // "7:05 PM ET"
   promotions: string
 }
 
@@ -106,7 +102,7 @@ const STOP_CATS = [
 function defaultStop(stadiums: Stadium[]): StopDraft {
   return {
     stadium_id: stadiums[0]?.id ?? '',
-    game_date: '', game_time: '', opponent: '', opponent_abbr: '',
+    game_date: '', game_time: '', opponent: '', opponent_team_id: '',
     est_tickets: '0', est_food: '0', est_parking: '0',
     actual_tickets: '0', actual_food: '0', actual_parking: '0',
     notes: '',
@@ -138,10 +134,10 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       return existingStops.map(s => ({
         id:             s.id,
         stadium_id:     s.stadium_id,
-        game_date:      s.game_date     ?? '',
-        game_time:      s.game_time     ?? '',
-        opponent:       s.opponent      ?? '',
-        opponent_abbr:  s.opponent_abbr ?? '',
+        game_date:        s.game_date                    ?? '',
+        game_time:        s.game_time                    ?? '',
+        opponent:         s.opponent                     ?? '',
+        opponent_team_id: s.opponent_team_id?.toString() ?? '',
         est_tickets:    s.est_tickets.toString(),
         est_food:       s.est_food.toString(),
         est_parking:    s.est_parking.toString(),
@@ -188,9 +184,9 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
           const displayDate = new Date(gameDate + 'T12:00:00').toLocaleDateString('en-US', {
             weekday: 'short', month: 'short', day: 'numeric',
           })
-          const awayTeamId   = game.teams?.away?.team?.id as number | undefined
-          const opponentAbbr = awayTeamId ? (MLB_ID_TO_ABBR[awayTeamId] ?? '') : ''
-          const opponent     = `vs ${game.teams?.away?.team?.name ?? 'Unknown'}`
+          const awayTeamId     = game.teams?.away?.team?.id as number | undefined
+          const opponentTeamId = awayTeamId ?? 0
+          const opponent       = `vs ${game.teams?.away?.team?.name ?? 'Unknown'}`
 
           let firstPitch = 'TBD'
           if (game.gameDate) {
@@ -203,7 +199,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
             .map((p: { name: string }) => p.name)
             .join(', ')
 
-          games.push({ gamePk: game.gamePk, gameDate, displayDate, opponent, opponentAbbr, firstPitch, promotions })
+          games.push({ gamePk: game.gamePk, gameDate, displayDate, opponent, opponentTeamId, firstPitch, promotions })
         }
       }
 
@@ -239,10 +235,10 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     setStopSchedules(prev => prev.map((ss, i) => i === stopIdx ? { ...ss, selectedPk: pkStr } : ss))
     setStops(prev => prev.map((s, i) => i === stopIdx ? {
       ...s,
-      game_date:     game?.gameDate     ?? '',
-      game_time:     game?.firstPitch   ?? '',
-      opponent:      game?.opponent     ?? '',
-      opponent_abbr: game?.opponentAbbr ?? '',
+      game_date:        game?.gameDate                      ?? '',
+      game_time:        game?.firstPitch                    ?? '',
+      opponent:         game?.opponent                      ?? '',
+      opponent_team_id: game?.opponentTeamId?.toString()    ?? '',
     } : s))
   }
 
@@ -315,10 +311,10 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       stops.map((stop, i) => ({
         trip_id:        tripId,
         stadium_id:     stop.stadium_id,
-        game_date:      stop.game_date     || null,
-        game_time:      stop.game_time     || null,
-        opponent:       stop.opponent      || null,
-        opponent_abbr:  stop.opponent_abbr || null,
+        game_date:        stop.game_date || null,
+        game_time:        stop.game_time || null,
+        opponent:         stop.opponent  || null,
+        opponent_team_id: parseInt(stop.opponent_team_id) || null,
         sort_order:     i,
         est_tickets:    parseFloat(stop.est_tickets)    || 0,
         est_food:       parseFloat(stop.est_food)       || 0,

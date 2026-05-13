@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase'
 import AppShell from '@/components/AppShell'
 import TripForm from '@/components/TripForm'
 import TeamLogo from '@/components/TeamLogo'
-import { getTeamLogoUrl } from '@/lib/team-logos'
+import { getTeamLogoUrlById } from '@/lib/team-logos'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip, TripStop } from '@/types'
 import Link from 'next/link'
@@ -400,11 +400,11 @@ export default function TripDetailPage() {
                       )}
                       {stop.opponent && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
-                          {stop.opponent_abbr && (
+                          {stop.opponent_team_id && (
                             /* eslint-disable-next-line @next/next/no-img-element */
                             <img
-                              src={getTeamLogoUrl(stop.opponent_abbr)}
-                              alt={stop.opponent_abbr}
+                              src={getTeamLogoUrlById(stop.opponent_team_id)}
+                              alt={stop.opponent}
                               width={16} height={16}
                               style={{ objectFit: 'contain', flexShrink: 0 }}
                             />
