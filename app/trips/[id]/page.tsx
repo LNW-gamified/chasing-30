@@ -416,7 +416,7 @@ export default function TripDetailPage() {
                           })}
                         </div>
                         {stop.game_time && (
-                          <div style={{ fontSize: 16, fontWeight: 700, color: '#1F6FEB', marginTop: 3 }}>
+                          <div style={{ fontSize: 16, fontWeight: 700, color: '#F5A623', marginTop: 3 }}>
                             {stop.game_time}
                           </div>
                         )}
