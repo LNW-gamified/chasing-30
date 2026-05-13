@@ -289,12 +289,12 @@ export default function OptimizerPage() {
                           cursor: 'pointer',
                         }}
                       >
-                        <TeamLogo abbreviation={s.abbreviation} size={30} style={{ borderRadius: 6, flexShrink: 0 }} />
+                        <TeamLogo abbreviation={s.abbreviation} size={36} style={{ borderRadius: 6, flexShrink: 0 }} />
                         <div className="min-w-0">
                           <div className="truncate" style={{ fontSize: 14, fontWeight: 800, color: isOn ? '#E6EDF3' : '#C9D1D9', lineHeight: 1.2 }}>
                             {ABBR_TO_NICKNAME[s.abbreviation] ?? s.abbreviation}
                           </div>
-                          <div className="truncate mt-0.5" style={{ fontSize: 11, color: '#6E7681' }}>
+                          <div className="truncate mt-0.5" style={{ fontSize: 12, color: '#8B949E' }}>
                             {s.city}
                           </div>
                         </div>
