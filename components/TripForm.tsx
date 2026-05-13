@@ -14,6 +14,49 @@ const ABBR_TO_MLB_ID: Record<string, number> = {
   STL: 138, TB:  139, TEX: 140, TOR: 141, WSH: 120,
 }
 
+// Reverse map: MLB team ID → abbreviation
+const MLB_ID_TO_ABBR: Record<number, string> = Object.fromEntries(
+  Object.entries(ABBR_TO_MLB_ID).map(([abbr, id]) => [id, abbr])
+)
+
+// Local timezone for each team's home stadium
+const ABBR_TO_TZ: Record<string, { tz: string; label: string }> = {
+  // Eastern
+  ATL: { tz: 'America/New_York',    label: 'ET'  },
+  BAL: { tz: 'America/New_York',    label: 'ET'  },
+  BOS: { tz: 'America/New_York',    label: 'ET'  },
+  CIN: { tz: 'America/New_York',    label: 'ET'  },
+  CLE: { tz: 'America/New_York',    label: 'ET'  },
+  DET: { tz: 'America/New_York',    label: 'ET'  },
+  MIA: { tz: 'America/New_York',    label: 'ET'  },
+  NYM: { tz: 'America/New_York',    label: 'ET'  },
+  NYY: { tz: 'America/New_York',    label: 'ET'  },
+  PHI: { tz: 'America/New_York',    label: 'ET'  },
+  PIT: { tz: 'America/New_York',    label: 'ET'  },
+  TB:  { tz: 'America/New_York',    label: 'ET'  },
+  TOR: { tz: 'America/Toronto',     label: 'ET'  },
+  WSH: { tz: 'America/New_York',    label: 'ET'  },
+  // Central
+  CHC: { tz: 'America/Chicago',     label: 'CT'  },
+  CWS: { tz: 'America/Chicago',     label: 'CT'  },
+  HOU: { tz: 'America/Chicago',     label: 'CT'  },
+  KC:  { tz: 'America/Chicago',     label: 'CT'  },
+  MIL: { tz: 'America/Chicago',     label: 'CT'  },
+  MIN: { tz: 'America/Chicago',     label: 'CT'  },
+  STL: { tz: 'America/Chicago',     label: 'CT'  },
+  TEX: { tz: 'America/Chicago',     label: 'CT'  },
+  // Mountain
+  ARI: { tz: 'America/Phoenix',     label: 'MST' }, // Arizona doesn't observe DST
+  COL: { tz: 'America/Denver',      label: 'MT'  },
+  // Pacific
+  LAA: { tz: 'America/Los_Angeles', label: 'PT'  },
+  LAD: { tz: 'America/Los_Angeles', label: 'PT'  },
+  OAK: { tz: 'America/Los_Angeles', label: 'PT'  },
+  SD:  { tz: 'America/Los_Angeles', label: 'PT'  },
+  SF:  { tz: 'America/Los_Angeles', label: 'PT'  },
+  SEA: { tz: 'America/Los_Angeles', label: 'PT'  },
+}
+
 interface StopDraft {
   id?: string
   stadium_id: string
@@ -31,9 +74,10 @@ interface GameOption {
   gamePk: number
   gameDate: string
   displayDate: string
-  opponent: string
-  firstPitch: string
+  opponent: string   // "vs Yankees" (home) | "@ Red Sox" (away)
+  firstPitch: string // "7:05 PM ET"
   promotions: string
+  isHome: boolean
 }
 
 interface StopSchedule {
@@ -41,6 +85,7 @@ interface StopSchedule {
   games: GameOption[]
   noGames: boolean
   selectedPk: string
+  showAway: boolean
 }
 
 interface Props {
@@ -68,7 +113,7 @@ function defaultStop(stadiums: Stadium[]): StopDraft {
 }
 
 function emptySchedule(): StopSchedule {
-  return { loading: false, games: [], noGames: false, selectedPk: '' }
+  return { loading: false, games: [], noGames: false, selectedPk: '', showAway: false }
 }
 
 function defaultForm(trip?: Trip) {
@@ -118,41 +163,56 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     if (!teamId) return
 
     setStopSchedules(prev => prev.map((ss, i) =>
-      i === stopIdx ? { loading: true, games: [], noGames: false, selectedPk: '' } : ss
+      i === stopIdx ? { ...ss, loading: true, games: [], noGames: false, selectedPk: '' } : ss
     ))
 
     try {
       const today  = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
       const endStr = '2026-09-30'
-
-      const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=${teamId}&gameType=R&startDate=${today}&endDate=${endStr}&hydrate=promotions`
-      const res  = await fetch(url)
-      const json = await res.json()
+      const url    = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=${teamId}&gameType=R&startDate=${today}&endDate=${endStr}&hydrate=promotions`
+      const res    = await fetch(url)
+      const json   = await res.json()
 
       const games: GameOption[] = []
       for (const date of json.dates ?? []) {
         for (const game of date.games ?? []) {
-          if (game.teams?.home?.team?.id !== teamId) continue
+          const homeTeamId  = game.teams?.home?.team?.id as number | undefined
+          const awayTeamId  = game.teams?.away?.team?.id as number | undefined
+          const isHome      = homeTeamId === teamId
+          const isAway      = awayTeamId === teamId
+          if (!isHome && !isAway) continue
+
+          // Always use the home team's timezone — that's the local gate time
+          const homeAbbr    = homeTeamId ? (MLB_ID_TO_ABBR[homeTeamId] ?? '') : ''
+          const tzInfo      = ABBR_TO_TZ[homeAbbr] ?? { tz: 'America/Chicago', label: 'CT' }
+
           const gameDate    = date.date as string
           const displayDate = new Date(gameDate + 'T12:00:00').toLocaleDateString('en-US', {
             weekday: 'short', month: 'short', day: 'numeric',
           })
-          const opponent   = `vs ${game.teams?.away?.team?.name ?? 'Unknown'}`
-          let firstPitch   = 'TBD'
+
+          // "vs Yankees" for home, "@ Red Sox" for away
+          const opponent = isHome
+            ? `vs ${game.teams?.away?.team?.name ?? 'Unknown'}`
+            : `@ ${game.teams?.home?.team?.name ?? 'Unknown'}`
+
+          let firstPitch = 'TBD'
           if (game.gameDate) {
             firstPitch = new Date(game.gameDate).toLocaleTimeString('en-US', {
-              hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles', hour12: true,
-            }) + ' PT'
+              hour: 'numeric', minute: '2-digit', timeZone: tzInfo.tz, hour12: true,
+            }) + ' ' + tzInfo.label
           }
-          const promotions = (game.promotions ?? [])
-            .map((p: { name: string }) => p.name)
-            .join(', ')
-          games.push({ gamePk: game.gamePk, gameDate, displayDate, opponent, firstPitch, promotions })
+
+          const promotions = isHome
+            ? (game.promotions ?? []).map((p: { name: string }) => p.name).join(', ')
+            : ''
+
+          games.push({ gamePk: game.gamePk, gameDate, displayDate, opponent, firstPitch, promotions, isHome })
         }
       }
 
       setStopSchedules(prev => prev.map((ss, i) =>
-        i === stopIdx ? { loading: false, games, noGames: games.length === 0, selectedPk: '' } : ss
+        i === stopIdx ? { ...ss, loading: false, games, noGames: games.length === 0, selectedPk: '' } : ss
       ))
     } catch {
       setStopSchedules(prev => prev.map((ss, i) =>
@@ -184,6 +244,13 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     setStops(prev => prev.map((s, i) => i === stopIdx ? { ...s, game_date: game?.gameDate ?? '' } : s))
   }
 
+  function toggleShowAway(stopIdx: number) {
+    setStopSchedules(prev => prev.map((ss, i) =>
+      i === stopIdx ? { ...ss, showAway: !ss.showAway, selectedPk: '' } : ss
+    ))
+    setStops(prev => prev.map((s, i) => i === stopIdx ? { ...s, game_date: '' } : s))
+  }
+
   function addStop() {
     const newIdx       = stops.length
     const newStadiumId = stadiums[0]?.id ?? ''
@@ -197,13 +264,13 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     setStopSchedules(prev => prev.filter((_, idx) => idx !== i))
   }
 
-  const stopEst    = stops.reduce((sum, s) =>
+  const stopEst     = stops.reduce((sum, s) =>
     sum + (parseFloat(s.est_tickets) || 0) + (parseFloat(s.est_food) || 0) + (parseFloat(s.est_parking) || 0), 0)
-  const stopActual = stops.reduce((sum, s) =>
+  const stopActual  = stops.reduce((sum, s) =>
     sum + (parseFloat(s.actual_tickets) || 0) + (parseFloat(s.actual_food) || 0) + (parseFloat(s.actual_parking) || 0), 0)
-  const tripEst    = (parseFloat(form.est_travel) || 0) + (parseFloat(form.est_hotel) || 0)
-  const tripActual = (parseFloat(form.actual_travel) || 0) + (parseFloat(form.actual_hotel) || 0)
-  const grandEst   = stopEst + tripEst
+  const tripEst     = (parseFloat(form.est_travel) || 0) + (parseFloat(form.est_hotel) || 0)
+  const tripActual  = (parseFloat(form.actual_travel) || 0) + (parseFloat(form.actual_hotel) || 0)
+  const grandEst    = stopEst + tripEst
   const grandActual = stopActual + tripActual
 
   async function handleSubmit(e: React.FormEvent) {
@@ -332,8 +399,10 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
 
               <div className="flex flex-col gap-4">
                 {stops.map((stop, i) => {
-                  const ss   = stopSchedules[i] ?? emptySchedule()
-                  const game = ss.games.find(g => g.gamePk.toString() === ss.selectedPk)
+                  const ss           = stopSchedules[i] ?? emptySchedule()
+                  const hasAway      = ss.games.some(g => !g.isHome)
+                  const visibleGames = ss.showAway ? ss.games : ss.games.filter(g => g.isHome)
+                  const selectedGame = ss.games.find(g => g.gamePk.toString() === ss.selectedPk)
 
                   return (
                     <div key={i} className="p-4 rounded-xl" style={{ backgroundColor: '#0d1424', border: '1px solid #30363D' }}>
@@ -360,14 +429,32 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
 
                       {/* Game picker */}
                       <div className="mb-3">
-                        <label className="label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          Select a Game
-                          {ss.loading && <Loader2 size={12} className="animate-spin" style={{ color: '#1F6FEB' }} />}
-                        </label>
+                        {/* Label row with away toggle */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                          <label className="label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+                            Select a Game
+                            {ss.loading && <Loader2 size={12} className="animate-spin" style={{ color: '#1F6FEB' }} />}
+                          </label>
+                          {!ss.loading && hasAway && (
+                            <button
+                              type="button"
+                              onClick={() => toggleShowAway(i)}
+                              style={{
+                                fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 6,
+                                border: `1px solid ${ss.showAway ? 'rgba(31,111,235,0.4)' : '#30363D'}`,
+                                backgroundColor: ss.showAway ? 'rgba(31,111,235,0.12)' : 'transparent',
+                                color: ss.showAway ? '#1F6FEB' : '#8B949E',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              ✈️ Away games {ss.showAway ? 'on' : 'off'}
+                            </button>
+                          )}
+                        </div>
 
                         {ss.loading ? (
                           <div style={{ fontSize: 13, color: '#8B949E', padding: '8px 0' }}>
-                            Fetching upcoming home games…
+                            Fetching schedule…
                           </div>
                         ) : ss.noGames ? (
                           <div style={{
@@ -376,50 +463,73 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                             backgroundColor: 'rgba(139,148,158,0.08)',
                             border: '1px solid #30363D',
                           }}>
-                            No upcoming home games found — enter date manually below.
+                            No upcoming games found — enter date manually below.
                           </div>
-                        ) : ss.games.length > 0 ? (
+                        ) : visibleGames.length === 0 ? (
+                          <div style={{
+                            fontSize: 12, color: '#8B949E',
+                            padding: '8px 12px', borderRadius: 8,
+                            backgroundColor: 'rgba(139,148,158,0.08)',
+                            border: '1px solid #30363D',
+                          }}>
+                            No upcoming home games — toggle away games to see road trips.
+                          </div>
+                        ) : (
                           <select
                             className="input"
                             value={ss.selectedPk}
                             onChange={e => selectGame(i, e.target.value)}
                           >
                             <option value="">— pick a game (optional) —</option>
-                            {ss.games.map(g => (
+                            {visibleGames.map(g => (
                               <option key={g.gamePk} value={g.gamePk.toString()}>
-                                {g.displayDate} · {g.opponent} · {g.firstPitch}
+                                {g.isHome ? '🏠' : '✈️'} {g.displayDate} · {g.opponent} · {g.firstPitch}
                               </option>
                             ))}
                           </select>
-                        ) : null}
+                        )}
 
-                        {/* Game details when a game is selected */}
-                        {game && (
+                        {/* Selected game details */}
+                        {selectedGame && (
                           <div style={{
                             marginTop: 8, padding: '10px 12px', borderRadius: 10,
-                            backgroundColor: 'rgba(31,111,235,0.07)',
-                            border: '1px solid rgba(31,111,235,0.2)',
+                            backgroundColor: selectedGame.isHome
+                              ? 'rgba(63,185,80,0.06)'
+                              : 'rgba(31,111,235,0.06)',
+                            border: `1px solid ${selectedGame.isHome
+                              ? 'rgba(63,185,80,0.2)'
+                              : 'rgba(31,111,235,0.2)'}`,
                             display: 'flex', flexDirection: 'column', gap: 5,
                           }}>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                              <span style={{
+                                fontSize: 12, fontWeight: 700,
+                                padding: '2px 8px', borderRadius: 6,
+                                backgroundColor: selectedGame.isHome
+                                  ? 'rgba(63,185,80,0.15)'
+                                  : 'rgba(31,111,235,0.15)',
+                                color: selectedGame.isHome ? '#3FB950' : '#1F6FEB',
+                              }}>
+                                {selectedGame.isHome ? '🏠 Home' : '✈️ Away'}
+                              </span>
                               <span style={{
                                 fontSize: 12, fontWeight: 600, color: '#E6EDF3',
                                 padding: '2px 8px', borderRadius: 6,
-                                backgroundColor: 'rgba(31,111,235,0.15)',
+                                backgroundColor: '#1C2430',
                               }}>
-                                {game.opponent}
+                                {selectedGame.opponent}
                               </span>
                               <span style={{
                                 fontSize: 12, fontWeight: 600, color: '#8B949E',
                                 padding: '2px 8px', borderRadius: 6,
                                 backgroundColor: '#1C2430',
                               }}>
-                                ⏰ {game.firstPitch}
+                                ⏰ {selectedGame.firstPitch}
                               </span>
                             </div>
-                            {game.promotions && (
+                            {selectedGame.promotions && (
                               <div style={{ fontSize: 11, color: '#F5A623' }}>
-                                🎁 {game.promotions}
+                                🎁 {selectedGame.promotions}
                               </div>
                             )}
                           </div>
