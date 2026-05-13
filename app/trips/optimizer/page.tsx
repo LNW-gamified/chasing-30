@@ -9,37 +9,6 @@ import type { Stadium } from '@/types'
 import Link from 'next/link'
 import { ArrowLeft, MapPin, Calendar, Zap, Clock, Plus, Loader2, AlertCircle, CheckCircle2, ChevronRight } from 'lucide-react'
 
-const HOME_CITIES = [
-  { label: 'New York, NY',       lat: 40.7128, lng: -74.0060 },
-  { label: 'Los Angeles, CA',    lat: 34.0522, lng: -118.2437 },
-  { label: 'Chicago, IL',        lat: 41.8781, lng: -87.6298 },
-  { label: 'Houston, TX',        lat: 29.7604, lng: -95.3698 },
-  { label: 'Phoenix, AZ',        lat: 33.4484, lng: -112.0740 },
-  { label: 'Philadelphia, PA',   lat: 39.9526, lng: -75.1652 },
-  { label: 'San Antonio, TX',    lat: 29.4241, lng: -98.4936 },
-  { label: 'San Diego, CA',      lat: 32.7157, lng: -117.1611 },
-  { label: 'Dallas, TX',         lat: 32.7767, lng: -96.7970 },
-  { label: 'San Francisco, CA',  lat: 37.7749, lng: -122.4194 },
-  { label: 'Seattle, WA',        lat: 47.6062, lng: -122.3321 },
-  { label: 'Denver, CO',         lat: 39.7392, lng: -104.9903 },
-  { label: 'Boston, MA',         lat: 42.3601, lng: -71.0589 },
-  { label: 'Atlanta, GA',        lat: 33.7490, lng: -84.3880 },
-  { label: 'Miami, FL',          lat: 25.7617, lng: -80.1918 },
-  { label: 'Minneapolis, MN',    lat: 44.9778, lng: -93.2650 },
-  { label: 'St. Louis, MO',      lat: 38.6270, lng: -90.1994 },
-  { label: 'Baltimore, MD',      lat: 39.2904, lng: -76.6122 },
-  { label: 'Pittsburgh, PA',     lat: 40.4406, lng: -79.9959 },
-  { label: 'Detroit, MI',        lat: 42.3314, lng: -83.0458 },
-  { label: 'Kansas City, MO',    lat: 39.0997, lng: -94.5786 },
-  { label: 'Milwaukee, WI',      lat: 43.0389, lng: -87.9065 },
-  { label: 'Cincinnati, OH',     lat: 39.1031, lng: -84.5120 },
-  { label: 'Cleveland, OH',      lat: 41.4993, lng: -81.6944 },
-  { label: 'Tampa, FL',          lat: 27.9506, lng: -82.4572 },
-  { label: 'Toronto, ON',        lat: 43.6532, lng: -79.3832 },
-  { label: 'Arlington, TX',      lat: 32.7357, lng: -97.1081 },
-  { label: 'Oakland, CA',        lat: 37.8044, lng: -122.2712 },
-]
-
 const MONTHS = [
   'January','February','March','April','May','June',
   'July','August','September','October','November','December',
@@ -81,6 +50,8 @@ interface TripStop {
   gameDate: string
   dayOfTrip: number
   gapToNext: number | null
+  distFromPrev: number
+  driveMinFromPrev: number
 }
 
 interface TripOption {
@@ -91,16 +62,24 @@ interface TripOption {
   avgGapDays: number
   difficulty: 'Road Warrior' | 'On the Move' | 'Leisure Tour'
   score: number
+  totalDistanceMiles: number
+}
+
+function formatDriveTime(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
 
 export default function OptimizerPage() {
   const [stadiums, setStadiums] = useState<Stadium[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [startingAbbr, setStartingAbbr] = useState<string | null>(null)
   const [numDays, setNumDays] = useState('7')
   const [startMonth, setStartMonth] = useState(3)   // April (0-indexed)
   const [endMonth, setEndMonth] = useState(8)        // September
   const [year, setYear] = useState(new Date().getFullYear())
-  const [homeCityIdx, setHomeCityIdx] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [results, setResults] = useState<TripOption[] | null>(null)
@@ -114,15 +93,18 @@ export default function OptimizerPage() {
   }, [])
 
   function toggleTeam(abbr: string) {
+    const isRemoving = selected.has(abbr)
     setSelected(prev => {
       const next = new Set(prev)
       next.has(abbr) ? next.delete(abbr) : next.add(abbr)
       return next
     })
+    if (isRemoving && startingAbbr === abbr) setStartingAbbr(null)
   }
 
   async function handleFind() {
-    if (selected.size < 2) { setError('Select at least 2 teams.'); return }
+    if (!startingAbbr) { setError('Select a starting stadium first.'); return }
+    if (selected.size < 2) { setError('Select at least 2 teams (including your starting stadium).'); return }
     setLoading(true)
     setError(null)
     setResults(null)
@@ -132,7 +114,6 @@ export default function OptimizerPage() {
     const lastDay = new Date(year, endMonth + 1, 0).getDate()
     const endDate = `${year}-${pad(endMonth + 1)}-${lastDay}`
 
-    const homeCity = HOME_CITIES[homeCityIdx]
     const selectedStadiums = stadiums.filter(s => selected.has(s.abbreviation))
 
     try {
@@ -152,8 +133,7 @@ export default function OptimizerPage() {
           numDays: Math.min(30, Math.max(2, parseInt(numDays) || 2)),
           startDate,
           endDate,
-          homeLat: homeCity.lat,
-          homeLng: homeCity.lng,
+          startingAbbr,
         }),
       })
       const data = await res.json()
@@ -252,12 +232,12 @@ export default function OptimizerPage() {
       {/* Team selection */}
       <div className="card p-5 mb-5">
         <div className="flex items-center justify-between mb-4">
-          <div className="text-lg font-bold" style={{ color: '#E6EDF3' }}>Select Teams</div>
+          <div className="text-lg font-bold" style={{ color: '#E6EDF3' }}>Select Teams to Visit</div>
           <div className="text-base" style={{ color: '#8B949E' }}>
             {selected.size} selected
             {selected.size > 0 && (
               <button
-                onClick={() => setSelected(new Set())}
+                onClick={() => { setSelected(new Set()); setStartingAbbr(null) }}
                 className="ml-2 text-base"
                 style={{ color: '#1F6FEB' }}
               >
@@ -316,6 +296,54 @@ export default function OptimizerPage() {
         </div>
       </div>
 
+      {/* Starting Stadium */}
+      {selected.size > 0 && (
+        <div className="card p-5 mb-5">
+          <div className="flex items-center gap-2 mb-1">
+            <MapPin size={15} style={{ color: '#F5A623' }} />
+            <div className="text-lg font-bold" style={{ color: '#E6EDF3' }}>Starting Stadium</div>
+          </div>
+          <div className="text-sm mb-4" style={{ color: '#8B949E' }}>
+            Pick where your road trip begins — this is always Stop 1
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[...selected].map(abbr => {
+              const s = stadiums.find(st => st.abbreviation === abbr)
+              if (!s) return null
+              const isStart = startingAbbr === abbr
+              const primary = TEAM_PRIMARY[abbr] ?? '#1F6FEB'
+              return (
+                <button
+                  key={abbr}
+                  type="button"
+                  onClick={() => setStartingAbbr(isStart ? null : abbr)}
+                  className="relative flex items-center gap-2 rounded-xl transition-all"
+                  style={{
+                    padding: '8px 12px',
+                    border: isStart ? `2px solid ${primary}` : '1px solid rgba(255,255,255,0.08)',
+                    backgroundColor: isStart ? `${primary}18` : 'rgba(255,255,255,0.02)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <TeamLogo abbreviation={abbr} size={28} style={{ borderRadius: 5, flexShrink: 0 }} />
+                  <div className="min-w-0">
+                    <div className="truncate" style={{ fontSize: 13, fontWeight: 800, color: isStart ? '#E6EDF3' : '#C9D1D9', lineHeight: 1.2 }}>
+                      {ABBR_TO_NICKNAME[abbr] ?? abbr}
+                    </div>
+                    <div className="truncate" style={{ fontSize: 11, color: '#6E7681' }}>{s.city}</div>
+                  </div>
+                  {isStart && (
+                    <div className="absolute top-1 right-1 flex items-center justify-center rounded-full w-4 h-4" style={{ backgroundColor: primary }}>
+                      <MapPin size={9} style={{ color: '#fff' }} />
+                    </div>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Parameters */}
       <div className="card p-5 mb-5">
         <div className="text-lg font-bold mb-4" style={{ color: '#E6EDF3' }}>Trip Parameters</div>
@@ -354,18 +382,12 @@ export default function OptimizerPage() {
             </select>
           </div>
         </div>
-        <div className="mt-4">
-          <label className="label">Home City (starting point for routing)</label>
-          <select className="input" value={homeCityIdx} onChange={e => setHomeCityIdx(Number(e.target.value))}>
-            {HOME_CITIES.map((c, i) => <option key={c.label} value={i}>{c.label}</option>)}
-          </select>
-        </div>
       </div>
 
       {/* Find button */}
       <button
         onClick={handleFind}
-        disabled={loading || selected.size < 2}
+        disabled={loading || selected.size < 2 || !startingAbbr}
         className="btn-primary w-full mb-6"
         style={{ justifyContent: 'center', padding: '0.75rem', fontSize: '1rem' }}
       >
@@ -459,10 +481,15 @@ export default function OptimizerPage() {
                                 style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
                               >
                                 <div
-                                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-base font-black"
-                                  style={{ backgroundColor: 'rgba(31,111,235,0.15)', color: '#1F6FEB' }}
+                                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                                  style={{
+                                    backgroundColor: si === 0 ? 'rgba(245,166,35,0.15)' : 'rgba(31,111,235,0.12)',
+                                    color: si === 0 ? '#F5A623' : '#1F6FEB',
+                                    fontWeight: 900,
+                                    fontSize: si === 0 ? undefined : 14,
+                                  }}
                                 >
-                                  {si + 1}
+                                  {si === 0 ? <MapPin size={15} /> : si + 1}
                                 </div>
                                 <TeamLogo abbreviation={stop.abbreviation} size={32} style={{ borderRadius: 6 }} />
                                 <div className="flex-1 min-w-0">
@@ -482,19 +509,30 @@ export default function OptimizerPage() {
                                   </div>
                                 </div>
                               </div>
-                              {gapDays !== null && (
-                                <div className="flex items-center gap-2 py-1 pl-14">
-                                  <div className="flex-1 border-l-2 border-dashed h-4" style={{ borderColor: 'rgba(255,255,255,0.06)' }} />
-                                  <div className="text-base" style={{ color: '#4a5568' }}>
-                                    {gapDays} day{gapDays !== 1 ? 's' : ''} travel
+                              {gapDays !== null && (() => {
+                                const nextStop = opt.stops[si + 1]
+                                const driveMi = nextStop?.distFromPrev ?? 0
+                                const driveMin = nextStop?.driveMinFromPrev ?? 0
+                                return (
+                                  <div className="flex items-center gap-1.5 py-1.5 pl-11" style={{ color: '#6E7681', fontSize: 12 }}>
+                                    <div className="border-l border-dashed mr-1" style={{ borderColor: 'rgba(255,255,255,0.1)', height: 16 }} />
+                                    <span>🚗</span>
+                                    <span>{driveMi.toLocaleString()} mi · ~{formatDriveTime(driveMin)}</span>
+                                    <span style={{ color: 'rgba(255,255,255,0.15)' }}>·</span>
+                                    <span>{gapDays} day{gapDays !== 1 ? 's' : ''} gap</span>
                                   </div>
-                                  <ChevronRight size={12} style={{ color: '#4a5568' }} />
-                                </div>
-                              )}
+                                )
+                              })()}
                             </div>
                           )
                         })}
                       </div>
+                    </div>
+
+                    {/* Total distance */}
+                    <div className="px-5 pb-3 flex items-center gap-2" style={{ color: '#6E7681', fontSize: 13 }}>
+                      <MapPin size={13} style={{ flexShrink: 0 }} />
+                      <span>~{opt.totalDistanceMiles.toLocaleString()} miles total driving</span>
                     </div>
 
                     {/* Create button */}

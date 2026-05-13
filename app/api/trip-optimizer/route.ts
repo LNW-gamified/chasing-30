@@ -31,6 +31,8 @@ interface EnrichedStop {
   gameDate: string
   dayOfTrip: number
   gapToNext: number | null
+  distFromPrev: number
+  driveMinFromPrev: number
 }
 
 interface TripOption {
@@ -41,6 +43,7 @@ interface TripOption {
   avgGapDays: number
   difficulty: 'Road Warrior' | 'On the Move' | 'Leisure Tour'
   score: number
+  totalDistanceMiles: number
 }
 
 function haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -63,30 +66,6 @@ function addDays(dateStr: string, n: number): string {
   const d = new Date(dateStr + 'T12:00:00')
   d.setDate(d.getDate() + n)
   return d.toISOString().split('T')[0]
-}
-
-// Travel distance for stops that are ALREADY sorted chronologically.
-// This scores how much driving/flying the route requires in date order.
-function travelScore(stops: RawStop[], stadiums: StadiumInput[], homeLat: number, homeLng: number): number {
-  let dist = 0
-  let lat = homeLat
-  let lng = homeLng
-  for (const stop of stops) {
-    const s = stadiums.find(st => st.abbreviation === stop.abbreviation)
-    if (!s) continue
-    dist += haversine(lat, lng, s.lat, s.lng)
-    lat = s.lat
-    lng = s.lng
-  }
-  return dist
-}
-
-// Cartesian product of string arrays
-function cartesianProduct(arrays: string[][]): string[][] {
-  return arrays.reduce<string[][]>(
-    (acc, arr) => acc.flatMap(combo => arr.map(item => [...combo, item])),
-    [[]]
-  )
 }
 
 async function fetchHomeGames(
@@ -136,24 +115,25 @@ async function fetchHomeGames(
 
 export async function POST(req: NextRequest) {
   try {
-    const { abbreviations, stadiums, numDays, startDate, endDate, homeLat, homeLng } =
+    const { abbreviations, stadiums, numDays, startDate, endDate, startingAbbr } =
       await req.json() as {
         abbreviations: string[]
         stadiums: StadiumInput[]
         numDays: number
         startDate: string
         endDate: string
-        homeLat: number
-        homeLng: number
+        startingAbbr: string
       }
 
-    if (!abbreviations?.length || !stadiums?.length) {
+    if (!abbreviations?.length || !stadiums?.length || !startingAbbr) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const homeGamesByTeam = await fetchHomeGames(abbreviations, startDate, endDate)
+    // Deduplicate: starting stadium may also appear in abbreviations
+    const allAbbrs = [...new Set([startingAbbr, ...abbreviations])]
+    const homeGamesByTeam = await fetchHomeGames(allAbbrs, startDate, endDate)
 
-    const teamsWithNoGames = abbreviations.filter(a => !(homeGamesByTeam[a]?.length))
+    const teamsWithNoGames = allAbbrs.filter(a => !(homeGamesByTeam[a]?.length))
     if (teamsWithNoGames.length > 0) {
       return NextResponse.json(
         { error: `No home games found for: ${teamsWithNoGames.join(', ')}. Try expanding your date range.` },
@@ -161,116 +141,127 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const candidates: TripOption[] = []
-
-    // Slide a window of numDays across the search range
-    let windowStart = startDate
-    while (windowStart <= endDate) {
-      // Window spans exactly numDays calendar days (inclusive on both ends)
-      const windowEnd = addDays(windowStart, numDays - 1)
-
-      // Home game dates per team in this window — capped at 8 to bound cartesian product
-      const teamDateLists = abbreviations.map(abbr =>
-        (homeGamesByTeam[abbr] ?? []).filter(d => d >= windowStart && d <= windowEnd).slice(0, 8)
-      )
-
-      // Skip window if any team has no home game in it
-      if (teamDateLists.some(dl => dl.length === 0)) {
-        windowStart = addDays(windowStart, 1)
-        continue
-      }
-
-      // Enumerate every combination of dates (one per team)
-      const combos = cartesianProduct(teamDateLists)
-
-      let bestScore = Infinity
-      let bestStops: RawStop[] | null = null
-
-      for (const combo of combos) {
-        // Each stop must fall on a unique date (can't attend two games simultaneously)
-        if (new Set(combo).size < combo.length) continue
-
-        // Build stops, then sort chronologically by date
-        const stops: RawStop[] = abbreviations.map((abbr, i) => ({
-          stadiumId: stadiums.find(s => s.abbreviation === abbr)!.id,
-          abbreviation: abbr,
-          date: combo[i],
-        }))
-        stops.sort((a, b) => a.date.localeCompare(b.date))
-
-        // All game dates are already constrained to [windowStart, windowEnd] (numDays wide)
-        // so the first-to-last span is guaranteed ≤ numDays — no additional span check needed.
-
-        // Score = total travel distance in chronological order (lower = better)
-        const score = travelScore(stops, stadiums, homeLat, homeLng)
-        if (score < bestScore) {
-          bestScore = score
-          bestStops = stops
-        }
-      }
-
-      if (bestStops) {
-        // Dates and ordering are guaranteed correct:
-        //   - sorted chronologically above
-        //   - unique dates enforced above
-        //   - tripStart/tripEnd = first/last game dates
-        const tripStart = bestStops[0].date
-        const tripEnd = bestStops[bestStops.length - 1].date
-        const totalDays = daysBetween(tripStart, tripEnd) + 1
-
-        let totalGap = 0
-        for (let i = 1; i < bestStops.length; i++) {
-          // daysBetween(earlier, later) is always positive here
-          totalGap += daysBetween(bestStops[i - 1].date, bestStops[i].date)
-        }
-        const avgGap = bestStops.length > 1 ? totalGap / (bestStops.length - 1) : 0
-
-        const difficulty: TripOption['difficulty'] =
-          avgGap <= 1.5 ? 'Road Warrior' : avgGap <= 3 ? 'On the Move' : 'Leisure Tour'
-
-        // Deduplicate: skip if we already have an option with the same teams whose first game
-        // falls on the exact same date (windows sliding one day at a time would otherwise
-        // produce many near-identical results differing only in windowStart).
-        const isDuplicate = candidates.some(
-          o =>
-            o.startDate === tripStart &&
-            o.stops.map(s => s.abbreviation).sort().join() ===
-              bestStops!.map(s => s.abbreviation).sort().join()
-        )
-
-        if (!isDuplicate) {
-          const enrichedStops: EnrichedStop[] = bestStops.map((stop, i) => {
-            const nextStop = bestStops![i + 1]
-            const stadium = stadiums.find(s => s.abbreviation === stop.abbreviation)!
-            return {
-              stadiumId: stop.stadiumId,
-              stadiumName: stadium.name,
-              team: stadium.team,
-              abbreviation: stop.abbreviation,
-              gameDate: stop.date,
-              dayOfTrip: daysBetween(tripStart, stop.date) + 1,
-              // always positive: nextStop.date > stop.date (sorted chronologically, unique dates)
-              gapToNext: nextStop ? daysBetween(stop.date, nextStop.date) : null,
-            }
-          })
-
-          candidates.push({
-            startDate: tripStart,
-            endDate: tripEnd,
-            totalDays,
-            stops: enrichedStops,
-            avgGapDays: avgGap,
-            difficulty,
-            score: bestScore,
-          })
-        }
-      }
-
-      if (candidates.length >= 50) break
-      windowStart = addDays(windowStart, 1)
+    const startingStadium = stadiums.find(s => s.abbreviation === startingAbbr)
+    if (!startingStadium) {
+      return NextResponse.json({ error: 'Starting stadium not found in stadiums list' }, { status: 400 })
     }
 
-    // Rank by travel score (lower = less driving)
+    // Other stadiums to visit after the starting stadium
+    const otherAbbrs = allAbbrs.filter(a => a !== startingAbbr)
+
+    // Iterate over each home game date of the starting stadium as a potential trip start
+    const startingGameDates = (homeGamesByTeam[startingAbbr] ?? [])
+      .filter(d => d >= startDate && d <= endDate)
+
+    const candidates: TripOption[] = []
+
+    for (const tripStart of startingGameDates) {
+      const windowEnd = addDays(tripStart, numDays - 1)
+
+      // Nearest-neighbor greedy: from starting stadium, always pick the geographically
+      // closest remaining stadium that has a home game after the current date and within the window.
+      let currentLat = startingStadium.lat
+      let currentLng = startingStadium.lng
+      let currentDate = tripStart
+      const remaining = [...otherAbbrs]
+      const route: RawStop[] = [{
+        stadiumId: startingStadium.id,
+        abbreviation: startingAbbr,
+        date: tripStart,
+      }]
+      let routeValid = true
+
+      while (remaining.length > 0) {
+        let bestIdx = -1
+        let bestDate = ''
+        let bestDist = Infinity
+
+        for (let i = 0; i < remaining.length; i++) {
+          const abbr = remaining[i]
+          const stadium = stadiums.find(s => s.abbreviation === abbr)
+          if (!stadium) continue
+
+          // Earliest home game for this team strictly after current date and within window
+          const nextGame = (homeGamesByTeam[abbr] ?? []).find(d => d > currentDate && d <= windowEnd)
+          if (!nextGame) continue
+
+          const dist = haversine(currentLat, currentLng, stadium.lat, stadium.lng)
+          if (dist < bestDist) {
+            bestDist = dist
+            bestIdx = i
+            bestDate = nextGame
+          }
+        }
+
+        if (bestIdx === -1) { routeValid = false; break }
+
+        const abbr = remaining.splice(bestIdx, 1)[0]
+        const stadium = stadiums.find(s => s.abbreviation === abbr)!
+        route.push({ stadiumId: stadium.id, abbreviation: abbr, date: bestDate })
+        currentLat = stadium.lat
+        currentLng = stadium.lng
+        currentDate = bestDate
+      }
+
+      if (!routeValid) continue
+
+      // Skip if same first-game date already captured (same starting conditions produce same route)
+      if (candidates.some(o => o.startDate === tripStart)) continue
+
+      const tripEnd = route[route.length - 1].date
+      const totalDays = daysBetween(tripStart, tripEnd) + 1
+
+      // Build enriched stops with per-leg driving distance and estimated time
+      const enrichedStops: EnrichedStop[] = route.map((stop, i) => {
+        const stadium = stadiums.find(s => s.abbreviation === stop.abbreviation)!
+        const prevStop = route[i - 1]
+        const prevStadium = prevStop ? stadiums.find(s => s.abbreviation === prevStop.abbreviation)! : null
+        const nextStop = route[i + 1] ?? null
+        // Straight-line miles between consecutive stadiums
+        const distFromPrev = prevStadium
+          ? Math.round(haversine(prevStadium.lat, prevStadium.lng, stadium.lat, stadium.lng))
+          : 0
+        // Rough drive time: road distance ≈ 1.4× straight-line at ~60 mph
+        const driveMinFromPrev = Math.round(distFromPrev * 1.4)
+
+        return {
+          stadiumId: stop.stadiumId,
+          stadiumName: stadium.name,
+          team: stadium.team,
+          abbreviation: stop.abbreviation,
+          gameDate: stop.date,
+          dayOfTrip: daysBetween(tripStart, stop.date) + 1,
+          gapToNext: nextStop ? daysBetween(stop.date, nextStop.date) : null,
+          distFromPrev,
+          driveMinFromPrev,
+        }
+      })
+
+      const totalDistanceMiles = enrichedStops.reduce((sum, s) => sum + s.distFromPrev, 0)
+
+      let totalGap = 0
+      for (let i = 1; i < route.length; i++) {
+        totalGap += daysBetween(route[i - 1].date, route[i].date)
+      }
+      const avgGap = route.length > 1 ? totalGap / (route.length - 1) : 0
+      const difficulty: TripOption['difficulty'] =
+        avgGap <= 1.5 ? 'Road Warrior' : avgGap <= 3 ? 'On the Move' : 'Leisure Tour'
+
+      candidates.push({
+        startDate: tripStart,
+        endDate: tripEnd,
+        totalDays,
+        stops: enrichedStops,
+        avgGapDays: avgGap,
+        difficulty,
+        score: totalDistanceMiles,
+        totalDistanceMiles,
+      })
+
+      if (candidates.length >= 50) break
+    }
+
+    // Sort by total driving distance (shortest first)
     candidates.sort((a, b) => a.score - b.score)
     return NextResponse.json({ options: candidates, total: candidates.length })
   } catch (e) {
