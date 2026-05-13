@@ -49,6 +49,8 @@ interface TripStop {
   abbreviation: string
   gameDate: string
   gameTime: string
+  opponentName: string
+  opponentTeamId: number
   dayOfTrip: number
   gapToNext: number | null
   distFromPrev: number
@@ -157,8 +159,11 @@ export default function OptimizerPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
+    const firstStop = option.stops[0]
+    const firstCity = stadiums.find(s => s.abbreviation === firstStop.abbreviation)?.city
+      ?? firstStop.team
     const tripPayload = {
-      name: `Road Trip — ${option.stops.map(s => s.abbreviation).join(', ')}`,
+      name: firstCity,
       start_date: option.startDate,
       end_date: option.endDate,
       status: 'planned' as const,
@@ -188,6 +193,9 @@ export default function OptimizerPage() {
         trip_id: trip.id,
         stadium_id: stop.stadiumId,
         game_date: stop.gameDate,
+        game_time: stop.gameTime || null,
+        opponent: stop.opponentName || null,
+        opponent_team_id: stop.opponentTeamId || null,
         sort_order: i,
         est_tickets: 0,
         est_food: 0,

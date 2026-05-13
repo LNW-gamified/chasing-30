@@ -36,8 +36,10 @@ interface StadiumInput {
 }
 
 interface GameEntry {
-  date: string      // YYYY-MM-DD
-  localTime: string // e.g. "7:10 PM ET"
+  date: string           // YYYY-MM-DD
+  localTime: string      // e.g. "7:10 PM ET"
+  opponentName: string   // away team full name, prefixed with "vs "
+  opponentTeamId: number // MLB team ID of the away team
 }
 
 interface RawStop {
@@ -45,6 +47,8 @@ interface RawStop {
   abbreviation: string
   date: string
   localTime: string
+  opponentName: string
+  opponentTeamId: number
 }
 
 interface EnrichedStop {
@@ -54,6 +58,8 @@ interface EnrichedStop {
   abbreviation: string
   gameDate: string
   gameTime: string
+  opponentName: string
+  opponentTeamId: number
   dayOfTrip: number
   gapToNext: number | null
   distFromPrev: number
@@ -149,7 +155,14 @@ async function fetchHomeGames(
 
       const tzInfo = ABBR_TO_TZ[abbr] ?? { tz: 'America/New_York', label: 'ET' }
       const localTime = toLocalTime(game.gameDate as string, tzInfo.tz, tzInfo.label)
-      homeDates[abbr].push({ date: dateStr, localTime })
+      const awayName: string = game.teams?.away?.team?.name ?? ''
+      const awayId: number = game.teams?.away?.team?.id ?? 0
+      homeDates[abbr].push({
+        date: dateStr,
+        localTime,
+        opponentName: awayName ? `vs ${awayName}` : '',
+        opponentTeamId: awayId,
+      })
     }
   }
 
@@ -216,6 +229,8 @@ export async function POST(req: NextRequest) {
         abbreviation: startingAbbr,
         date: tripStart,
         localTime: startEntry.localTime,
+        opponentName: startEntry.opponentName,
+        opponentTeamId: startEntry.opponentTeamId,
       }]
       let routeValid = true
 
@@ -246,7 +261,14 @@ export async function POST(req: NextRequest) {
 
         const abbr = remaining.splice(bestIdx, 1)[0]
         const stadium = stadiums.find(s => s.abbreviation === abbr)!
-        route.push({ stadiumId: stadium.id, abbreviation: abbr, date: bestEntry.date, localTime: bestEntry.localTime })
+        route.push({
+          stadiumId: stadium.id,
+          abbreviation: abbr,
+          date: bestEntry.date,
+          localTime: bestEntry.localTime,
+          opponentName: bestEntry.opponentName,
+          opponentTeamId: bestEntry.opponentTeamId,
+        })
         currentLat = stadium.lat
         currentLng = stadium.lng
         currentDate = bestEntry.date
@@ -276,6 +298,8 @@ export async function POST(req: NextRequest) {
           abbreviation: stop.abbreviation,
           gameDate: stop.date,
           gameTime: stop.localTime,
+          opponentName: stop.opponentName,
+          opponentTeamId: stop.opponentTeamId,
           dayOfTrip: daysBetween(tripStart, stop.date) + 1,
           gapToNext: nextStop ? daysBetween(stop.date, nextStop.date) : null,
           distFromPrev,
