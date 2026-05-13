@@ -74,7 +74,7 @@ interface TripOption {
 export default function OptimizerPage() {
   const [stadiums, setStadiums] = useState<Stadium[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [numDays, setNumDays] = useState(7)
+  const [numDays, setNumDays] = useState('7')
   const [startMonth, setStartMonth] = useState(3)   // April (0-indexed)
   const [endMonth, setEndMonth] = useState(8)        // September
   const [year, setYear] = useState(new Date().getFullYear())
@@ -126,7 +126,7 @@ export default function OptimizerPage() {
             lat: s.lat,
             lng: s.lng,
           })),
-          numDays,
+          numDays: Math.min(30, Math.max(2, parseInt(numDays) || 2)),
           startDate,
           endDate,
           homeLat: homeCity.lat,
@@ -303,7 +303,11 @@ export default function OptimizerPage() {
               min={2}
               max={30}
               value={numDays}
-              onChange={e => setNumDays(Math.max(2, Math.min(30, Number(e.target.value))))}
+              onChange={e => setNumDays(e.target.value)}
+              onBlur={e => {
+                const n = Math.min(30, Math.max(2, parseInt(e.target.value) || 2))
+                setNumDays(String(n))
+              }}
             />
           </div>
           <div>
