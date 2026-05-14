@@ -4,6 +4,18 @@ import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import type { Stadium, StadiumVisit, InningScore } from '@/types'
 import { X, Plus, Minus, ImagePlus, Trash2, CloudSun, Loader2 } from 'lucide-react'
+import { GAME_MOMENTS } from '@/lib/moments'
+
+const TEAM_ACCENT: Record<string, string> = {
+  NYY: '#003087', BOS: '#BD3039', LAD: '#005A9C', CHC: '#0E3386',
+  CWS: '#888D8D', STL: '#C41E3A', ATL: '#CE1141', NYM: '#002D72',
+  PHI: '#E81828', WSH: '#AB0003', MIA: '#00A3E0', PIT: '#FDB827',
+  CIN: '#C6011F', MIL: '#FFC52F', HOU: '#EB6E1F', TEX: '#003278',
+  LAA: '#BA0021', OAK: '#003831', SEA: '#0C2C56', SD:  '#2F241D',
+  COL: '#33006F', ARI: '#A71930', SF:  '#FD5A1E', MIN: '#002B5C',
+  CLE: '#E31937', DET: '#0C2340', KC:  '#004687', BAL: '#DF4601',
+  TB:  '#092C5C', TOR: '#134A8E',
+}
 
 interface ExtraSeat { section: string; row: string; number: string }
 
@@ -11,7 +23,7 @@ interface Props {
   stadium: Stadium
   visit?: StadiumVisit
   onClose: () => void
-  onSaved: () => void
+  onSaved: (savedMoments: string[]) => void
 }
 
 function emptyInnings(n = 9): InningScore[] {
@@ -80,6 +92,9 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
   const [weatherNote, setWeatherNote] = useState<string | null>(null)
   const [additionalSeats, setAdditionalSeats] = useState<ExtraSeat[]>(
     () => (visit?.additional_seats as ExtraSeat[] | null) ?? []
+  )
+  const [selectedMoments, setSelectedMoments] = useState<string[]>(
+    () => (visit?.moments as string[] | null) ?? []
   )
 
   async function fetchWeather(date: string, force = false) {
@@ -243,6 +258,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
       notes: form.notes || null,
       photo_url: uploadedPhotoUrl,
       additional_seats: additionalSeats.filter((s) => s.section || s.row || s.number),
+      moments: selectedMoments,
       created_by: user?.id ?? null,
     }
 
@@ -260,7 +276,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
     if (err) {
       setError(err.message)
     } else {
-      onSaved()
+      onSaved(selectedMoments)
     }
   }
 
@@ -751,6 +767,40 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                 />
               </label>
             )}
+          </div>
+
+          {sectionHead('Game Day Moments')}
+          <div style={{ marginBottom: 4 }}>
+            <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 10 }}>
+              Tap to mark moments from this game.
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+              {GAME_MOMENTS.map(({ id, icon, label }) => {
+                const selected = selectedMoments.includes(id)
+                const accent   = TEAM_ACCENT[stadium.abbreviation] ?? '#1F6FEB'
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() =>
+                      setSelectedMoments(prev =>
+                        prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
+                      )
+                    }
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      padding: '6px 11px', borderRadius: 999, fontSize: 12, fontWeight: 600,
+                      cursor: 'pointer', transition: 'all 0.12s',
+                      backgroundColor: selected ? `${accent}22` : 'transparent',
+                      color: selected ? accent : '#8B949E',
+                      border: `1.5px solid ${selected ? accent : '#30363D'}`,
+                    }}
+                  >
+                    <span style={{ fontSize: 14 }}>{icon}</span> {label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           {sectionHead('Story & Notes')}

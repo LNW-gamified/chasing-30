@@ -360,3 +360,36 @@ ALTER TABLE stadium_visits ADD COLUMN IF NOT EXISTS stats_auto_populated BOOLEAN
 ALTER TABLE trip_stops ADD COLUMN IF NOT EXISTS game_time TEXT;
 ALTER TABLE trip_stops ADD COLUMN IF NOT EXISTS opponent TEXT;
 ALTER TABLE trip_stops ADD COLUMN IF NOT EXISTS opponent_team_id INTEGER;
+
+-- ============================================================
+-- Feature 10: Game Day Moments (manual moment tracking)
+-- Run this block in the Supabase SQL Editor
+-- ============================================================
+
+ALTER TABLE stadium_visits ADD COLUMN IF NOT EXISTS moments TEXT[] DEFAULT '{}';
+
+-- ============================================================
+-- Feature 11: Pre-Game Checklist per Trip Stop
+-- Run this block in the Supabase SQL Editor
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS stop_checklist (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stop_id    UUID REFERENCES trip_stops(id) ON DELETE CASCADE NOT NULL,
+  category   TEXT NOT NULL CHECK (category IN ('food_drinks', 'souvenirs', 'moments', 'must_do')),
+  item       TEXT NOT NULL,
+  checked    BOOLEAN DEFAULT FALSE,
+  suggested  BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE stop_checklist ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated users can read stop_checklist"
+  ON stop_checklist FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Authenticated users can insert stop_checklist"
+  ON stop_checklist FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Authenticated users can update stop_checklist"
+  ON stop_checklist FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "Authenticated users can delete stop_checklist"
+  ON stop_checklist FOR DELETE TO authenticated USING (true);

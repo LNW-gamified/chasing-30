@@ -8,6 +8,7 @@ import { formatDate } from '@/lib/utils'
 import type { Stadium, StadiumVisit, StadiumNote } from '@/types'
 import { fetchUpcomingHomeGames, type UpcomingGame } from '@/lib/mlb-api'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
+import { GAME_MOMENTS } from '@/lib/moments'
 import Link from 'next/link'
 import {
   ArrowLeft, Plus, Pencil, Trash2, Save,
@@ -74,6 +75,8 @@ export default function StadiumDetailPage() {
   const [stadiumPhoto, setStadiumPhoto] = useState<string | null>(null)
   const [allVisitedIds, setAllVisitedIds] = useState<Set<string>>(new Set())
   const [allStadiums, setAllStadiums] = useState<MiniStadium[]>([])
+  const [allGlobalMoments, setAllGlobalMoments] = useState<Set<string>>(new Set())
+  const [firstTimeMoments, setFirstTimeMoments] = useState<string[]>([])
 
   async function load() {
     const supabase = createClient()
@@ -81,7 +84,7 @@ export default function StadiumDetailPage() {
       supabase.from('stadiums').select('*').eq('id', id).single(),
       supabase.from('stadium_visits').select('*').eq('stadium_id', id).order('visit_date', { ascending: false }),
       supabase.from('stadium_notes').select('notes').eq('stadium_id', id).maybeSingle(),
-      supabase.from('stadium_visits').select('stadium_id'),
+      supabase.from('stadium_visits').select('stadium_id, moments'),
       supabase.from('stadiums').select('id, league, division'),
     ])
     setStadium(s)
@@ -89,7 +92,9 @@ export default function StadiumDetailPage() {
     const note = (n as StadiumNote | null)?.notes ?? ''
     setStadiumNote(note)
     setNoteInput(note)
-    setAllVisitedIds(new Set((av ?? []).map((r: { stadium_id: string }) => r.stadium_id)))
+    const avRows = (av ?? []) as { stadium_id: string; moments: string[] | null }[]
+    setAllVisitedIds(new Set(avRows.map(r => r.stadium_id)))
+    setAllGlobalMoments(new Set(avRows.flatMap(r => r.moments ?? [])))
     setAllStadiums((as_ ?? []) as MiniStadium[])
     setLoading(false)
   }
@@ -666,6 +671,40 @@ export default function StadiumDetailPage() {
                             )}
                           </div>
 
+                          {/* Game Day Moments */}
+                          {visit.moments && visit.moments.length > 0 && (
+                            <div style={{ marginBottom: 16 }}>
+                              <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+                                Game Day Moments
+                              </div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                {visit.moments.map(momentId => {
+                                  const m = GAME_MOMENTS.find(gm => gm.id === momentId)
+                                  if (!m) return null
+                                  const isFirst = firstTimeMoments.includes(momentId)
+                                  return (
+                                    <span
+                                      key={momentId}
+                                      className={isFirst ? 'achievement-earned' : ''}
+                                      style={{
+                                        display: 'inline-flex', alignItems: 'center', gap: 5,
+                                        padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600,
+                                        backgroundColor: 'rgba(31,111,235,0.1)',
+                                        color: '#58A6FF',
+                                        border: '1px solid rgba(31,111,235,0.2)',
+                                        ...(isFirst ? { boxShadow: '0 0 12px rgba(245,166,35,0.4)', borderColor: 'rgba(245,166,35,0.5)', color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.1)' } : {}),
+                                      }}
+                                    >
+                                      <span style={{ fontSize: 14 }}>{m.icon}</span>
+                                      {m.label}
+                                      {isFirst && <span style={{ fontSize: 10, marginLeft: 2, fontWeight: 800 }}>★ First!</span>}
+                                    </span>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+
                           {/* Starting pitchers */}
                           {(visit.home_starter_name || visit.away_starter_name) && (
                             <div style={{ marginBottom: 16 }}>
@@ -967,7 +1006,25 @@ export default function StadiumDetailPage() {
           stadium={stadium}
           visit={editingVisit}
           onClose={() => { setShowForm(false); setEditingVisit(undefined) }}
-          onSaved={() => { setShowForm(false); setEditingVisit(undefined); load() }}
+          onSaved={(savedMoments) => {
+            // Detect first-evers using pre-save state (before reload overwrites it)
+            const otherMoments = new Set(
+              visits
+                .filter(v => v.id !== editingVisit?.id)
+                .flatMap(v => v.moments ?? [])
+            )
+            // A moment is a "first" if it's not in any other visit globally
+            const firsts = savedMoments.filter(
+              m => !allGlobalMoments.has(m) || !otherMoments.has(m)
+            )
+            if (firsts.length > 0) {
+              setFirstTimeMoments(firsts)
+              setTimeout(() => setFirstTimeMoments([]), 7000)
+            }
+            setShowForm(false)
+            setEditingVisit(undefined)
+            load()
+          }}
         />
       )}
     </div>

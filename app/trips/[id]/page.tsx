@@ -8,9 +8,10 @@ import TripForm from '@/components/TripForm'
 import TeamLogo from '@/components/TeamLogo'
 import { getTeamLogoUrlById, getTeamAbbrById } from '@/lib/team-logos'
 import { formatDate, formatCurrency } from '@/lib/utils'
-import type { Stadium, Trip, TripStop } from '@/types'
+import type { Stadium, Trip, TripStop, StopChecklistItem } from '@/types'
 import Link from 'next/link'
 import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar } from 'lucide-react'
+import StopChecklist from '@/components/StopChecklist'
 
 type TripWithStadium = Trip & { stadium: Stadium | null }
 
@@ -30,14 +31,15 @@ export default function TripDetailPage() {
   const router = useRouter()
   const id = params.id as string
 
-  const [trip,        setTrip]        = useState<TripWithStadium | null>(null)
-  const [stops,       setStops]       = useState<TripStop[]>([])
-  const [stadiums,    setStadiums]    = useState<Stadium[]>([])
-  const [loading,     setLoading]     = useState(true)
-  const [showEdit,    setShowEdit]    = useState(false)
-  const [showComplete,setShowComplete]= useState(false)
-  const [completeDate,setCompleteDate]= useState('')
-  const [completing,  setCompleting]  = useState(false)
+  const [trip,          setTrip]          = useState<TripWithStadium | null>(null)
+  const [stops,         setStops]         = useState<TripStop[]>([])
+  const [stadiums,      setStadiums]      = useState<Stadium[]>([])
+  const [loading,       setLoading]       = useState(true)
+  const [showEdit,      setShowEdit]      = useState(false)
+  const [showComplete,  setShowComplete]  = useState(false)
+  const [completeDate,  setCompleteDate]  = useState('')
+  const [completing,    setCompleting]    = useState(false)
+  const [checklistItems,setChecklistItems]= useState<StopChecklistItem[]>([])
 
   async function load() {
     const supabase = createClient()
@@ -48,8 +50,25 @@ export default function TripDetailPage() {
     ])
     setTrip(t as TripWithStadium)
     setStadiums(s ?? [])
-    setStops((st as TripStop[]) ?? [])
+    const loadedStops = (st as TripStop[]) ?? []
+    setStops(loadedStops)
+    if (loadedStops.length > 0) {
+      const stopIds = loadedStops.map(s => s.id)
+      const { data: cl } = await supabase
+        .from('stop_checklist').select('*')
+        .in('stop_id', stopIds).order('created_at')
+      setChecklistItems((cl as StopChecklistItem[]) ?? [])
+    }
     setLoading(false)
+  }
+
+  async function reloadChecklist() {
+    if (stops.length === 0) return
+    const supabase = createClient()
+    const { data: cl } = await supabase
+      .from('stop_checklist').select('*')
+      .in('stop_id', stops.map(s => s.id)).order('created_at')
+    setChecklistItems((cl as StopChecklistItem[]) ?? [])
   }
 
   useEffect(() => { load() }, [id])
@@ -548,6 +567,13 @@ export default function TripDetailPage() {
                       </button>
                     </div>
                   )}
+
+                  {/* ── Don't Forget checklist ─────────────────────── */}
+                  <StopChecklist
+                    stopId={stop.id}
+                    items={checklistItems.filter(c => c.stop_id === stop.id)}
+                    onReload={reloadChecklist}
+                  />
                 </div>
               )
             })}

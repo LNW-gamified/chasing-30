@@ -19,7 +19,8 @@
       "Bash(sed -n '90,100p' \"C:\\\\Users\\\\later\\\\chasing-30\\\\app\\\\map\\\\page.tsx\")",
       "Bash(sed -n '170,180p' \"C:\\\\Users\\\\later\\\\chasing-30\\\\app\\\\trips\\\\page.tsx\")",
       "Bash(sed -n '209,220p' \"C:\\\\Users\\\\later\\\\chasing-30\\\\app\\\\stadiums\\\\[id]\\\\page.tsx\")",
-      "Bash(notepad *)"
+      "Bash(notepad *)",
+      "Bash(not exist *)"
     ]
   }
 }

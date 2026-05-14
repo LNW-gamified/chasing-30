@@ -72,6 +72,7 @@ export interface StadiumVisit {
   additional_seats: { section: string; row: string; number: string }[] | null
   mlb_game_pk: number | null
   stats_auto_populated: boolean
+  moments: string[] | null
   created_by: string | null
   created_at: string
   stadium?: Stadium
@@ -195,4 +196,14 @@ export interface SerializableMilestone {
 export interface StadiumWithVisit extends Stadium {
   visited: boolean
   visits: StadiumVisit[]
+}
+
+export interface StopChecklistItem {
+  id: string
+  stop_id: string
+  category: 'food_drinks' | 'souvenirs' | 'moments' | 'must_do'
+  item: string
+  checked: boolean
+  suggested: boolean
+  created_at: string
 }
