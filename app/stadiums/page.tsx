@@ -88,18 +88,31 @@ function StadiumCard({
     <Link href={`/stadiums/${stadium.id}`} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
       <div style={{
         backgroundColor: '#161B22',
-        border: '1px solid #30363D',
+        border: visited ? '1px solid rgba(63,185,80,0.45)' : '1px solid #30363D',
         borderRadius: 12,
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        opacity: visited ? 1 : 0.7,
+        position: 'relative',
+        opacity: visited ? 1 : 0.68,
+        boxShadow: visited ? '0 0 14px rgba(63,185,80,0.12)' : 'none',
         transition: 'opacity 0.15s, border-color 0.15s',
         cursor: 'pointer',
       }}
         className="stadium-card"
       >
+        {/* Visited checkmark badge */}
+        {visited && (
+          <div style={{
+            position: 'absolute', top: 8, right: 8, zIndex: 2,
+            width: 18, height: 18, borderRadius: '50%',
+            backgroundColor: '#3FB950', border: '2px solid #161B22',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 9, color: '#0B1117', fontWeight: 900, lineHeight: 1,
+          }}>✓</div>
+        )}
+
         {/* Team color accent bar */}
         <div style={{ height: 4, backgroundColor: accent, flexShrink: 0 }} />
 
@@ -119,7 +132,8 @@ function StadiumCard({
           <div style={{
             fontSize: 13, fontWeight: 700, color: '#E6EDF3',
             lineHeight: 1.2, marginBottom: 3,
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            display: '-webkit-box', WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical', overflow: 'hidden',
             width: '100%',
           }}>
             {stadium.team}

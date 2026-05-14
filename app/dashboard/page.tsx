@@ -143,9 +143,8 @@ function HeroRing({ visited, total }: { visited: number; total: number }) {
   )
 }
 
-function ProgressRing({ visited, total }: { visited: number; total: number }) {
-  const size = 130
-  const sw   = 10
+function ProgressRing({ visited, total, size = 130 }: { visited: number; total: number; size?: number }) {
+  const sw = 10
   const r    = (size - sw * 2) / 2
   const circ = 2 * Math.PI * r
   const pct  = total > 0 ? visited / total : 0
@@ -312,7 +311,13 @@ export default async function DashboardPage() {
         <div style={{ fontSize: 20, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.15 }}>
           ⚾ Chasing 30
         </div>
-        <div style={{ fontSize: 13, color: '#8B949E', marginTop: 1 }}>
+        <div style={{
+          marginTop: 5,
+          display: 'inline-flex', alignItems: 'center',
+          background: 'rgba(245,166,35,0.12)', border: '1px solid rgba(245,166,35,0.25)',
+          borderRadius: 999, padding: '2px 10px',
+          fontSize: 12, fontWeight: 600, color: '#F5A623',
+        }}>
           {rank} · {points} pts
         </div>
       </div>
@@ -401,25 +406,30 @@ export default async function DashboardPage() {
           <div style={{ maxWidth: 800, width: '100%', margin: '0 auto', padding: '1.25rem 1rem', overflowX: 'hidden', boxSizing: 'border-box' }}>
 
             {/* ── Hero Progress Card ───────────────────────────────────────── */}
-            <div style={{ ...card, padding: '1.25rem 1.5rem', marginBottom: '1rem' }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
-                YOUR MISSION
+            <div style={{ ...card, padding: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 18 }}>
+                My Progress
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2, marginBottom: 6 }}>
-                    Chasing 30 · {visitedCount} of 30 stadiums
-                  </div>
-                  <div style={{ fontSize: 14, color: '#8B949E' }}>
-                    {visitedCount === 30
-                      ? 'Legend status achieved!'
-                      : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} remaining`}
-                  </div>
-                </div>
-                <HeroRing visited={visitedCount} total={30} />
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
+                <ProgressRing visited={visitedCount} total={30} size={150} />
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2, marginBottom: 6 }}>
+                {visitedCount} of 30 stadiums
+              </div>
+              <div style={{ fontSize: 14, color: '#8B949E', marginBottom: 14 }}>
+                {visitedCount === 30
+                  ? 'Legend status achieved!'
+                  : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} remaining`}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 20 }}>
+                <span style={{ color: '#3FB950', fontSize: 14, fontWeight: 600 }}>{pct}% complete</span>
+                <span style={{ color: '#30363D' }}>·</span>
+                <Link href="/milestones" style={{ color: '#1F6FEB', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+                  {earnedMilestones.length} milestone{earnedMilestones.length !== 1 ? 's' : ''} earned →
+                </Link>
               </div>
               <Link href="/trips" style={{
-                display: 'block', textAlign: 'center', marginTop: '1rem',
+                display: 'block', textAlign: 'center',
                 background: '#1F6FEB', color: '#fff',
                 padding: '11px 0', borderRadius: 999,
                 fontWeight: 600, fontSize: '0.9rem', textDecoration: 'none',
@@ -465,46 +475,26 @@ export default async function DashboardPage() {
               </Link>
             </div>
 
-            {/* ── My Stadiums + Division Progress ──────────────────────────── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
-
-              {/* My Stadiums */}
-              <div style={{ ...card, padding: '1.25rem' }}>
-                <div style={{ fontWeight: 600, color: '#E6EDF3', fontSize: 16, marginBottom: '1.25rem' }}>
-                  My Stadiums
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                  <ProgressRing visited={visitedCount} total={30} />
-                  <div style={{ color: '#3FB950', fontSize: 14, fontWeight: 600 }}>
-                    {pct}% complete
-                  </div>
-                  <Link href="/milestones" style={{ color: '#1F6FEB', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
-                    {earnedMilestones.length} milestone{earnedMilestones.length !== 1 ? 's' : ''} earned →
-                  </Link>
-                </div>
+            {/* ── Division Progress ─────────────────────────────────────────── */}
+            <div style={{ ...card, padding: '1.25rem', marginBottom: '1rem' }}>
+              <div style={{ fontWeight: 600, color: '#E6EDF3', fontSize: 16, marginBottom: '0.875rem' }}>
+                Division Progress
               </div>
-
-              {/* Division Progress */}
-              <div style={{ ...card, padding: '1.25rem' }}>
-                <div style={{ fontWeight: 600, color: '#E6EDF3', fontSize: 16, marginBottom: '0.875rem' }}>
-                  Division Progress
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {divProgress.map(({ label, vis, total }) => (
-                    <div key={label}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span style={{ fontSize: 15, color: '#E6EDF3' }}>{label}</span>
-                        <span style={{ fontSize: 14, color: '#8B949E' }}>{vis}/{total}</span>
-                      </div>
-                      <div style={{ height: 8, background: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
-                        <div style={{
-                          width: `${(vis / total) * 100}%`, height: '100%',
-                          background: '#1F6FEB', borderRadius: 4,
-                        }} />
-                      </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                {divProgress.map(({ label, vis, total }) => (
+                  <div key={label}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: 14, color: '#E6EDF3' }}>{label}</span>
+                      <span style={{ fontSize: 13, color: '#8B949E' }}>{vis}/{total}</span>
                     </div>
-                  ))}
-                </div>
+                    <div style={{ height: 7, background: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{
+                        width: `${(vis / total) * 100}%`, height: '100%',
+                        background: '#1F6FEB', borderRadius: 4,
+                      }} />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 

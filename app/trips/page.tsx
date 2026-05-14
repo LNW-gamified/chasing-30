@@ -350,45 +350,51 @@ export default function TripsPage() {
                             position: 'relative', height: 140,
                             background: heroGradient(trip.status, abbrs), overflow: 'hidden',
                           }}>
+                            {/* Dark gradient overlay — keeps text readable over any team color */}
+                            <div style={{
+                              position: 'absolute', inset: 0, pointerEvents: 'none',
+                              background: 'linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.52) 100%)',
+                            }} />
                             {/* Logo tiles */}
                             <div style={{
-                              position: 'absolute', right: 16, top: '50%',
+                              position: 'absolute', right: 14, top: '50%',
                               transform: 'translateY(-50%)', display: 'flex', gap: 8,
                             }}>
                               {abbrs.slice(0, 2).map(abbr => (
                                 <div key={abbr} style={{
-                                  width: 54, height: 54, borderRadius: 10,
-                                  backgroundColor: 'rgba(0,0,0,0.2)',
-                                  backdropFilter: 'blur(4px)',
-                                  border: '1px solid rgba(230,237,243,0.15)',
+                                  width: 52, height: 52, borderRadius: 10,
+                                  backgroundColor: 'rgba(255,255,255,0.15)',
+                                  backdropFilter: 'blur(6px)',
+                                  border: '1px solid rgba(255,255,255,0.2)',
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 }}>
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img src={getTeamLogoUrl(abbr)} alt={abbr} width={38} height={38}
-                                    style={{ objectFit: 'contain' }} />
+                                    style={{ objectFit: 'contain', display: 'block' }} />
                                 </div>
                               ))}
                             </div>
-                            {/* Trip name */}
+                            {/* Trip name + date stacked */}
                             <div style={{
-                              position: 'absolute', bottom: 12, left: 16,
-                              right: abbrs.length > 0 ? 120 : 16,
+                              position: 'absolute', bottom: 13, left: 16,
+                              right: abbrs.length > 0 ? 128 : 16,
                             }}>
                               <div style={{
-                                fontSize: 15, fontWeight: 700, color: '#ffffff', lineHeight: 1.3,
-                                textShadow: '0 1px 4px rgba(0,0,0,0.3)',
+                                fontSize: 19, fontWeight: 800, color: '#ffffff', lineHeight: 1.2,
+                                textShadow: '0 1px 6px rgba(0,0,0,0.5)',
                               }}>
                                 {trip.name}
                               </div>
-                            </div>
-                            {/* Date */}
-                            {dateRange && (
-                              <div style={{ position: 'absolute', bottom: 14, right: 14, textAlign: 'right' }}>
-                                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
+                              {dateRange && (
+                                <div style={{
+                                  fontSize: 12, color: 'rgba(255,255,255,0.82)',
+                                  fontWeight: 500, marginTop: 4,
+                                  textShadow: '0 1px 4px rgba(0,0,0,0.4)',
+                                }}>
                                   {dateRange}
                                 </div>
-                              </div>
-                            )}
+                              )}
+                            </div>
                           </div>
 
                           {/* Card body */}
@@ -398,18 +404,18 @@ export default function TripsPage() {
                               <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
                                 {abbrs.map((abbr, i) => (
                                   <div key={abbr} style={{
-                                    width: 32, height: 32, borderRadius: '50%',
+                                    width: 36, height: 36, borderRadius: '50%',
                                     border: '2px solid #161B22',
-                                    backgroundColor: '#1C2430',
+                                    backgroundColor: '#0B1117',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     overflow: 'hidden',
-                                    marginLeft: i === 0 ? 0 : -9,
+                                    marginLeft: i === 0 ? 0 : -10,
                                     zIndex: abbrs.length - i,
                                     position: 'relative',
                                   }}>
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={getTeamLogoUrl(abbr)} alt={abbr} width={22} height={22}
-                                      style={{ objectFit: 'contain' }} />
+                                    <img src={getTeamLogoUrl(abbr)} alt={abbr} width={26} height={26}
+                                      style={{ objectFit: 'contain', display: 'block' }} />
                                   </div>
                                 ))}
                                 <span style={{ marginLeft: 10, fontSize: 13, color: '#8B949E' }}>

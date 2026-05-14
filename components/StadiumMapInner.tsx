@@ -12,6 +12,17 @@ import { X, Navigation, ChevronLeft, Info } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
+const TEAM_PRIMARY: Record<string, string> = {
+  ARI: '#A71930', ATL: '#CE1141', BAL: '#DF4601', BOS: '#BD3039',
+  CHC: '#0E3386', CWS: '#888D8D', CIN: '#C6011F', CLE: '#E31937',
+  COL: '#33006F', DET: '#0C2C56', HOU: '#EB6E1F', KC:  '#004687',
+  LAA: '#BA0021', LAD: '#005A9C', MIA: '#00A3E0', MIL: '#12284B',
+  MIN: '#D31145', NYM: '#003087', NYY: '#003087', OAK: '#003831',
+  PHI: '#E81828', PIT: '#27251F', SD:  '#2F241D', SF:  '#FD5A1E',
+  SEA: '#005C5C', STL: '#C41E3A', TB:  '#092C5C', TEX: '#003278',
+  TOR: '#134A8E', WSH: '#AB0003',
+}
+
 type Filter = 'all' | 'visited' | 'not-yet' | 'bucket-list'
 
 const FILTERS: { id: Filter; label: string }[] = [
@@ -32,9 +43,8 @@ function MapInitializer({ mapRef }: { mapRef: React.MutableRefObject<L.Map | nul
 // ── Stadium pin icon factory ────────────────────────────────────────────────
 
 function makeStadiumIcon(logoUrl: string, visited: boolean, abbr: string): L.DivIcon {
-  if (abbr === 'SEA') console.log('[StadiumMap] marker logo URL:', logoUrl)
-
-  const ring  = visited ? '#3FB950' : '#484F58'
+  const teamColor = TEAM_PRIMARY[abbr] ?? '#1C2430'
+  const ring  = visited ? '#3FB950' : 'rgba(255,255,255,0.25)'
   const badge = visited
     ? `<div style="position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:#3FB950;border:2px solid #0B1117;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:900;line-height:1;">✓</div>`
     : ''
@@ -48,8 +58,8 @@ function makeStadiumIcon(logoUrl: string, visited: boolean, abbr: string): L.Div
         <div style="
           width:40px;height:40px;border-radius:50%;
           border:2.5px solid ${ring};
-          box-shadow:0 2px 8px rgba(0,0,0,0.5);
-          background-color:#1C2430;
+          box-shadow:0 2px 10px rgba(0,0,0,0.6);
+          background-color:${teamColor};
           background-image:url('${logoUrl}');
           background-size:72%;
           background-position:center;
@@ -108,7 +118,7 @@ export default function StadiumMapInner({ stadiums }: Props) {
       {/* ── Leaflet map ──────────────────────────────────────────────── */}
       <MapContainer
         center={[39.5, -98.35]}
-        zoom={4}
+        zoom={5}
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
       >
@@ -277,8 +287,8 @@ export default function StadiumMapInner({ stadiums }: Props) {
             {/* Stadium photo / team logo thumbnail */}
             <div style={{
               width: 80, height: 80, borderRadius: 12, flexShrink: 0,
-              backgroundColor: '#1C2430',
-              border: '1px solid #30363D',
+              backgroundColor: TEAM_PRIMARY[selected.abbreviation] ?? '#1C2430',
+              border: '1px solid rgba(255,255,255,0.1)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               overflow: 'hidden',
             }}>

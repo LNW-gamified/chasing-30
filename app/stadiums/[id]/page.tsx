@@ -660,12 +660,17 @@ export default function StadiumDetailPage() {
                               <div>
                                 <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Seats</div>
                                 <div style={{ fontSize: 14, color: '#E6EDF3', marginTop: 2 }}>
-                                  {[
-                                    visit.seat_section || visit.seat_row || visit.seat_number
-                                      ? `Sec ${visit.seat_section}, Row ${visit.seat_row}, Seat ${visit.seat_number}`
-                                      : null,
-                                    ...(visit.additional_seats ?? []).map(s => `Sec ${s.section}, Row ${s.row}, Seat ${s.number}`),
-                                  ].filter(Boolean).join(' · ')}
+                                  {(() => {
+                                    const parts: string[] = []
+                                    if (visit.seat_section) parts.push(`Section ${visit.seat_section}`)
+                                    if (visit.seat_row) parts.push(`Row ${visit.seat_row}`)
+                                    const nums = [
+                                      visit.seat_number,
+                                      ...(visit.additional_seats ?? []).map(s => s.number),
+                                    ].filter(Boolean)
+                                    if (nums.length > 0) parts.push(`${nums.length > 1 ? 'Seats' : 'Seat'} ${nums.join(', ')}`)
+                                    return parts.join(' · ')
+                                  })()}
                                 </div>
                               </div>
                             )}
