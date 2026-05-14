@@ -346,3 +346,17 @@ CREATE POLICY "Authenticated users can update trip_stops"
   ON trip_stops FOR UPDATE TO authenticated USING (true);
 CREATE POLICY "Authenticated users can delete trip_stops"
   ON trip_stops FOR DELETE TO authenticated USING (true);
+
+-- ============================================================
+-- Game-day enhancements: additional seats, MLB auto-stats
+-- Run this block in the Supabase SQL Editor
+-- ============================================================
+
+ALTER TABLE stadium_visits ADD COLUMN IF NOT EXISTS additional_seats JSONB DEFAULT '[]';
+ALTER TABLE stadium_visits ADD COLUMN IF NOT EXISTS mlb_game_pk INTEGER;
+ALTER TABLE stadium_visits ADD COLUMN IF NOT EXISTS stats_auto_populated BOOLEAN DEFAULT FALSE;
+
+-- Trip stop: optimizer-written game details
+ALTER TABLE trip_stops ADD COLUMN IF NOT EXISTS game_time TEXT;
+ALTER TABLE trip_stops ADD COLUMN IF NOT EXISTS opponent TEXT;
+ALTER TABLE trip_stops ADD COLUMN IF NOT EXISTS opponent_team_id INTEGER;

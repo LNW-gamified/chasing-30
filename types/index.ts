@@ -70,6 +70,8 @@ export interface StadiumVisit {
   photo_url: string | null
   notes: string | null
   additional_seats: { section: string; row: string; number: string }[] | null
+  mlb_game_pk: number | null
+  stats_auto_populated: boolean
   created_by: string | null
   created_at: string
   stadium?: Stadium

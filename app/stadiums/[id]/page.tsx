@@ -12,7 +12,7 @@ import Link from 'next/link'
 import {
   ArrowLeft, Plus, Pencil, Trash2, Save,
   Home, MapPin, Map, Trophy, Plane,
-  ChevronRight, ChevronDown,
+  ChevronRight, ChevronDown, RefreshCw,
 } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 
@@ -98,6 +98,8 @@ export default function StadiumDetailPage() {
   const [savingNote, setSavingNote] = useState(false)
   const [upcomingGames, setUpcomingGames] = useState<UpcomingGame[]>([])
   const [retiredNumbers, setRetiredNumbers] = useState<RetiredNumber[]>([])
+  const [fetchingStats, setFetchingStats] = useState<string | null>(null)
+  const [statsError, setStatsError] = useState<Record<string, string>>({})
   const [stadiumPhoto, setStadiumPhoto] = useState<string | null>(null)
   const [allVisitedIds, setAllVisitedIds] = useState<Set<string>>(new Set())
   const [allStadiums, setAllStadiums] = useState<MiniStadium[]>([])
@@ -135,6 +137,29 @@ export default function StadiumDetailPage() {
     fetchUpcomingHomeGames(stadium.abbreviation).then(setUpcomingGames)
     fetchStadiumPhoto(stadium.abbreviation).then(setStadiumPhoto)
   }, [stadium])
+
+  useEffect(() => {
+    if (!expandedVisit || !stadium) return
+    const visit = visits.find(v => v.id === expandedVisit)
+    if (!visit || visit.stats_auto_populated) return
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+    if (visit.visit_date >= today) return
+
+    setFetchingStats(expandedVisit)
+    fetch('/api/autofill-game', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visitId: visit.id, visitDate: visit.visit_date, stadiumAbbr: stadium.abbreviation }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) setStatsError(prev => ({ ...prev, [expandedVisit]: data.error }))
+        else load()
+      })
+      .catch(() => setStatsError(prev => ({ ...prev, [expandedVisit]: 'Could not reach MLB API' })))
+      .finally(() => setFetchingStats(null))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expandedVisit])
 
   async function saveNote() {
     setSavingNote(true)
@@ -397,72 +422,56 @@ export default function StadiumDetailPage() {
             {/* ── ACTION BUTTONS ─────────────────────────────────── */}
             <div style={{ marginBottom: 32 }}>
               {visited ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    color: '#3FB950', fontWeight: 700, fontSize: 16,
-                  }}>
-                    ✓ You&apos;ve been here! ({visits.length} game{visits.length !== 1 ? 's' : ''})
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#3FB950', fontWeight: 700, fontSize: 15 }}>
+                    ✓ You&apos;ve been here!
+                    <span style={{ color: '#8B949E', fontWeight: 500, fontSize: 13 }}>
+                      {visits.length} game{visits.length !== 1 ? 's' : ''}
+                    </span>
                   </div>
-                  <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={openAdd}
+                    style={{
+                      width: '100%', padding: '13px', borderRadius: 12, fontSize: 15, fontWeight: 700,
+                      backgroundColor: '#1F6FEB', color: '#ffffff', border: 'none', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                    }}
+                  >
+                    <Plus size={16} /> Add Memory
+                  </button>
+                  <div style={{ display: 'flex', gap: 8 }}>
                     <button
                       onClick={shareStadium}
                       style={{
-                        padding: '8px 16px', borderRadius: 20, fontSize: 14, fontWeight: 600,
+                        flex: 1, padding: '10px', borderRadius: 10, fontSize: 13, fontWeight: 600,
                         border: '1.5px solid #30363D', background: '#1C2430', cursor: 'pointer', color: '#8B949E',
                       }}
                     >
                       Share
                     </button>
                     <button
-                      onClick={openAdd}
-                      style={{
-                        padding: '8px 16px', borderRadius: 20, fontSize: 14, fontWeight: 600,
-                        border: '1.5px solid #30363D', background: '#1C2430', cursor: 'pointer', color: '#8B949E',
-                        display: 'flex', alignItems: 'center', gap: 5,
-                      }}
-                    >
-                      <Plus size={14} /> Add Memory
-                    </button>
-                    <button
                       onClick={undoLastVisit}
                       style={{
-                        padding: '8px 16px', borderRadius: 20, fontSize: 14, fontWeight: 600,
-                        border: '1.5px solid rgba(248,81,73,0.3)', background: 'rgba(248,81,73,0.08)', cursor: 'pointer', color: '#F85149',
+                        flex: 1, padding: '10px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+                        border: '1.5px solid rgba(248,81,73,0.25)', background: 'rgba(248,81,73,0.07)', cursor: 'pointer', color: '#F85149',
                       }}
                     >
-                      Undo
+                      Undo Last
                     </button>
                   </div>
                 </div>
               ) : (
-                <div>
-                  <button
-                    onClick={openAdd}
-                    style={{
-                      width: '100%', padding: '14px', borderRadius: 12, fontSize: 16, fontWeight: 700,
-                      backgroundColor: '#1F6FEB',
-                      color: '#E6EDF3', border: 'none', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    }}
-                  >
-                    ✓ Mark Visited
-                  </button>
-                  <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
-                    <button style={{
-                      flex: 1, padding: '10px', borderRadius: 10, fontSize: 14, fontWeight: 600,
-                      border: '1.5px solid #30363D', background: '#1C2430', cursor: 'pointer', color: '#8B949E',
-                    }}>
-                      🚩 Bucket List
-                    </button>
-                    <button style={{
-                      flex: 1, padding: '10px', borderRadius: 10, fontSize: 14, fontWeight: 600,
-                      border: '1.5px solid #30363D', background: '#1C2430', cursor: 'pointer', color: '#8B949E',
-                    }}>
-                      ⊙ Challenge
-                    </button>
-                  </div>
-                </div>
+                <button
+                  onClick={openAdd}
+                  style={{
+                    width: '100%', padding: '15px', borderRadius: 12, fontSize: 17, fontWeight: 800,
+                    backgroundColor: '#1F6FEB', color: '#ffffff', border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    letterSpacing: '-0.2px',
+                  }}
+                >
+                  ✓ Mark Visited
+                </button>
               )}
             </div>
 
@@ -507,7 +516,9 @@ export default function StadiumDetailPage() {
                   backgroundColor: '#161B22', borderRadius: 14, border: '2px dashed #30363D',
                   padding: '40px 24px', textAlign: 'center',
                 }}>
-                  <div style={{ fontSize: 36, marginBottom: 12 }}>⚾</div>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                    <TeamLogo abbreviation={stadium.abbreviation} size={60} />
+                  </div>
                   <div style={{ fontWeight: 700, fontSize: 16, color: '#E6EDF3', marginBottom: 6 }}>
                     Your first memory at {stadium.name}
                   </div>
@@ -518,7 +529,7 @@ export default function StadiumDetailPage() {
                     onClick={openAdd}
                     style={{
                       padding: '10px 24px', borderRadius: 10, fontSize: 14, fontWeight: 700,
-                      backgroundColor: '#1F6FEB', color: '#0B1117', border: 'none', cursor: 'pointer',
+                      backgroundColor: '#1F6FEB', color: '#ffffff', border: 'none', cursor: 'pointer',
                       display: 'inline-flex', alignItems: 'center', gap: 6,
                     }}
                   >
@@ -614,6 +625,25 @@ export default function StadiumDetailPage() {
                               {visit.first_pitch_time && ` · First pitch: ${visit.first_pitch_time}`}
                               {visit.attendance && ` · ${visit.attendance.toLocaleString()} fans`}
                             </div>
+                            {/* MLB stats badge / fetching state */}
+                            {fetchingStats === visit.id ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, fontSize: 11, color: '#8B949E' }}>
+                                <RefreshCw size={11} style={{ animation: 'spin 1s linear infinite' }} />
+                                Fetching MLB stats…
+                              </div>
+                            ) : visit.stats_auto_populated ? (
+                              <div style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6,
+                                fontSize: 10, fontWeight: 600, color: '#3FB950',
+                                background: 'rgba(63,185,80,0.1)', borderRadius: 20, padding: '2px 8px',
+                              }}>
+                                ⚾ Stats from MLB
+                              </div>
+                            ) : statsError[visit.id] ? (
+                              <div style={{ fontSize: 11, color: '#F85149', marginTop: 4 }}>
+                                {statsError[visit.id]}
+                              </div>
+                            ) : null}
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             {visit.home_runs != null && visit.away_runs != null && (
@@ -710,38 +740,42 @@ export default function StadiumDetailPage() {
                             </div>
                           )}
 
-                          {/* Box score */}
-                          {(visit.home_runs != null || visit.away_runs != null) && (
-                            <div style={{ marginBottom: 16 }}>
-                              <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Final Box Score</div>
-                              <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', fontSize: 14, borderCollapse: 'collapse' }}>
-                                  <thead>
-                                    <tr style={{ color: '#8B949E', fontSize: 12 }}>
-                                      <th style={{ textAlign: 'left', paddingBottom: 6, paddingRight: 12 }}>Team</th>
-                                      {['R', 'H', 'E', 'LOB'].map(h => (
-                                        <th key={h} style={{ textAlign: 'center', paddingBottom: 6, paddingLeft: 12, paddingRight: 12 }}>{h}</th>
-                                      ))}
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {[
-                                      { team: visit.visiting_team, r: visit.away_runs, h: visit.away_hits, e: visit.away_errors, lob: visit.away_lob },
-                                      { team: visit.home_team, r: visit.home_runs, h: visit.home_hits, e: visit.home_errors, lob: visit.home_lob },
-                                    ].map(({ team, r, h, e, lob }) => (
-                                      <tr key={team}>
-                                        <td style={{ paddingRight: 12, paddingBottom: 4, color: '#E6EDF3' }}>{team}</td>
-                                        <td style={{ textAlign: 'center', paddingLeft: 12, paddingRight: 12, paddingBottom: 4, fontWeight: 700, color: '#E6EDF3' }}>{r ?? '—'}</td>
-                                        <td style={{ textAlign: 'center', paddingLeft: 12, paddingRight: 12, paddingBottom: 4, color: '#8B949E' }}>{h ?? '—'}</td>
-                                        <td style={{ textAlign: 'center', paddingLeft: 12, paddingRight: 12, paddingBottom: 4, color: '#8B949E' }}>{e ?? '—'}</td>
-                                        <td style={{ textAlign: 'center', paddingLeft: 12, paddingRight: 12, paddingBottom: 4, color: '#8B949E' }}>{lob ?? '—'}</td>
+                          {/* Box score — only when H/E/LOB detail exists */}
+                          {(visit.home_runs != null || visit.away_runs != null) && (() => {
+                            const hasDetails = [visit.away_hits, visit.home_hits, visit.away_errors, visit.home_errors, visit.away_lob, visit.home_lob].some(v => v != null)
+                            if (!hasDetails) return null
+                            return (
+                              <div style={{ marginBottom: 16 }}>
+                                <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Final Box Score</div>
+                                <div style={{ overflowX: 'auto' }}>
+                                  <table style={{ width: '100%', fontSize: 14, borderCollapse: 'collapse' }}>
+                                    <thead>
+                                      <tr style={{ color: '#8B949E', fontSize: 12 }}>
+                                        <th style={{ textAlign: 'left', paddingBottom: 6, paddingRight: 12 }}>Team</th>
+                                        {['R', 'H', 'E', 'LOB'].map(h => (
+                                          <th key={h} style={{ textAlign: 'center', paddingBottom: 6, paddingLeft: 12, paddingRight: 12 }}>{h}</th>
+                                        ))}
                                       </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
+                                    </thead>
+                                    <tbody>
+                                      {[
+                                        { team: visit.visiting_team, r: visit.away_runs, h: visit.away_hits, e: visit.away_errors, lob: visit.away_lob },
+                                        { team: visit.home_team, r: visit.home_runs, h: visit.home_hits, e: visit.home_errors, lob: visit.home_lob },
+                                      ].map(({ team, r, h, e, lob }) => (
+                                        <tr key={team}>
+                                          <td style={{ paddingRight: 12, paddingBottom: 4, color: '#E6EDF3' }}>{team}</td>
+                                          <td style={{ textAlign: 'center', paddingLeft: 12, paddingRight: 12, paddingBottom: 4, fontWeight: 700, color: '#E6EDF3' }}>{r ?? '—'}</td>
+                                          <td style={{ textAlign: 'center', paddingLeft: 12, paddingRight: 12, paddingBottom: 4, color: '#8B949E' }}>{h ?? '—'}</td>
+                                          <td style={{ textAlign: 'center', paddingLeft: 12, paddingRight: 12, paddingBottom: 4, color: '#8B949E' }}>{e ?? '—'}</td>
+                                          <td style={{ textAlign: 'center', paddingLeft: 12, paddingRight: 12, paddingBottom: 4, color: '#8B949E' }}>{lob ?? '—'}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )
+                          })()}
 
                           {/* Inning by inning */}
                           {visit.inning_scores?.length > 0 && (
@@ -1009,7 +1043,7 @@ export default function StadiumDetailPage() {
 
             {/* ── RETIRED NUMBERS ───────────────────────────────── */}
             <section style={{ marginBottom: 32 }}>
-              <Collapsible title="Retired Numbers ›">
+              <Collapsible title="👕 Retired Numbers">
                 <div style={{ paddingTop: 12 }}>
                   {retiredNumbers.length === 0 ? (
                     <div style={{ fontSize: 14, color: '#8B949E', textAlign: 'center', padding: '12px 0' }}>
@@ -1017,46 +1051,60 @@ export default function StadiumDetailPage() {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      {retiredNumbers.map((rn) => (
-                        <div
-                          key={rn.id}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: 14,
-                            padding: '10px 4px',
-                            borderBottom: '1px solid rgba(48,54,61,0.5)',
-                          }}
-                        >
-                          <div style={{
-                            width: 52, height: 52, borderRadius: 10, flexShrink: 0,
-                            backgroundColor: `rgba(${colors[0].startsWith('#') ? hexToRgb(colors[0]) : '31,111,235'}, 0.18)`,
-                            border: `1.5px solid rgba(${colors[0].startsWith('#') ? hexToRgb(colors[0]) : '31,111,235'}, 0.35)`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          }}>
-                            <span style={{
-                              fontSize: rn.number.length > 2 ? 14 : 20,
-                              fontWeight: 900, color: '#E6EDF3', letterSpacing: '-0.5px',
-                            }}>
-                              {rn.number}
-                            </span>
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 700, fontSize: 15, color: '#E6EDF3', lineHeight: 1.2 }}>
-                              {rn.player_name}
-                            </div>
-                            {rn.number === '42*' && (
-                              <div style={{ fontSize: 11, color: '#F5A623', fontWeight: 600, marginTop: 1 }}>
-                                Universally retired across MLB
+                      {retiredNumbers.map((rn) => {
+                        const jerseyColor = colors[0]
+                        const jerseyRgb = hexToRgb(jerseyColor)
+                        return (
+                          <div
+                            key={rn.id}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 14,
+                              padding: '10px 4px',
+                              borderBottom: '1px solid rgba(48,54,61,0.5)',
+                            }}
+                          >
+                            {/* Jersey badge */}
+                            <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
+                              <svg viewBox="0 0 52 52" width="52" height="52">
+                                <path
+                                  d="M6 10 L18 3 L22 11 L26 7 L30 11 L34 3 L46 10 L41 22 L36 17 L36 48 L16 48 L16 17 L11 22 Z"
+                                  fill={`rgba(${jerseyRgb}, 0.9)`}
+                                />
+                                <path
+                                  d="M22 11 L26 7 L30 11 L27 17 L26 15 L25 17 Z"
+                                  fill="rgba(255,255,255,0.18)"
+                                />
+                              </svg>
+                              <div style={{
+                                position: 'absolute', inset: 0,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                paddingTop: 8,
+                              }}>
+                                <span style={{
+                                  fontSize: rn.number.length > 2 ? 12 : 17,
+                                  fontWeight: 900, color: '#ffffff', letterSpacing: '-0.5px',
+                                  textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                                }}>
+                                  {rn.number}
+                                </span>
                               </div>
-                            )}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 700, fontSize: 15, color: '#E6EDF3', lineHeight: 1.2 }}>
+                                {rn.player_name}
+                              </div>
+                              {rn.number === '42*' && (
+                                <div style={{ fontSize: 11, color: '#F5A623', fontWeight: 600, marginTop: 1 }}>
+                                  Universally retired across MLB
+                                </div>
+                              )}
+                            </div>
+                            <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 600, flexShrink: 0 }}>
+                              {rn.year_retired}
+                            </div>
                           </div>
-                          <div style={{
-                            fontSize: 13, color: '#8B949E', fontWeight: 600,
-                            flexShrink: 0,
-                          }}>
-                            {rn.year_retired}
-                          </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )}
                 </div>

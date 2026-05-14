@@ -228,3 +228,9 @@ select.input { cursor: pointer; }
   background: var(--color-border);
   border-radius: 2px;
 }
+
+/* ── Spinner ─────────────────────────────────────────────────────────── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
