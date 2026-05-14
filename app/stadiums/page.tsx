@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
-import { Search, Home, MapPin, Map, Trophy, Plane, X } from 'lucide-react'
+import { Search, Home, MapPin, Map, Trophy, Plane, X, ChevronRight } from 'lucide-react'
 import type { Stadium } from '@/types'
 import TeamLogo from '@/components/TeamLogo'
 
@@ -13,6 +13,7 @@ type FilterVisited = 'all' | 'visited' | 'unvisited'
 type Category = 'mlb' | 'historical' | 'spring'
 type SortKey = 'team' | 'name' | 'state' | 'division'
 interface VisitRow { stadium_id: string; visit_date: string }
+interface NextGameInfo { date: string; opponentAbbr: string }
 
 // ─── Team colors ──────────────────────────────────────────────────────────────
 
@@ -25,6 +26,19 @@ const TEAM_ACCENT: Record<string, string> = {
   COL: '#33006F', ARI: '#A71930', SF:  '#FD5A1E', MIN: '#002B5C',
   CLE: '#E31937', DET: '#0C2340', KC:  '#004687', BAL: '#DF4601',
   TB:  '#092C5C', TOR: '#134A8E',
+}
+
+// ─── Team nicknames ───────────────────────────────────────────────────────────
+
+const TEAM_NICKNAME: Record<string, string> = {
+  ARI: 'D-backs',   ATL: 'Braves',    BAL: 'Orioles',   BOS: 'Red Sox',
+  CHC: 'Cubs',      CWS: 'White Sox', CIN: 'Reds',       CLE: 'Guardians',
+  COL: 'Rockies',   DET: 'Tigers',    HOU: 'Astros',     KC:  'Royals',
+  LAA: 'Angels',    LAD: 'Dodgers',   MIA: 'Marlins',    MIL: 'Brewers',
+  MIN: 'Twins',     NYM: 'Mets',      NYY: 'Yankees',    OAK: 'Athletics',
+  PHI: 'Phillies',  PIT: 'Pirates',   SD:  'Padres',     SF:  'Giants',
+  SEA: 'Mariners',  STL: 'Cardinals', TB:  'Rays',       TEX: 'Rangers',
+  TOR: 'Blue Jays', WSH: 'Nationals',
 }
 
 // ─── Real-world capacity & year fallbacks ─────────────────────────────────────
@@ -67,125 +81,143 @@ function fmtDate(d: string): string {
   } catch { return d }
 }
 
-function fmtCap(n: number | null | undefined): string {
-  return n ? n.toLocaleString() : '—'
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r},${g},${b},${alpha})`
 }
 
 // ─── Stadium card ─────────────────────────────────────────────────────────────
 
 function StadiumCard({
-  stadium, visited, visitDate,
+  stadium, visited, visitDate, nextGame,
 }: {
   stadium: Stadium
   visited: boolean
   visitDate?: string
+  nextGame?: NextGameInfo
 }) {
-  const accent   = TEAM_ACCENT[stadium.abbreviation] ?? '#1F6FEB'
-  const capacity = stadium.capacity ?? STADIUM_INFO[stadium.abbreviation]?.capacity ?? null
-  const opened   = stadium.opened   ?? STADIUM_INFO[stadium.abbreviation]?.opened   ?? null
+  const accent = TEAM_ACCENT[stadium.abbreviation] ?? '#1F6FEB'
 
   return (
     <Link href={`/stadiums/${stadium.id}`} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
-      <div style={{
-        backgroundColor: '#161B22',
-        border: visited ? '1px solid rgba(63,185,80,0.45)' : '1px solid #30363D',
-        borderRadius: 12,
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        position: 'relative',
-        opacity: visited ? 1 : 0.68,
-        boxShadow: visited ? '0 0 14px rgba(63,185,80,0.12)' : 'none',
-        transition: 'opacity 0.15s, border-color 0.15s',
-        cursor: 'pointer',
-      }}
+      <div
         className="stadium-card"
+        style={{
+          backgroundColor: '#161B22',
+          border: visited ? '1px solid rgba(63,185,80,0.4)' : '1px solid #30363D',
+          borderRadius: 12,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          cursor: 'pointer',
+          opacity: visited ? 1 : 0.78,
+          boxShadow: visited ? '0 0 14px rgba(63,185,80,0.10)' : 'none',
+          transition: 'transform 0.15s, box-shadow 0.15s, border-color 0.15s, opacity 0.15s',
+        }}
       >
-        {/* Visited checkmark badge */}
-        {visited && (
-          <div style={{
-            position: 'absolute', top: 8, right: 8, zIndex: 2,
-            width: 18, height: 18, borderRadius: '50%',
-            backgroundColor: '#3FB950', border: '2px solid #161B22',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 9, color: '#0B1117', fontWeight: 900, lineHeight: 1,
-          }}>✓</div>
-        )}
-
-        {/* Team color accent bar */}
-        <div style={{ height: 4, backgroundColor: accent, flexShrink: 0 }} />
-
-        {/* Card body */}
+        {/* Gradient hero — team color washing down from top */}
         <div style={{
-          padding: '12px 10px',
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          textAlign: 'center', flex: 1, gap: 0,
+          background: `linear-gradient(to bottom, ${hexToRgba(accent, 0.45)} 0%, transparent 100%)`,
+          paddingTop: 20,
+          paddingBottom: 14,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+          flexShrink: 0,
         }}>
+          {visited && (
+            <div style={{
+              position: 'absolute', top: 8, right: 8,
+              width: 18, height: 18, borderRadius: '50%',
+              backgroundColor: '#3FB950', border: '2px solid #161B22',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 9, color: '#0B1117', fontWeight: 900,
+            }}>✓</div>
+          )}
+          <TeamLogo abbreviation={stadium.abbreviation} size={80} />
+        </div>
 
-          {/* Logo */}
-          <div style={{ marginBottom: 8, marginTop: 2 }}>
-            <TeamLogo abbreviation={stadium.abbreviation} size={44} />
-          </div>
-
+        {/* Content */}
+        <div style={{
+          padding: '8px 12px 10px',
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          gap: 2,
+        }}>
           {/* Team name */}
           <div style={{
-            fontSize: 13, fontWeight: 700, color: '#E6EDF3',
-            lineHeight: 1.2, marginBottom: 3,
+            fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2,
             display: '-webkit-box', WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical', overflow: 'hidden',
-            width: '100%',
           }}>
             {stadium.team}
           </div>
-
           {/* Stadium name */}
           <div style={{
-            fontSize: 11, color: '#C9D1D9', lineHeight: 1.35, marginBottom: 2,
+            fontSize: 11, color: '#8B949E', lineHeight: 1.3,
             display: '-webkit-box', WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical', overflow: 'hidden',
-            width: '100%',
           }}>
             {stadium.name}
           </div>
-
           {/* City */}
-          <div style={{ fontSize: 11, color: '#C9D1D9', marginBottom: 8 }}>
-            {stadium.city}, {stadium.state}
+          <div style={{ fontSize: 11, color: '#8B949E' }}>
+            {stadium.city}
           </div>
 
-          {/* Capacity / Year */}
-          <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 10 }}>
-            {fmtCap(capacity)} cap · Est. {opened ?? '—'}
-          </div>
+          <div style={{ flex: 1, minHeight: 8 }} />
 
-          {/* Spacer */}
-          <div style={{ flex: 1 }} />
-
-          {/* Visit state */}
-          {visited ? (
-            <div style={{ textAlign: 'center' }}>
-              <span style={{
-                display: 'inline-block',
-                fontSize: 11, fontWeight: 700, color: '#3FB950',
-                backgroundColor: 'rgba(63,185,80,0.12)',
-                padding: '3px 10px', borderRadius: 999,
-                marginBottom: visitDate ? 4 : 0,
-              }}>
-                Visited ✓
-              </span>
-              {visitDate && (
-                <div style={{ fontSize: 11, color: '#C9D1D9' }}>
-                  {fmtDate(visitDate)}
-                </div>
+          {/* Footer: badge + info + chevron */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+            {/* Left: badge + text */}
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 5 }}>
+              {visited ? (
+                <>
+                  <span style={{
+                    flexShrink: 0,
+                    fontSize: 10, fontWeight: 700, color: '#3FB950',
+                    backgroundColor: 'rgba(63,185,80,0.12)',
+                    border: '1px solid rgba(63,185,80,0.25)',
+                    padding: '2px 7px', borderRadius: 999,
+                  }}>Visited ✓</span>
+                  {visitDate && (
+                    <span style={{
+                      fontSize: 11, color: '#8B949E',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      minWidth: 0,
+                    }}>
+                      {fmtDate(visitDate)}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <span style={{
+                    flexShrink: 0,
+                    fontSize: 10, fontWeight: 600, color: '#8B949E',
+                    border: '1px solid #30363D',
+                    padding: '2px 7px', borderRadius: 999,
+                  }}>Not Yet</span>
+                  {nextGame && (
+                    <span style={{
+                      fontSize: 11, color: '#8B949E',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      minWidth: 0,
+                    }}>
+                      {nextGame.date} vs {TEAM_NICKNAME[nextGame.opponentAbbr] ?? nextGame.opponentAbbr}
+                    </span>
+                  )}
+                </>
               )}
             </div>
-          ) : (
-            <span style={{ fontSize: 11, color: 'rgba(201,209,217,0.5)', fontStyle: 'italic' }}>
-              Not Yet
-            </span>
-          )}
-
+            {/* Chevron CTA */}
+            <ChevronRight size={13} color="#484F58" style={{ flexShrink: 0 }} />
+          </div>
         </div>
       </div>
     </Link>
@@ -204,15 +236,18 @@ export default function StadiumsPage() {
   const [filterLeague, setFilterLeague] = useState<'all' | 'AL' | 'NL'>('all')
   const [filterVisited, setFilterVisited] = useState<FilterVisited>('all')
   const [activeCategory, setActiveCategory] = useState<Category>('mlb')
+  const [nextGames, setNextGames]   = useState<Record<string, NextGameInfo>>({})
 
   useEffect(() => {
     const supabase = createClient()
     Promise.all([
       supabase.from('stadiums').select('*').order('team'),
       supabase.from('stadium_visits').select('stadium_id, visit_date').order('visit_date', { ascending: false }),
-    ]).then(([{ data: s }, { data: v }]) => {
+      fetch('/api/next-games').then(r => r.ok ? r.json() : {}),
+    ]).then(([{ data: s }, { data: v }, games]) => {
       setStadiums(s ?? [])
       setVisits((v as VisitRow[]) ?? [])
+      setNextGames(games ?? {})
       setLoading(false)
     })
   }, [])
@@ -322,7 +357,6 @@ export default function StadiumsPage() {
                   Chasing all 30 MLB ballparks
                 </div>
               </div>
-              {/* Search toggle */}
               <button
                 onClick={() => { setShowSearch(v => !v); if (showSearch) setSearch('') }}
                 aria-label="Toggle search"
@@ -410,7 +444,6 @@ export default function StadiumsPage() {
             )}
 
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-              {/* Visit filter pills */}
               {VISIT_FILTERS.map(({ key, label, count }) => {
                 const active = filterVisited === key
                 return (
@@ -430,7 +463,6 @@ export default function StadiumsPage() {
                 )
               })}
 
-              {/* Sort + league controls */}
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
                 <select
                   value={filterLeague}
@@ -486,6 +518,7 @@ export default function StadiumsPage() {
                   stadium={stadium}
                   visited={visitedIds.has(stadium.id)}
                   visitDate={latestVisit[stadium.id]}
+                  nextGame={nextGames[stadium.abbreviation]}
                 />
               ))}
             </div>
@@ -494,7 +527,7 @@ export default function StadiumsPage() {
 
       </main>
 
-      {/* ── Mobile bottom tab bar (flex md:hidden — no inline display) ── */}
+      {/* ── Mobile bottom tab bar ────────────────────────────────── */}
       <div
         className="flex md:hidden"
         style={{
@@ -530,7 +563,18 @@ export default function StadiumsPage() {
         })}
       </div>
 
-      <style>{`.stadium-card:hover { border-color: #484F58 !important; opacity: 1 !important; }`}</style>
+      <style>{`
+        .stadium-card:hover {
+          transform: translateY(-2px) !important;
+          box-shadow: 0 6px 24px rgba(0,0,0,0.4) !important;
+          border-color: #484F58 !important;
+          opacity: 1 !important;
+        }
+        .stadium-card:active {
+          transform: translateY(0) !important;
+          transition: transform 0.05s !important;
+        }
+      `}</style>
     </div>
   )
 }
