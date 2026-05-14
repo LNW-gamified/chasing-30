@@ -5,14 +5,14 @@ import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import GameDayForm from '@/components/GameDayForm'
 import { formatDate } from '@/lib/utils'
-import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber } from '@/types'
+import type { Stadium, StadiumVisit, StadiumNote } from '@/types'
 import { fetchUpcomingHomeGames, type UpcomingGame } from '@/lib/mlb-api'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 import Link from 'next/link'
 import {
   ArrowLeft, Plus, Pencil, Trash2, Save,
   Home, MapPin, Map, Trophy, Plane,
-  ChevronRight, ChevronDown, RefreshCw,
+  RefreshCw,
 } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 
@@ -44,11 +44,6 @@ const NAV = [
 
 type MiniStadium = { id: string; league: string; division: string }
 
-function hexToRgb(hex: string): string {
-  const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-  return r ? `${parseInt(r[1], 16)},${parseInt(r[2], 16)},${parseInt(r[3], 16)}` : '31,111,235'
-}
-
 function SectionTitle({ icon, children }: { icon: string; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
@@ -58,29 +53,6 @@ function SectionTitle({ icon, children }: { icon: string; children: React.ReactN
   )
 }
 
-function Collapsible({ title, children }: { title: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div style={{ border: '1px solid #30363D', borderRadius: 12, overflow: 'hidden', marginBottom: 8 }}>
-      <button
-        onClick={() => setOpen(v => !v)}
-        style={{
-          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 16px', background: 'none', border: 'none', cursor: 'pointer',
-          fontSize: 15, fontWeight: 600, color: '#E6EDF3', textAlign: 'left',
-        }}
-      >
-        {title}
-        <ChevronDown size={16} color="#8B949E" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-      </button>
-      {open && (
-        <div style={{ borderTop: '1px solid #30363D', padding: '0 16px 16px' }}>
-          {children}
-        </div>
-      )}
-    </div>
-  )
-}
 
 export default function StadiumDetailPage() {
   const params = useParams()
@@ -97,7 +69,6 @@ export default function StadiumDetailPage() {
   const [noteInput, setNoteInput] = useState('')
   const [savingNote, setSavingNote] = useState(false)
   const [upcomingGames, setUpcomingGames] = useState<UpcomingGame[]>([])
-  const [retiredNumbers, setRetiredNumbers] = useState<RetiredNumber[]>([])
   const [fetchingStats, setFetchingStats] = useState<string | null>(null)
   const [statsError, setStatsError] = useState<Record<string, string>>({})
   const [stadiumPhoto, setStadiumPhoto] = useState<string | null>(null)
@@ -106,13 +77,12 @@ export default function StadiumDetailPage() {
 
   async function load() {
     const supabase = createClient()
-    const [{ data: s }, { data: v }, { data: n }, { data: av }, { data: as_ }, { data: rn }] = await Promise.all([
+    const [{ data: s }, { data: v }, { data: n }, { data: av }, { data: as_ }] = await Promise.all([
       supabase.from('stadiums').select('*').eq('id', id).single(),
       supabase.from('stadium_visits').select('*').eq('stadium_id', id).order('visit_date', { ascending: false }),
       supabase.from('stadium_notes').select('notes').eq('stadium_id', id).maybeSingle(),
       supabase.from('stadium_visits').select('stadium_id'),
       supabase.from('stadiums').select('id, league, division'),
-      supabase.from('retired_numbers').select('*').eq('team_id', id),
     ])
     setStadium(s)
     setVisits(v ?? [])
@@ -121,12 +91,6 @@ export default function StadiumDetailPage() {
     setNoteInput(note)
     setAllVisitedIds(new Set((av ?? []).map((r: { stadium_id: string }) => r.stadium_id)))
     setAllStadiums((as_ ?? []) as MiniStadium[])
-    const sorted = (rn ?? [] as RetiredNumber[]).sort((a: RetiredNumber, b: RetiredNumber) => {
-      const numA = parseInt(a.number.replace('*', ''), 10)
-      const numB = parseInt(b.number.replace('*', ''), 10)
-      return numA - numB
-    })
-    setRetiredNumbers(sorted as RetiredNumber[])
     setLoading(false)
   }
 
@@ -302,18 +266,6 @@ export default function StadiumDetailPage() {
     { icon: '🏆', name: 'Chasing 30', current: allVisitedIds.size, total: 30 },
     { icon: '📍', name: `${stadium.league} ${stadium.division}`, current: divVisited, total: divStadiums.length },
     { icon: '⚾', name: `${stadium.league} League`, current: leagueVisited, total: leagueStadiums.length },
-  ]
-
-  // External links
-  const ticketsUrl = `https://seatgeek.com/${stadium.team.toLowerCase().replace(/\s+/g, '-')}-tickets`
-  const hotelsUrl = `https://www.google.com/maps/search/?api=1&query=hotels+near+${encodeURIComponent(stadium.name + ' ' + stadium.city)}`
-  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${stadium.lat},${stadium.lng}`
-
-  const actionGrid = [
-    { icon: '🎟', label: 'Get Tickets', sub: 'via SeatGeek', bg: 'rgba(248,81,73,0.12)', href: ticketsUrl, external: true },
-    { icon: '🏨', label: 'Find Hotels', sub: stadium.city, bg: 'rgba(139,92,246,0.12)', href: hotelsUrl, external: true },
-    { icon: '🗺', label: 'Directions', sub: stadium.name, bg: 'rgba(63,185,80,0.12)', href: directionsUrl, external: true },
-    { icon: '🚗', label: 'Road Trip', sub: 'Multi-stadium', bg: 'rgba(31,111,235,0.12)', href: '/trips/optimizer', external: false },
   ]
 
   return (
@@ -873,16 +825,11 @@ export default function StadiumDetailPage() {
               )}
             </section>
 
-            {/* ── PLAN YOUR VISIT ───────────────────────────────── */}
-            <section style={{ marginBottom: 32 }}>
-              <SectionTitle icon="🧭">Plan Your Visit</SectionTitle>
-
-              {/* Upcoming home games */}
-              {upcomingGames.length > 0 && (
-                <div style={{ marginBottom: 16, borderRadius: 12, overflow: 'hidden', border: '1px solid #30363D' }}>
-                  <div style={{ backgroundColor: '#161B22', padding: '12px 16px', fontSize: 14, fontWeight: 700, color: '#E6EDF3', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    📅 Upcoming Home Games
-                  </div>
+            {/* ── UPCOMING HOME GAMES ───────────────────────────── */}
+            {upcomingGames.length > 0 && (
+              <section style={{ marginBottom: 32 }}>
+                <SectionTitle icon="📅">Upcoming Home Games</SectionTitle>
+                <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #30363D' }}>
                   <div style={{ backgroundColor: '#0B1117' }}>
                     {upcomingGames.map((g, i) => {
                       const dt = new Date(g.gameDate)
@@ -922,42 +869,8 @@ export default function StadiumDetailPage() {
                     </a>
                   </div>
                 </div>
-              )}
-
-              {/* 2×2 action grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                {actionGrid.map(({ icon, label, sub, bg, href, external }) => {
-                  const content = (
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 12, padding: '14px',
-                      borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D',
-                    }}>
-                      <div style={{
-                        width: 44, height: 44, borderRadius: 10, backgroundColor: bg,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 22, flexShrink: 0,
-                      }}>
-                        {icon}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 700, fontSize: 14, color: '#E6EDF3' }}>{label}</div>
-                        <div style={{ fontSize: 12, color: '#8B949E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>
-                      </div>
-                      <ChevronRight size={16} color="#8B949E" style={{ flexShrink: 0 }} />
-                    </div>
-                  )
-                  return external ? (
-                    <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                      {content}
-                    </a>
-                  ) : (
-                    <Link key={label} href={href} style={{ textDecoration: 'none' }}>
-                      {content}
-                    </Link>
-                  )
-                })}
-              </div>
-            </section>
+              </section>
+            )}
 
             {/* ── NOTES ─────────────────────────────────────────── */}
             <section style={{ marginBottom: 32 }}>
@@ -1039,76 +952,6 @@ export default function StadiumDetailPage() {
                   </button>
                 </div>
               )}
-            </section>
-
-            {/* ── RETIRED NUMBERS ───────────────────────────────── */}
-            <section style={{ marginBottom: 32 }}>
-              <Collapsible title="👕 Retired Numbers">
-                <div style={{ paddingTop: 12 }}>
-                  {retiredNumbers.length === 0 ? (
-                    <div style={{ fontSize: 14, color: '#8B949E', textAlign: 'center', padding: '12px 0' }}>
-                      None retired
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      {retiredNumbers.map((rn) => {
-                        const jerseyColor = colors[0]
-                        const jerseyRgb = hexToRgb(jerseyColor)
-                        return (
-                          <div
-                            key={rn.id}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 14,
-                              padding: '10px 4px',
-                              borderBottom: '1px solid rgba(48,54,61,0.5)',
-                            }}
-                          >
-                            {/* Jersey badge */}
-                            <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
-                              <svg viewBox="0 0 52 52" width="52" height="52">
-                                <path
-                                  d="M6 10 L18 3 L22 11 L26 7 L30 11 L34 3 L46 10 L41 22 L36 17 L36 48 L16 48 L16 17 L11 22 Z"
-                                  fill={`rgba(${jerseyRgb}, 0.9)`}
-                                />
-                                <path
-                                  d="M22 11 L26 7 L30 11 L27 17 L26 15 L25 17 Z"
-                                  fill="rgba(255,255,255,0.18)"
-                                />
-                              </svg>
-                              <div style={{
-                                position: 'absolute', inset: 0,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                paddingTop: 8,
-                              }}>
-                                <span style={{
-                                  fontSize: rn.number.length > 2 ? 12 : 17,
-                                  fontWeight: 900, color: '#ffffff', letterSpacing: '-0.5px',
-                                  textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-                                }}>
-                                  {rn.number}
-                                </span>
-                              </div>
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontWeight: 700, fontSize: 15, color: '#E6EDF3', lineHeight: 1.2 }}>
-                                {rn.player_name}
-                              </div>
-                              {rn.number === '42*' && (
-                                <div style={{ fontSize: 11, color: '#F5A623', fontWeight: 600, marginTop: 1 }}>
-                                  Universally retired across MLB
-                                </div>
-                              )}
-                            </div>
-                            <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 600, flexShrink: 0 }}>
-                              {rn.year_retired}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              </Collapsible>
             </section>
 
           </div>{/* /padding wrapper */}
