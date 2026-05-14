@@ -393,3 +393,11 @@ CREATE POLICY "Authenticated users can update stop_checklist"
   ON stop_checklist FOR UPDATE TO authenticated USING (true);
 CREATE POLICY "Authenticated users can delete stop_checklist"
   ON stop_checklist FOR DELETE TO authenticated USING (true);
+
+-- ============================================================
+-- Feature: Game Events (MLB API auto-detectable achievements)
+-- Run this block in the Supabase SQL Editor
+-- (or run supabase/migrations/20260514_game_events.sql)
+-- ============================================================
+
+ALTER TABLE stadium_visits ADD COLUMN IF NOT EXISTS game_events TEXT[] DEFAULT '{}';

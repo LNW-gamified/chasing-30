@@ -73,6 +73,7 @@ export interface StadiumVisit {
   mlb_game_pk: number | null
   stats_auto_populated: boolean
   moments: string[] | null
+  game_events: string[] | null
   created_by: string | null
   created_at: string
   stadium?: Stadium

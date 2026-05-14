@@ -118,9 +118,81 @@ export async function POST(req: NextRequest) {
       } catch {}
     }
 
+    // ── Game event detection ───────────────────────────────────────────────
+    const allPlays: any[] = liveData.plays?.allPlays ?? []
+    const homeRunsTotal = homeLS.runs ?? 0
+    const awayRunsTotal = awayLS.runs ?? 0
+    const awayHitsTotal = awayLS.hits ?? 0
+    const homeErrorsTotal = homeLS.errors ?? 0
+
+    const gameEvents: string[] = []
+
+    // Walk-off: home wins and scored in bottom of last inning
+    if (homeRunsTotal > awayRunsTotal && inningScores.length > 0) {
+      const lastInn = inningScores[inningScores.length - 1]
+      if ((lastInn.home ?? 0) > 0) gameEvents.push('walk_off')
+    }
+
+    // Extra innings
+    if (inningScores.length > 9)  gameEvents.push('extra_innings')
+    if (inningScores.length >= 12) gameEvents.push('twelve_plus_innings')
+
+    // No-hitter / perfect game / combined no-hitter
+    if (awayHitsTotal === 0 && awayLS.hits != null) {
+      const pitcherCount: number = homeBox.pitchers?.length ?? 0
+      const awayBB  = awayBox.teamStats?.batting?.baseOnBalls ?? 0
+      const awayHBP = awayBox.teamStats?.batting?.hitByPitch  ?? 0
+
+      gameEvents.push('no_hitter')
+      if (pitcherCount === 1 && awayBB === 0 && awayHBP === 0 && homeErrorsTotal === 0) {
+        gameEvents.push('perfect_game')
+      } else if (pitcherCount > 1) {
+        gameEvents.push('combined_no_hitter')
+      }
+    }
+
+    // Shutout: home team wins, away scored 0
+    if (awayRunsTotal === 0 && homeRunsTotal > 0) gameEvents.push('shutout')
+
+    // Run factory: either team scores 15+
+    if (Math.max(homeRunsTotal, awayRunsTotal) >= 15) gameEvents.push('run_factory')
+
+    // Pitcher's duel: 1-0 final
+    if (homeRunsTotal + awayRunsTotal === 1) gameEvents.push('pitchers_duel')
+
+    // Grand slam: scan play descriptions
+    if (allPlays.some((p: any) => (p.result?.description ?? '').toLowerCase().includes('grand slam'))) {
+      gameEvents.push('grand_slam')
+    }
+
+    // Hit for the cycle: one batter records a single, double, triple, and HR
+    {
+      const batterHits = new Map<number, Set<string>>()
+      for (const play of allPlays) {
+        const et: string = play.result?.eventType ?? ''
+        const bid: number | undefined = play.matchup?.batter?.id
+        if (bid && ['single', 'double', 'triple', 'home_run'].includes(et)) {
+          if (!batterHits.has(bid)) batterHits.set(bid, new Set())
+          batterHits.get(bid)!.add(et)
+        }
+      }
+      if ([...batterHits.values()].some(
+        h => h.has('single') && h.has('double') && h.has('triple') && h.has('home_run')
+      )) gameEvents.push('cycle')
+    }
+
+    // Milestone home run: career HR milestone callouts in play descriptions
+    if (allPlays.some((p: any) => {
+      const desc: string = p.result?.description ?? ''
+      return /\b\d{3,}(?:st|nd|rd|th)\b.*(?:home run|homer)/i.test(desc) &&
+        /\b(career|all.time)\b/i.test(desc)
+    })) gameEvents.push('milestone_hr')
+
+    // ── Build update payload ───────────────────────────────────────────────
     const update: Record<string, any> = {
       mlb_game_pk: gamePk,
       stats_auto_populated: true,
+      game_events: gameEvents,
       // Final score R/H/E
       home_runs:   homeLS.runs   ?? null,
       away_runs:   awayLS.runs   ?? null,

@@ -18,6 +18,13 @@ const MILESTONE_POINTS: Record<string, number> = {
   hall_of_fame_visit: 75, field_of_dreams_visit: 75,
   international_game: 100, historic_ballparks_all: 200,
   first_special_event: 30,
+  // Game-event achievements
+  walk_off_witness: 75, double_walk_off: 125,
+  no_hit_wonder: 150, perfect_day: 300, committee_work: 100,
+  extra_credit: 50, marathon_man: 75,
+  lights_out: 50, grand_slam_witness: 75,
+  full_cycle: 150, history_maker: 200,
+  run_factory: 50, pitchers_duel: 75,
 }
 
 const PLACES_IDS = new Set([
@@ -34,6 +41,13 @@ const EXPERIENCE_IDS = new Set([
   'first_special_event', 'world_series_attendance', 'all_star_attendance',
   'postseason_attendance', 'spring_training_attendance', 'minor_league_attendance',
   'hall_of_fame_visit', 'field_of_dreams_visit', 'international_game', 'historic_ballparks_all',
+  // Game-event achievements
+  'walk_off_witness', 'double_walk_off',
+  'no_hit_wonder', 'perfect_day', 'committee_work',
+  'extra_credit', 'marathon_man',
+  'lights_out', 'grand_slam_witness',
+  'full_cycle', 'history_maker',
+  'run_factory', 'pitchers_duel',
 ])
 
 interface StaticExperience {
@@ -169,6 +183,20 @@ function getSerializableMilestoneContext(
       }
       return null
     }
+    // Game-event achievements — find first qualifying visit
+    case 'walk_off_witness':   { const v = sv.find(v => v.game_events?.includes('walk_off'));          return v ? { date: v.visit_date, location: sn(v.stadium_id) } : null }
+    case 'double_walk_off':    { const v = sv.filter(v => v.game_events?.includes('walk_off'))[1];    return v ? { date: v.visit_date, location: sn(v.stadium_id) } : null }
+    case 'no_hit_wonder':      { const v = sv.find(v => v.game_events?.includes('no_hitter'));         return v ? { date: v.visit_date, location: sn(v.stadium_id) } : null }
+    case 'perfect_day':        { const v = sv.find(v => v.game_events?.includes('perfect_game'));      return v ? { date: v.visit_date, location: sn(v.stadium_id) } : null }
+    case 'committee_work':     { const v = sv.find(v => v.game_events?.includes('combined_no_hitter')); return v ? { date: v.visit_date, location: sn(v.stadium_id) } : null }
+    case 'extra_credit':       { const v = sv.find(v => v.game_events?.includes('extra_innings'));     return v ? { date: v.visit_date, location: sn(v.stadium_id) } : null }
+    case 'marathon_man':       { const v = sv.find(v => v.game_events?.includes('twelve_plus_innings')); return v ? { date: v.visit_date, location: sn(v.stadium_id) } : null }
+    case 'lights_out':         { const v = sv.find(v => v.game_events?.includes('shutout'));           return v ? { date: v.visit_date, location: sn(v.stadium_id) } : null }
+    case 'grand_slam_witness': { const v = sv.find(v => v.game_events?.includes('grand_slam'));        return v ? { date: v.visit_date, location: sn(v.stadium_id) } : null }
+    case 'full_cycle':         { const v = sv.find(v => v.game_events?.includes('cycle'));             return v ? { date: v.visit_date, location: sn(v.stadium_id) } : null }
+    case 'history_maker':      { const v = sv.find(v => v.game_events?.includes('milestone_hr'));      return v ? { date: v.visit_date, location: sn(v.stadium_id) } : null }
+    case 'run_factory':        { const v = sv.find(v => v.game_events?.includes('run_factory'));       return v ? { date: v.visit_date, location: sn(v.stadium_id) } : null }
+    case 'pitchers_duel':      { const v = sv.find(v => v.game_events?.includes('pitchers_duel'));     return v ? { date: v.visit_date, location: sn(v.stadium_id) } : null }
     default: return null
   }
 }
@@ -214,6 +242,10 @@ function getMilestoneProgress(
       const VENUES = ['Louisville Slugger Museum & Factory', 'National Baseball Hall of Fame', 'Negro Leagues Baseball Museum', 'Field of Dreams', 'Rickwood Field']
       const visited = new Set(allEvents.filter(e => e.event_type === 'historic_ballpark' && e.venue_name).map(e => e.venue_name!))
       return { current: VENUES.filter(v => visited.has(v)).length, total: VENUES.length }
+    }
+    case 'double_walk_off': {
+      const count = allVisits.filter(v => v.game_events?.includes('walk_off')).length
+      return { current: Math.min(count, 2), total: 2 }
     }
     default: return null
   }
