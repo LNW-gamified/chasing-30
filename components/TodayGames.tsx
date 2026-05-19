@@ -49,10 +49,12 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
       const res = await fetch('/api/today-games')
       if (!res.ok) return
       const raw = await res.json() as Omit<TodayGame, 'isFavorite'>[]
-      const withFav = raw.map(g => ({
-        ...g,
-        isFavorite: favAbbr !== null && (g.awayAbbr === favAbbr || g.homeAbbr === favAbbr),
-      }))
+      console.log(`[TodayGames] favAbbr="${favAbbr}" — checking ${raw.length} games`)
+      const withFav = raw.map(g => {
+        const isFavorite = favAbbr !== null && (g.awayAbbr === favAbbr || g.homeAbbr === favAbbr)
+        console.log(`  gamePk=${g.gamePk} away=${g.awayAbbr} home=${g.homeAbbr} → isFavorite=${isFavorite}`)
+        return { ...g, isFavorite }
+      })
       setGames(favFirst(withFav))
       setLastUpdated(new Date())
       setSecsAgo(0)

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Home, Map, MapPin, Trophy, Plane, Bell, ChevronRight } from 'lucide-react'
 import TodayGames, { type TodayGame } from '@/components/TodayGames'
 import Standings from '@/components/Standings'
+import FavoriteTeamPicker from '@/components/FavoriteTeamPicker'
 
 // ─── MLB API ──────────────────────────────────────────────────────────────────
 
@@ -40,6 +41,10 @@ async function fetchTodayGames(favAbbr: string | null): Promise<TodayGame[]> {
         isFinal:   g.status?.abstractGameState === 'Final',
         isFavorite: favAbbr !== null && (awayAbbr === favAbbr || homeAbbr === favAbbr),
       }
+    })
+    console.log(`[Dashboard] favAbbr="${favAbbr}" — checking ${games.length} games`)
+    games.forEach(g => {
+      console.log(`  gamePk=${g.gamePk} away=${g.awayAbbr} home=${g.homeAbbr} → isFavorite=${g.isFavorite}`)
     })
     return games.sort((a, b) => (b.isFavorite ? 1 : 0) - (a.isFavorite ? 1 : 0))
   } catch {
@@ -207,6 +212,11 @@ export default async function DashboardPage() {
     supabase.auth.getUser(),
   ])
 
+  const userId = user?.id ?? ''
+  const { data: userSettings } = userId
+    ? await supabase.from('user_settings').select('favorite_team_abbr').eq('user_id', userId).single()
+    : { data: null }
+
   const allStadiums: Stadium[]     = stadiums ?? []
   const allVisits:   StadiumVisit[] = visits ?? []
   const allEvents:   SpecialEvent[] = events ?? []
@@ -237,11 +247,8 @@ export default async function DashboardPage() {
     return { label, total: group.length, vis }
   })
 
-  // Fav team abbreviation (for Today's Games)
-  const stadiumCounts: Record<string, number> = {}
-  for (const v of allVisits) stadiumCounts[v.stadium_id] = (stadiumCounts[v.stadium_id] ?? 0) + 1
-  const topId   = Object.entries(stadiumCounts).sort((a, b) => b[1] - a[1])[0]?.[0]
-  const favAbbr = allStadiums.find(s => s.id === topId)?.abbreviation ?? null
+  // Fav team abbreviation (user-selected)
+  const favAbbr = (userSettings as any)?.favorite_team_abbr ?? null
 
   const todayGames = await fetchTodayGames(favAbbr)
 
@@ -523,6 +530,7 @@ export default async function DashboardPage() {
             </div>
 
             {/* ── Today's Games ────────────────────────────────────────────── */}
+            <FavoriteTeamPicker userId={userId} currentFavAbbr={favAbbr} />
             {todayGames.length > 0 && (
               <TodayGames initialGames={todayGames} favAbbr={favAbbr} />
             )}
