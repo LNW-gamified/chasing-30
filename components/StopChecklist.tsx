@@ -75,7 +75,12 @@ export default function StopChecklist({ stopId, items, onReload }: Props) {
               {totalItems} item{totalItems !== 1 ? 's' : ''} · {checkedCount} checked
             </span>
           ) : (
-            <span style={{ fontSize: 11, color: '#484F58' }}>Add items</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              {CATEGORIES.map(cat => (
+                <span key={cat.id} style={{ fontSize: 15, lineHeight: 1 }}>{cat.icon}</span>
+              ))}
+              <span style={{ fontSize: 11, color: '#484F58', marginLeft: 2 }}>Add items</span>
+            </div>
           )}
         </div>
         {expanded

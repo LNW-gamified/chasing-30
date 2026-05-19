@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import type { Stadium, Trip, TripStop } from '@/types'
-import { X, Plus, Trash2, Loader2 } from 'lucide-react'
+import { X, Plus, Trash2, Loader2, MapPin, Ticket, DollarSign, FileText, CalendarDays } from 'lucide-react'
 
 const ABBR_TO_MLB_ID: Record<string, number> = {
   ARI: 109, ATL: 144, BAL: 110, BOS: 111, CHC: 112,
@@ -14,9 +14,7 @@ const ABBR_TO_MLB_ID: Record<string, number> = {
   STL: 138, TB:  139, TEX: 140, TOR: 141, WSH: 120,
 }
 
-// Local timezone for each team's home stadium
 const ABBR_TO_TZ: Record<string, { tz: string; label: string }> = {
-  // Eastern
   ATL: { tz: 'America/New_York',    label: 'ET'  },
   BAL: { tz: 'America/New_York',    label: 'ET'  },
   BOS: { tz: 'America/New_York',    label: 'ET'  },
@@ -31,7 +29,6 @@ const ABBR_TO_TZ: Record<string, { tz: string; label: string }> = {
   TB:  { tz: 'America/New_York',    label: 'ET'  },
   TOR: { tz: 'America/Toronto',     label: 'ET'  },
   WSH: { tz: 'America/New_York',    label: 'ET'  },
-  // Central
   CHC: { tz: 'America/Chicago',     label: 'CT'  },
   CWS: { tz: 'America/Chicago',     label: 'CT'  },
   HOU: { tz: 'America/Chicago',     label: 'CT'  },
@@ -40,10 +37,8 @@ const ABBR_TO_TZ: Record<string, { tz: string; label: string }> = {
   MIN: { tz: 'America/Chicago',     label: 'CT'  },
   STL: { tz: 'America/Chicago',     label: 'CT'  },
   TEX: { tz: 'America/Chicago',     label: 'CT'  },
-  // Mountain
-  ARI: { tz: 'America/Phoenix',     label: 'MST' }, // Arizona doesn't observe DST
+  ARI: { tz: 'America/Phoenix',     label: 'MST' },
   COL: { tz: 'America/Denver',      label: 'MT'  },
-  // Pacific
   LAA: { tz: 'America/Los_Angeles', label: 'PT'  },
   LAD: { tz: 'America/Los_Angeles', label: 'PT'  },
   OAK: { tz: 'America/Los_Angeles', label: 'PT'  },
@@ -58,7 +53,7 @@ interface StopDraft {
   game_date: string
   game_time: string
   opponent: string
-  opponent_team_id: string  // stored as string for form state, parsed to int on save
+  opponent_team_id: string
   est_tickets: string
   est_food: string
   est_parking: string
@@ -76,9 +71,9 @@ interface GameOption {
   gamePk: number
   gameDate: string
   displayDate: string
-  opponent: string         // "vs New York Yankees"
-  opponentTeamId: number   // MLB team ID — for logo lookup
-  firstPitch: string       // "7:05 PM ET"
+  opponent: string
+  opponentTeamId: number
+  firstPitch: string
   promotions: string
 }
 
@@ -98,9 +93,9 @@ interface Props {
 }
 
 const STOP_CATS = [
-  { key: 'tickets', label: 'Tickets' },
-  { key: 'food',    label: 'Food'    },
-  { key: 'parking', label: 'Parking' },
+  { key: 'tickets', label: 'Tickets', icon: '🎟' },
+  { key: 'food',    label: 'Food',    icon: '🌭' },
+  { key: 'parking', label: 'Parking', icon: '🚗' },
 ]
 
 function defaultStop(stadiums: Stadium[]): StopDraft {
@@ -132,27 +127,42 @@ function defaultForm(trip?: Trip) {
   }
 }
 
+function SectionHeader({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '28px 0 16px' }}>
+      <span style={{ color: '#1F6FEB', flexShrink: 0, display: 'flex' }}>{icon}</span>
+      <span style={{
+        fontSize: 11, fontWeight: 700, color: '#8B949E',
+        textTransform: 'uppercase', letterSpacing: '0.09em', whiteSpace: 'nowrap',
+      }}>
+        {label}
+      </span>
+      <div style={{ flex: 1, height: 1, backgroundColor: '#30363D' }} />
+    </div>
+  )
+}
+
 export default function TripForm({ stadiums, trip, existingStops, onClose, onSaved }: Props) {
   const [form,          setForm]          = useState(() => defaultForm(trip))
   const [stops,         setStops]         = useState<StopDraft[]>(() => {
     if (existingStops && existingStops.length > 0) {
       return existingStops.map(s => ({
-        id:             s.id,
-        stadium_id:     s.stadium_id,
+        id:               s.id,
+        stadium_id:       s.stadium_id,
         game_date:        s.game_date                    ?? '',
         game_time:        s.game_time                    ?? '',
         opponent:         s.opponent                     ?? '',
         opponent_team_id: s.opponent_team_id?.toString() ?? '',
-        est_tickets:    s.est_tickets.toString(),
-        est_food:       s.est_food.toString(),
-        est_parking:    s.est_parking.toString(),
-        actual_tickets: s.actual_tickets.toString(),
-        actual_food:    s.actual_food.toString(),
-        actual_parking: s.actual_parking.toString(),
-        notes:          s.notes ?? '',
-        ticket_section:     s.ticket_section     ?? '',
-        ticket_row:         s.ticket_row         ?? '',
-        ticket_seats:       s.ticket_seats       ?? [],
+        est_tickets:      s.est_tickets.toString(),
+        est_food:         s.est_food.toString(),
+        est_parking:      s.est_parking.toString(),
+        actual_tickets:   s.actual_tickets.toString(),
+        actual_food:      s.actual_food.toString(),
+        actual_parking:   s.actual_parking.toString(),
+        notes:            s.notes            ?? '',
+        ticket_section:      s.ticket_section      ?? '',
+        ticket_row:          s.ticket_row          ?? '',
+        ticket_seats:        s.ticket_seats        ?? [],
         ticket_confirmation: s.ticket_confirmation ?? '',
       }))
     }
@@ -166,10 +176,15 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     const n = (existingStops && existingStops.length > 0) ? existingStops.length : 1
     return Array.from({ length: n }, () => '')
   })
-  const [saving,  setSaving]  = useState(false)
-  const [error,   setError]   = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error,  setError]  = useState('')
 
-  async function fetchGamesForStop(stopIdx: number, stadiumId: string) {
+  async function fetchGamesForStop(
+    stopIdx: number,
+    stadiumId: string,
+    existingDate?: string,
+    existingOppId?: number,
+  ) {
     const stadium = stadiums.find(s => s.id === stadiumId)
     if (!stadium) return
     const teamId = ABBR_TO_MLB_ID[stadium.abbreviation]
@@ -192,7 +207,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       for (const date of json.dates ?? []) {
         for (const game of date.games ?? []) {
           const homeTeamId = game.teams?.home?.team?.id as number | undefined
-          if (homeTeamId !== teamId) continue  // skip away games
+          if (homeTeamId !== teamId) continue
 
           const tzInfo      = ABBR_TO_TZ[stadium.abbreviation] ?? { tz: 'America/Chicago', label: 'CT' }
           const gameDate    = date.date as string
@@ -218,8 +233,15 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
         }
       }
 
+      // Restore selectedPk when editing an existing stop
+      let restoredPk = ''
+      if (existingDate && existingOppId) {
+        const match = games.find(g => g.gameDate === existingDate && g.opponentTeamId === existingOppId)
+        if (match) restoredPk = match.gamePk.toString()
+      }
+
       setStopSchedules(prev => prev.map((ss, i) =>
-        i === stopIdx ? { ...ss, loading: false, games, noGames: games.length === 0, selectedPk: '' } : ss
+        i === stopIdx ? { ...ss, loading: false, games, noGames: games.length === 0, selectedPk: restoredPk } : ss
       ))
     } catch {
       setStopSchedules(prev => prev.map((ss, i) =>
@@ -228,10 +250,14 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     }
   }
 
-  // On mount, fetch games for all existing stops
   useEffect(() => {
     stops.forEach((stop, i) => {
-      if (stop.stadium_id) fetchGamesForStop(i, stop.stadium_id)
+      if (stop.stadium_id) fetchGamesForStop(
+        i,
+        stop.stadium_id,
+        stop.game_date     || undefined,
+        parseInt(stop.opponent_team_id) || undefined,
+      )
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -250,10 +276,10 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     setStopSchedules(prev => prev.map((ss, i) => i === stopIdx ? { ...ss, selectedPk: pkStr } : ss))
     setStops(prev => prev.map((s, i) => i === stopIdx ? {
       ...s,
-      game_date:        game?.gameDate                      ?? '',
-      game_time:        game?.firstPitch                    ?? '',
-      opponent:         game?.opponent                      ?? '',
-      opponent_team_id: game?.opponentTeamId?.toString()    ?? '',
+      game_date:        game?.gameDate                   ?? '',
+      game_time:        game?.firstPitch                 ?? '',
+      opponent:         game?.opponent                   ?? '',
+      opponent_team_id: game?.opponentTeamId?.toString() ?? '',
     } : s))
   }
 
@@ -341,20 +367,20 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
 
     const { error: stopsErr } = await supabase.from('trip_stops').insert(
       stops.map((stop, i) => ({
-        trip_id:        tripId,
-        stadium_id:     stop.stadium_id,
-        game_date:        stop.game_date || null,
-        game_time:        stop.game_time || null,
-        opponent:         stop.opponent  || null,
-        opponent_team_id: parseInt(stop.opponent_team_id) || null,
-        sort_order:     i,
-        est_tickets:    parseFloat(stop.est_tickets)    || 0,
-        est_food:       parseFloat(stop.est_food)       || 0,
-        est_parking:    parseFloat(stop.est_parking)    || 0,
-        actual_tickets: parseFloat(stop.actual_tickets) || 0,
-        actual_food:    parseFloat(stop.actual_food)    || 0,
-        actual_parking: parseFloat(stop.actual_parking) || 0,
-        notes:          stop.notes || null,
+        trip_id:             tripId,
+        stadium_id:          stop.stadium_id,
+        game_date:           stop.game_date || null,
+        game_time:           stop.game_time || null,
+        opponent:            stop.opponent  || null,
+        opponent_team_id:    parseInt(stop.opponent_team_id) || null,
+        sort_order:          i,
+        est_tickets:         parseFloat(stop.est_tickets)    || 0,
+        est_food:            parseFloat(stop.est_food)       || 0,
+        est_parking:         parseFloat(stop.est_parking)    || 0,
+        actual_tickets:      parseFloat(stop.actual_tickets) || 0,
+        actual_food:         parseFloat(stop.actual_food)    || 0,
+        actual_parking:      parseFloat(stop.actual_parking) || 0,
+        notes:               stop.notes || null,
         ticket_section:      stop.ticket_section     || null,
         ticket_row:          stop.ticket_row         || null,
         ticket_seats:        stop.ticket_seats.length > 0 ? stop.ticket_seats : null,
@@ -367,46 +393,94 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     onSaved()
   }
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '11px 14px', borderRadius: 10,
+    border: '1px solid #30363D', backgroundColor: '#0d1424',
+    color: '#E6EDF3', fontSize: 14, outline: 'none',
+    boxSizing: 'border-box',
+  }
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block', fontSize: 12, fontWeight: 600,
+    color: '#8B949E', marginBottom: 6, letterSpacing: '0.02em',
+  }
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-8 px-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 50,
+        display: 'flex', flexDirection: 'column',
+        backgroundColor: 'rgba(0,0,0,0.75)',
+      }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="card w-full max-w-2xl" style={{ backgroundColor: '#161B22' }}>
-        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #30363D' }}>
-          <div className="font-semibold" style={{ color: '#E6EDF3' }}>
+      {/* Sheet panel */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: '#161B22',
+        overflow: 'hidden',
+        // Desktop: centered with margin, rounded corners
+      }}
+        className="md:rounded-2xl md:m-6 md:mx-auto md:max-w-2xl md:w-full"
+      >
+
+        {/* ── Sticky header ─────────────────────────────────────── */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '18px 20px', borderBottom: '1px solid #30363D', flexShrink: 0,
+        }}>
+          <div style={{ fontSize: 18, fontWeight: 800, color: '#E6EDF3' }}>
             {trip ? 'Edit Trip' : 'Plan a Trip'}
           </div>
-          <button onClick={onClose} style={{ color: '#8B949E' }}>
-            <X size={20} />
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              width: 32, height: 32, borderRadius: '50%', display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              backgroundColor: '#1C2430', border: '1px solid #30363D',
+              cursor: 'pointer', color: '#8B949E',
+            }}
+          >
+            <X size={16} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 pb-6 pt-5">
-          <div className="flex flex-col gap-5">
+        {/* ── Scrollable form body ───────────────────────────────── */}
+        <form onSubmit={handleSubmit} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '0 20px 120px' }}>
 
-            {/* Trip name */}
-            <div>
-              <label className="label">Trip Name</label>
-              <input type="text" className="input" placeholder="SoCal Baseball Tour"
-                value={form.name} onChange={e => setField('name', e.target.value)} required />
+            {/* ═══ TRIP DETAILS ═══════════════════════════════════ */}
+            <SectionHeader icon={<CalendarDays size={15} />} label="Trip Details" />
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>Trip Name</label>
+              <input
+                type="text"
+                style={inputStyle}
+                placeholder="SoCal Baseball Tour"
+                value={form.name}
+                onChange={e => setField('name', e.target.value)}
+                required
+              />
             </div>
 
-            {/* Dates + status */}
-            <div className="grid grid-cols-3 gap-3">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 4 }}>
               <div>
-                <label className="label">Start Date</label>
-                <input type="date" className="input" value={form.start_date}
+                <label style={labelStyle}>Start Date</label>
+                <input type="date" style={inputStyle} value={form.start_date}
                   onChange={e => setField('start_date', e.target.value)} />
               </div>
               <div>
-                <label className="label">End Date</label>
-                <input type="date" className="input" value={form.end_date}
+                <label style={labelStyle}>End Date</label>
+                <input type="date" style={inputStyle} value={form.end_date}
                   onChange={e => setField('end_date', e.target.value)} />
               </div>
               <div>
-                <label className="label">Status</label>
-                <select className="input" value={form.status}
+                <label style={labelStyle}>Status</label>
+                <select style={inputStyle} value={form.status}
                   onChange={e => setField('status', e.target.value)}>
                   <option value="planned">Planned</option>
                   <option value="completed">Completed</option>
@@ -415,39 +489,60 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
               </div>
             </div>
 
-            {/* Stops */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#1F6FEB' }}>
-                  Stadiums &amp; Schedule
-                </div>
-                <button type="button" onClick={addStop} className="btn-secondary"
-                  style={{ fontSize: '0.85rem', padding: '4px 12px', gap: '5px' }}>
-                  <Plus size={13} /> Add Stop
-                </button>
+            {/* ═══ STADIUMS & GAMES ════════════════════════════════ */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 28, marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <MapPin size={15} style={{ color: '#1F6FEB' }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
+                  Stadiums &amp; Games
+                </span>
               </div>
+              <button type="button" onClick={addStop} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '6px 12px', borderRadius: 8,
+                border: '1px solid #30363D', backgroundColor: '#1C2430',
+                color: '#8B949E', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              }}>
+                <Plus size={12} /> Add Stop
+              </button>
+            </div>
 
-              <div className="flex flex-col gap-4">
-                {stops.map((stop, i) => {
-                  const ss           = stopSchedules[i] ?? emptySchedule()
-                  const selectedGame = ss.games.find(g => g.gamePk.toString() === ss.selectedPk)
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {stops.map((stop, i) => {
+                const ss           = stopSchedules[i] ?? emptySchedule()
+                const selectedGame = ss.games.find(g => g.gamePk.toString() === ss.selectedPk)
 
-                  return (
-                    <div key={i} className="p-4 rounded-xl" style={{ backgroundColor: '#0d1424', border: '1px solid #30363D' }}>
-                      {/* Stop header */}
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="text-sm font-semibold" style={{ color: '#8B949E' }}>Stop {i + 1}</div>
-                        {stops.length > 1 && (
-                          <button type="button" onClick={() => removeStop(i)} className="p-1" style={{ color: '#F85149' }}>
-                            <Trash2 size={15} />
-                          </button>
-                        )}
-                      </div>
+                return (
+                  <div key={i} style={{
+                    borderRadius: 14,
+                    border: '1px solid #30363D',
+                    backgroundColor: '#0d1117',
+                    overflow: 'hidden',
+                  }}>
+                    {/* Stop header bar */}
+                    <div style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '12px 16px', backgroundColor: '#161B22',
+                      borderBottom: '1px solid #30363D',
+                    }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>
+                        Stop {i + 1}
+                      </span>
+                      {stops.length > 1 && (
+                        <button type="button" onClick={() => removeStop(i)} style={{
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          color: '#F85149', display: 'flex', alignItems: 'center', padding: 4,
+                        }}>
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
 
+                    <div style={{ padding: '16px' }}>
                       {/* Stadium selector */}
-                      <div className="mb-3">
-                        <label className="label">Stadium</label>
-                        <select className="input" value={stop.stadium_id}
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={labelStyle}>Stadium</label>
+                        <select style={inputStyle} value={stop.stadium_id}
                           onChange={e => setStop(i, 'stadium_id', e.target.value)}>
                           {stadiums.map(s => (
                             <option key={s.id} value={s.id}>{s.name}</option>
@@ -456,8 +551,8 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                       </div>
 
                       {/* Game picker */}
-                      <div className="mb-3">
-                        <label className="label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 6 }}>
                           Select a Game
                           {ss.loading && <Loader2 size={12} className="animate-spin" style={{ color: '#1F6FEB' }} />}
                         </label>
@@ -468,16 +563,15 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                           </div>
                         ) : ss.noGames ? (
                           <div style={{
-                            fontSize: 12, color: '#8B949E',
-                            padding: '8px 12px', borderRadius: 8,
-                            backgroundColor: 'rgba(139,148,158,0.08)',
+                            fontSize: 12, color: '#8B949E', padding: '10px 14px',
+                            borderRadius: 10, backgroundColor: 'rgba(139,148,158,0.06)',
                             border: '1px solid #30363D',
                           }}>
-                            No upcoming home games found — enter date manually below.
+                            No upcoming home games found — enter date below.
                           </div>
                         ) : (
                           <select
-                            className="input"
+                            style={inputStyle}
                             value={ss.selectedPk}
                             onChange={e => selectGame(i, e.target.value)}
                           >
@@ -490,10 +584,9 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                           </select>
                         )}
 
-                        {/* Selected game details */}
                         {selectedGame && (
                           <div style={{
-                            marginTop: 8, padding: '10px 12px', borderRadius: 10,
+                            marginTop: 10, padding: '10px 14px', borderRadius: 10,
                             backgroundColor: 'rgba(31,111,235,0.07)',
                             border: '1px solid rgba(31,111,235,0.2)',
                             display: 'flex', flexDirection: 'column', gap: 5,
@@ -523,72 +616,88 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                         )}
                       </div>
 
-                      {/* Game date (always editable, auto-filled when game selected) */}
-                      <div className="mb-3">
-                        <label className="label">Game Date</label>
-                        <input type="date" className="input" value={stop.game_date}
+                      {/* Game date */}
+                      <div style={{ marginBottom: 20 }}>
+                        <label style={labelStyle}>Game Date</label>
+                        <input type="date" style={inputStyle} value={stop.game_date}
                           onChange={e => setStop(i, 'game_date', e.target.value)} />
                       </div>
 
-                      {/* Tickets & Seats */}
-                      <div className="mb-3">
-                        <div className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#8B949E', letterSpacing: '0.07em' }}>
-                          Tickets &amp; Seats
+                      {/* ── Tickets & Seats subsection ────────────────── */}
+                      <div style={{ borderTop: '1px solid #30363D', paddingTop: 16, marginBottom: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14 }}>
+                          <Ticket size={13} style={{ color: '#F5A623' }} />
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                            Tickets &amp; Seats
+                          </span>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 mb-2">
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
                           <div>
-                            <label className="label">Section</label>
-                            <input type="text" className="input" placeholder="240"
+                            <label style={labelStyle}>Section</label>
+                            <input type="text" style={inputStyle} placeholder="240"
                               value={stop.ticket_section}
                               onChange={e => setStop(i, 'ticket_section', e.target.value)} />
                           </div>
                           <div>
-                            <label className="label">Row</label>
-                            <input type="text" className="input" placeholder="13"
+                            <label style={labelStyle}>Row</label>
+                            <input type="text" style={inputStyle} placeholder="13"
                               value={stop.ticket_row}
                               onChange={e => setStop(i, 'ticket_row', e.target.value)} />
                           </div>
                         </div>
 
-                        <div className="mb-2">
-                          <label className="label">Seats</label>
+                        <div style={{ marginBottom: 12 }}>
+                          <label style={labelStyle}>Seats</label>
                           {stop.ticket_seats.length > 0 && (
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                               {stop.ticket_seats.map((seat, si) => (
                                 <span key={si} style={{
-                                  display: 'inline-flex', alignItems: 'center', gap: 4,
-                                  padding: '3px 10px', borderRadius: 20,
-                                  backgroundColor: 'rgba(31,111,235,0.12)', color: '#1F6FEB',
+                                  display: 'inline-flex', alignItems: 'center',
+                                  borderRadius: 20, overflow: 'hidden',
+                                  border: '1px solid rgba(31,111,235,0.3)',
                                   fontSize: 13, fontWeight: 600,
                                 }}>
-                                  {seat}
-                                  <button type="button" onClick={() => removeSeat(i, si)} style={{
-                                    background: 'none', border: 'none', cursor: 'pointer',
-                                    color: '#1F6FEB', padding: 0, lineHeight: 1,
-                                    display: 'flex', alignItems: 'center',
+                                  <span style={{
+                                    padding: '5px 10px',
+                                    color: '#1F6FEB',
+                                    backgroundColor: 'rgba(31,111,235,0.1)',
                                   }}>
-                                    <X size={12} />
+                                    Seat {seat}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeSeat(i, si)}
+                                    style={{
+                                      padding: '5px 8px',
+                                      backgroundColor: 'rgba(31,111,235,0.15)',
+                                      borderLeft: '1px solid rgba(31,111,235,0.25)',
+                                      border: 'none', cursor: 'pointer',
+                                      color: '#8B949E',
+                                      display: 'flex', alignItems: 'center',
+                                    }}
+                                  >
+                                    <X size={11} />
                                   </button>
                                 </span>
                               ))}
                             </div>
                           )}
-                          <div style={{ display: 'flex', gap: 6 }}>
+                          <div style={{ display: 'flex', gap: 8 }}>
                             <input
                               type="text"
-                              className="input"
-                              placeholder="Seat number"
+                              style={{ ...inputStyle, flex: 1 }}
+                              placeholder="Enter seat number"
                               value={seatInputs[i] ?? ''}
                               onChange={e => setSeatInputs(prev => prev.map((v, idx) => idx === i ? e.target.value : v))}
                               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSeat(i) } }}
-                              style={{ flex: 1 }}
                             />
                             <button type="button" onClick={() => addSeat(i)} style={{
-                              padding: '0 12px', borderRadius: 8,
+                              padding: '0 16px', borderRadius: 10,
                               border: '1px solid #30363D',
                               backgroundColor: '#1C2430', color: '#8B949E',
-                              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
-                              fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
+                              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+                              fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
                             }}>
                               <Plus size={13} /> Add
                             </button>
@@ -596,112 +705,156 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                         </div>
 
                         <div>
-                          <label className="label">
-                            Confirmation #&nbsp;
-                            <span style={{ fontWeight: 400, color: '#8B949E', fontSize: '0.8rem' }}>(optional)</span>
+                          <label style={labelStyle}>
+                            Confirmation #
+                            <span style={{ fontWeight: 400, color: '#484F58', marginLeft: 4 }}>(optional)</span>
                           </label>
-                          <input type="text" className="input" placeholder="ABC-123456"
+                          <input type="text" style={inputStyle} placeholder="ABC-123456"
                             value={stop.ticket_confirmation}
                             onChange={e => setStop(i, 'ticket_confirmation', e.target.value)} />
                         </div>
                       </div>
 
-                      {/* Budget table */}
-                      <table className="w-full">
-                        <thead>
-                          <tr>
-                            <th className="text-left pb-1.5 text-xs font-medium" style={{ color: '#8B949E' }}>Category</th>
-                            <th className="text-left pb-1.5 pl-2 text-xs font-medium" style={{ color: '#8B949E' }}>Est ($)</th>
-                            <th className="text-left pb-1.5 pl-2 text-xs font-medium" style={{ color: '#8B949E' }}>Actual ($)</th>
-                          </tr>
-                        </thead>
-                        <tbody>
+                      {/* ── Budget subsection ─────────────────────────── */}
+                      <div style={{ borderTop: '1px solid #30363D', paddingTop: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12 }}>
+                          <DollarSign size={13} style={{ color: '#3FB950' }} />
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                            Stop Budget
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                           {STOP_CATS.map(cat => (
-                            <tr key={cat.key}>
-                              <td className="py-1 pr-2 text-sm" style={{ color: '#8B949E' }}>{cat.label}</td>
-                              <td className="py-1 pl-2">
-                                <input type="number" min={0} step={0.01} className="input"
-                                  style={{ padding: '3px 8px', fontSize: '0.9rem' }}
-                                  value={stop[`est_${cat.key}` as keyof StopDraft]}
-                                  onChange={e => setStop(i, `est_${cat.key}`, e.target.value)} />
-                              </td>
-                              <td className="py-1 pl-2">
-                                <input type="number" min={0} step={0.01} className="input"
-                                  style={{ padding: '3px 8px', fontSize: '0.9rem' }}
-                                  value={stop[`actual_${cat.key}` as keyof StopDraft]}
-                                  onChange={e => setStop(i, `actual_${cat.key}`, e.target.value)} />
-                              </td>
-                            </tr>
+                            <div key={cat.key} style={{
+                              padding: '12px 14px', borderRadius: 10,
+                              backgroundColor: '#161B22',
+                              border: '1px solid #30363D',
+                            }}>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: '#8B949E', marginBottom: 10 }}>
+                                {cat.icon} {cat.label}
+                              </div>
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                                <div>
+                                  <label style={{ ...labelStyle, fontSize: 11 }}>Est ($)</label>
+                                  <input type="number" min={0} step={0.01} style={inputStyle}
+                                    value={stop[`est_${cat.key}` as keyof StopDraft] as string}
+                                    onChange={e => setStop(i, `est_${cat.key}`, e.target.value)} />
+                                </div>
+                                <div>
+                                  <label style={{ ...labelStyle, fontSize: 11 }}>Actual ($)</label>
+                                  <input type="number" min={0} step={0.01} style={inputStyle}
+                                    value={stop[`actual_${cat.key}` as keyof StopDraft] as string}
+                                    onChange={e => setStop(i, `actual_${cat.key}`, e.target.value)} />
+                                </div>
+                              </div>
+                            </div>
                           ))}
-                        </tbody>
-                      </table>
+                        </div>
+                      </div>
                     </div>
-                  )
-                })}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* ═══ TRIP COSTS ══════════════════════════════════════ */}
+            <SectionHeader icon={<DollarSign size={15} />} label="Trip Costs" />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {([
+                { key: 'travel', label: 'Travel', icon: '✈️' },
+                { key: 'hotel',  label: 'Hotel',  icon: '🏨' },
+              ] as const).map(cat => (
+                <div key={cat.key} style={{
+                  padding: '12px 14px', borderRadius: 10,
+                  backgroundColor: '#0d1117', border: '1px solid #30363D',
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#8B949E', marginBottom: 10 }}>
+                    {cat.icon} {cat.label}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: 11 }}>Est ($)</label>
+                      <input type="number" min={0} step={0.01} style={inputStyle}
+                        value={form[`est_${cat.key}` as keyof typeof form]}
+                        onChange={e => setField(`est_${cat.key}`, e.target.value)} />
+                    </div>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: 11 }}>Actual ($)</label>
+                      <input type="number" min={0} step={0.01} style={inputStyle}
+                        value={form[`actual_${cat.key}` as keyof typeof form]}
+                        onChange={e => setField(`actual_${cat.key}`, e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Grand total */}
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '14px 0', marginTop: 12, borderTop: '1px solid #30363D',
+            }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3' }}>Grand Total</span>
+              <div style={{ display: 'flex', gap: 16 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#3FB950' }}>
+                  Est ${grandEst.toFixed(0)}
+                </span>
+                {grandActual > 0 && (
+                  <span style={{ fontSize: 14, fontWeight: 700, color: grandActual > grandEst ? '#F85149' : '#3FB950' }}>
+                    Actual ${grandActual.toFixed(0)}
+                  </span>
+                )}
               </div>
             </div>
 
-            {/* Trip-level costs */}
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#1F6FEB' }}>
-                Trip Costs (Travel &amp; Hotel)
-              </div>
-              <table className="w-full">
-                <thead>
-                  <tr>
-                    <th className="text-left pb-2 text-xs font-medium" style={{ color: '#8B949E' }}>Category</th>
-                    <th className="text-left pb-2 pl-2 text-xs font-medium" style={{ color: '#8B949E' }}>Estimated ($)</th>
-                    <th className="text-left pb-2 pl-2 text-xs font-medium" style={{ color: '#8B949E' }}>Actual ($)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {([{ key: 'travel', label: 'Travel ✈️' }, { key: 'hotel', label: 'Hotel 🏨' }] as const).map(cat => (
-                    <tr key={cat.key}>
-                      <td className="py-1.5 pr-2 text-sm" style={{ color: '#8B949E' }}>{cat.label}</td>
-                      <td className="py-1.5 pl-2">
-                        <input type="number" min={0} step={0.01} className="input"
-                          style={{ padding: '4px 8px', fontSize: '0.9rem' }}
-                          value={form[`est_${cat.key}` as keyof typeof form]}
-                          onChange={e => setField(`est_${cat.key}`, e.target.value)} />
-                      </td>
-                      <td className="py-1.5 pl-2">
-                        <input type="number" min={0} step={0.01} className="input"
-                          style={{ padding: '4px 8px', fontSize: '0.9rem' }}
-                          value={form[`actual_${cat.key}` as keyof typeof form]}
-                          onChange={e => setField(`actual_${cat.key}`, e.target.value)} />
-                      </td>
-                    </tr>
-                  ))}
-                  <tr style={{ borderTop: '1px solid #30363D' }}>
-                    <td className="pt-2.5 text-sm font-semibold" style={{ color: '#E6EDF3' }}>Grand Total</td>
-                    <td className="pt-2.5 pl-2 font-bold" style={{ color: '#3FB950' }}>${grandEst.toFixed(0)}</td>
-                    <td className="pt-2.5 pl-2 font-bold" style={{ color: grandActual > grandEst ? '#F85149' : '#3FB950' }}>${grandActual.toFixed(0)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            {/* ═══ NOTES ═══════════════════════════════════════════ */}
+            <SectionHeader icon={<FileText size={15} />} label="Notes" />
 
-            {/* Notes */}
-            <div>
-              <label className="label">Notes</label>
-              <textarea className="input" rows={3}
-                placeholder="Hotel name, flight info, car rental..."
-                value={form.notes} onChange={e => setField('notes', e.target.value)}
-                style={{ resize: 'vertical' }} />
-            </div>
+            <textarea
+              style={{ ...inputStyle, resize: 'vertical', minHeight: 88 }}
+              rows={3}
+              placeholder="Hotel name, flight info, car rental…"
+              value={form.notes}
+              onChange={e => setField('notes', e.target.value)}
+            />
 
             {error && (
-              <div className="p-3 rounded-lg text-sm" style={{ backgroundColor: 'rgba(248,81,73,0.1)', color: '#F85149' }}>
+              <div style={{
+                marginTop: 16, padding: '12px 14px', borderRadius: 10, fontSize: 14,
+                backgroundColor: 'rgba(248,81,73,0.1)', color: '#F85149',
+                border: '1px solid rgba(248,81,73,0.25)',
+              }}>
                 {error}
               </div>
             )}
+          </div>
 
-            <div className="flex justify-end gap-3">
-              <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
-              <button type="submit" className="btn-primary" disabled={saving}>
-                {saving ? 'Saving...' : trip ? 'Update Trip' : 'Save Trip'}
-              </button>
-            </div>
+          {/* ── Sticky footer ─────────────────────────────────────── */}
+          <div style={{
+            position: 'sticky', bottom: 0,
+            padding: '14px 20px',
+            backgroundColor: '#161B22',
+            borderTop: '1px solid #30363D',
+            display: 'flex', gap: 10,
+            flexShrink: 0,
+          }}>
+            <button type="button" onClick={onClose} style={{
+              flex: 1, padding: '13px', borderRadius: 10,
+              border: '1px solid #30363D', backgroundColor: '#1C2430',
+              color: '#8B949E', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+            }}>
+              Cancel
+            </button>
+            <button type="submit" style={{
+              flex: 2, padding: '13px', borderRadius: 10, border: 'none',
+              backgroundColor: '#1F6FEB', color: '#ffffff',
+              fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer',
+              opacity: saving ? 0.7 : 1,
+            }} disabled={saving}>
+              {saving ? 'Saving…' : trip ? 'Update Trip' : 'Save Trip'}
+            </button>
           </div>
         </form>
       </div>
