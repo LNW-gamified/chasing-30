@@ -363,11 +363,17 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       tripId = data.id
     }
 
-    await supabase.from('trip_stops').delete().eq('trip_id', tripId)
+    // Delete only stops that were removed from the form (preserves checklist items on kept stops)
+    const currentIds = new Set(stops.filter(s => s.id).map(s => s.id!))
+    const removedIds = (existingStops ?? []).map(s => s.id).filter(id => !currentIds.has(id))
+    if (removedIds.length > 0) {
+      const { error: delErr } = await supabase.from('trip_stops').delete().in('id', removedIds)
+      if (delErr) { setSaving(false); setError(delErr.message); return }
+    }
 
-    const { error: stopsErr } = await supabase.from('trip_stops').insert(
-      stops.map((stop, i) => ({
-        trip_id:             tripId,
+    // Update existing stops in place, insert new ones
+    for (const [i, stop] of stops.entries()) {
+      const payload = {
         stadium_id:          stop.stadium_id,
         game_date:           stop.game_date || null,
         game_time:           stop.game_time || null,
@@ -385,11 +391,18 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
         ticket_row:          stop.ticket_row         || null,
         ticket_seats:        stop.ticket_seats.length > 0 ? stop.ticket_seats : null,
         ticket_confirmation: stop.ticket_confirmation || null,
-      }))
-    )
+      }
+
+      if (stop.id) {
+        const { error: updErr } = await supabase.from('trip_stops').update(payload).eq('id', stop.id)
+        if (updErr) { setSaving(false); setError(updErr.message); return }
+      } else {
+        const { error: insErr } = await supabase.from('trip_stops').insert({ trip_id: tripId, ...payload })
+        if (insErr) { setSaving(false); setError(insErr.message); return }
+      }
+    }
 
     setSaving(false)
-    if (stopsErr) { setError(stopsErr.message); return }
     onSaved()
   }
 

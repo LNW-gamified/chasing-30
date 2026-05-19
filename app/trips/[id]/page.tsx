@@ -64,11 +64,15 @@ export default function TripDetailPage() {
     const [{ data: t }, { data: s }, { data: st }] = await Promise.all([
       supabase.from('trips').select('*, stadium:stadiums(*)').eq('id', id).single(),
       supabase.from('stadiums').select('*').order('name'),
-      supabase.from('trip_stops').select('*, stadium:stadiums(*)').eq('trip_id', id).order('sort_order'),
+      supabase.from('trip_stops').select(
+        'id, trip_id, stadium_id, sort_order, game_date, game_time, opponent, opponent_team_id, ' +
+        'est_tickets, est_food, est_parking, actual_tickets, actual_food, actual_parking, notes, ' +
+        'ticket_section, ticket_row, ticket_seats, ticket_confirmation, created_at, stadium:stadiums(*)'
+      ).eq('trip_id', id).order('sort_order'),
     ])
     setTrip(t as TripWithStadium)
     setStadiums(s ?? [])
-    const loadedStops = (st as TripStop[]) ?? []
+    const loadedStops = (st as unknown as TripStop[]) ?? []
     setStops(loadedStops)
     if (loadedStops.length > 0) {
       const stopIds = loadedStops.map(s => s.id)
