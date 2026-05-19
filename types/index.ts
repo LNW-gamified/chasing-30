@@ -95,6 +95,10 @@ export interface TripStop {
   actual_food: number
   actual_parking: number
   notes: string | null
+  ticket_section: string | null
+  ticket_row: string | null
+  ticket_seats: string[] | null
+  ticket_confirmation: string | null
   created_at: string
   stadium?: Stadium
 }

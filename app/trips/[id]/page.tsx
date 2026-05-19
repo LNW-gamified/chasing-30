@@ -86,6 +86,39 @@ export default function TripDetailPage() {
     await supabase.from('trips')
       .update({ status: 'completed', trip_date: completeDate || null })
       .eq('id', id)
+
+    // Carry ticket info into matching stadium visit records (only if seats empty)
+    for (const stop of stops) {
+      if (!stop.game_date) continue
+      const hasTicket = stop.ticket_section || stop.ticket_row || (stop.ticket_seats && stop.ticket_seats.length > 0)
+      if (!hasTicket) continue
+
+      const { data: matches } = await supabase
+        .from('stadium_visits')
+        .select('id, seat_section, seat_row, seat_number')
+        .eq('stadium_id', stop.stadium_id)
+        .eq('visit_date', stop.game_date)
+
+      for (const visit of matches ?? []) {
+        if (visit.seat_section || visit.seat_row || visit.seat_number) continue
+
+        const seats = stop.ticket_seats ?? []
+        const firstSeat = seats[0] ?? null
+        const extraSeats = seats.slice(1).map(num => ({
+          section: stop.ticket_section ?? '',
+          row:     stop.ticket_row     ?? '',
+          number:  num,
+        }))
+
+        await supabase.from('stadium_visits').update({
+          seat_section:     stop.ticket_section || null,
+          seat_row:         stop.ticket_row     || null,
+          seat_number:      firstSeat,
+          ...(extraSeats.length > 0 ? { additional_seats: extraSeats } : {}),
+        }).eq('id', visit.id)
+      }
+    }
+
     setCompleting(false)
     setShowComplete(false)
     await load()

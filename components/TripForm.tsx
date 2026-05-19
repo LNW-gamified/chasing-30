@@ -66,6 +66,10 @@ interface StopDraft {
   actual_food: string
   actual_parking: string
   notes: string
+  ticket_section: string
+  ticket_row: string
+  ticket_seats: string[]
+  ticket_confirmation: string
 }
 
 interface GameOption {
@@ -106,6 +110,7 @@ function defaultStop(stadiums: Stadium[]): StopDraft {
     est_tickets: '0', est_food: '0', est_parking: '0',
     actual_tickets: '0', actual_food: '0', actual_parking: '0',
     notes: '',
+    ticket_section: '', ticket_row: '', ticket_seats: [], ticket_confirmation: '',
   }
 }
 
@@ -145,6 +150,10 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
         actual_food:    s.actual_food.toString(),
         actual_parking: s.actual_parking.toString(),
         notes:          s.notes ?? '',
+        ticket_section:     s.ticket_section     ?? '',
+        ticket_row:         s.ticket_row         ?? '',
+        ticket_seats:       s.ticket_seats       ?? [],
+        ticket_confirmation: s.ticket_confirmation ?? '',
       }))
     }
     return [defaultStop(stadiums)]
@@ -152,6 +161,10 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
   const [stopSchedules, setStopSchedules] = useState<StopSchedule[]>(() => {
     const n = (existingStops && existingStops.length > 0) ? existingStops.length : 1
     return Array.from({ length: n }, () => emptySchedule())
+  })
+  const [seatInputs, setSeatInputs] = useState<string[]>(() => {
+    const n = (existingStops && existingStops.length > 0) ? existingStops.length : 1
+    return Array.from({ length: n }, () => '')
   })
   const [saving,  setSaving]  = useState(false)
   const [error,   setError]   = useState('')
@@ -244,17 +257,34 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     } : s))
   }
 
+  function addSeat(stopIdx: number) {
+    const val = (seatInputs[stopIdx] ?? '').trim()
+    if (!val) return
+    setStops(prev => prev.map((s, i) =>
+      i === stopIdx ? { ...s, ticket_seats: [...s.ticket_seats, val] } : s
+    ))
+    setSeatInputs(prev => prev.map((v, i) => i === stopIdx ? '' : v))
+  }
+
+  function removeSeat(stopIdx: number, seatIdx: number) {
+    setStops(prev => prev.map((s, i) =>
+      i === stopIdx ? { ...s, ticket_seats: s.ticket_seats.filter((_, si) => si !== seatIdx) } : s
+    ))
+  }
+
   function addStop() {
     const newIdx       = stops.length
     const newStadiumId = stadiums[0]?.id ?? ''
     setStops(prev => [...prev, defaultStop(stadiums)])
     setStopSchedules(prev => [...prev, emptySchedule()])
+    setSeatInputs(prev => [...prev, ''])
     if (newStadiumId) setTimeout(() => fetchGamesForStop(newIdx, newStadiumId), 0)
   }
 
   function removeStop(i: number) {
     setStops(prev => prev.filter((_, idx) => idx !== i))
     setStopSchedules(prev => prev.filter((_, idx) => idx !== i))
+    setSeatInputs(prev => prev.filter((_, idx) => idx !== i))
   }
 
   const stopEst     = stops.reduce((sum, s) =>
@@ -325,6 +355,10 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
         actual_food:    parseFloat(stop.actual_food)    || 0,
         actual_parking: parseFloat(stop.actual_parking) || 0,
         notes:          stop.notes || null,
+        ticket_section:      stop.ticket_section     || null,
+        ticket_row:          stop.ticket_row         || null,
+        ticket_seats:        stop.ticket_seats.length > 0 ? stop.ticket_seats : null,
+        ticket_confirmation: stop.ticket_confirmation || null,
       }))
     )
 
@@ -494,6 +528,82 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                         <label className="label">Game Date</label>
                         <input type="date" className="input" value={stop.game_date}
                           onChange={e => setStop(i, 'game_date', e.target.value)} />
+                      </div>
+
+                      {/* Tickets & Seats */}
+                      <div className="mb-3">
+                        <div className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#8B949E', letterSpacing: '0.07em' }}>
+                          Tickets &amp; Seats
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 mb-2">
+                          <div>
+                            <label className="label">Section</label>
+                            <input type="text" className="input" placeholder="240"
+                              value={stop.ticket_section}
+                              onChange={e => setStop(i, 'ticket_section', e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="label">Row</label>
+                            <input type="text" className="input" placeholder="13"
+                              value={stop.ticket_row}
+                              onChange={e => setStop(i, 'ticket_row', e.target.value)} />
+                          </div>
+                        </div>
+
+                        <div className="mb-2">
+                          <label className="label">Seats</label>
+                          {stop.ticket_seats.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                              {stop.ticket_seats.map((seat, si) => (
+                                <span key={si} style={{
+                                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                                  padding: '3px 10px', borderRadius: 20,
+                                  backgroundColor: 'rgba(31,111,235,0.12)', color: '#1F6FEB',
+                                  fontSize: 13, fontWeight: 600,
+                                }}>
+                                  {seat}
+                                  <button type="button" onClick={() => removeSeat(i, si)} style={{
+                                    background: 'none', border: 'none', cursor: 'pointer',
+                                    color: '#1F6FEB', padding: 0, lineHeight: 1,
+                                    display: 'flex', alignItems: 'center',
+                                  }}>
+                                    <X size={12} />
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <input
+                              type="text"
+                              className="input"
+                              placeholder="Seat number"
+                              value={seatInputs[i] ?? ''}
+                              onChange={e => setSeatInputs(prev => prev.map((v, idx) => idx === i ? e.target.value : v))}
+                              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSeat(i) } }}
+                              style={{ flex: 1 }}
+                            />
+                            <button type="button" onClick={() => addSeat(i)} style={{
+                              padding: '0 12px', borderRadius: 8,
+                              border: '1px solid #30363D',
+                              backgroundColor: '#1C2430', color: '#8B949E',
+                              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                              fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
+                            }}>
+                              <Plus size={13} /> Add
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="label">
+                            Confirmation #&nbsp;
+                            <span style={{ fontWeight: 400, color: '#8B949E', fontSize: '0.8rem' }}>(optional)</span>
+                          </label>
+                          <input type="text" className="input" placeholder="ABC-123456"
+                            value={stop.ticket_confirmation}
+                            onChange={e => setStop(i, 'ticket_confirmation', e.target.value)} />
+                        </div>
                       </div>
 
                       {/* Budget table */}
