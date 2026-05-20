@@ -152,6 +152,7 @@ async function tryPopulateStats(
       mlb_game_pk: gamePk,
       stats_auto_populated: true,
       game_events: gameEvents,
+      boxscore_data: boxscore,
       home_runs:   homeLS.runs   ?? null,
       away_runs:   awayLS.runs   ?? null,
       home_hits:   homeLS.hits   ?? null,
