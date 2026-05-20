@@ -74,6 +74,7 @@ export interface StadiumVisit {
   stats_auto_populated: boolean
   moments: string[] | null
   game_events: string[] | null
+  trip_id: string | null
   created_by: string | null
   created_at: string
   stadium?: Stadium

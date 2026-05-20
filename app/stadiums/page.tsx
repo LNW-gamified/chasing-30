@@ -91,11 +91,12 @@ function hexToRgba(hex: string, alpha: number): string {
 // ─── Stadium card ─────────────────────────────────────────────────────────────
 
 function StadiumCard({
-  stadium, visited, visitDate, nextGame,
+  stadium, visited, visitDate, visitCount, nextGame,
 }: {
   stadium: Stadium
   visited: boolean
   visitDate?: string
+  visitCount?: number
   nextGame?: NextGameInfo
 }) {
   const accent = TEAM_ACCENT[stadium.abbreviation] ?? '#1F6FEB'
@@ -185,6 +186,15 @@ function StadiumCard({
                     border: '1px solid rgba(63,185,80,0.25)',
                     padding: '2px 7px', borderRadius: 999,
                   }}>Visited ✓</span>
+                  {visitCount && visitCount > 1 && (
+                    <span style={{
+                      flexShrink: 0,
+                      fontSize: 10, fontWeight: 700, color: '#F5A623',
+                      backgroundColor: 'rgba(245,166,35,0.12)',
+                      border: '1px solid rgba(245,166,35,0.25)',
+                      padding: '2px 7px', borderRadius: 999,
+                    }}>{visitCount}×</span>
+                  )}
                   {visitDate && (
                     <span style={{
                       fontSize: 11, color: '#8B949E',
@@ -257,6 +267,12 @@ export default function StadiumsPage() {
   const latestVisit = useMemo(() => {
     const map: Record<string, string> = {}
     visits.forEach(v => { if (!map[v.stadium_id]) map[v.stadium_id] = v.visit_date })
+    return map
+  }, [visits])
+
+  const visitCountMap = useMemo(() => {
+    const map: Record<string, number> = {}
+    visits.forEach(v => { map[v.stadium_id] = (map[v.stadium_id] ?? 0) + 1 })
     return map
   }, [visits])
 
@@ -518,6 +534,7 @@ export default function StadiumsPage() {
                   stadium={stadium}
                   visited={visitedIds.has(stadium.id)}
                   visitDate={latestVisit[stadium.id]}
+                  visitCount={visitCountMap[stadium.id]}
                   nextGame={nextGames[stadium.abbreviation]}
                 />
               ))}

@@ -57,6 +57,7 @@ export default function TripDetailPage() {
   const [showComplete,   setShowComplete]   = useState(false)
   const [completeDate,   setCompleteDate]   = useState('')
   const [completing,     setCompleting]     = useState(false)
+  const [completeStep,   setCompleteStep]   = useState('')
   const [checklistItems, setChecklistItems] = useState<StopChecklistItem[]>([])
 
   async function load() {
@@ -104,46 +105,29 @@ export default function TripDetailPage() {
 
   async function handleMarkComplete() {
     setCompleting(true)
-    const supabase = createClient()
-    await supabase.from('trips')
-      .update({ status: 'completed', trip_date: completeDate || null })
-      .eq('id', id)
+    setCompleteStep('Marking trip complete…')
 
-    // Carry ticket info into matching stadium visit records (only if seats currently empty)
-    for (const stop of stops) {
-      if (!stop.game_date) continue
-      const hasTicket = stop.ticket_section || stop.ticket_row || (stop.ticket_seats && stop.ticket_seats.length > 0)
-      if (!hasTicket) continue
+    const res = await fetch('/api/complete-trip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tripId: id, completionDate: completeDate || undefined }),
+    })
 
-      const { data: matches } = await supabase
-        .from('stadium_visits')
-        .select('id, seat_section, seat_row, seat_number')
-        .eq('stadium_id', stop.stadium_id)
-        .eq('visit_date', stop.game_date)
-
-      for (const visit of matches ?? []) {
-        if (visit.seat_section || visit.seat_row || visit.seat_number) continue
-
-        const seats     = stop.ticket_seats ?? []
-        const firstSeat = seats[0] ?? null
-        const extraSeats = seats.slice(1).map(num => ({
-          section: stop.ticket_section ?? '',
-          row:     stop.ticket_row     ?? '',
-          number:  num,
-        }))
-
-        await supabase.from('stadium_visits').update({
-          seat_section: stop.ticket_section || null,
-          seat_row:     stop.ticket_row     || null,
-          seat_number:  firstSeat,
-          ...(extraSeats.length > 0 ? { additional_seats: extraSeats } : {}),
-        }).eq('id', visit.id)
+    if (res.ok) {
+      const result = await res.json()
+      const statsOk = (result.statsResults ?? []).filter((r: any) => r.success).length
+      const statsTotal = result.statsResults?.length ?? 0
+      if (statsTotal > 0) {
+        setCompleteStep(
+          `Visit${result.visitsCreated !== 1 ? 's' : ''} logged · Stats loaded for ${statsOk}/${statsTotal} game${statsTotal !== 1 ? 's' : ''}`
+        )
       }
     }
 
     setCompleting(false)
     setShowComplete(false)
     await load()
+    setCompleteStep('')
   }
 
   if (loading) {
@@ -398,7 +382,7 @@ export default function TripDetailPage() {
                     fontSize: 14, fontWeight: 700, cursor: 'pointer',
                   }}
                 >
-                  {completing ? 'Saving…' : 'Confirm'}
+                  {completing ? (completeStep || 'Saving…') : 'Confirm'}
                 </button>
                 <button
                   onClick={() => setShowComplete(false)}
