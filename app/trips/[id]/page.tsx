@@ -58,6 +58,7 @@ export default function TripDetailPage() {
   const [completeDate,   setCompleteDate]   = useState('')
   const [completing,     setCompleting]     = useState(false)
   const [completeStep,   setCompleteStep]   = useState('')
+  const [completeError,  setCompleteError]  = useState('')
   const [checklistItems, setChecklistItems] = useState<StopChecklistItem[]>([])
 
   async function load() {
@@ -106,22 +107,36 @@ export default function TripDetailPage() {
   async function handleMarkComplete() {
     setCompleting(true)
     setCompleteStep('Marking trip complete…')
+    setCompleteError('')
 
-    const res = await fetch('/api/complete-trip', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tripId: id, completionDate: completeDate || undefined }),
-    })
+    try {
+      const res = await fetch('/api/complete-trip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tripId: id, completionDate: completeDate || undefined }),
+      })
 
-    if (res.ok) {
       const result = await res.json()
-      const statsOk = (result.statsResults ?? []).filter((r: any) => r.success).length
+
+      if (!res.ok) {
+        setCompleteError(result.error ?? `Request failed (${res.status})`)
+        setCompleting(false)
+        setCompleteStep('')
+        return
+      }
+
+      const statsOk    = (result.statsResults ?? []).filter((r: any) => r.success).length
       const statsTotal = result.statsResults?.length ?? 0
       if (statsTotal > 0) {
         setCompleteStep(
           `Visit${result.visitsCreated !== 1 ? 's' : ''} logged · Stats loaded for ${statsOk}/${statsTotal} game${statsTotal !== 1 ? 's' : ''}`
         )
       }
+    } catch (e) {
+      setCompleteError('Network error — please try again')
+      setCompleting(false)
+      setCompleteStep('')
+      return
     }
 
     setCompleting(false)
@@ -359,8 +374,9 @@ export default function TripDetailPage() {
 
           {/* Mark complete panel */}
           {showComplete && (
+            <>
             <div style={{
-              padding: 18, borderRadius: 14, marginBottom: 16,
+              padding: 18, borderRadius: 14, marginBottom: 8,
               backgroundColor: 'rgba(63,185,80,0.08)',
               border: '1px solid rgba(63,185,80,0.25)',
               display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: 12,
@@ -379,13 +395,14 @@ export default function TripDetailPage() {
                   style={{
                     padding: '10px 20px', borderRadius: 10, border: 'none',
                     backgroundColor: '#3FB950', color: '#0B1117',
-                    fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                    fontSize: 14, fontWeight: 700, cursor: completing ? 'default' : 'pointer',
+                    opacity: completing ? 0.75 : 1,
                   }}
                 >
                   {completing ? (completeStep || 'Saving…') : 'Confirm'}
                 </button>
                 <button
-                  onClick={() => setShowComplete(false)}
+                  onClick={() => { setShowComplete(false); setCompleteError('') }}
                   style={{
                     padding: '10px 14px', borderRadius: 10,
                     border: '1px solid #30363D', backgroundColor: '#1C2430',
@@ -396,6 +413,16 @@ export default function TripDetailPage() {
                 </button>
               </div>
             </div>
+            {completeError && (
+              <div style={{
+                marginBottom: 16, padding: '10px 14px', borderRadius: 10,
+                backgroundColor: 'rgba(248,81,73,0.1)', border: '1px solid rgba(248,81,73,0.25)',
+                fontSize: 13, color: '#F85149',
+              }}>
+                {completeError}
+              </div>
+            )}
+            </>
           )}
 
           {/* ── Cost summary bar ───────────────────────────────────── */}
