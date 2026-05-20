@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase'
 import GameDayForm from '@/components/GameDayForm'
 import BoxScore from '@/components/BoxScore'
 import { formatDate } from '@/lib/utils'
-import type { Stadium, StadiumVisit, StadiumNote } from '@/types'
+import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber } from '@/types'
 import { fetchUpcomingHomeGames, type UpcomingGame } from '@/lib/mlb-api'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 import Link from 'next/link'
@@ -43,6 +43,7 @@ const NAV = [
 ]
 
 type MiniStadium = { id: string; league: string; division: string }
+type ActiveTab = 'overview' | 'memories' | 'stadium-info'
 
 function SectionTitle({ icon, children }: { icon: string; children: React.ReactNode }) {
   return (
@@ -52,7 +53,6 @@ function SectionTitle({ icon, children }: { icon: string; children: React.ReactN
     </div>
   )
 }
-
 
 export default function StadiumDetailPage() {
   const params = useParams()
@@ -76,15 +76,21 @@ export default function StadiumDetailPage() {
   const [allStadiums, setAllStadiums] = useState<MiniStadium[]>([])
   const [allGlobalMoments, setAllGlobalMoments] = useState<Set<string>>(new Set())
   const [firstTimeMoments, setFirstTimeMoments] = useState<string[]>([])
+  const [activeTab, setActiveTab] = useState<ActiveTab>('overview')
+  const [retiredNumbers, setRetiredNumbers] = useState<RetiredNumber[]>([])
 
   async function load() {
     const supabase = createClient()
-    const [{ data: s }, { data: v }, { data: n }, { data: av }, { data: as_ }] = await Promise.all([
+    const [
+      { data: s }, { data: v }, { data: n },
+      { data: av }, { data: as_ }, { data: rn },
+    ] = await Promise.all([
       supabase.from('stadiums').select('*').eq('id', id).single(),
       supabase.from('stadium_visits').select('*').eq('stadium_id', id).order('visit_date', { ascending: false }),
       supabase.from('stadium_notes').select('notes').eq('stadium_id', id).maybeSingle(),
       supabase.from('stadium_visits').select('stadium_id, moments'),
       supabase.from('stadiums').select('id, league, division'),
+      supabase.from('retired_numbers').select('*').eq('team_id', id).order('year_retired'),
     ])
     setStadium(s)
     setVisits(v ?? [])
@@ -95,6 +101,7 @@ export default function StadiumDetailPage() {
     setAllVisitedIds(new Set(avRows.map(r => r.stadium_id)))
     setAllGlobalMoments(new Set(avRows.flatMap(r => r.moments ?? [])))
     setAllStadiums((as_ ?? []) as MiniStadium[])
+    setRetiredNumbers((rn ?? []) as RetiredNumber[])
     setLoading(false)
   }
 
@@ -169,7 +176,7 @@ export default function StadiumDetailPage() {
   function openAdd() { setEditingVisit(undefined); setShowForm(true) }
   function openEdit(visit: StadiumVisit) { setEditingVisit(visit); setShowForm(true) }
 
-  // ── Sidebar + skeleton shared layout ────────────────────────────────────────
+  // ── Sidebar ─────────────────────────────────────────────────────────────────
   const sidebar = (
     <aside
       className="hidden md:flex flex-col"
@@ -261,7 +268,7 @@ export default function StadiumDetailPage() {
   const visited = visits.length > 0
   const colors = TEAM_GRADIENTS[stadium.abbreviation] ?? ['#0B1117', '#161B22']
 
-  // Achievements
+  // Achievement progress
   const divStadiums = allStadiums.filter(s => s.league === stadium.league && s.division === stadium.division)
   const divVisited = divStadiums.filter(s => allVisitedIds.has(s.id)).length
   const leagueStadiums = allStadiums.filter(s => s.league === stadium.league)
@@ -272,41 +279,37 @@ export default function StadiumDetailPage() {
     { icon: '⚾', name: `${stadium.league} League`, current: leagueVisited, total: leagueStadiums.length },
   ]
 
+  const TABS: { key: ActiveTab; label: string }[] = [
+    { key: 'overview',     label: 'Overview'     },
+    { key: 'memories',     label: 'Memories'     },
+    { key: 'stadium-info', label: 'Stadium Info' },
+  ]
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0B1117', color: '#E6EDF3' }}>
       {sidebar}
 
       <main className="md:ml-[240px]" style={{ minHeight: '100vh', paddingBottom: 80 }}>
 
-        {/* ── HERO SECTION ──────────────────────────────────────── */}
+        {/* ── HERO ─────────────────────────────────────────────────── */}
         <div style={{ position: 'relative', height: 260, overflow: 'hidden' }}>
-          {/* Gradient fallback */}
           <div style={{
             position: 'absolute', inset: 0,
             background: `linear-gradient(160deg, ${colors[0]} 0%, ${colors[1]} 100%)`,
           }} />
-
-          {/* Stadium photo */}
           {stadiumPhoto && (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={stadiumPhoto}
               alt={stadium.name}
               onError={() => setStadiumPhoto(null)}
-              style={{
-                position: 'absolute', inset: 0,
-                width: '100%', height: '100%', objectFit: 'cover', display: 'block',
-              }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
           )}
-
-          {/* Dark gradient overlay — bottom half */}
           <div style={{
             position: 'absolute', inset: 0,
             background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 65%, rgba(0,0,0,0.82) 100%)',
           }} />
-
-          {/* Top-left: back button + visited badge */}
           <div style={{ position: 'absolute', top: 16, left: 16, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 10 }}>
             <Link href="/stadiums" style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -316,30 +319,12 @@ export default function StadiumDetailPage() {
             }}>
               <ArrowLeft size={15} /> Back
             </Link>
-            {visited && (
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: 5, alignSelf: 'flex-start',
-                backgroundColor: 'rgba(63,185,80,0.82)', backdropFilter: 'blur(6px)',
-                color: '#ffffff', padding: '5px 12px', borderRadius: 20,
-                fontSize: 13, fontWeight: 700,
-              }}>
-                ✓ Visited
-              </div>
-            )}
           </div>
-
-          {/* Bottom text */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 16px 18px', zIndex: 10 }}>
-            <div style={{
-              fontSize: 11, fontWeight: 700, letterSpacing: '0.14em',
-              textTransform: 'uppercase', color: 'rgba(255,255,255,0.75)', marginBottom: 4,
-            }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.75)', marginBottom: 4 }}>
               {stadium.team}
             </div>
-            <h1 style={{
-              margin: '0 0 4px', fontSize: 28, fontWeight: 800, color: '#ffffff',
-              lineHeight: 1.1, textShadow: '0 2px 10px rgba(0,0,0,0.4)',
-            }}>
+            <h1 style={{ margin: '0 0 4px', fontSize: 28, fontWeight: 800, color: '#ffffff', lineHeight: 1.1, textShadow: '0 2px 10px rgba(0,0,0,0.4)' }}>
               {stadium.name}
             </h1>
             <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.78)' }}>
@@ -348,14 +333,11 @@ export default function StadiumDetailPage() {
           </div>
         </div>
 
-        {/* ── Max-width content wrapper ─────────────────────────── */}
+        {/* ── Max-width wrapper ─────────────────────────────────────── */}
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
 
-          {/* ── STATS ROW ──────────────────────────────────────── */}
-          <div style={{
-            backgroundColor: '#161B22', borderBottom: '1px solid #30363D',
-            marginBottom: 24,
-          }}>
+          {/* ── STATS ROW ────────────────────────────────────────────── */}
+          <div style={{ backgroundColor: '#161B22', borderBottom: '1px solid #30363D' }}>
             <div style={{ display: 'flex' }}>
               {[
                 { value: stadium.capacity ? stadium.capacity.toLocaleString() : '—', label: 'Capacity' },
@@ -373,50 +355,65 @@ export default function StadiumDetailPage() {
             </div>
           </div>
 
-          <div style={{ padding: '0 16px' }}>
-
-            {/* ── ACTION BUTTONS ─────────────────────────────────── */}
-            <div style={{ marginBottom: 32 }}>
-              {visited ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#3FB950', fontWeight: 700, fontSize: 15 }}>
-                    ✓ You&apos;ve been here!
-                    <span style={{ color: '#8B949E', fontWeight: 500, fontSize: 13 }}>
-                      {visits.length} game{visits.length !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <button
-                    onClick={openAdd}
-                    style={{
-                      width: '100%', padding: '13px', borderRadius: 12, fontSize: 15, fontWeight: 700,
-                      backgroundColor: '#1F6FEB', color: '#ffffff', border: 'none', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                    }}
-                  >
-                    <Plus size={16} /> Add Memory
-                  </button>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      onClick={shareStadium}
-                      style={{
-                        flex: 1, padding: '10px', borderRadius: 10, fontSize: 13, fontWeight: 600,
-                        border: '1.5px solid #30363D', background: '#1C2430', cursor: 'pointer', color: '#8B949E',
-                      }}
-                    >
-                      Share
-                    </button>
-                    <button
-                      onClick={undoLastVisit}
-                      style={{
-                        flex: 1, padding: '10px', borderRadius: 10, fontSize: 13, fontWeight: 600,
-                        border: '1.5px solid rgba(248,81,73,0.25)', background: 'rgba(248,81,73,0.07)', cursor: 'pointer', color: '#F85149',
-                      }}
-                    >
-                      Undo Last
-                    </button>
+          {/* ── CELEBRATORY BANNER + ACTION BUTTONS ──────────────────── */}
+          <div style={{ padding: '16px 16px 0' }}>
+            {visited ? (
+              <div style={{ marginBottom: 16 }}>
+                {/* Team-color gradient banner */}
+                <div style={{
+                  background: `linear-gradient(135deg, ${colors[0]}E6 0%, ${colors[1]}E6 100%)`,
+                  borderRadius: 14, padding: '18px 20px', marginBottom: 12,
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <TeamLogo abbreviation={stadium.abbreviation} size={40} />
+                    <div>
+                      <div style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', lineHeight: 1.1 }}>
+                        ⚾ You&apos;ve been here!
+                      </div>
+                      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.82)', marginTop: 3 }}>
+                        {visits.length} game{visits.length !== 1 ? 's' : ''} · Last visited {formatDate(visits[0].visit_date)}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              ) : (
+                {/* Primary action */}
+                <button
+                  onClick={openAdd}
+                  style={{
+                    width: '100%', padding: '13px', borderRadius: 12, fontSize: 15, fontWeight: 700,
+                    backgroundColor: '#1F6FEB', color: '#ffffff', border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                    marginBottom: 8,
+                  }}
+                >
+                  <Plus size={16} /> Add Memory
+                </button>
+                {/* Secondary actions */}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={shareStadium}
+                    style={{
+                      flex: 1, padding: '9px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+                      border: '1.5px solid #30363D', background: '#1C2430', cursor: 'pointer', color: '#8B949E',
+                    }}
+                  >
+                    Share
+                  </button>
+                  <button
+                    onClick={undoLastVisit}
+                    style={{
+                      flex: 1, padding: '9px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+                      border: '1.5px solid rgba(248,81,73,0.25)', background: 'rgba(248,81,73,0.07)', cursor: 'pointer', color: '#F85149',
+                    }}
+                  >
+                    Undo Last
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ marginBottom: 16 }}>
                 <button
                   onClick={openAdd}
                   style={{
@@ -428,303 +425,403 @@ export default function StadiumDetailPage() {
                 >
                   ✓ Mark Visited
                 </button>
-              )}
-            </div>
+              </div>
+            )}
+          </div>
 
-            {/* ── ACHIEVEMENT PROGRESS ─────────────────────────── */}
-            <section style={{ marginBottom: 32 }}>
-              <SectionTitle icon="🏆">Achievement Progress</SectionTitle>
-              <div style={{
-                backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D',
-                overflow: 'hidden',
-              }}>
-                {achievements.map(({ icon, name, current, total }, i) => (
-                  <div key={name} style={{
-                    padding: '14px 16px',
-                    borderBottom: i < achievements.length - 1 ? '1px solid #30363D' : 'none',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                      <span style={{ fontSize: 20 }}>{icon}</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>{name}</span>
-                          <span style={{ fontSize: 13, color: '#8B949E', flexShrink: 0 }}>{current} of {total}</span>
-                        </div>
-                        <div style={{ height: 7, backgroundColor: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
-                          <div style={{
-                            height: '100%', borderRadius: 4, transition: 'width 0.6s',
-                            backgroundColor: '#3FB950',
-                            width: `${Math.min((current / total) * 100, 100)}%`,
-                          }} />
+          {/* ── STICKY TAB BAR ───────────────────────────────────────── */}
+          <div style={{
+            position: 'sticky', top: 0, zIndex: 20,
+            backgroundColor: '#161B22', borderBottom: '1px solid #30363D',
+            borderTop: '1px solid #30363D',
+          }}>
+            <div style={{ display: 'flex', padding: '0 4px' }}>
+              {TABS.map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setActiveTab(key)}
+                  style={{
+                    flex: 1, padding: '12px 8px', fontSize: 13, fontWeight: activeTab === key ? 700 : 500,
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: activeTab === key ? '#E6EDF3' : '#8B949E',
+                    borderBottom: activeTab === key ? '2px solid #1F6FEB' : '2px solid transparent',
+                    transition: 'color 0.15s, border-color 0.15s',
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── TAB CONTENT ──────────────────────────────────────────── */}
+          <div style={{ padding: '24px 16px' }}>
+
+            {/* ── OVERVIEW TAB ─────────────────────────────────────── */}
+            {activeTab === 'overview' && (
+              <>
+                {/* Achievement Progress */}
+                <section style={{ marginBottom: 32 }}>
+                  <SectionTitle icon="🏆">Achievement Progress</SectionTitle>
+                  <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
+                    {achievements.map(({ icon, name, current, total }, i) => (
+                      <div key={name} style={{ padding: '14px 16px', borderBottom: i < achievements.length - 1 ? '1px solid #30363D' : 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                          <span style={{ fontSize: 20 }}>{icon}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                              <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>{name}</span>
+                              <span style={{ fontSize: 13, color: '#8B949E', flexShrink: 0 }}>{current} of {total}</span>
+                            </div>
+                            <div style={{ height: 7, backgroundColor: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
+                              <div style={{
+                                height: '100%', borderRadius: 4, transition: 'width 0.6s',
+                                backgroundColor: '#3FB950',
+                                width: `${Math.min((current / total) * 100, 100)}%`,
+                              }} />
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </section>
+                </section>
 
-            {/* ── MEMORIES SECTION ─────────────────────────────── */}
-            <section style={{ marginBottom: 32 }}>
-              <SectionTitle icon="📷">Memories</SectionTitle>
-              {visits.length === 0 ? (
-                <div style={{
-                  backgroundColor: '#161B22', borderRadius: 14, border: '2px dashed #30363D',
-                  padding: '40px 24px', textAlign: 'center',
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-                    <TeamLogo abbreviation={stadium.abbreviation} size={60} />
-                  </div>
-                  <div style={{ fontWeight: 700, fontSize: 16, color: '#E6EDF3', marginBottom: 6 }}>
-                    Your first memory at {stadium.name}
-                  </div>
-                  <div style={{ fontSize: 14, color: '#8B949E', marginBottom: 20 }}>
-                    Photos, notes, game scores — all in one place
-                  </div>
-                  <button
-                    onClick={openAdd}
-                    style={{
-                      padding: '10px 24px', borderRadius: 10, fontSize: 14, fontWeight: 700,
-                      backgroundColor: '#1F6FEB', color: '#ffffff', border: 'none', cursor: 'pointer',
-                      display: 'inline-flex', alignItems: 'center', gap: 6,
-                    }}
-                  >
-                    <Plus size={14} /> Add Memory
-                  </button>
-                </div>
-              ) : (
-                <>
-                  {/* 2-column photo grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-                    {visits.map((visit) => {
-                      const isExpanded = expandedVisit === visit.id
-                      return (
-                        <button
-                          key={visit.id}
-                          onClick={() => setExpandedVisit(isExpanded ? null : visit.id)}
+                {/* Upcoming Home Games */}
+                {upcomingGames.length > 0 && (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle icon="📅">Upcoming Home Games</SectionTitle>
+                    <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #30363D' }}>
+                      <div style={{ backgroundColor: '#0B1117' }}>
+                        {upcomingGames.map((g, i) => {
+                          const dt = new Date(g.gameDate)
+                          const dayAbbr = dt.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/Los_Angeles' })
+                          const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })
+                          const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
+                          return (
+                            <div key={g.gamePk} style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                              padding: '12px 16px',
+                              borderBottom: i < upcomingGames.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                            }}>
+                              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                                <div style={{ textAlign: 'center', minWidth: 36 }}>
+                                  <div style={{ fontSize: 10, color: '#8B949E', fontWeight: 600 }}>{dayAbbr}</div>
+                                  <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 700 }}>{dateStr}</div>
+                                </div>
+                                <div style={{ fontWeight: 700, fontSize: 14, color: '#E6EDF3' }}>
+                                  {g.awayTeam} @ {g.homeTeam}
+                                </div>
+                              </div>
+                              <div style={{ fontSize: 13, color: '#8B949E' }}>{timeStr} PT</div>
+                            </div>
+                          )
+                        })}
+                        <a
+                          href="https://www.mlb.com/schedule"
+                          target="_blank"
+                          rel="noopener noreferrer"
                           style={{
-                            border: `2px solid ${isExpanded ? '#3FB950' : 'transparent'}`,
-                            borderRadius: 12, overflow: 'hidden', cursor: 'pointer',
-                            padding: 0, backgroundColor: 'transparent', textAlign: 'left', width: '100%',
+                            display: 'block', padding: '12px 16px', fontSize: 14, fontWeight: 600,
+                            color: '#1F6FEB', textDecoration: 'none',
+                            borderTop: '1px solid rgba(255,255,255,0.06)',
                           }}
                         >
-                          <div style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden' }}>
-                            {visit.photo_url ? (
-                              /* eslint-disable-next-line @next/next/no-img-element */
-                              <img
-                                src={visit.photo_url}
-                                alt={`Game ${formatDate(visit.visit_date)}`}
-                                style={{
+                          See Full Schedule →
+                        </a>
+                      </div>
+                    </div>
+                  </section>
+                )}
+
+                {/* Notes */}
+                <section style={{ marginBottom: 32 }}>
+                  <SectionTitle icon="💬">Notes</SectionTitle>
+                  {editingNote ? (
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: 16 }}>
+                      <textarea
+                        rows={4}
+                        value={noteInput}
+                        onChange={e => setNoteInput(e.target.value)}
+                        placeholder={`Parking tips, best food spots, recommended seats at ${stadium.name}...`}
+                        autoFocus
+                        style={{
+                          width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #30363D',
+                          fontSize: 14, color: '#E6EDF3', backgroundColor: '#1C2430',
+                          resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
+                        }}
+                      />
+                      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                        <button
+                          onClick={saveNote}
+                          disabled={savingNote}
+                          style={{
+                            padding: '9px 18px', borderRadius: 8, fontSize: 14, fontWeight: 700,
+                            backgroundColor: '#1F6FEB', color: '#0B1117', border: 'none', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: 6,
+                          }}
+                        >
+                          <Save size={14} /> {savingNote ? 'Saving…' : 'Save Note'}
+                        </button>
+                        <button
+                          onClick={() => setEditingNote(false)}
+                          style={{ padding: '9px 18px', borderRadius: 8, fontSize: 14, fontWeight: 600, border: '1.5px solid #30363D', backgroundColor: '#1C2430', cursor: 'pointer', color: '#8B949E' }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : stadiumNote ? (
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#E6EDF3', backgroundColor: 'rgba(139,148,158,0.12)', padding: '3px 10px', borderRadius: 20 }}>
+                          General
+                        </span>
+                        <button
+                          onClick={() => { setNoteInput(stadiumNote); setEditingNote(true) }}
+                          style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid #30363D', background: '#1C2430', cursor: 'pointer', fontSize: 13, color: '#8B949E', display: 'flex', alignItems: 'center', gap: 4 }}
+                        >
+                          <Pencil size={12} /> Edit
+                        </button>
+                      </div>
+                      <div style={{ fontSize: 14, color: '#E6EDF3', fontStyle: 'italic', lineHeight: 1.6 }}>
+                        &ldquo;{stadiumNote}&rdquo;
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '2px dashed #30363D', padding: '32px 24px', textAlign: 'center' }}>
+                      <div style={{ fontSize: 28, marginBottom: 8 }}>💬</div>
+                      <div style={{ fontWeight: 700, fontSize: 15, color: '#E6EDF3', marginBottom: 4 }}>Be the first to share</div>
+                      <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 16 }}>Parking, food, best seats...</div>
+                      <button
+                        onClick={() => { setNoteInput(''); setEditingNote(true) }}
+                        style={{ padding: '9px 20px', borderRadius: 8, fontSize: 14, fontWeight: 700, border: '1.5px solid #30363D', backgroundColor: '#1C2430', cursor: 'pointer', color: '#8B949E' }}
+                      >
+                        + Add a Note
+                      </button>
+                    </div>
+                  )}
+                </section>
+              </>
+            )}
+
+            {/* ── MEMORIES TAB ─────────────────────────────────────── */}
+            {activeTab === 'memories' && (
+              <section>
+                {visits.length === 0 ? (
+                  <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '2px dashed #30363D', padding: '40px 24px', textAlign: 'center' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                      <TeamLogo abbreviation={stadium.abbreviation} size={60} />
+                    </div>
+                    <div style={{ fontWeight: 700, fontSize: 16, color: '#E6EDF3', marginBottom: 6 }}>
+                      Your first memory at {stadium.name}
+                    </div>
+                    <div style={{ fontSize: 14, color: '#8B949E', marginBottom: 20 }}>
+                      Photos, notes, game scores — all in one place
+                    </div>
+                    <button
+                      onClick={openAdd}
+                      style={{
+                        padding: '10px 24px', borderRadius: 10, fontSize: 14, fontWeight: 700,
+                        backgroundColor: '#1F6FEB', color: '#ffffff', border: 'none', cursor: 'pointer',
+                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                      }}
+                    >
+                      <Plus size={14} /> Add Memory
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {/* 2-column thumbnail grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+                      {visits.map((visit) => {
+                        const isExpanded = expandedVisit === visit.id
+                        const hasScore = visit.home_runs != null && visit.away_runs != null
+                        return (
+                          <button
+                            key={visit.id}
+                            onClick={() => setExpandedVisit(isExpanded ? null : visit.id)}
+                            style={{
+                              border: `2px solid ${isExpanded ? '#3FB950' : 'transparent'}`,
+                              borderRadius: 12, overflow: 'hidden', cursor: 'pointer',
+                              padding: 0, backgroundColor: 'transparent', textAlign: 'left', width: '100%',
+                            }}
+                          >
+                            <div style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden' }}>
+                              {visit.photo_url ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img
+                                  src={visit.photo_url}
+                                  alt={`Game ${formatDate(visit.visit_date)}`}
+                                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                />
+                              ) : (
+                                <div style={{
                                   position: 'absolute', inset: 0,
-                                  width: '100%', height: '100%', objectFit: 'cover', display: 'block',
-                                }}
-                              />
-                            ) : (
+                                  background: `linear-gradient(160deg, ${colors[0]}, ${colors[1]})`,
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                }}>
+                                  <TeamLogo abbreviation={stadium.abbreviation} size={44} />
+                                </div>
+                              )}
+                              {/* Bottom overlay */}
                               <div style={{
-                                position: 'absolute', inset: 0,
-                                background: `linear-gradient(160deg, ${colors[0]}, ${colors[1]})`,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                position: 'absolute', bottom: 0, left: 0, right: 0,
+                                background: 'linear-gradient(to top, rgba(0,0,0,0.82), transparent)',
+                                padding: '20px 8px 8px',
                               }}>
-                                <TeamLogo abbreviation={stadium.abbreviation} size={44} />
-                                {visit.home_runs != null && visit.away_runs != null && (
-                                  <div style={{
-                                    position: 'absolute', bottom: 28, left: 0, right: 0,
-                                    textAlign: 'center', fontSize: 20, fontWeight: 900,
-                                    color: '#ffffff', textShadow: '0 2px 8px rgba(0,0,0,0.5)',
-                                  }}>
-                                    {visit.away_runs}–{visit.home_runs}
+                                <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>
+                                  {formatDate(visit.visit_date)}
+                                </div>
+                                {hasScore ? (
+                                  <div style={{ fontSize: 13, fontWeight: 900, color: '#ffffff', marginTop: 1, lineHeight: 1.2 }}>
+                                    {visit.visiting_team} {visit.away_runs} · {visit.home_team} {visit.home_runs}
+                                  </div>
+                                ) : (
+                                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {visit.home_team} vs {visit.visiting_team}
                                   </div>
                                 )}
                               </div>
-                            )}
-                            <div style={{
-                              position: 'absolute', bottom: 0, left: 0, right: 0,
-                              background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)',
-                              padding: '20px 10px 8px',
-                            }}>
-                              <div style={{ fontSize: 11, fontWeight: 700, color: '#ffffff' }}>
-                                {formatDate(visit.visit_date)}
-                              </div>
-                              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {visit.home_team} vs {visit.visiting_team}
-                              </div>
                             </div>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
+                          </button>
+                        )
+                      })}
+                    </div>
 
-                  {/* Expanded game detail */}
-                  {expandedVisit && (() => {
-                    const visit = visits.find(v => v.id === expandedVisit)
-                    if (!visit) return null
-                    return (
-                      <BoxScore
-                        visit={visit}
-                        stadium={stadium}
-                        firstTimeMoments={firstTimeMoments}
-                        fetchingStats={fetchingStats === visit.id}
-                        statsError={statsError[visit.id] ?? null}
-                        onEdit={() => openEdit(visit)}
-                        onDelete={() => { deleteVisit(visit.id) }}
-                      />
-                    )
-                  })()}
-                </>
-              )}
-            </section>
-
-            {/* ── UPCOMING HOME GAMES ───────────────────────────── */}
-            {upcomingGames.length > 0 && (
-              <section style={{ marginBottom: 32 }}>
-                <SectionTitle icon="📅">Upcoming Home Games</SectionTitle>
-                <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #30363D' }}>
-                  <div style={{ backgroundColor: '#0B1117' }}>
-                    {upcomingGames.map((g, i) => {
-                      const dt = new Date(g.gameDate)
-                      const dayAbbr = dt.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/Los_Angeles' })
-                      const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })
-                      const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
+                    {/* Expanded BoxScore */}
+                    {expandedVisit && (() => {
+                      const visit = visits.find(v => v.id === expandedVisit)
+                      if (!visit) return null
                       return (
-                        <div key={g.gamePk} style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          padding: '12px 16px',
-                          borderBottom: i < upcomingGames.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
-                        }}>
-                          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                            <div style={{ textAlign: 'center', minWidth: 36 }}>
-                              <div style={{ fontSize: 10, color: '#8B949E', fontWeight: 600 }}>{dayAbbr}</div>
-                              <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 700 }}>{dateStr}</div>
-                            </div>
-                            <div style={{ fontWeight: 700, fontSize: 14, color: '#E6EDF3' }}>
-                              {g.awayTeam} @ {g.homeTeam}
-                            </div>
-                          </div>
-                          <div style={{ fontSize: 13, color: '#8B949E' }}>{timeStr} PT</div>
-                        </div>
+                        <BoxScore
+                          visit={visit}
+                          stadium={stadium}
+                          firstTimeMoments={firstTimeMoments}
+                          fetchingStats={fetchingStats === visit.id}
+                          statsError={statsError[visit.id] ?? null}
+                          onEdit={() => openEdit(visit)}
+                          onDelete={() => { deleteVisit(visit.id) }}
+                        />
                       )
-                    })}
-                    <a
-                      href="https://www.mlb.com/schedule"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: 'block', padding: '12px 16px', fontSize: 14, fontWeight: 600,
-                        color: '#1F6FEB', textDecoration: 'none',
-                        borderTop: '1px solid rgba(255,255,255,0.06)',
-                      }}
-                    >
-                      See Full Schedule →
-                    </a>
-                  </div>
-                </div>
+                    })()}
+                  </>
+                )}
               </section>
             )}
 
-            {/* ── NOTES ─────────────────────────────────────────── */}
-            <section style={{ marginBottom: 32 }}>
-              <SectionTitle icon="💬">Notes</SectionTitle>
-              {editingNote ? (
-                <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: 16 }}>
-                  <textarea
-                    rows={4}
-                    value={noteInput}
-                    onChange={e => setNoteInput(e.target.value)}
-                    placeholder={`Parking tips, best food spots, recommended seats at ${stadium.name}...`}
-                    autoFocus
-                    style={{
-                      width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #30363D',
-                      fontSize: 14, color: '#E6EDF3', backgroundColor: '#1C2430',
-                      resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
-                    }}
-                  />
-                  <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                    <button
-                      onClick={saveNote}
-                      disabled={savingNote}
+            {/* ── STADIUM INFO TAB ─────────────────────────────────── */}
+            {activeTab === 'stadium-info' && (
+              <>
+                {/* Retired Numbers */}
+                {retiredNumbers.length > 0 && (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle icon="🔢">Retired Numbers</SectionTitle>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {retiredNumbers.map(rn => (
+                        <div key={rn.id} style={{
+                          backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D',
+                          padding: '10px 14px', textAlign: 'center', minWidth: 72,
+                        }}>
+                          <div style={{ fontSize: 24, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{rn.number}</div>
+                          <div style={{ fontSize: 11, color: '#8B949E', marginTop: 4, lineHeight: 1.3 }}>{rn.player_name}</div>
+                          <div style={{ fontSize: 10, color: '#484F58', marginTop: 2 }}>{rn.year_retired}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* About */}
+                <section style={{ marginBottom: 32 }}>
+                  <SectionTitle icon="🏟️">About</SectionTitle>
+                  <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
+                    {[
+                      { label: 'Full Name', value: stadium.name },
+                      { label: 'Team', value: stadium.team },
+                      { label: 'City', value: `${stadium.city}, ${stadium.state}` },
+                      { label: 'League / Division', value: `${stadium.league} ${stadium.division}` },
+                      stadium.capacity ? { label: 'Capacity', value: stadium.capacity.toLocaleString() } : null,
+                      stadium.opened ? { label: 'Opened', value: String(stadium.opened) } : null,
+                      stadium.surface ? { label: 'Surface', value: stadium.surface } : null,
+                    ].filter(Boolean).map((row, i, arr) => (
+                      <div key={row!.label} style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '12px 16px',
+                        borderBottom: i < arr.length - 1 ? '1px solid #30363D' : 'none',
+                      }}>
+                        <span style={{ fontSize: 13, color: '#8B949E' }}>{row!.label}</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{row!.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Directions & Links */}
+                <section style={{ marginBottom: 32 }}>
+                  <SectionTitle icon="🗺️">Directions &amp; Links</SectionTitle>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <a
+                      href={`https://maps.google.com/?q=${encodeURIComponent(stadium.name + ' ' + stadium.city + ' ' + stadium.state)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       style={{
-                        padding: '9px 18px', borderRadius: 8, fontSize: 14, fontWeight: 700,
-                        backgroundColor: '#1F6FEB', color: '#0B1117', border: 'none', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', gap: 6,
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '14px 16px', borderRadius: 12, textDecoration: 'none',
+                        backgroundColor: '#161B22', border: '1px solid #30363D',
                       }}
                     >
-                      <Save size={14} /> {savingNote ? 'Saving…' : 'Save Note'}
-                    </button>
-                    <button
-                      onClick={() => setEditingNote(false)}
-                      style={{ padding: '9px 18px', borderRadius: 8, fontSize: 14, fontWeight: 600, border: '1.5px solid #30363D', backgroundColor: '#1C2430', cursor: 'pointer', color: '#8B949E' }}
+                      <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>📍 Google Maps</span>
+                      <span style={{ fontSize: 13, color: '#1F6FEB' }}>Open ↗</span>
+                    </a>
+                    <a
+                      href={`https://www.mlb.com/${stadium.abbreviation.toLowerCase()}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '14px 16px', borderRadius: 12, textDecoration: 'none',
+                        backgroundColor: '#161B22', border: '1px solid #30363D',
+                      }}
                     >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : stadiumNote ? (
-                <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: 16 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                    <span style={{
-                      fontSize: 11, fontWeight: 700, color: '#E6EDF3',
-                      backgroundColor: 'rgba(139,148,158,0.12)', padding: '3px 10px', borderRadius: 20,
-                    }}>
-                      General
-                    </span>
-                    <button
-                      onClick={() => { setNoteInput(stadiumNote); setEditingNote(true) }}
-                      style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid #30363D', background: '#1C2430', cursor: 'pointer', fontSize: 13, color: '#8B949E', display: 'flex', alignItems: 'center', gap: 4 }}
+                      <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>⚾ Team Website</span>
+                      <span style={{ fontSize: 13, color: '#1F6FEB' }}>Open ↗</span>
+                    </a>
+                    <a
+                      href={`https://www.mlb.com/schedule/${stadium.abbreviation.toLowerCase()}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '14px 16px', borderRadius: 12, textDecoration: 'none',
+                        backgroundColor: '#161B22', border: '1px solid #30363D',
+                      }}
                     >
-                      <Pencil size={12} /> Edit
-                    </button>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>📅 Home Schedule</span>
+                      <span style={{ fontSize: 13, color: '#1F6FEB' }}>Open ↗</span>
+                    </a>
                   </div>
-                  <div style={{ fontSize: 14, color: '#E6EDF3', fontStyle: 'italic', lineHeight: 1.6 }}>
-                    &ldquo;{stadiumNote}&rdquo;
-                  </div>
-                </div>
-              ) : (
-                <div style={{
-                  backgroundColor: '#161B22', borderRadius: 14, border: '2px dashed #30363D',
-                  padding: '32px 24px', textAlign: 'center',
-                }}>
-                  <div style={{ fontSize: 28, marginBottom: 8 }}>💬</div>
-                  <div style={{ fontWeight: 700, fontSize: 15, color: '#E6EDF3', marginBottom: 4 }}>
-                    Be the first to share
-                  </div>
-                  <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 16 }}>
-                    Parking, food, best seats...
-                  </div>
-                  <button
-                    onClick={() => { setNoteInput(''); setEditingNote(true) }}
-                    style={{
-                      padding: '9px 20px', borderRadius: 8, fontSize: 14, fontWeight: 700,
-                      border: '1.5px solid #30363D', backgroundColor: '#1C2430', cursor: 'pointer', color: '#8B949E',
-                    }}
-                  >
-                    + Add a Note
-                  </button>
-                </div>
-              )}
-            </section>
+                </section>
+              </>
+            )}
 
-          </div>{/* /padding wrapper */}
+          </div>{/* /tab content */}
         </div>{/* /max-width */}
       </main>
 
-      {/* ── Mobile bottom tab bar ────────────────────────────────── */}
       {bottomNav}
 
-      {/* ── GameDayForm modal ────────────────────────────────────── */}
       {showForm && stadium && (
         <GameDayForm
           stadium={stadium}
           visit={editingVisit}
           onClose={() => { setShowForm(false); setEditingVisit(undefined) }}
           onSaved={(savedMoments) => {
-            // Detect first-evers using pre-save state (before reload overwrites it)
             const otherMoments = new Set(
               visits
                 .filter(v => v.id !== editingVisit?.id)
                 .flatMap(v => v.moments ?? [])
             )
-            // A moment is a "first" if it's not in any other visit globally
             const firsts = savedMoments.filter(
               m => !allGlobalMoments.has(m) || !otherMoments.has(m)
             )

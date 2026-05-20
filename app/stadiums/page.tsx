@@ -9,7 +9,6 @@ import TeamLogo from '@/components/TeamLogo'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type FilterVisited = 'all' | 'visited' | 'unvisited'
 type Category = 'mlb' | 'historical' | 'spring'
 type SortKey = 'team' | 'name' | 'state' | 'division'
 interface VisitRow { stadium_id: string; visit_date: string }
@@ -41,26 +40,6 @@ const TEAM_NICKNAME: Record<string, string> = {
   TOR: 'Blue Jays', WSH: 'Nationals',
 }
 
-// ─── Real-world capacity & year fallbacks ─────────────────────────────────────
-
-const STADIUM_INFO: Record<string, { capacity: number; opened: number }> = {
-  ARI: { capacity: 48686, opened: 1998 }, ATL: { capacity: 41084, opened: 2017 },
-  BAL: { capacity: 44970, opened: 1992 }, BOS: { capacity: 37755, opened: 1912 },
-  CHC: { capacity: 41649, opened: 1914 }, CWS: { capacity: 40615, opened: 1991 },
-  CIN: { capacity: 42319, opened: 2003 }, CLE: { capacity: 34830, opened: 1994 },
-  COL: { capacity: 46897, opened: 1995 }, DET: { capacity: 41083, opened: 2000 },
-  HOU: { capacity: 41168, opened: 2000 }, KC:  { capacity: 37903, opened: 1973 },
-  LAA: { capacity: 45517, opened: 1966 }, LAD: { capacity: 56000, opened: 1962 },
-  MIA: { capacity: 36742, opened: 2012 }, MIL: { capacity: 41900, opened: 2001 },
-  MIN: { capacity: 38544, opened: 2010 }, NYM: { capacity: 41922, opened: 2009 },
-  NYY: { capacity: 47309, opened: 2009 }, OAK: { capacity: 46765, opened: 1966 },
-  PHI: { capacity: 43651, opened: 2004 }, PIT: { capacity: 38747, opened: 2001 },
-  SD:  { capacity: 40162, opened: 2004 }, SF:  { capacity: 41265, opened: 2000 },
-  SEA: { capacity: 47929, opened: 1999 }, STL: { capacity: 44383, opened: 2006 },
-  TB:  { capacity: 25000, opened: 1990 }, TEX: { capacity: 40518, opened: 2020 },
-  TOR: { capacity: 49286, opened: 1989 }, WSH: { capacity: 41313, opened: 2008 },
-}
-
 // ─── Nav ─────────────────────────────────────────────────────────────────────
 
 const NAV = [
@@ -86,6 +65,10 @@ function hexToRgba(hex: string, alpha: number): string {
   const g = parseInt(hex.slice(3, 5), 16)
   const b = parseInt(hex.slice(5, 7), 16)
   return `rgba(${r},${g},${b},${alpha})`
+}
+
+function scrollToSection(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 // ─── Stadium card ─────────────────────────────────────────────────────────────
@@ -119,7 +102,7 @@ function StadiumCard({
           transition: 'transform 0.15s, box-shadow 0.15s, border-color 0.15s, opacity 0.15s',
         }}
       >
-        {/* Gradient hero — team color washing down from top */}
+        {/* Gradient hero */}
         <div style={{
           background: `linear-gradient(to bottom, ${hexToRgba(accent, 0.45)} 0%, transparent 100%)`,
           paddingTop: 20,
@@ -143,14 +126,7 @@ function StadiumCard({
         </div>
 
         {/* Content */}
-        <div style={{
-          padding: '8px 12px 10px',
-          display: 'flex',
-          flexDirection: 'column',
-          flex: 1,
-          gap: 2,
-        }}>
-          {/* Team name */}
+        <div style={{ padding: '8px 12px 10px', display: 'flex', flexDirection: 'column', flex: 1, gap: 2 }}>
           <div style={{
             fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2,
             display: '-webkit-box', WebkitLineClamp: 2,
@@ -158,7 +134,6 @@ function StadiumCard({
           }}>
             {stadium.team}
           </div>
-          {/* Stadium name */}
           <div style={{
             fontSize: 11, color: '#8B949E', lineHeight: 1.3,
             display: '-webkit-box', WebkitLineClamp: 2,
@@ -166,7 +141,6 @@ function StadiumCard({
           }}>
             {stadium.name}
           </div>
-          {/* City */}
           <div style={{ fontSize: 11, color: '#8B949E' }}>
             {stadium.city}
           </div>
@@ -175,7 +149,6 @@ function StadiumCard({
 
           {/* Footer: badge + info + chevron */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
-            {/* Left: badge + text */}
             <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 5 }}>
               {visited ? (
                 <>
@@ -198,8 +171,7 @@ function StadiumCard({
                   {visitDate && (
                     <span style={{
                       fontSize: 11, color: '#8B949E',
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      minWidth: 0,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0,
                     }}>
                       {fmtDate(visitDate)}
                     </span>
@@ -216,8 +188,7 @@ function StadiumCard({
                   {nextGame && (
                     <span style={{
                       fontSize: 11, color: '#8B949E',
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      minWidth: 0,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0,
                     }}>
                       {nextGame.date} vs {TEAM_NICKNAME[nextGame.opponentAbbr] ?? nextGame.opponentAbbr}
                     </span>
@@ -225,12 +196,28 @@ function StadiumCard({
                 </>
               )}
             </div>
-            {/* Chevron CTA */}
             <ChevronRight size={13} color="#484F58" style={{ flexShrink: 0 }} />
           </div>
         </div>
       </div>
     </Link>
+  )
+}
+
+// ─── Section header ───────────────────────────────────────────────────────────
+
+function SectionHeader({ children, count }: { children: React.ReactNode; count: number }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12, marginTop: 4,
+    }}>
+      <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#E6EDF3' }}>{children}</h2>
+      <span style={{
+        fontSize: 13, fontWeight: 600, color: '#8B949E',
+        backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid #30363D',
+        padding: '2px 10px', borderRadius: 999,
+      }}>{count}</span>
+    </div>
   )
 }
 
@@ -244,7 +231,6 @@ export default function StadiumsPage() {
   const [showSearch, setShowSearch] = useState(false)
   const [sortKey, setSortKey]       = useState<SortKey>('team')
   const [filterLeague, setFilterLeague] = useState<'all' | 'AL' | 'NL'>('all')
-  const [filterVisited, setFilterVisited] = useState<FilterVisited>('all')
   const [activeCategory, setActiveCategory] = useState<Category>('mlb')
   const [nextGames, setNextGames]   = useState<Record<string, NextGameInfo>>({})
 
@@ -279,30 +265,26 @@ export default function StadiumsPage() {
   const visitedCount = visitedIds.size
   const pct = Math.round((visitedCount / 30) * 100)
 
+  // All filtered stadiums (search + league + sort — no visited filter)
   const filtered = useMemo(() => {
     if (activeCategory !== 'mlb') return []
-    let list = stadiums.filter(s => {
+    const list = stadiums.filter(s => {
       const q = search.toLowerCase()
       if (q && !s.name.toLowerCase().includes(q) && !s.team.toLowerCase().includes(q) && !s.city.toLowerCase().includes(q)) return false
       if (filterLeague !== 'all' && s.league !== filterLeague) return false
-      if (filterVisited === 'visited' && !visitedIds.has(s.id)) return false
-      if (filterVisited === 'unvisited' && visitedIds.has(s.id)) return false
       return true
     })
     list.sort((a, b) => (a[sortKey] as string).localeCompare(b[sortKey] as string))
     return list
-  }, [stadiums, search, sortKey, filterLeague, filterVisited, visitedIds, activeCategory])
+  }, [stadiums, search, sortKey, filterLeague, activeCategory])
+
+  const visitedList   = useMemo(() => filtered.filter(s =>  visitedIds.has(s.id)), [filtered, visitedIds])
+  const unvisitedList = useMemo(() => filtered.filter(s => !visitedIds.has(s.id)), [filtered, visitedIds])
 
   const CATEGORIES: { key: Category; label: string }[] = [
     { key: 'mlb',        label: 'MLB'             },
     { key: 'historical', label: 'Historical'      },
     { key: 'spring',     label: 'Spring Training' },
-  ]
-
-  const VISIT_FILTERS: { key: FilterVisited; label: string; count: number }[] = [
-    { key: 'all',       label: 'All',     count: 30                },
-    { key: 'visited',   label: 'Visited', count: visitedCount      },
-    { key: 'unvisited', label: 'Not Yet', count: 30 - visitedCount },
   ]
 
   return (
@@ -325,19 +307,15 @@ export default function StadiumsPage() {
           {NAV.map(({ label, href, icon: Icon }) => {
             const active = href === '/stadiums'
             return (
-              <Link
-                key={href}
-                href={href}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '10px 12px', borderRadius: 10, marginBottom: 2,
-                  color: active ? '#E6EDF3' : '#8B949E',
-                  backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent',
-                  fontWeight: active ? 600 : 400, fontSize: 15,
-                  textDecoration: 'none',
-                  borderLeft: active ? '3px solid #1F6FEB' : '3px solid transparent',
-                }}
-              >
+              <Link key={href} href={href} style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '10px 12px', borderRadius: 10, marginBottom: 2,
+                color: active ? '#E6EDF3' : '#8B949E',
+                backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent',
+                fontWeight: active ? 600 : 400, fontSize: 15,
+                textDecoration: 'none',
+                borderLeft: active ? '3px solid #1F6FEB' : '3px solid transparent',
+              }}>
                 <Icon size={18} color={active ? '#1F6FEB' : '#8B949E'} />
                 {label}
               </Link>
@@ -460,24 +438,31 @@ export default function StadiumsPage() {
             )}
 
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-              {VISIT_FILTERS.map(({ key, label, count }) => {
-                const active = filterVisited === key
-                return (
-                  <button
-                    key={key}
-                    onClick={() => setFilterVisited(key)}
-                    style={{
-                      padding: '5px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600,
-                      cursor: 'pointer', transition: 'all 0.15s',
-                      backgroundColor: active ? 'rgba(31,111,235,0.15)' : 'transparent',
-                      color: active ? '#E6EDF3' : '#8B949E',
-                      border: active ? '1.5px solid #1F6FEB' : '1.5px solid #30363D',
-                    }}
-                  >
-                    {label} <span style={{ fontWeight: 400, fontSize: 12 }}>({count})</span>
-                  </button>
-                )
-              })}
+              {/* Scroll-to-section pills */}
+              <button
+                onClick={() => scrollToSection('visited-section')}
+                style={{
+                  padding: '5px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', transition: 'all 0.15s',
+                  backgroundColor: 'rgba(63,185,80,0.1)',
+                  color: '#3FB950',
+                  border: '1.5px solid rgba(63,185,80,0.3)',
+                }}
+              >
+                Visited <span style={{ fontWeight: 400, fontSize: 12 }}>({visitedCount})</span>
+              </button>
+              <button
+                onClick={() => scrollToSection('not-yet-section')}
+                style={{
+                  padding: '5px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', transition: 'all 0.15s',
+                  backgroundColor: 'transparent',
+                  color: '#8B949E',
+                  border: '1.5px solid #30363D',
+                }}
+              >
+                Not Yet <span style={{ fontWeight: 400, fontSize: 12 }}>({30 - visitedCount})</span>
+              </button>
 
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
                 <select
@@ -510,8 +495,8 @@ export default function StadiumsPage() {
           </div>
         </div>
 
-        {/* ── Card grid ────────────────────────────────────────── */}
-        <div style={{ maxWidth: 960, margin: '0 auto', padding: '16px' }}>
+        {/* ── Content ──────────────────────────────────────────── */}
+        <div style={{ maxWidth: 960, margin: '0 auto', padding: '20px 16px' }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '56px 16px', color: '#8B949E', fontSize: 15 }}>
               Loading parks…
@@ -522,23 +507,65 @@ export default function StadiumsPage() {
                 ? 'No historical ballparks tracked yet.'
                 : 'No spring training parks tracked yet.'}
             </div>
-          ) : filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '56px 16px', color: '#8B949E', fontSize: 15 }}>
-              No parks match your filters.
-            </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {filtered.map(stadium => (
-                <StadiumCard
-                  key={stadium.id}
-                  stadium={stadium}
-                  visited={visitedIds.has(stadium.id)}
-                  visitDate={latestVisit[stadium.id]}
-                  visitCount={visitCountMap[stadium.id]}
-                  nextGame={nextGames[stadium.abbreviation]}
-                />
-              ))}
-            </div>
+            <>
+              {/* Visited section */}
+              <div id="visited-section" style={{ marginBottom: 40, scrollMarginTop: 60 }}>
+                <SectionHeader count={visitedList.length}>Visited</SectionHeader>
+                {visitedList.length === 0 ? (
+                  <div style={{
+                    backgroundColor: '#161B22', borderRadius: 12, border: '2px dashed #30363D',
+                    padding: '32px 24px', textAlign: 'center',
+                  }}>
+                    <div style={{ fontSize: 13, color: '#8B949E' }}>
+                      {search || filterLeague !== 'all'
+                        ? 'No visited parks match your filters.'
+                        : 'No parks visited yet — tap any card to mark your first!'}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {visitedList.map(stadium => (
+                      <StadiumCard
+                        key={stadium.id}
+                        stadium={stadium}
+                        visited
+                        visitDate={latestVisit[stadium.id]}
+                        visitCount={visitCountMap[stadium.id]}
+                        nextGame={nextGames[stadium.abbreviation]}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Not Yet section */}
+              <div id="not-yet-section" style={{ scrollMarginTop: 60 }}>
+                <SectionHeader count={unvisitedList.length}>Not Yet</SectionHeader>
+                {unvisitedList.length === 0 ? (
+                  <div style={{
+                    backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D',
+                    padding: '32px 24px', textAlign: 'center',
+                  }}>
+                    <div style={{ fontSize: 22, marginBottom: 8 }}>🏆</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', marginBottom: 4 }}>
+                      {search || filterLeague !== 'all' ? 'No parks match your filters.' : 'You\'ve visited them all!'}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {unvisitedList.map(stadium => (
+                      <StadiumCard
+                        key={stadium.id}
+                        stadium={stadium}
+                        visited={false}
+                        nextGame={nextGames[stadium.abbreviation]}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
 
@@ -559,16 +586,12 @@ export default function StadiumsPage() {
         {NAV.map(({ label, href, icon: Icon }) => {
           const active = href === '/stadiums'
           return (
-            <Link
-              key={href}
-              href={href}
-              style={{
-                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-                justifyContent: 'center', textDecoration: 'none',
-                padding: '10px 0', minHeight: 56,
-                color: active ? '#1F6FEB' : '#8B949E', gap: 3,
-              }}
-            >
+            <Link key={href} href={href} style={{
+              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+              justifyContent: 'center', textDecoration: 'none',
+              padding: '10px 0', minHeight: 56,
+              color: active ? '#1F6FEB' : '#8B949E', gap: 3,
+            }}>
               <Icon size={22} color={active ? '#1F6FEB' : '#8B949E'} strokeWidth={active ? 2.5 : 1.8} />
               {active && (
                 <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#1F6FEB', lineHeight: 1 }}>
