@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { StadiumWithVisit } from '@/types'
-import { getTeamLogoUrl } from '@/lib/team-logos'
+import { getTeamLogoUrl, LIGHT_BG_LOGO_TEAMS } from '@/lib/team-logos'
 import TeamLogo from '@/components/TeamLogo'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -44,11 +44,15 @@ function MapInitializer({ mapRef }: { mapRef: React.MutableRefObject<L.Map | nul
 // ── Stadium pin icon factory ────────────────────────────────────────────────
 
 function makeStadiumIcon(logoUrl: string, visited: boolean, abbr: string): L.DivIcon {
-  const teamColor = TEAM_PRIMARY[abbr] ?? '#1C2430'
   const ring  = visited ? '#3FB950' : 'rgba(255,255,255,0.25)'
   const badge = visited
     ? `<div style="position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:#3FB950;border:2px solid #0B1117;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:900;line-height:1;">✓</div>`
     : ''
+
+  const lightBg = LIGHT_BG_LOGO_TEAMS.has(abbr)
+  const bgStyle = lightBg
+    ? 'background:rgba(255,255,255,0.90);'
+    : 'background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);'
 
   // background-image is used instead of <img> because Leaflet's innerHTML
   // injection path can suppress img load events in certain browser/CSP contexts;
@@ -60,9 +64,7 @@ function makeStadiumIcon(logoUrl: string, visited: boolean, abbr: string): L.Div
           width:40px;height:40px;border-radius:50%;
           border:2.5px solid ${ring};
           box-shadow:0 2px 10px rgba(0,0,0,0.6);
-          background:rgba(255,255,255,0.15);
-          backdrop-filter:blur(8px);
-          -webkit-backdrop-filter:blur(8px);
+          ${bgStyle}
           background-image:url('${logoUrl}');
           background-size:72%;
           background-position:center;

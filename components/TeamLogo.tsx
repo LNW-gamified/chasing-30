@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { getTeamLogoUrl } from '@/lib/team-logos'
+import { getTeamLogoUrl, LIGHT_BG_LOGO_TEAMS } from '@/lib/team-logos'
 
 interface Props {
   abbreviation: string
@@ -12,6 +12,8 @@ interface Props {
 
 export default function TeamLogo({ abbreviation, size = 32, className, style }: Props) {
   const [error, setError] = useState(false)
+
+  const lightBg = LIGHT_BG_LOGO_TEAMS.has(abbreviation)
 
   const wrapperStyle: React.CSSProperties = {
     flexShrink: 0,
@@ -24,10 +26,15 @@ export default function TeamLogo({ abbreviation, size = 32, className, style }: 
     justifyContent: 'center',
     overflow: 'hidden',
     borderRadius: 12,
-    background: 'rgba(255, 255, 255, 0.15)',
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+    ...(lightBg
+      ? { background: 'rgba(255, 255, 255, 0.90)' }
+      : {
+          background: 'rgba(255, 255, 255, 0.15)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+        }
+    ),
   }
 
   if (error) {
