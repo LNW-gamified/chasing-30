@@ -75,6 +75,7 @@ interface GameOption {
   opponentTeamId: number
   firstPitch: string
   promotions: string
+  isPast: boolean
 }
 
 interface StopSchedule {
@@ -195,13 +196,12 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     ))
 
     try {
-      const now    = new Date()
-      const today  = now.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
-      const seasonYear = now.getMonth() >= 9 ? now.getFullYear() + 1 : now.getFullYear()
-      const endStr = `${seasonYear}-09-30`
-      const url    = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=${teamId}&gameType=R&startDate=${today}&endDate=${endStr}&hydrate=promotions`
-      const res    = await fetch(url)
-      const json   = await res.json()
+      const now   = new Date()
+      const today = now.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+      const year  = now.getFullYear()
+      const url   = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=${teamId}&gameType=R&startDate=${year}-03-01&endDate=${year}-09-30&hydrate=promotions`
+      const res   = await fetch(url)
+      const json  = await res.json()
 
       const games: GameOption[] = []
       for (const date of json.dates ?? []) {
@@ -229,7 +229,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
             .map((p: { name: string }) => p.name)
             .join(', ')
 
-          games.push({ gamePk: game.gamePk, gameDate, displayDate, opponent, opponentTeamId, firstPitch, promotions })
+          games.push({ gamePk: game.gamePk, gameDate, displayDate, opponent, opponentTeamId, firstPitch, promotions, isPast: gameDate < today })
         }
       }
 
@@ -572,7 +572,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
 
                         {ss.loading ? (
                           <div style={{ fontSize: 13, color: '#8B949E', padding: '8px 0' }}>
-                            Fetching upcoming home games…
+                            Fetching home games…
                           </div>
                         ) : ss.noGames ? (
                           <div style={{
@@ -580,22 +580,39 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                             borderRadius: 10, backgroundColor: 'rgba(139,148,158,0.06)',
                             border: '1px solid #30363D',
                           }}>
-                            No upcoming home games found — enter date below.
+                            No home games found for this season — enter date below.
                           </div>
-                        ) : (
-                          <select
-                            style={inputStyle}
-                            value={ss.selectedPk}
-                            onChange={e => selectGame(i, e.target.value)}
-                          >
-                            <option value="">— pick a game (optional) —</option>
-                            {ss.games.map(g => (
-                              <option key={g.gamePk} value={g.gamePk.toString()}>
-                                {g.displayDate} · {g.opponent} · {g.firstPitch}
-                              </option>
-                            ))}
-                          </select>
-                        )}
+                        ) : (() => {
+                          const upcoming = ss.games.filter(g => !g.isPast)
+                          const past     = ss.games.filter(g => g.isPast).slice().reverse()
+                          return (
+                            <select
+                              style={inputStyle}
+                              value={ss.selectedPk}
+                              onChange={e => selectGame(i, e.target.value)}
+                            >
+                              <option value="">— pick a game (optional) —</option>
+                              {upcoming.length > 0 && (
+                                <optgroup label="── Upcoming Games ──">
+                                  {upcoming.map(g => (
+                                    <option key={g.gamePk} value={g.gamePk.toString()}>
+                                      {g.displayDate} · {g.opponent} · {g.firstPitch}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              )}
+                              {past.length > 0 && (
+                                <optgroup label="── Past Games ──">
+                                  {past.map(g => (
+                                    <option key={g.gamePk} value={g.gamePk.toString()}>
+                                      {g.displayDate} · {g.opponent} · {g.firstPitch}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              )}
+                            </select>
+                          )
+                        })()}
 
                         {selectedGame && (
                           <div style={{
