@@ -15,7 +15,6 @@ export default function TeamLogo({ abbreviation, size = 32, className, style }: 
 
   const wrapperStyle: React.CSSProperties = {
     flexShrink: 0,
-    borderRadius: 6,
     ...style,
     // Always applied — cannot be overridden via style prop
     width: size,
@@ -24,7 +23,11 @@ export default function TeamLogo({ abbreviation, size = 32, className, style }: 
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    borderRadius: 12,
+    background: 'rgba(255, 255, 255, 0.15)',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
   }
 
   if (error) {

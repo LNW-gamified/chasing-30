@@ -593,24 +593,23 @@ export default function TripDetailPage() {
                             {/* Opponent */}
                             {stop.opponent ? (
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-                                <div style={{
-                                  width: 52, height: 52, borderRadius: 12, flexShrink: 0,
-                                  backgroundColor: 'rgba(255,255,255,0.06)',
-                                  border: '1px solid #30363D',
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                }}>
-                                  {stop.opponent_team_id ? (
-                                    /* eslint-disable-next-line @next/next/no-img-element */
-                                    <img
-                                      src={getTeamLogoUrlById(stop.opponent_team_id)}
-                                      alt={stop.opponent}
-                                      width={36} height={36}
-                                      style={{ objectFit: 'contain' }}
-                                    />
-                                  ) : (
+                                {stop.opponent_team_id ? (
+                                  <TeamLogo
+                                    abbreviation={getTeamAbbrById(stop.opponent_team_id) || 'MLB'}
+                                    size={52}
+                                  />
+                                ) : (
+                                  <div style={{
+                                    width: 52, height: 52, borderRadius: 12, flexShrink: 0,
+                                    background: 'rgba(255, 255, 255, 0.15)',
+                                    backdropFilter: 'blur(8px)',
+                                    WebkitBackdropFilter: 'blur(8px)',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  }}>
                                     <span style={{ fontSize: 22 }}>⚾</span>
-                                  )}
-                                </div>
+                                  </div>
+                                )}
                                 <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', letterSpacing: '0.04em' }}>
                                   {stop.opponent_team_id
                                     ? getTeamAbbrById(stop.opponent_team_id)

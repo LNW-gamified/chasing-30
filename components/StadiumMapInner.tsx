@@ -6,6 +6,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { StadiumWithVisit } from '@/types'
 import { getTeamLogoUrl } from '@/lib/team-logos'
+import TeamLogo from '@/components/TeamLogo'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { X, Navigation, ChevronLeft, Info } from 'lucide-react'
@@ -59,7 +60,9 @@ function makeStadiumIcon(logoUrl: string, visited: boolean, abbr: string): L.Div
           width:40px;height:40px;border-radius:50%;
           border:2.5px solid ${ring};
           box-shadow:0 2px 10px rgba(0,0,0,0.6);
-          background-color:${teamColor};
+          background:rgba(255,255,255,0.15);
+          backdrop-filter:blur(8px);
+          -webkit-backdrop-filter:blur(8px);
           background-image:url('${logoUrl}');
           background-size:72%;
           background-position:center;
@@ -285,22 +288,7 @@ export default function StadiumMapInner({ stadiums }: Props) {
             </button>
 
             {/* Stadium photo / team logo thumbnail */}
-            <div style={{
-              width: 80, height: 80, borderRadius: 12, flexShrink: 0,
-              backgroundColor: TEAM_PRIMARY[selected.abbreviation] ?? '#1C2430',
-              border: '1px solid rgba(255,255,255,0.1)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              overflow: 'hidden',
-            }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={getTeamLogoUrl(selected.abbreviation)}
-                alt={selected.abbreviation}
-                width={56}
-                height={56}
-                style={{ objectFit: 'contain' }}
-              />
-            </div>
+            <TeamLogo abbreviation={selected.abbreviation} size={80} />
 
             {/* Info column */}
             <div style={{ flex: 1, minWidth: 0, paddingRight: 28 }}>

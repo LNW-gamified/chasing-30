@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { getTeamLogoUrl } from '@/lib/team-logos'
+import TeamLogo from '@/components/TeamLogo'
 
 export interface TodayGame {
   gamePk:    number
@@ -132,12 +132,10 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
           >
             {/* Team row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={getTeamLogoUrl(g.awayAbbr)} alt={g.awayAbbr} width={20} height={20} style={{ objectFit: 'contain' }} />
+              <TeamLogo abbreviation={g.awayAbbr} size={24} />
               <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>{g.awayAbbr}</span>
               <span style={{ fontSize: 11, color: '#8B949E' }}>@</span>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={getTeamLogoUrl(g.homeAbbr)} alt={g.homeAbbr} width={20} height={20} style={{ objectFit: 'contain' }} />
+              <TeamLogo abbreviation={g.homeAbbr} size={24} />
               <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>{g.homeAbbr}</span>
             </div>
 

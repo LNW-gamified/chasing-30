@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { getTeamLogoUrl } from '@/lib/team-logos'
+import TeamLogo from '@/components/TeamLogo'
 import { X } from 'lucide-react'
 
 const TEAMS = [
@@ -74,8 +74,7 @@ export default function FavoriteTeamPicker({ userId, currentFavAbbr }: Props) {
         </span>
         {currentTeam ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={getTeamLogoUrl(currentTeam.abbr)} alt={currentTeam.abbr} width={18} height={18} style={{ objectFit: 'contain' }} />
+            <TeamLogo abbreviation={currentTeam.abbr} size={22} />
             <span style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{currentTeam.abbr}</span>
             <span style={{ fontSize: 12, color: '#8B949E' }}>{currentTeam.name}</span>
           </div>
@@ -151,8 +150,7 @@ export default function FavoriteTeamPicker({ userId, currentFavAbbr }: Props) {
                         opacity: saving ? 0.6 : 1,
                       }}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={getTeamLogoUrl(team.abbr)} alt={team.abbr} width={24} height={24} style={{ objectFit: 'contain', flexShrink: 0 }} />
+                      <TeamLogo abbreviation={team.abbr} size={28} />
                       <div style={{ minWidth: 0 }}>
                         <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3' }}>{team.abbr}</div>
                         <div style={{

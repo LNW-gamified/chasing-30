@@ -8,6 +8,7 @@ import type { Stadium, Trip } from '@/types'
 import Link from 'next/link'
 import { Plus, Home, MapPin, Map as MapIcon, Trophy, Plane, ChevronRight } from 'lucide-react'
 import { getTeamLogoUrl } from '@/lib/team-logos'
+import TeamLogo from '@/components/TeamLogo'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -361,17 +362,7 @@ export default function TripsPage() {
                               transform: 'translateY(-50%)', display: 'flex', gap: 8,
                             }}>
                               {abbrs.slice(0, 2).map(abbr => (
-                                <div key={abbr} style={{
-                                  width: 52, height: 52, borderRadius: 10,
-                                  backgroundColor: 'rgba(255,255,255,0.15)',
-                                  backdropFilter: 'blur(6px)',
-                                  border: '1px solid rgba(255,255,255,0.2)',
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                }}>
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img src={getTeamLogoUrl(abbr)} alt={abbr} width={38} height={38}
-                                    style={{ objectFit: 'contain', display: 'block' }} />
-                                </div>
+                                <TeamLogo key={abbr} abbreviation={abbr} size={52} />
                               ))}
                             </div>
                             {/* Trip name + date stacked */}
@@ -406,7 +397,9 @@ export default function TripsPage() {
                                   <div key={abbr} style={{
                                     width: 36, height: 36, borderRadius: '50%',
                                     border: '2px solid #161B22',
-                                    backgroundColor: '#0B1117',
+                                    background: 'rgba(255, 255, 255, 0.15)',
+                                    backdropFilter: 'blur(8px)',
+                                    WebkitBackdropFilter: 'blur(8px)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     overflow: 'hidden',
                                     marginLeft: i === 0 ? 0 : -10,
