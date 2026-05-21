@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Check, X, Share2, Calendar, MapPin, Search, ChevronRight } from 'lucide-react'
 import type { SerializableMilestone, StadiumVisit, Stadium, SpecialEvent } from '@/types'
 import { createClient } from '@/lib/supabase'
@@ -50,6 +50,21 @@ const EXPERIENCE_IDS = new Set([
   'run_factory', 'pitchers_duel',
 ])
 
+// Which experiences take a "player name" extra field
+const PLAYER_NAME_EXP = new Set(['autograph', 'met_player'])
+
+// Giveaway item types for the collection
+const GIVEAWAY_TYPES = [
+  { value: 'bobblehead', label: 'Bobblehead', emoji: '🪆' },
+  { value: 'figurine',   label: 'Figurine',   emoji: '🏺' },
+  { value: 'jersey',     label: 'Jersey',     emoji: '👕' },
+  { value: 'hat',        label: 'Hat',        emoji: '🎩' },
+  { value: 'poster',     label: 'Poster',     emoji: '📋' },
+  { value: 'other',      label: 'Other',      emoji: '🎁' },
+] as const
+
+type GiveawayTypeValue = typeof GIVEAWAY_TYPES[number]['value']
+
 // ── Types ──────────────────────────────────────────────────────────────────
 
 type TrackingType = 'manual_once' | 'manual_repeatable'
@@ -69,6 +84,7 @@ interface AchievementClaim {
   claim_date: string
   notes: string | null
   extra_data: Record<string, unknown>
+  giveaway_type: GiveawayTypeValue | null
   created_at: string
 }
 
@@ -79,7 +95,7 @@ const STATIC_EXPERIENCES: StaticExperience[] = [
   { id: 'walk_off_win',    name: 'Walk-Off Win',           description: 'Witness a walk-off victory in person',            icon: '🎉', tracking_type: 'manual_once' },
   { id: 'opening_day',     name: 'Opening Day',            description: 'Attend Opening Day for any team',                 icon: '🌱', tracking_type: 'manual_once' },
   // ── manual_repeatable ─────────────────────────────────────────────────
-  { id: 'bobblehead',      name: 'Bobblehead Collection',  description: 'Score a bobblehead giveaway at the park',         icon: '🪆', tracking_type: 'manual_repeatable' },
+  { id: 'bobblehead',      name: 'Bobblehead Collection',  description: 'Score a giveaway item at the park',              icon: '🪆', tracking_type: 'manual_repeatable' },
   { id: 'foul_ball',       name: 'Caught a Foul Ball',     description: 'Catch or retrieve a foul ball at a game',         icon: '⚾', tracking_type: 'manual_repeatable' },
   { id: 'autograph',       name: 'Got an Autograph',       description: 'Get a player autograph at any MLB venue',         icon: '✍️', tracking_type: 'manual_repeatable' },
   { id: 'met_player',      name: 'Met a Player',           description: 'Meet an MLB player in person',                    icon: '🤝', tracking_type: 'manual_repeatable' },
@@ -93,9 +109,6 @@ const STATIC_EXPERIENCES: StaticExperience[] = [
   { id: 'jersey_day',      name: 'Jersey Day',             description: 'Wear your team jersey to a game',                 icon: '👕', tracking_type: 'manual_repeatable' },
   { id: 'night_owl',       name: 'Night Owl',              description: 'Stay until the very last out of a night game',    icon: '🦉', tracking_type: 'manual_repeatable' },
 ]
-
-// Which experiences take a "player name" extra field
-const PLAYER_NAME_EXP = new Set(['autograph', 'met_player'])
 
 // ── Helper functions ───────────────────────────────────────────────────────
 
@@ -246,6 +259,13 @@ function visitLabel(v: StadiumVisit, stadiums: Stadium[]): string {
   return `${v.visit_date} · ${s?.name ?? '?'} (${v.home_team} vs ${v.visiting_team})`
 }
 
+function getItemDisplayName(claim: AchievementClaim): string {
+  const name = claim.extra_data?.bobblehead_name ? String(claim.extra_data.bobblehead_name) : null
+  if (name) return name
+  if (claim.notes) return claim.notes.length > 36 ? claim.notes.slice(0, 36) + '…' : claim.notes
+  return GIVEAWAY_TYPES.find(t => t.value === claim.giveaway_type)?.label ?? 'Item'
+}
+
 // ── Component Props ────────────────────────────────────────────────────────
 
 interface Props {
@@ -275,22 +295,34 @@ export default function MilestoneGrid({
   const [claims, setClaims] = useState<AchievementClaim[]>([])
 
   // Claim form fields
-  const [claimVisitId,       setClaimVisitId]       = useState('')
+  const [claimVisitId,        setClaimVisitId]        = useState('')
+  const [claimGiveawayType,   setClaimGiveawayType]   = useState<GiveawayTypeValue>('bobblehead')
   const [claimBobbleheadName, setClaimBobbleheadName] = useState('')
-  const [claimPlayerName,    setClaimPlayerName]    = useState('')
-  const [claimNotes,         setClaimNotes]         = useState('')
-  const [claimPhotoFile,     setClaimPhotoFile]     = useState<File | null>(null)
-  const [claimSaving,        setClaimSaving]        = useState(false)
+  const [claimPlayerName,     setClaimPlayerName]     = useState('')
+  const [claimNotes,          setClaimNotes]          = useState('')
+  const [claimPhotoFile,      setClaimPhotoFile]      = useState<File | null>(null)
+  const [claimSaving,         setClaimSaving]         = useState(false)
 
-  useEffect(() => {
+  // Collection filter state
+  const [collectionTypeFilter, setCollectionTypeFilter] = useState<string>('all')
+  const [collectionTeamFilter, setCollectionTeamFilter] = useState<string>('all')
+
+  // ── Data loading ──────────────────────────────────────────────────────────
+
+  const fetchClaims = useCallback(async () => {
     const supabase = createClient()
-    supabase.from('achievement_claims').select('*')
-      .then(({ data }) => { if (data) setClaims(data as AchievementClaim[]) })
+    const { data } = await supabase.from('achievement_claims').select('*')
+    if (data) setClaims(data as AchievementClaim[])
   }, [])
+
+  useEffect(() => { fetchClaims() }, [fetchClaims])
+
+  // ── Modal helpers ─────────────────────────────────────────────────────────
 
   function closeModal() {
     setSelected(null)
     setClaimVisitId('')
+    setClaimGiveawayType('bobblehead')
     setClaimBobbleheadName('')
     setClaimPlayerName('')
     setClaimNotes('')
@@ -324,21 +356,26 @@ export default function MilestoneGrid({
       extra.player_name = claimPlayerName.trim()
     }
 
-    const { data } = await supabase
+    // Bug 1 fix: use the selected game's visit_date, not today's date
+    const selectedVisit = claimVisitId ? allVisits.find(v => v.id === claimVisitId) : null
+    const claimDate = selectedVisit?.visit_date ?? new Date().toISOString().split('T')[0]
+
+    await supabase
       .from('achievement_claims')
       .insert({
-        achievement_id:    exp.id,
-        stadium_visit_id:  claimVisitId || null,
-        claim_date:        new Date().toISOString().split('T')[0],
-        notes:             claimNotes.trim() || null,
-        extra_data:        extra,
+        achievement_id:   exp.id,
+        stadium_visit_id: claimVisitId || null,
+        claim_date:       claimDate,
+        notes:            claimNotes.trim() || null,
+        extra_data:       extra,
+        giveaway_type:    exp.id === 'bobblehead' ? claimGiveawayType : null,
       })
-      .select()
-      .single()
 
-    if (data) setClaims(prev => [...prev, data as AchievementClaim])
+    // Bug 2 fix: re-fetch all claims so counts update immediately
+    await fetchClaims()
 
     setClaimVisitId('')
+    setClaimGiveawayType('bobblehead')
     setClaimBobbleheadName('')
     setClaimPlayerName('')
     setClaimNotes('')
@@ -354,7 +391,8 @@ export default function MilestoneGrid({
     setClaims(prev => prev.filter(c => c.id !== claimId))
   }
 
-  // Derived lists
+  // ── Derived state ─────────────────────────────────────────────────────────
+
   const earnedIds      = new Set(earned.map(m => m.id))
   const currentRankIdx = rankTiers.findIndex(r => r.name === currentRankName)
 
@@ -370,7 +408,7 @@ export default function MilestoneGrid({
     return m.name.toLowerCase().includes(q) || m.description.toLowerCase().includes(q)
   })
 
-  const showStatics    = filter === 'all' || filter === 'experiences'
+  const showStatics     = filter === 'all' || filter === 'experiences'
   const filteredStatics = showStatics ? STATIC_EXPERIENCES.filter(s => {
     if (!search) return true
     const q = search.toLowerCase()
@@ -383,13 +421,48 @@ export default function MilestoneGrid({
 
   const sortedVisits = [...allVisits].sort((a, b) => b.visit_date.localeCompare(a.visit_date))
 
-  // Shared input style for the claim form
+  // Collection derived state
+  const giveawayClaims = useMemo(
+    () => claims.filter(c => c.giveaway_type != null),
+    [claims]
+  )
+
+  const collectionTeams = useMemo(() => {
+    const teams = new Set<string>()
+    for (const claim of giveawayClaims) {
+      const visit = allVisits.find(v => v.id === claim.stadium_visit_id)
+      const stadium = visit ? allStadiums.find(s => s.id === visit.stadium_id) : null
+      if (stadium) teams.add(stadium.abbreviation)
+    }
+    return [...teams].sort()
+  }, [giveawayClaims, allVisits, allStadiums])
+
+  const filteredCollection = useMemo(() => {
+    return giveawayClaims
+      .filter(c => collectionTypeFilter === 'all' || c.giveaway_type === collectionTypeFilter)
+      .filter(c => {
+        if (collectionTeamFilter === 'all') return true
+        const visit = allVisits.find(v => v.id === c.stadium_visit_id)
+        const stadium = visit ? allStadiums.find(s => s.id === visit.stadium_id) : null
+        return stadium?.abbreviation === collectionTeamFilter
+      })
+      .sort((a, b) => b.claim_date.localeCompare(a.claim_date))
+  }, [giveawayClaims, collectionTypeFilter, collectionTeamFilter, allVisits, allStadiums])
+
+  // Shared input style
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 12px', borderRadius: 10,
     border: '1px solid #30363D', fontSize: 13, color: '#E6EDF3',
     backgroundColor: '#0B1117', outline: 'none', boxSizing: 'border-box',
     fontFamily: 'inherit',
   }
+
+  const pillStyle = (active: boolean): React.CSSProperties => ({
+    padding: '6px 13px', borderRadius: 20, border: 'none', cursor: 'pointer',
+    fontSize: 12, fontWeight: 600,
+    backgroundColor: active ? '#E6EDF3' : 'rgba(139,148,158,0.1)',
+    color: active ? '#0B1117' : '#8B949E',
+  })
 
   // ── Render ─────────────────────────────────────────────────────────────
 
@@ -533,7 +606,6 @@ export default function MilestoneGrid({
                 onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#1C2430' }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
               >
-                {/* Icon */}
                 <div style={{
                   width: 44, height: 44, borderRadius: 10, flexShrink: 0,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, position: 'relative',
@@ -549,13 +621,11 @@ export default function MilestoneGrid({
                   )}
                 </div>
 
-                {/* Text */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 15, fontWeight: 600, color: hasClaims ? '#E6EDF3' : '#8B949E', marginBottom: 1 }}>{s.name}</div>
                   <div style={{ fontSize: 13, color: '#8B949E' }}>{s.description}</div>
                 </div>
 
-                {/* Right badge */}
                 {isRepeatable && hasClaims ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
                     <span style={{ fontSize: 12, fontWeight: 700, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)', padding: '3px 9px', borderRadius: 20 }}>
@@ -584,6 +654,127 @@ export default function MilestoneGrid({
             </div>
           )}
         </div>
+
+        {/* ── My Collection section ─────────────────────────────────────────── */}
+        {giveawayClaims.length > 0 && (
+          <div style={{ marginBottom: 48 }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#E6EDF3', marginBottom: 2 }}>
+                  🎁 My Collection
+                </h2>
+                <div style={{ fontSize: 13, color: '#8B949E' }}>
+                  {giveawayClaims.length} item{giveawayClaims.length !== 1 ? 's' : ''} collected
+                </div>
+              </div>
+            </div>
+
+            {/* Type filter pills */}
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+              <button onClick={() => setCollectionTypeFilter('all')} style={pillStyle(collectionTypeFilter === 'all')}>
+                All ({giveawayClaims.length})
+              </button>
+              {GIVEAWAY_TYPES.filter(t => giveawayClaims.some(c => c.giveaway_type === t.value)).map(t => (
+                <button key={t.value} onClick={() => setCollectionTypeFilter(t.value)} style={pillStyle(collectionTypeFilter === t.value)}>
+                  {t.emoji} {t.label} ({giveawayClaims.filter(c => c.giveaway_type === t.value).length})
+                </button>
+              ))}
+            </div>
+
+            {/* Team filter — only show when 2+ teams represented */}
+            {collectionTeams.length > 1 && (
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
+                <button onClick={() => setCollectionTeamFilter('all')} style={pillStyle(collectionTeamFilter === 'all')}>
+                  All Teams
+                </button>
+                {collectionTeams.map(abbr => (
+                  <button
+                    key={abbr}
+                    onClick={() => setCollectionTeamFilter(abbr)}
+                    title={abbr}
+                    style={{
+                      padding: '3px', borderRadius: 8, border: `2px solid ${collectionTeamFilter === abbr ? '#1F6FEB' : 'transparent'}`,
+                      background: 'none', cursor: 'pointer',
+                    }}
+                  >
+                    <TeamLogo abbreviation={abbr} size={28} />
+                  </button>
+                ))}
+              </div>
+            )}
+            {collectionTeams.length === 1 && <div style={{ marginBottom: 16 }} />}
+
+            {/* Grid */}
+            {filteredCollection.length === 0 ? (
+              <div style={{ textAlign: 'center', color: '#8B949E', fontSize: 14, padding: '24px 0' }}>
+                No items match this filter.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12 }}>
+                {filteredCollection.map(claim => {
+                  const visit    = allVisits.find(v => v.id === claim.stadium_visit_id)
+                  const stadium  = visit ? allStadiums.find(s => s.id === visit.stadium_id) : null
+                  const photoUrl = claim.extra_data?.photo_url ? String(claim.extra_data.photo_url) : null
+                  const itemName = getItemDisplayName(claim)
+                  const typeInfo = GIVEAWAY_TYPES.find(t => t.value === claim.giveaway_type)
+
+                  return (
+                    <div key={claim.id} style={{
+                      backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden',
+                    }}>
+                      {/* Photo or team logo placeholder */}
+                      <div style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden', backgroundColor: '#1C2430' }}>
+                        {photoUrl ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={photoUrl}
+                            alt={itemName}
+                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                          />
+                        ) : (
+                          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {stadium
+                              ? <TeamLogo abbreviation={stadium.abbreviation} size={60} />
+                              : <span style={{ fontSize: 40 }}>{typeInfo?.emoji ?? '🎁'}</span>
+                            }
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Card info */}
+                      <div style={{ padding: '10px 12px 12px' }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {itemName}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4, flexWrap: 'wrap' }}>
+                          <span style={{
+                            fontSize: 11, fontWeight: 600, color: '#F5A623',
+                            backgroundColor: 'rgba(245,166,35,0.1)', padding: '2px 7px', borderRadius: 20,
+                          }}>
+                            {typeInfo?.emoji} {typeInfo?.label}
+                          </span>
+                        </div>
+                        {stadium && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                            <TeamLogo abbreviation={stadium.abbreviation} size={14} />
+                            <span style={{ fontSize: 11, color: '#8B949E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {stadium.name}
+                            </span>
+                          </div>
+                        )}
+                        <div style={{ fontSize: 11, color: '#484F58' }}>
+                          {formatDate(claim.claim_date)}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
 
       {/* ── Milestone detail modal (centered, auto achievements) ────────────── */}
@@ -671,8 +862,15 @@ export default function MilestoneGrid({
         const isRepeatable = exp.tracking_type === 'manual_repeatable'
         const isBobble     = exp.id === 'bobblehead'
         const showsPlayer  = PLAYER_NAME_EXP.has(exp.id)
-        // Repeatable always shows the log form; manual_once only when unclaimed
         const showForm     = isRepeatable || !hasClaims
+
+        const itemNamePlaceholder =
+          claimGiveawayType === 'bobblehead' ? 'Item name (e.g. Josh Naylor Bobblehead)' :
+          claimGiveawayType === 'jersey'     ? 'Item name (e.g. Home White Jersey)' :
+          claimGiveawayType === 'hat'        ? 'Item name (e.g. Summer Bucket Hat)' :
+          claimGiveawayType === 'figurine'   ? 'Item name (e.g. Mike Trout Figurine)' :
+          claimGiveawayType === 'poster'     ? 'Item name (e.g. 2025 Opening Day Poster)' :
+          'Item name or description'
 
         return (
           <div
@@ -753,11 +951,27 @@ export default function MilestoneGrid({
                       <ChevronRight size={14} color="#484F58" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%) rotate(90deg)', pointerEvents: 'none' }} />
                     </div>
 
-                    {/* Bobblehead name */}
+                    {/* Giveaway item type selector (bobblehead achievement only) */}
+                    {isBobble && (
+                      <div style={{ position: 'relative' }}>
+                        <select
+                          value={claimGiveawayType}
+                          onChange={e => setClaimGiveawayType(e.target.value as GiveawayTypeValue)}
+                          style={{ ...inputStyle, paddingRight: 36, appearance: 'none', WebkitAppearance: 'none' }}
+                        >
+                          {GIVEAWAY_TYPES.map(t => (
+                            <option key={t.value} value={t.value}>{t.emoji} {t.label}</option>
+                          ))}
+                        </select>
+                        <ChevronRight size={14} color="#484F58" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%) rotate(90deg)', pointerEvents: 'none' }} />
+                      </div>
+                    )}
+
+                    {/* Item name (bobblehead) */}
                     {isBobble && (
                       <input
                         type="text"
-                        placeholder="Bobblehead name (e.g. Josh Naylor — May 19, 2026)"
+                        placeholder={itemNamePlaceholder}
                         value={claimBobbleheadName}
                         onChange={e => setClaimBobbleheadName(e.target.value)}
                         style={inputStyle}
@@ -784,7 +998,7 @@ export default function MilestoneGrid({
                       style={{ ...inputStyle, resize: 'vertical' }}
                     />
 
-                    {/* Photo upload — bobblehead only */}
+                    {/* Photo upload — bobblehead/giveaway only */}
                     {isBobble && (
                       <div>
                         <input
@@ -843,12 +1057,12 @@ export default function MilestoneGrid({
                         const bobble   = claim.extra_data?.bobblehead_name ? String(claim.extra_data.bobblehead_name) : null
                         const player   = claim.extra_data?.player_name     ? String(claim.extra_data.player_name)     : null
                         const photoUrl = claim.extra_data?.photo_url       ? String(claim.extra_data.photo_url)       : null
+                        const typeInfo = GIVEAWAY_TYPES.find(t => t.value === claim.giveaway_type)
 
                         return (
                           <div key={claim.id} style={{ padding: '12px 14px', borderRadius: 10, backgroundColor: 'rgba(139,148,158,0.06)', border: '1px solid #30363D' }}>
                             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
 
-                              {/* Text content */}
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3', marginBottom: 6 }}>
                                   {formatDate(claim.claim_date)}
@@ -864,7 +1078,7 @@ export default function MilestoneGrid({
                                 )}
                                 {bobble && (
                                   <div style={{ fontSize: 12, color: '#8B949E', marginBottom: claim.notes ? 4 : 0 }}>
-                                    🪆 {bobble}
+                                    {typeInfo?.emoji ?? '🪆'} {bobble}
                                   </div>
                                 )}
                                 {player && (
@@ -877,7 +1091,6 @@ export default function MilestoneGrid({
                                 )}
                               </div>
 
-                              {/* Right: photo + remove */}
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
                                 <button
                                   onClick={() => removeClaim(claim.id)}
@@ -890,7 +1103,7 @@ export default function MilestoneGrid({
                                   /* eslint-disable-next-line @next/next/no-img-element */
                                   <img
                                     src={photoUrl}
-                                    alt="Bobblehead"
+                                    alt="Item photo"
                                     style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover' }}
                                   />
                                 )}
