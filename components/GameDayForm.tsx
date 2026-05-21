@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase'
 import type { Stadium, StadiumVisit, InningScore } from '@/types'
 import { X, Plus, Minus, ImagePlus, Trash2, CloudSun, Loader2 } from 'lucide-react'
 import { GAME_MOMENTS } from '@/lib/moments'
+import { fetchSeasonHomeGames, type SeasonGame, STADIUM_TZ, TZ_LABEL } from '@/lib/mlb-api'
 
 const TEAM_ACCENT: Record<string, string> = {
   NYY: '#003087', BOS: '#BD3039', LAD: '#005A9C', CHC: '#0E3386',
@@ -23,7 +24,7 @@ interface Props {
   stadium: Stadium
   visit?: StadiumVisit
   onClose: () => void
-  onSaved: (savedMoments: string[]) => void
+  onSaved: (savedMoments: string[], newVisitId: string | null) => void
 }
 
 function emptyInnings(n = 9): InningScore[] {
@@ -78,6 +79,20 @@ function defaultForm(stadium: Stadium, visit?: StadiumVisit) {
   }
 }
 
+function formatGameOption(game: SeasonGame, tz: string, tzLabel: string): string {
+  const dt = new Date(game.gameDate)
+  const dateStr = dt.toLocaleDateString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric', timeZone: tz,
+  })
+  const awayLabel = game.awayTeamAbbr || game.awayTeam.split(' ').pop() || game.awayTeam
+  if (game.isFinal) return `${dateStr} — vs ${awayLabel} (Final)`
+  if (game.isLive)  return `${dateStr} — vs ${awayLabel} (Live)`
+  const timeStr = dt.toLocaleTimeString('en-US', {
+    hour: 'numeric', minute: '2-digit', hour12: true, timeZone: tz,
+  })
+  return `${dateStr} — vs ${awayLabel} (${timeStr} ${tzLabel})`
+}
+
 export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props) {
   const [form, setForm] = useState(() => defaultForm(stadium, visit))
   const [innings, setInnings] = useState<InningScore[]>(() =>
@@ -96,6 +111,55 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
   const [selectedMoments, setSelectedMoments] = useState<string[]>(
     () => (visit?.moments as string[] | null) ?? []
   )
+
+  // Game picker state (new games only)
+  const [seasonGames, setSeasonGames] = useState<SeasonGame[]>([])
+  const [gamesLoading, setGamesLoading] = useState(!visit)
+  const [selectedGame, setSelectedGame] = useState<SeasonGame | null>(null)
+  const [enterManually, setEnterManually] = useState(!!visit)
+
+  const tz      = STADIUM_TZ[stadium.abbreviation] ?? 'America/Los_Angeles'
+  const tzLabel = TZ_LABEL[tz] ?? 'PT'
+
+  // Load full season schedule on mount (for new games only)
+  useEffect(() => {
+    if (visit) return
+    fetchSeasonHomeGames(stadium.abbreviation).then(games => {
+      setSeasonGames(games)
+      setGamesLoading(false)
+      if (games.length === 0) setEnterManually(true)
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: tz })
+  const pastGames = seasonGames
+    .filter(g => g.isFinal)
+    .sort((a, b) => new Date(b.gameDate).getTime() - new Date(a.gameDate).getTime())
+  const upcomingGames = seasonGames
+    .filter(g => !g.isFinal)
+    .sort((a, b) => new Date(a.gameDate).getTime() - new Date(b.gameDate).getTime())
+
+  function handleGameSelect(gamePkStr: string) {
+    if (!gamePkStr) { setSelectedGame(null); return }
+    const gamePk = parseInt(gamePkStr)
+    const game = seasonGames.find(g => g.gamePk === gamePk) ?? null
+    setSelectedGame(game)
+    if (!game) return
+
+    const dt = new Date(game.gameDate)
+    const dateStr = dt.toLocaleDateString('en-CA', { timeZone: tz })
+    const timeStr = dt.toLocaleTimeString('en-US', {
+      hour: 'numeric', minute: '2-digit', hour12: true, timeZone: tz,
+    }) + ` ${tzLabel}`
+
+    setForm(prev => ({
+      ...prev,
+      visit_date:     dateStr,
+      visiting_team:  game.awayTeam,
+      first_pitch_time: game.isFinal ? prev.first_pitch_time : timeStr,
+    }))
+  }
 
   async function fetchWeather(date: string, force = false) {
     if (!date) return
@@ -122,13 +186,13 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
         setWeatherNote('Auto-filled')
       }
     } catch {
-      // silently fail — weather is optional
+      // weather is optional — silently fail
     }
     setWeatherLoading(false)
   }
 
   useEffect(() => {
-    if (visit) return // don't auto-fill when editing an existing record
+    if (visit) return
     if (form.visit_date) fetchWeather(form.visit_date)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.visit_date])
@@ -262,21 +326,29 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
       created_by: user?.id ?? null,
     }
 
-    let err
+    let err: any
+    let newVisitId: string | null = null
+
     if (visit) {
       ;({ error: err } = await supabase
         .from('stadium_visits')
         .update(payload)
         .eq('id', visit.id))
     } else {
-      ;({ error: err } = await supabase.from('stadium_visits').insert(payload))
+      const { data: insertData, error: insertErr } = await supabase
+        .from('stadium_visits')
+        .insert(payload)
+        .select('id')
+        .single()
+      err = insertErr
+      newVisitId = insertData?.id ?? null
     }
 
     setSaving(false)
     if (err) {
       setError(err.message)
     } else {
-      onSaved(selectedMoments)
+      onSaved(selectedMoments, newVisitId)
     }
   }
 
@@ -321,6 +393,95 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 pb-6">
+
+          {/* ── Game picker (new games only) ─────────────────────────── */}
+          {!visit && !enterManually && (
+            <div style={{ marginTop: 16 }}>
+              <div
+                style={{
+                  fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
+                  letterSpacing: '0.08em', color: '#1F6FEB',
+                  borderBottom: '1px solid #30363D', paddingBottom: 6, marginBottom: 10,
+                }}
+              >
+                Select a Game
+              </div>
+
+              {gamesLoading ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#8B949E', fontSize: 13, padding: '8px 0' }}>
+                  <Loader2 size={14} className="animate-spin" />
+                  Loading {stadium.team} schedule…
+                </div>
+              ) : (
+                <>
+                  <select
+                    className="input"
+                    value={selectedGame?.gamePk?.toString() ?? ''}
+                    onChange={e => handleGameSelect(e.target.value)}
+                    style={{ marginBottom: 8 }}
+                  >
+                    <option value="">— Select a home game —</option>
+                    {upcomingGames.length > 0 && (
+                      <optgroup label="Upcoming Games">
+                        {upcomingGames.map(g => (
+                          <option key={g.gamePk} value={String(g.gamePk)}>
+                            {formatGameOption(g, tz, tzLabel)}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {pastGames.length > 0 && (
+                      <optgroup label="Past Games">
+                        {pastGames.map(g => (
+                          <option key={g.gamePk} value={String(g.gamePk)}>
+                            {formatGameOption(g, tz, tzLabel)}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+
+                  {selectedGame && (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      fontSize: 12, color: '#3FB950', marginBottom: 4,
+                    }}>
+                      ✓ Auto-filled: {form.visit_date} · vs {selectedGame.awayTeam}
+                      {form.first_pitch_time ? ` · ${form.first_pitch_time}` : ''}
+                    </div>
+                  )}
+                </>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setEnterManually(true)}
+                style={{
+                  fontSize: 12, color: '#8B949E', background: 'none', border: 'none',
+                  cursor: 'pointer', padding: 0, textDecoration: 'underline',
+                }}
+              >
+                Enter date manually instead
+              </button>
+            </div>
+          )}
+
+          {/* Back to picker link when in manual mode (new games only) */}
+          {!visit && enterManually && seasonGames.length > 0 && (
+            <div style={{ marginTop: 16, marginBottom: -4 }}>
+              <button
+                type="button"
+                onClick={() => setEnterManually(false)}
+                style={{
+                  fontSize: 12, color: '#1F6FEB', background: 'none', border: 'none',
+                  cursor: 'pointer', padding: 0, textDecoration: 'underline',
+                }}
+              >
+                ← Pick from schedule instead
+              </button>
+            </div>
+          )}
+
           {sectionHead('Game Info')}
           <div className="grid grid-cols-2 gap-3">
             {field(

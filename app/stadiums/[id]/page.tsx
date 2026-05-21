@@ -11,10 +11,25 @@ import { fetchUpcomingHomeGames, type UpcomingGame } from '@/lib/mlb-api'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 import Link from 'next/link'
 import {
-  ArrowLeft, Plus, Pencil, Save,
+  ArrowLeft, Plus, Pencil, Save, Loader2,
   Home, MapPin, Map, Trophy, Plane,
 } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
+
+const GAME_EVENT_LABELS: Record<string, string> = {
+  walk_off:            '🏠 Walk-off',
+  extra_innings:       '⏰ Extra innings',
+  twelve_plus_innings: '⏰ 12+ innings',
+  no_hitter:           '🚫 No-hitter',
+  perfect_game:        '✨ Perfect game',
+  combined_no_hitter:  '🚫 Combined no-hitter',
+  shutout:             '🔒 Shutout',
+  run_factory:         '💣 Run factory',
+  pitchers_duel:       '⚔️ Pitcher\'s duel',
+  grand_slam:          '💥 Grand slam',
+  cycle:               '🔄 Hit for the cycle',
+  milestone_hr:        '🏆 Milestone HR',
+}
 
 const TEAM_GRADIENTS: Record<string, [string, string]> = {
   LAA: ['#003263', '#BA0021'], ARI: ['#A71930', '#1A1A1A'],
@@ -71,6 +86,12 @@ export default function StadiumDetailPage() {
   const [upcomingGames, setUpcomingGames] = useState<UpcomingGame[]>([])
   const [fetchingStats, setFetchingStats] = useState<string | null>(null)
   const [statsError, setStatsError] = useState<Record<string, string>>({})
+  const [autofillState, setAutofillState] = useState<
+    null |
+    { phase: 'loading' } |
+    { phase: 'success'; score?: string; events?: string[] } |
+    { phase: 'error'; msg: string }
+  >(null)
   const [stadiumPhoto, setStadiumPhoto] = useState<string | null>(null)
   const [allVisitedIds, setAllVisitedIds] = useState<Set<string>>(new Set())
   const [allStadiums, setAllStadiums] = useState<MiniStadium[]>([])
@@ -170,6 +191,31 @@ export default function StadiumDetailPage() {
       try { await navigator.share({ title: stadium?.name ?? 'Stadium', url }) } catch {}
     } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
       await navigator.clipboard.writeText(url)
+    }
+  }
+
+  async function triggerAutofill(visitId: string) {
+    setAutofillState({ phase: 'loading' })
+    try {
+      const res = await fetch('/api/autofill-game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visitId }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setAutofillState({ phase: 'success', score: data.score, events: data.events })
+        await load()
+        setTimeout(() => setAutofillState(null), 8000)
+      } else if (data.code === 'not_final' || data.code === 'no_home_game') {
+        setAutofillState(null)
+      } else {
+        setAutofillState({ phase: 'error', msg: data.error ?? 'Could not fetch game stats' })
+        setTimeout(() => setAutofillState(null), 6000)
+      }
+    } catch {
+      setAutofillState({ phase: 'error', msg: 'Could not reach MLB API' })
+      setTimeout(() => setAutofillState(null), 6000)
     }
   }
 
@@ -783,12 +829,62 @@ export default function StadiumDetailPage() {
 
       {bottomNav}
 
+      {/* ── Autofill toast ──────────────────────────────────────── */}
+      {autofillState && (
+        <div
+          className="fixed left-3 right-3 md:left-auto md:right-6 md:w-96 z-50"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}
+        >
+          {autofillState.phase === 'loading' ? (
+            <div style={{
+              background: '#161B22', border: '1px solid #30363D', borderRadius: 14,
+              padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+            }}>
+              <Loader2 size={16} className="animate-spin" style={{ color: '#1F6FEB', flexShrink: 0 }} />
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>Fetching game stats…</div>
+                <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>Looking up box score from MLB</div>
+              </div>
+            </div>
+          ) : autofillState.phase === 'success' ? (
+            <div style={{
+              background: '#0d2116', border: '1px solid rgba(63,185,80,0.35)', borderRadius: 14,
+              padding: '14px 16px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: autofillState.score ? 6 : 0 }}>
+                <span style={{ fontSize: 16 }}>✓</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#3FB950' }}>Game stats loaded!</span>
+              </div>
+              {autofillState.score && (
+                <div style={{ fontSize: 13, color: '#E6EDF3', marginBottom: 2 }}>{autofillState.score}</div>
+              )}
+              {autofillState.events && autofillState.events.length > 0 && (
+                <div style={{ fontSize: 12, color: '#8B949E' }}>
+                  {autofillState.events.map(e => GAME_EVENT_LABELS[e] ?? e).join(' · ')}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{
+              background: '#1a1215', border: '1px solid rgba(248,81,73,0.25)', borderRadius: 14,
+              padding: '14px 16px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+            }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#F85149', marginBottom: 4 }}>
+                Stats not available
+              </div>
+              <div style={{ fontSize: 12, color: '#8B949E' }}>{autofillState.msg}</div>
+            </div>
+          )}
+        </div>
+      )}
+
       {showForm && stadium && (
         <GameDayForm
           stadium={stadium}
           visit={editingVisit}
           onClose={() => { setShowForm(false); setEditingVisit(undefined) }}
-          onSaved={(savedMoments) => {
+          onSaved={(savedMoments, newVisitId) => {
             const otherMoments = new Set(
               visits
                 .filter(v => v.id !== editingVisit?.id)
@@ -804,6 +900,7 @@ export default function StadiumDetailPage() {
             setShowForm(false)
             setEditingVisit(undefined)
             load()
+            if (newVisitId) triggerAutofill(newVisitId)
           }}
         />
       )}
