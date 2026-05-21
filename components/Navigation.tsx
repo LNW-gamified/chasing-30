@@ -11,6 +11,7 @@ import {
   Plane,
   LogOut,
 } from 'lucide-react'
+import UpNextPill from '@/components/UpNextPill'
 
 const NAV_ITEMS = [
   { href: '/dashboard',  label: 'Home',  icon: LayoutDashboard },
@@ -79,6 +80,11 @@ export default function Navigation() {
               MLB STADIUM TRACKER
             </div>
           </div>
+        </div>
+
+        {/* Up Next pill */}
+        <div className="px-3 pt-3">
+          <UpNextPill />
         </div>
 
         {/* Nav links */}

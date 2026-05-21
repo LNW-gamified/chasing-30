@@ -2,10 +2,11 @@ import { createClient } from '@/lib/supabase-server'
 import { MILESTONES } from '@/lib/milestones'
 import type { Stadium, StadiumVisit, SpecialEvent, Trip } from '@/types'
 import Link from 'next/link'
-import { Home, Map, MapPin, Trophy, Plane, Bell } from 'lucide-react'
+import { Home, Map, MapPin, Trophy, Plane } from 'lucide-react'
 import TodayGames, { type TodayGame } from '@/components/TodayGames'
 import Standings from '@/components/Standings'
 import FavoriteTeamPicker from '@/components/FavoriteTeamPicker'
+import UpNextPill from '@/components/UpNextPill'
 
 // ─── MLB API ──────────────────────────────────────────────────────────────────
 
@@ -176,14 +177,12 @@ export default async function DashboardPage() {
     { data: events },
     { data: trips },
     { data: { user } },
-    { data: giveaways },
   ] = await Promise.all([
     supabase.from('stadiums').select('*').order('league').order('division').order('name'),
     supabase.from('stadium_visits').select('*').order('visit_date', { ascending: false }),
     supabase.from('special_events').select('*'),
     supabase.from('trips').select('*, stadium:stadiums(*)').order('start_date', { ascending: true }),
     supabase.auth.getUser(),
-    supabase.from('achievement_claims').select('id').not('giveaway_type', 'is', null),
   ])
 
   const userId = user?.id ?? ''
@@ -228,7 +227,6 @@ export default async function DashboardPage() {
   // ─── My Stats ───────────────────────────────────────────────────────────────
 
   const gamesAttended = allVisits.length
-  const giveawayCount = giveaways?.length ?? 0
 
   const totalSpent = allTrips
     .filter(t => t.status === 'completed')
@@ -257,15 +255,6 @@ export default async function DashboardPage() {
   const teamEntries  = Object.entries(teamCounts).sort((a, b) => b[1] - a[1])
   const mostSeenFull = teamEntries.length > 0 ? teamEntries[0][0] : '—'
   const mostSeenTeam = mostSeenFull === '—' ? '—' : (mostSeenFull.split(' ').pop() ?? mostSeenFull)
-
-  // ─── Next Up ────────────────────────────────────────────────────────────────
-
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
-  const nextPlannedTrip = allTrips.find(t =>
-    t.status === 'planned' &&
-    ((t.start_date && t.start_date >= today) || (t.trip_date && t.trip_date >= today))
-  )
-  const nearestUnvisited = allStadiums.find(s => !visitedIds.has(s.id))
 
   // ─── Shared styles ────────────────────────────────────────────────────────
 
@@ -297,22 +286,14 @@ export default async function DashboardPage() {
           {rank} · {points} pts
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <button
-          style={{
-            width: 36, height: 36, borderRadius: '50%',
-            background: 'transparent', border: 'none',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-          }}
-          aria-label="Notifications"
-        >
-          <Bell size={18} style={{ color: '#8B949E' }} />
-        </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <UpNextPill compact />
         <div style={{
           width: 32, height: 32, borderRadius: '50%',
           background: 'rgba(31,111,235,0.18)', border: '1px solid rgba(31,111,235,0.3)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: '#8B949E', fontWeight: 700, fontSize: '0.9rem',
+          flexShrink: 0,
         }}>
           {name.charAt(0).toUpperCase()}
         </div>
@@ -381,43 +362,6 @@ export default async function DashboardPage() {
 
           <div style={{ maxWidth: 800, width: '100%', margin: '0 auto', padding: '1.25rem 1rem', overflowX: 'hidden', boxSizing: 'border-box' }}>
 
-            {/* ── Next Up Card ─────────────────────────────────────────────── */}
-            <div style={{
-              ...card,
-              padding: '1rem 1.25rem', marginBottom: '1rem',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-            }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
-                  NEXT UP
-                </div>
-                {nextPlannedTrip ? (
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
-                      {(nextPlannedTrip as any).stadium?.name ?? nextPlannedTrip.name}
-                    </div>
-                    <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
-                      {fmtDate(nextPlannedTrip.start_date ?? nextPlannedTrip.trip_date)}
-                    </div>
-                  </div>
-                ) : nearestUnvisited ? (
-                  <div>
-                    <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 2 }}>Suggested</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
-                      {nearestUnvisited.name}
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ fontSize: 15, fontWeight: 600, color: '#3FB950' }}>
-                    All 30 stadiums visited!
-                  </div>
-                )}
-              </div>
-              <Link href="/trips" style={{ fontSize: 14, fontWeight: 600, color: '#1F6FEB', textDecoration: 'none', flexShrink: 0 }}>
-                View →
-              </Link>
-            </div>
-
             {/* ── Hero Progress Card ───────────────────────────────────────── */}
             <div style={{ ...card, padding: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 18 }}>
@@ -457,13 +401,12 @@ export default async function DashboardPage() {
                 MY STATS
               </div>
               {/* gap-px + dark bg creates 1px dividers between cells at every breakpoint */}
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-px" style={{ background: '#30363D' }}>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-px" style={{ background: '#30363D' }}>
                 {[
                   { icon: '⚾', value: gamesAttended.toString(),         label: 'Games Attended' },
                   { icon: '💰', value: `$${totalSpent.toLocaleString()}`, label: 'Total Spent'    },
                   { icon: '🏆', value: favDivision,                       label: 'Fav Division'   },
                   { icon: '👁', value: mostSeenTeam,                      label: 'Most Seen'      },
-                  { icon: '🎁', value: giveawayCount.toString(),          label: 'My Giveaways'   },
                 ].map(({ icon, value, label }) => (
                   <div key={label} style={{ background: '#161B22', padding: 16 }}>
                     <div style={{ fontSize: 24, marginBottom: 6 }}>{icon}</div>

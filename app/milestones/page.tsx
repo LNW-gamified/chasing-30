@@ -5,6 +5,7 @@ import { STATIC_EXPERIENCES } from '@/lib/static-experiences'
 import Link from 'next/link'
 import { Home, MapPin, Map, Trophy, Plane } from 'lucide-react'
 import type { Stadium, StadiumVisit, SpecialEvent, SerializableMilestone } from '@/types'
+import UpNextPill from '@/components/UpNextPill'
 
 const NAV = [
   { label: 'Home',  href: '/dashboard',  icon: Home },
@@ -131,8 +132,9 @@ export default async function MilestonesPage() {
             )
           })}
         </nav>
-        <div style={{ padding: '16px 20px', borderTop: '1px solid #30363D' }}>
-          <div style={{ fontSize: 12, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Progress</div>
+        <div style={{ padding: '12px 16px', borderTop: '1px solid #30363D' }}>
+          <UpNextPill />
+          <div style={{ fontSize: 12, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, marginTop: 8 }}>Progress</div>
           <div style={{ fontWeight: 800, fontSize: 22, color: '#E6EDF3' }}>
             {visitedCount}<span style={{ fontWeight: 400, fontSize: 14, color: '#8B949E' }}> / 30</span>
           </div>
@@ -208,6 +210,16 @@ export default async function MilestonesPage() {
           rankTiers={RANK_TIERS}
         />
       </main>
+
+      {/* ── Mobile top header ────────────────────────────────────── */}
+      <div className="flex md:hidden items-center justify-between" style={{
+        position: 'sticky', top: 0, zIndex: 30,
+        backgroundColor: 'rgba(11,17,23,0.95)', backdropFilter: 'blur(10px)',
+        borderBottom: '1px solid #30363D', padding: '8px 16px',
+      }}>
+        <span style={{ fontSize: 16, fontWeight: 800, color: '#E6EDF3' }}>🏆 Goals</span>
+        <UpNextPill compact />
+      </div>
 
       {/* ── Mobile bottom tab bar ────────────────────────────────── */}
       <div className="flex md:hidden" style={{
