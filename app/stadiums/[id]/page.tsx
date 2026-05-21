@@ -43,7 +43,7 @@ const NAV = [
 ]
 
 type MiniStadium = { id: string; league: string; division: string }
-type ActiveTab = 'overview' | 'memories' | 'stadium-info'
+type ActiveTab = 'games-attended' | 'upcoming-games' | 'stadium-info'
 
 function SectionTitle({ icon, children }: { icon: string; children: React.ReactNode }) {
   return (
@@ -76,7 +76,7 @@ export default function StadiumDetailPage() {
   const [allStadiums, setAllStadiums] = useState<MiniStadium[]>([])
   const [allGlobalMoments, setAllGlobalMoments] = useState<Set<string>>(new Set())
   const [firstTimeMoments, setFirstTimeMoments] = useState<string[]>([])
-  const [activeTab, setActiveTab] = useState<ActiveTab>('overview')
+  const [activeTab, setActiveTab] = useState<ActiveTab>('games-attended')
   const [retiredNumbers, setRetiredNumbers] = useState<RetiredNumber[]>([])
 
   async function load() {
@@ -268,21 +268,10 @@ export default function StadiumDetailPage() {
   const visited = visits.length > 0
   const colors = TEAM_GRADIENTS[stadium.abbreviation] ?? ['#0B1117', '#161B22']
 
-  // Achievement progress
-  const divStadiums = allStadiums.filter(s => s.league === stadium.league && s.division === stadium.division)
-  const divVisited = divStadiums.filter(s => allVisitedIds.has(s.id)).length
-  const leagueStadiums = allStadiums.filter(s => s.league === stadium.league)
-  const leagueVisited = leagueStadiums.filter(s => allVisitedIds.has(s.id)).length
-  const achievements = [
-    { icon: '🏆', name: 'Chasing 30', current: allVisitedIds.size, total: 30 },
-    { icon: '📍', name: `${stadium.league} ${stadium.division}`, current: divVisited, total: divStadiums.length },
-    { icon: '⚾', name: `${stadium.league} League`, current: leagueVisited, total: leagueStadiums.length },
-  ]
-
   const TABS: { key: ActiveTab; label: string }[] = [
-    { key: 'overview',     label: 'Overview'     },
-    { key: 'memories',     label: 'Memories'     },
-    { key: 'stadium-info', label: 'Stadium Info' },
+    { key: 'games-attended',  label: 'Games Attended'  },
+    { key: 'upcoming-games',  label: 'Upcoming Games'  },
+    { key: 'stadium-info',    label: 'Stadium Info'    },
   ]
 
   return (
@@ -388,7 +377,7 @@ export default function StadiumDetailPage() {
                     marginBottom: 8,
                   }}
                 >
-                  <Plus size={16} /> Add Memory
+                  <Plus size={16} /> Log Game
                 </button>
                 {/* Secondary actions */}
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -457,156 +446,8 @@ export default function StadiumDetailPage() {
           {/* ── TAB CONTENT ──────────────────────────────────────────── */}
           <div style={{ padding: '24px 16px' }}>
 
-            {/* ── OVERVIEW TAB ─────────────────────────────────────── */}
-            {activeTab === 'overview' && (
-              <>
-                {/* Achievement Progress */}
-                <section style={{ marginBottom: 32 }}>
-                  <SectionTitle icon="🏆">Achievement Progress</SectionTitle>
-                  <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
-                    {achievements.map(({ icon, name, current, total }, i) => (
-                      <div key={name} style={{ padding: '14px 16px', borderBottom: i < achievements.length - 1 ? '1px solid #30363D' : 'none' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                          <span style={{ fontSize: 20 }}>{icon}</span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-                              <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>{name}</span>
-                              <span style={{ fontSize: 13, color: '#8B949E', flexShrink: 0 }}>{current} of {total}</span>
-                            </div>
-                            <div style={{ height: 7, backgroundColor: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
-                              <div style={{
-                                height: '100%', borderRadius: 4, transition: 'width 0.6s',
-                                backgroundColor: '#3FB950',
-                                width: `${Math.min((current / total) * 100, 100)}%`,
-                              }} />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                {/* Upcoming Home Games */}
-                {upcomingGames.length > 0 && (
-                  <section style={{ marginBottom: 32 }}>
-                    <SectionTitle icon="📅">Upcoming Home Games</SectionTitle>
-                    <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #30363D' }}>
-                      <div style={{ backgroundColor: '#0B1117' }}>
-                        {upcomingGames.map((g, i) => {
-                          const dt = new Date(g.gameDate)
-                          const dayAbbr = dt.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/Los_Angeles' })
-                          const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })
-                          const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
-                          return (
-                            <div key={g.gamePk} style={{
-                              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                              padding: '12px 16px',
-                              borderBottom: i < upcomingGames.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
-                            }}>
-                              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                                <div style={{ textAlign: 'center', minWidth: 36 }}>
-                                  <div style={{ fontSize: 10, color: '#8B949E', fontWeight: 600 }}>{dayAbbr}</div>
-                                  <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 700 }}>{dateStr}</div>
-                                </div>
-                                <div style={{ fontWeight: 700, fontSize: 14, color: '#E6EDF3' }}>
-                                  {g.awayTeam} @ {g.homeTeam}
-                                </div>
-                              </div>
-                              <div style={{ fontSize: 13, color: '#8B949E' }}>{timeStr} PT</div>
-                            </div>
-                          )
-                        })}
-                        <a
-                          href="https://www.mlb.com/schedule"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            display: 'block', padding: '12px 16px', fontSize: 14, fontWeight: 600,
-                            color: '#1F6FEB', textDecoration: 'none',
-                            borderTop: '1px solid rgba(255,255,255,0.06)',
-                          }}
-                        >
-                          See Full Schedule →
-                        </a>
-                      </div>
-                    </div>
-                  </section>
-                )}
-
-                {/* Notes */}
-                <section style={{ marginBottom: 32 }}>
-                  <SectionTitle icon="💬">Notes</SectionTitle>
-                  {editingNote ? (
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: 16 }}>
-                      <textarea
-                        rows={4}
-                        value={noteInput}
-                        onChange={e => setNoteInput(e.target.value)}
-                        placeholder={`Parking tips, best food spots, recommended seats at ${stadium.name}...`}
-                        autoFocus
-                        style={{
-                          width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #30363D',
-                          fontSize: 14, color: '#E6EDF3', backgroundColor: '#1C2430',
-                          resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
-                        }}
-                      />
-                      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                        <button
-                          onClick={saveNote}
-                          disabled={savingNote}
-                          style={{
-                            padding: '9px 18px', borderRadius: 8, fontSize: 14, fontWeight: 700,
-                            backgroundColor: '#1F6FEB', color: '#0B1117', border: 'none', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', gap: 6,
-                          }}
-                        >
-                          <Save size={14} /> {savingNote ? 'Saving…' : 'Save Note'}
-                        </button>
-                        <button
-                          onClick={() => setEditingNote(false)}
-                          style={{ padding: '9px 18px', borderRadius: 8, fontSize: 14, fontWeight: 600, border: '1.5px solid #30363D', backgroundColor: '#1C2430', cursor: 'pointer', color: '#8B949E' }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : stadiumNote ? (
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: '#E6EDF3', backgroundColor: 'rgba(139,148,158,0.12)', padding: '3px 10px', borderRadius: 20 }}>
-                          General
-                        </span>
-                        <button
-                          onClick={() => { setNoteInput(stadiumNote); setEditingNote(true) }}
-                          style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid #30363D', background: '#1C2430', cursor: 'pointer', fontSize: 13, color: '#8B949E', display: 'flex', alignItems: 'center', gap: 4 }}
-                        >
-                          <Pencil size={12} /> Edit
-                        </button>
-                      </div>
-                      <div style={{ fontSize: 14, color: '#E6EDF3', fontStyle: 'italic', lineHeight: 1.6 }}>
-                        &ldquo;{stadiumNote}&rdquo;
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '2px dashed #30363D', padding: '32px 24px', textAlign: 'center' }}>
-                      <div style={{ fontSize: 28, marginBottom: 8 }}>💬</div>
-                      <div style={{ fontWeight: 700, fontSize: 15, color: '#E6EDF3', marginBottom: 4 }}>Be the first to share</div>
-                      <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 16 }}>Parking, food, best seats...</div>
-                      <button
-                        onClick={() => { setNoteInput(''); setEditingNote(true) }}
-                        style={{ padding: '9px 20px', borderRadius: 8, fontSize: 14, fontWeight: 700, border: '1.5px solid #30363D', backgroundColor: '#1C2430', cursor: 'pointer', color: '#8B949E' }}
-                      >
-                        + Add a Note
-                      </button>
-                    </div>
-                  )}
-                </section>
-              </>
-            )}
-
-            {/* ── MEMORIES TAB ─────────────────────────────────────── */}
-            {activeTab === 'memories' && (
+            {/* ── GAMES ATTENDED TAB ───────────────────────────────── */}
+            {activeTab === 'games-attended' && (
               <section>
                 {visits.length === 0 ? (
                   <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '2px dashed #30363D', padding: '40px 24px', textAlign: 'center' }}>
@@ -614,7 +455,7 @@ export default function StadiumDetailPage() {
                       <TeamLogo abbreviation={stadium.abbreviation} size={60} />
                     </div>
                     <div style={{ fontWeight: 700, fontSize: 16, color: '#E6EDF3', marginBottom: 6 }}>
-                      Your first memory at {stadium.name}
+                      Your first game at {stadium.name}
                     </div>
                     <div style={{ fontSize: 14, color: '#8B949E', marginBottom: 20 }}>
                       Photos, notes, game scores — all in one place
@@ -627,7 +468,7 @@ export default function StadiumDetailPage() {
                         display: 'inline-flex', alignItems: 'center', gap: 6,
                       }}
                     >
-                      <Plus size={14} /> Add Memory
+                      <Plus size={14} /> Log Game
                     </button>
                   </div>
                 ) : (
@@ -708,6 +549,137 @@ export default function StadiumDetailPage() {
                   </>
                 )}
               </section>
+            )}
+
+            {/* ── UPCOMING GAMES TAB ───────────────────────────────── */}
+            {activeTab === 'upcoming-games' && (
+              <>
+                {/* Upcoming Home Games */}
+                {upcomingGames.length > 0 ? (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle icon="📅">Upcoming Home Games</SectionTitle>
+                    <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #30363D' }}>
+                      <div style={{ backgroundColor: '#0B1117' }}>
+                        {upcomingGames.map((g, i) => {
+                          const dt = new Date(g.gameDate)
+                          const dayAbbr = dt.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/Los_Angeles' })
+                          const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })
+                          const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
+                          return (
+                            <div key={g.gamePk} style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                              padding: '12px 16px',
+                              borderBottom: i < upcomingGames.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                            }}>
+                              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                                <div style={{ textAlign: 'center', minWidth: 36 }}>
+                                  <div style={{ fontSize: 10, color: '#8B949E', fontWeight: 600 }}>{dayAbbr}</div>
+                                  <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 700 }}>{dateStr}</div>
+                                </div>
+                                <div style={{ fontWeight: 700, fontSize: 14, color: '#E6EDF3' }}>
+                                  {g.awayTeam} @ {g.homeTeam}
+                                </div>
+                              </div>
+                              <div style={{ fontSize: 13, color: '#8B949E' }}>{timeStr} PT</div>
+                            </div>
+                          )
+                        })}
+                        <a
+                          href="https://www.mlb.com/schedule"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: 'block', padding: '12px 16px', fontSize: 14, fontWeight: 600,
+                            color: '#1F6FEB', textDecoration: 'none',
+                            borderTop: '1px solid rgba(255,255,255,0.06)',
+                          }}
+                        >
+                          See Full Schedule →
+                        </a>
+                      </div>
+                    </div>
+                  </section>
+                ) : (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle icon="📅">Upcoming Home Games</SectionTitle>
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '24px 16px', textAlign: 'center', color: '#8B949E', fontSize: 14 }}>
+                      No upcoming games found.{' '}
+                      <a href="https://www.mlb.com/schedule" target="_blank" rel="noopener noreferrer" style={{ color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
+                        Check MLB.com →
+                      </a>
+                    </div>
+                  </section>
+                )}
+
+                {/* Notes */}
+                <section style={{ marginBottom: 32 }}>
+                  <SectionTitle icon="💬">Notes</SectionTitle>
+                  {editingNote ? (
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: 16 }}>
+                      <textarea
+                        rows={4}
+                        value={noteInput}
+                        onChange={e => setNoteInput(e.target.value)}
+                        placeholder={`Parking tips, best food spots, recommended seats at ${stadium.name}...`}
+                        autoFocus
+                        style={{
+                          width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #30363D',
+                          fontSize: 14, color: '#E6EDF3', backgroundColor: '#1C2430',
+                          resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
+                        }}
+                      />
+                      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                        <button
+                          onClick={saveNote}
+                          disabled={savingNote}
+                          style={{
+                            padding: '9px 18px', borderRadius: 8, fontSize: 14, fontWeight: 700,
+                            backgroundColor: '#1F6FEB', color: '#0B1117', border: 'none', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: 6,
+                          }}
+                        >
+                          <Save size={14} /> {savingNote ? 'Saving…' : 'Save Note'}
+                        </button>
+                        <button
+                          onClick={() => setEditingNote(false)}
+                          style={{ padding: '9px 18px', borderRadius: 8, fontSize: 14, fontWeight: 600, border: '1.5px solid #30363D', backgroundColor: '#1C2430', cursor: 'pointer', color: '#8B949E' }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : stadiumNote ? (
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#E6EDF3', backgroundColor: 'rgba(139,148,158,0.12)', padding: '3px 10px', borderRadius: 20 }}>
+                          General
+                        </span>
+                        <button
+                          onClick={() => { setNoteInput(stadiumNote); setEditingNote(true) }}
+                          style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid #30363D', background: '#1C2430', cursor: 'pointer', fontSize: 13, color: '#8B949E', display: 'flex', alignItems: 'center', gap: 4 }}
+                        >
+                          <Pencil size={12} /> Edit
+                        </button>
+                      </div>
+                      <div style={{ fontSize: 14, color: '#E6EDF3', fontStyle: 'italic', lineHeight: 1.6 }}>
+                        &ldquo;{stadiumNote}&rdquo;
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '2px dashed #30363D', padding: '32px 24px', textAlign: 'center' }}>
+                      <div style={{ fontSize: 28, marginBottom: 8 }}>💬</div>
+                      <div style={{ fontWeight: 700, fontSize: 15, color: '#E6EDF3', marginBottom: 4 }}>Be the first to share</div>
+                      <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 16 }}>Parking, food, best seats...</div>
+                      <button
+                        onClick={() => { setNoteInput(''); setEditingNote(true) }}
+                        style={{ padding: '9px 20px', borderRadius: 8, fontSize: 14, fontWeight: 700, border: '1.5px solid #30363D', backgroundColor: '#1C2430', cursor: 'pointer', color: '#8B949E' }}
+                      >
+                        + Add a Note
+                      </button>
+                    </div>
+                  )}
+                </section>
+              </>
             )}
 
             {/* ── STADIUM INFO TAB ─────────────────────────────────── */}

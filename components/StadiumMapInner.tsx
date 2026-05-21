@@ -24,13 +24,12 @@ const TEAM_PRIMARY: Record<string, string> = {
   TOR: '#134A8E', WSH: '#AB0003',
 }
 
-type Filter = 'all' | 'visited' | 'not-yet' | 'bucket-list'
+type Filter = 'all' | 'visited' | 'not-yet'
 
 const FILTERS: { id: Filter; label: string }[] = [
-  { id: 'all',         label: 'All' },
-  { id: 'visited',     label: 'Visited' },
-  { id: 'not-yet',     label: 'Not Yet' },
-  { id: 'bucket-list', label: 'Bucket List' },
+  { id: 'all',     label: 'All'     },
+  { id: 'visited', label: 'Visited' },
+  { id: 'not-yet', label: 'Not Yet' },
 ]
 
 // ── Leaflet child components ────────────────────────────────────────────────
@@ -95,7 +94,7 @@ export default function StadiumMapInner({ stadiums }: Props) {
   // Filtered stadium list
   const visibleStadiums = useMemo(() => stadiums.filter(s => {
     if (filter === 'visited')                          return s.visited
-    if (filter === 'not-yet' || filter === 'bucket-list') return !s.visited
+    if (filter === 'not-yet') return !s.visited
     return true
   }), [stadiums, filter])
 

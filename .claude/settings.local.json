@@ -20,7 +20,15 @@
       "Bash(sed -n '170,180p' \"C:\\\\Users\\\\later\\\\chasing-30\\\\app\\\\trips\\\\page.tsx\")",
       "Bash(sed -n '209,220p' \"C:\\\\Users\\\\later\\\\chasing-30\\\\app\\\\stadiums\\\\[id]\\\\page.tsx\")",
       "Bash(notepad *)",
-      "Bash(not exist *)"
+      "Bash(not exist *)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\later\\\\chasing-30\" -Recurse -Force -File | Where-Object { $_.Extension -in @\\('.tsx', '.ts', '.jsx', '.js', '.json', '.md'\\) -and $_.FullName -notmatch 'node_modules' } | Select-Object -ExpandProperty FullName | Sort-Object)",
+      "Bash(npx next *)",
+      "Bash(curl -s https://ssrffcjbtdtyhjamyyio.supabase.co/rest/v1/rpc/query -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcmZmY2pidGR0eWhqYW15eWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxODg4NTgsImV4cCI6MjA5Mzc2NDg1OH0.OqwruHN3epB4nRmCH4zi_IH9mtaBlixVJGE1VcLxbr0' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcmZmY2pidGR0eWhqYW15eWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxODg4NTgsImV4cCI6MjA5Mzc2NDg1OH0.OqwruHN3epB4nRmCH4zi_IH9mtaBlixVJGE1VcLxbr0')",
+      "Bash(curl -s https://ssrffcjbtdtyhjamyyio.supabase.co/rest/v1/stadium_visits?limit=0 -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcmZmY2pidGR0eWhqYW15eWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxODg4NTgsImV4cCI6MjA5Mzc2NDg1OH0.OqwruHN3epB4nRmCH4zi_IH9mtaBlixVJGE1VcLxbr0' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcmZmY2pidGR0eWhqYW15eWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxODg4NTgsImV4cCI6MjA5Mzc2NDg1OH0.OqwruHN3epB4nRmCH4zi_IH9mtaBlixVJGE1VcLxbr0' -H 'Prefer: count=exact' -I)",
+      "Bash(curl -s https://ssrffcjbtdtyhjamyyio.supabase.co/rest/v1/ -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcmZmY2pidGR0eWhqYW15eWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxODg4NTgsImV4cCI6MjA5Mzc2NDg1OH0.OqwruHN3epB4nRmCH4zi_IH9mtaBlixVJGE1VcLxbr0' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcmZmY2pidGR0eWhqYW15eWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxODg4NTgsImV4cCI6MjA5Mzc2NDg1OH0.OqwruHN3epB4nRmCH4zi_IH9mtaBlixVJGE1VcLxbr0')",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s https://ssrffcjbtdtyhjamyyio.supabase.co/rest/v1/ -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcmZmY2pidGR0eWhqYW15eWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxODg4NTgsImV4cCI6MjA5Mzc2NDg1OH0.OqwruHN3epB4nRmCH4zi_IH9mtaBlixVJGE1VcLxbr0' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcmZmY2pidGR0eWhqYW15eWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxODg4NTgsImV4cCI6MjA5Mzc2NDg1OH0.OqwruHN3epB4nRmCH4zi_IH9mtaBlixVJGE1VcLxbr0' -o C:/Temp/supabase_schema.json)",
+      "Bash(dir supabase\\\\migrations /b)"
     ]
   }
 }

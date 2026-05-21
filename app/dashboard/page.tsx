@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase-server'
 import { MILESTONES } from '@/lib/milestones'
 import type { Stadium, StadiumVisit, SpecialEvent, Trip } from '@/types'
 import Link from 'next/link'
-import { Home, Map, MapPin, Trophy, Plane, Bell, ChevronRight } from 'lucide-react'
+import { Home, Map, MapPin, Trophy, Plane, Bell } from 'lucide-react'
 import TodayGames, { type TodayGame } from '@/components/TodayGames'
 import Standings from '@/components/Standings'
 import FavoriteTeamPicker from '@/components/FavoriteTeamPicker'
@@ -67,34 +67,6 @@ function getRank(pts: number): string {
   if (pts >= 150)  return 'Prospect'
   if (pts >= 50)   return 'Farm Hand'
   return 'Rookie'
-}
-
-function getMilestonePoints(id: string): number {
-  if (id === 'all_stadiums') return 200
-  if (id === 'american_league' || id === 'national_league') return 150
-  if (id === 'historic_ballparks_all') return 150
-  if (id === 'east_coast' || id === 'midwest' || id === 'west_coast') return 100
-  if (/^(al|nl)_(east|central|west)$/.test(id)) return 75
-  if (id === 'twentyfive_stadiums') return 125
-  if (id === 'twenty_stadiums') return 100
-  if (id === 'fifteen_stadiums') return 80
-  if (id === 'ten_stadiums') return 60
-  if (id === 'world_series_attendance' || id === 'international_game') return 75
-  if (id === 'all_star_attendance' || id === 'postseason_attendance') return 50
-  if (id === 'hall_of_fame_visit' || id === 'field_of_dreams_visit') return 50
-  if (id === 'five_stadiums') return 35
-  if (id === 'ten_games') return 50
-  if (id === 'five_games') return 35
-  return 25
-}
-
-// ─── Quest icon ───────────────────────────────────────────────────────────────
-
-function questStyle(id: string): { emoji: string; bg: string } {
-  if (id === 'five_stadiums')    return { emoji: '🚗', bg: 'rgba(249,115,22,0.15)'  }
-  if (id === 'ten_stadiums')     return { emoji: '🔟', bg: 'rgba(31,111,235,0.15)'  }
-  if (id === 'fifteen_stadiums') return { emoji: '🏟️', bg: 'rgba(63,185,80,0.15)'  }
-  return                                { emoji: '⚡', bg: 'rgba(139,92,246,0.15)'  }
 }
 
 // ─── User helpers ─────────────────────────────────────────────────────────────
@@ -226,7 +198,6 @@ export default async function DashboardPage() {
   const visitedCount = visitedIds.size
 
   const earnedMilestones = MILESTONES.filter(m => m.check(allVisits, allStadiums, allEvents))
-  const nextQuests       = MILESTONES.filter(m => !m.check(allVisits, allStadiums, allEvents)).slice(0, 3)
 
   const points = computePoints(visitedCount, allVisits.length, earnedMilestones.length)
   const rank   = getRank(points)
@@ -299,11 +270,6 @@ export default async function DashboardPage() {
     background: '#161B22',
     borderRadius: 16,
     border: '1px solid #30363D',
-  }
-
-  const sectionLabel: React.CSSProperties = {
-    fontSize: 13, fontWeight: 600, color: '#8B949E',
-    textTransform: 'uppercase', letterSpacing: '0.1em',
   }
 
   const headerBlock = (
@@ -412,39 +378,6 @@ export default async function DashboardPage() {
 
           <div style={{ maxWidth: 800, width: '100%', margin: '0 auto', padding: '1.25rem 1rem', overflowX: 'hidden', boxSizing: 'border-box' }}>
 
-            {/* ── Hero Progress Card ───────────────────────────────────────── */}
-            <div style={{ ...card, padding: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 18 }}>
-                My Progress
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
-                <ProgressRing visited={visitedCount} total={30} size={150} />
-              </div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2, marginBottom: 6 }}>
-                {visitedCount} of 30 stadiums
-              </div>
-              <div style={{ fontSize: 14, color: '#8B949E', marginBottom: 14 }}>
-                {visitedCount === 30
-                  ? 'Legend status achieved!'
-                  : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} remaining`}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 20 }}>
-                <span style={{ color: '#3FB950', fontSize: 14, fontWeight: 600 }}>{pct}% complete</span>
-                <span style={{ color: '#30363D' }}>·</span>
-                <Link href="/milestones" style={{ color: '#1F6FEB', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
-                  {earnedMilestones.length} milestone{earnedMilestones.length !== 1 ? 's' : ''} earned →
-                </Link>
-              </div>
-              <Link href="/trips" style={{
-                display: 'block', textAlign: 'center',
-                background: '#1F6FEB', color: '#fff',
-                padding: '11px 0', borderRadius: 999,
-                fontWeight: 600, fontSize: '0.9rem', textDecoration: 'none',
-              }}>
-                Plan Next Trip →
-              </Link>
-            </div>
-
             {/* ── Next Up Card ─────────────────────────────────────────────── */}
             <div style={{
               ...card,
@@ -482,31 +415,41 @@ export default async function DashboardPage() {
               </Link>
             </div>
 
-            {/* ── Division Progress ─────────────────────────────────────────── */}
-            <div style={{ ...card, padding: '1.25rem', marginBottom: '1rem' }}>
-              <div style={{ fontWeight: 600, color: '#E6EDF3', fontSize: 16, marginBottom: '0.875rem' }}>
-                Division Progress
+            {/* ── Hero Progress Card ───────────────────────────────────────── */}
+            <div style={{ ...card, padding: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 18 }}>
+                My Progress
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-                {divProgress.map(({ label, vis, total }) => (
-                  <div key={label}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontSize: 14, color: '#E6EDF3' }}>{label}</span>
-                      <span style={{ fontSize: 13, color: '#8B949E' }}>{vis}/{total}</span>
-                    </div>
-                    <div style={{ height: 7, background: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
-                      <div style={{
-                        width: `${(vis / total) * 100}%`, height: '100%',
-                        background: '#1F6FEB', borderRadius: 4,
-                      }} />
-                    </div>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
+                <ProgressRing visited={visitedCount} total={30} size={150} />
               </div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2, marginBottom: 6 }}>
+                {visitedCount} of 30 stadiums
+              </div>
+              <div style={{ fontSize: 14, color: '#8B949E', marginBottom: 14 }}>
+                {visitedCount === 30
+                  ? 'Legend status achieved!'
+                  : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} remaining`}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 20 }}>
+                <span style={{ color: '#3FB950', fontSize: 14, fontWeight: 600 }}>{pct}% complete</span>
+                <span style={{ color: '#30363D' }}>·</span>
+                <Link href="/milestones" style={{ color: '#1F6FEB', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+                  {earnedMilestones.length} milestone{earnedMilestones.length !== 1 ? 's' : ''} earned →
+                </Link>
+              </div>
+              <Link href="/trips" style={{
+                display: 'block', textAlign: 'center',
+                background: '#1F6FEB', color: '#fff',
+                padding: '11px 0', borderRadius: 999,
+                fontWeight: 600, fontSize: '0.9rem', textDecoration: 'none',
+              }}>
+                Plan Next Trip →
+              </Link>
             </div>
 
             {/* ── My Stats Card ────────────────────────────────────────────── */}
-            <div style={{ ...card, marginBottom: '1.5rem', overflow: 'hidden' }}>
+            <div style={{ ...card, marginBottom: '1rem', overflow: 'hidden' }}>
               <div style={{ padding: '1.25rem 1.25rem 0.75rem', fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 MY STATS
               </div>
@@ -529,6 +472,29 @@ export default async function DashboardPage() {
               </div>
             </div>
 
+            {/* ── Division Progress ─────────────────────────────────────────── */}
+            <div style={{ ...card, padding: '1.25rem', marginBottom: '1.5rem' }}>
+              <div style={{ fontWeight: 600, color: '#E6EDF3', fontSize: 16, marginBottom: '0.875rem' }}>
+                Division Progress
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                {divProgress.map(({ label, vis, total }) => (
+                  <div key={label}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: 14, color: '#E6EDF3' }}>{label}</span>
+                      <span style={{ fontSize: 13, color: '#8B949E' }}>{vis}/{total}</span>
+                    </div>
+                    <div style={{ height: 7, background: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{
+                        width: `${(vis / total) * 100}%`, height: '100%',
+                        background: '#1F6FEB', borderRadius: 4,
+                      }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* ── Today's Games ────────────────────────────────────────────── */}
             <FavoriteTeamPicker userId={userId} currentFavAbbr={favAbbr} />
             {todayGames.length > 0 && (
@@ -537,55 +503,6 @@ export default async function DashboardPage() {
 
             {/* ── Standings ────────────────────────────────────────────────── */}
             <Standings favAbbr={favAbbr} />
-
-            {/* ── Your Quests ───────────────────────────────────────────────── */}
-            {nextQuests.length > 0 && (
-              <div style={{ marginTop: 24 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                  <span style={sectionLabel}>Your Quests</span>
-                  <Link href="/milestones" style={{ fontSize: 13, color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
-                    See All
-                  </Link>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {nextQuests.map(m => {
-                    const { emoji, bg } = questStyle(m.id)
-                    return (
-                      <Link key={m.id} href="/milestones" style={{ textDecoration: 'none' }}>
-                        <div style={{
-                          background: '#161B22', borderRadius: 12, border: '1px solid #30363D',
-                          padding: '0.875rem 1rem',
-                          display: 'flex', alignItems: 'center', gap: '0.875rem',
-                        }}>
-                          <div style={{
-                            width: 44, height: 44, borderRadius: 10, flexShrink: 0,
-                            backgroundColor: bg,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 22,
-                          }}>
-                            {emoji}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, color: '#E6EDF3', fontSize: 16, marginBottom: 2 }}>
-                              {m.name}
-                            </div>
-                            <div style={{ color: '#8B949E', fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {m.description}
-                            </div>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                            <span style={{ color: '#F5A623', fontSize: '0.8rem', fontWeight: 600 }}>
-                              +{getMilestonePoints(m.id)}
-                            </span>
-                            <ChevronRight size={14} style={{ color: '#8B949E' }} />
-                          </div>
-                        </div>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
 
           </div>
         </main>
