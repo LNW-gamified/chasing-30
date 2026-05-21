@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase-server'
 import MilestoneGrid from '@/components/MilestoneGrid'
 import { MILESTONES } from '@/lib/milestones'
+import { STATIC_EXPERIENCES } from '@/lib/static-experiences'
 import Link from 'next/link'
 import { Home, MapPin, Map, Trophy, Plane } from 'lucide-react'
 import type { Stadium, StadiumVisit, SpecialEvent, SerializableMilestone } from '@/types'
@@ -76,10 +77,11 @@ function toSerializable(ms: typeof MILESTONES): SerializableMilestone[] {
 export default async function MilestonesPage() {
   const supabase = await createClient()
 
-  const [{ data: stadiums }, { data: visits }, { data: events }] = await Promise.all([
+  const [{ data: stadiums }, { data: visits }, { data: events }, { data: claims }] = await Promise.all([
     supabase.from('stadiums').select('*'),
     supabase.from('stadium_visits').select('*'),
     supabase.from('special_events').select('*'),
+    supabase.from('achievement_claims').select('achievement_id'),
   ])
 
   const allStadiums: Stadium[] = stadiums ?? []
@@ -93,6 +95,11 @@ export default async function MilestonesPage() {
   const nextRank = getNextRank(totalPoints)
   const visitedCount = new Set(allVisits.map(v => v.stadium_id)).size
   const inProgress = computeInProgress(unearned.map(m => m.id), allVisits, allStadiums)
+
+  const claimedIds = new Set((claims ?? []).map(c => c.achievement_id))
+  const earnedStaticCount = STATIC_EXPERIENCES.filter(s => claimedIds.has(s.id)).length
+  const totalAchievements = MILESTONES.length + STATIC_EXPERIENCES.length
+  const totalEarned = earned.length + earnedStaticCount
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0B1117' }}>
@@ -158,9 +165,9 @@ export default async function MilestonesPage() {
             {/* Stats row */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
               {[
-                { label: 'Earned', value: earned.length },
+                { label: 'Earned', value: totalEarned },
                 { label: 'In Progress', value: inProgress },
-                { label: 'Total', value: MILESTONES.length },
+                { label: 'Total', value: totalAchievements },
               ].map(({ label, value }, i, arr) => (
                 <div key={label} style={{
                   flex: 1, maxWidth: 110, textAlign: 'center',

@@ -5,6 +5,7 @@ import { Check, X, Share2, Calendar, MapPin, Search, ChevronRight } from 'lucide
 import type { SerializableMilestone, StadiumVisit, Stadium, SpecialEvent } from '@/types'
 import { createClient } from '@/lib/supabase'
 import TeamLogo from '@/components/TeamLogo'
+import { STATIC_EXPERIENCES, type StaticExperience } from '@/lib/static-experiences'
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -67,16 +68,6 @@ type GiveawayTypeValue = typeof GIVEAWAY_TYPES[number]['value']
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-type TrackingType = 'manual_once' | 'manual_repeatable'
-
-interface StaticExperience {
-  id: string
-  name: string
-  description: string
-  icon: string
-  tracking_type: TrackingType
-}
-
 interface AchievementClaim {
   id: string
   achievement_id: string
@@ -88,27 +79,6 @@ interface AchievementClaim {
   created_at: string
 }
 
-// manual_once  → user marks it done once (walk-off, opening day)
-// manual_repeatable → collectible log; can add many entries
-const STATIC_EXPERIENCES: StaticExperience[] = [
-  // ── manual_once ───────────────────────────────────────────────────────
-  { id: 'walk_off_win',    name: 'Walk-Off Win',           description: 'Witness a walk-off victory in person',            icon: '🎉', tracking_type: 'manual_once' },
-  { id: 'opening_day',     name: 'Opening Day',            description: 'Attend Opening Day for any team',                 icon: '🌱', tracking_type: 'manual_once' },
-  // ── manual_repeatable ─────────────────────────────────────────────────
-  { id: 'bobblehead',      name: 'Bobblehead Collection',  description: 'Score a giveaway item at the park',              icon: '🪆', tracking_type: 'manual_repeatable' },
-  { id: 'foul_ball',       name: 'Caught a Foul Ball',     description: 'Catch or retrieve a foul ball at a game',         icon: '⚾', tracking_type: 'manual_repeatable' },
-  { id: 'autograph',       name: 'Got an Autograph',       description: 'Get a player autograph at any MLB venue',         icon: '✍️', tracking_type: 'manual_repeatable' },
-  { id: 'met_player',      name: 'Met a Player',           description: 'Meet an MLB player in person',                    icon: '🤝', tracking_type: 'manual_repeatable' },
-  { id: 'jumbotron',       name: 'On the Jumbotron',       description: 'Make it onto the stadium big screen',             icon: '📺', tracking_type: 'manual_repeatable' },
-  { id: 'seventh_inning',  name: 'Seventh Inning Stretch', description: 'Sing Take Me Out to the Ballgame',                icon: '🎵', tracking_type: 'manual_repeatable' },
-  { id: 'fireworks_night', name: 'Fireworks Night',        description: 'Stay for post-game fireworks',                    icon: '🎆', tracking_type: 'manual_repeatable' },
-  { id: 'rivalry_game',    name: 'Rivalry Game',           description: 'Attend a heated rivalry matchup',                 icon: '⚔️', tracking_type: 'manual_repeatable' },
-  { id: 'enemy_territory', name: 'Enemy Territory',        description: 'Cheer for the visiting team at a ballpark',       icon: '🕵️', tracking_type: 'manual_repeatable' },
-  { id: 'rain_delay',      name: 'Rain Delay',             description: 'Sit through a rain delay at a ballpark',          icon: '🌧️', tracking_type: 'manual_repeatable' },
-  { id: 'early_bird',      name: 'Early Bird',             description: 'Arrive early to watch batting practice',          icon: '🌅', tracking_type: 'manual_repeatable' },
-  { id: 'jersey_day',      name: 'Jersey Day',             description: 'Wear your team jersey to a game',                 icon: '👕', tracking_type: 'manual_repeatable' },
-  { id: 'night_owl',       name: 'Night Owl',              description: 'Stay until the very last out of a night game',    icon: '🦉', tracking_type: 'manual_repeatable' },
-]
 
 // ── Helper functions ───────────────────────────────────────────────────────
 
@@ -396,6 +366,11 @@ export default function MilestoneGrid({
   const earnedIds      = new Set(earned.map(m => m.id))
   const currentRankIdx = rankTiers.findIndex(r => r.name === currentRankName)
 
+  const earnedStaticCount = useMemo(() => {
+    const claimedIds = new Set(claims.map(c => c.achievement_id))
+    return STATIC_EXPERIENCES.filter(s => claimedIds.has(s.id)).length
+  }, [claims])
+
   const allMilestones       = [...earned, ...unearned]
   const filteredMilestones  = allMilestones.filter(m => {
     if (filter === 'earned')      return earnedIds.has(m.id)
@@ -519,7 +494,7 @@ export default function MilestoneGrid({
                 border: filter === f ? '1px solid #484F58' : '1px solid transparent',
                 cursor: 'pointer', whiteSpace: 'nowrap',
               }}>
-                {f === 'earned' ? `Earned (${earned.length})` : f.charAt(0).toUpperCase() + f.slice(1)}
+                {f === 'earned' ? `Earned (${earned.length + earnedStaticCount})` : f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
             ))}
           </div>
