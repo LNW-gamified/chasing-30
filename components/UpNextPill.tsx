@@ -65,21 +65,26 @@ export default function UpNextPill({ compact = false }: { compact?: boolean }) {
       <Link
         href={`/trips/${next.id}`}
         style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6,
+          display: 'inline-flex', alignItems: 'center', gap: 9,
           background: 'rgba(31,111,235,0.12)', border: '1px solid rgba(31,111,235,0.25)',
-          borderRadius: 999, padding: '4px 10px 4px 6px',
-          textDecoration: 'none', flexShrink: 0, maxWidth: 220,
+          borderRadius: 999, padding: '6px 14px 6px 8px',
+          textDecoration: 'none', flexShrink: 0, maxWidth: 280,
         }}
       >
-        {next.stadiumAbbr && <TeamLogo abbreviation={next.stadiumAbbr} size={18} />}
-        <span style={{
-          fontSize: 12, fontWeight: 600, color: '#E6EDF3',
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          maxWidth: 110,
-        }}>
-          {next.stadiumName}
-        </span>
-        <span style={{ fontSize: 11, color: '#1F6FEB', fontWeight: 700, flexShrink: 0 }}>
+        {next.stadiumAbbr && <TeamLogo abbreviation={next.stadiumAbbr} size={24} />}
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em', lineHeight: 1.3 }}>
+            Next Up
+          </div>
+          <div style={{
+            fontSize: 14, fontWeight: 700, color: '#E6EDF3',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            maxWidth: 130, lineHeight: 1.3,
+          }}>
+            {next.stadiumName}
+          </div>
+        </div>
+        <span style={{ fontSize: 15, color: '#F5A623', fontWeight: 800, flexShrink: 0 }}>
           {label}
         </span>
       </Link>

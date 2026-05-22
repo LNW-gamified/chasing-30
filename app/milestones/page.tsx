@@ -111,36 +111,40 @@ export default async function MilestonesPage() {
 
       {/* ── Desktop sidebar ──────────────────────────────────────── */}
       <aside className="hidden md:flex flex-col" style={{
-        position: 'fixed', top: 0, left: 0, bottom: 0, width: 240,
-        backgroundColor: '#161B22', borderRight: '1px solid #30363D', zIndex: 40,
+        position: 'fixed', top: 0, left: 0, bottom: 0, width: 256,
+        backgroundColor: '#0B1117', borderRight: '1px solid #30363D', zIndex: 40, overflowY: 'auto',
       }}>
-        <div style={{ padding: '24px 20px 16px' }}>
-          <div style={{ fontWeight: 900, fontSize: 20, color: '#E6EDF3', letterSpacing: '-0.5px' }}>
-            ⚾ Chasing 30
-          </div>
+        <div style={{ padding: '1.5rem 1.25rem', borderBottom: '1px solid #30363D' }}>
+          <div style={{ fontSize: '1.125rem', fontWeight: 900, color: '#E6EDF3' }}>⚾ Chasing 30</div>
+          <div style={{ fontSize: '0.75rem', color: '#8B949E', marginTop: 2 }}>MLB Stadium Tracker</div>
         </div>
-        <nav style={{ flex: 1, padding: '4px 12px' }}>
+        <div style={{ padding: '12px 12px 0' }}>
+          <UpNextPill />
+        </div>
+        <nav style={{ flex: 1, padding: '0.75rem' }}>
           {NAV.map(({ label, href, icon: Icon }) => {
             const active = href === '/milestones'
             return (
               <Link key={href} href={href} style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '10px 12px', borderRadius: 10, marginBottom: 2,
+                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                padding: '0.625rem 0.875rem', borderRadius: 10, marginBottom: 2,
                 color: active ? '#E6EDF3' : '#8B949E',
                 backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent',
-                fontWeight: active ? 700 : 500, fontSize: 15, textDecoration: 'none',
+                fontWeight: active ? 600 : 400, fontSize: '0.9375rem', textDecoration: 'none',
+                borderLeft: active ? '3px solid #1F6FEB' : '3px solid transparent',
               }}>
-                <Icon size={20} color={active ? '#1F6FEB' : '#8B949E'} />
+                <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
                 {label}
               </Link>
             )
           })}
         </nav>
-        <div style={{ padding: '12px 16px', borderTop: '1px solid #30363D' }}>
-          <UpNextPill />
-          <div style={{ fontSize: 12, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, marginTop: 8 }}>Progress</div>
-          <div style={{ fontWeight: 800, fontSize: 22, color: '#E6EDF3' }}>
-            {visitedCount}<span style={{ fontWeight: 400, fontSize: 14, color: '#8B949E' }}> / 30</span>
+        <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #30363D' }}>
+          <div style={{ fontSize: '0.8125rem', color: '#8B949E', marginBottom: 6 }}>
+            {visitedCount} / 30 · {Math.round((visitedCount / 30) * 100)}% complete
+          </div>
+          <div style={{ height: 4, background: '#30363D', borderRadius: 3, overflow: 'hidden' }}>
+            <div style={{ width: `${Math.round((visitedCount / 30) * 100)}%`, height: '100%', background: '#3FB950', borderRadius: 3 }} />
           </div>
         </div>
       </aside>
@@ -307,7 +311,8 @@ export default async function MilestonesPage() {
       {/* ── Mobile bottom tab bar ────────────────────────────────── */}
       <div className="flex md:hidden" style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
-        backgroundColor: '#161B22', borderTop: '1px solid #30363D',
+        backgroundColor: 'rgba(11,17,23,0.96)', borderTop: '1px solid #30363D',
+        backdropFilter: 'blur(12px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}>
         {NAV.map(({ label, href, icon: Icon }) => {
@@ -315,11 +320,11 @@ export default async function MilestonesPage() {
           return (
             <Link key={href} href={href} style={{
               flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-              justifyContent: 'center', textDecoration: 'none', padding: '10px 0', minHeight: 56,
+              justifyContent: 'center', textDecoration: 'none', padding: '10px 0',
               color: active ? '#1F6FEB' : '#8B949E', gap: 3,
             }}>
-              <Icon size={22} color={active ? '#1F6FEB' : '#8B949E'} />
-              {active && <span style={{ fontSize: 11, fontWeight: 700, color: '#1F6FEB' }}>{label}</span>}
+              <Icon size={21} strokeWidth={active ? 2.5 : 1.8} />
+              {active && <span style={{ fontSize: '0.6rem', fontWeight: 700, lineHeight: 1 }}>{label}</span>}
             </Link>
           )
         })}
