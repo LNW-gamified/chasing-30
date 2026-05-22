@@ -7,6 +7,8 @@ import { X, ImagePlus, Trash2 } from 'lucide-react'
 
 interface Props {
   event?: SpecialEvent
+  defaultType?: SpecialEventType
+  allowedTypes?: SpecialEventType[]
   onClose: () => void
   onSaved: () => void
 }
@@ -33,9 +35,9 @@ const HISTORIC_VENUES = [
 const ML_LEVELS = ['AAA', 'AA', 'A', 'A+', 'Rookie']
 const POSTSEASON_ROUNDS = ['ALDS', 'ALCS', 'NLDS', 'NLCS', 'Wild Card']
 
-function defaultForm(event?: SpecialEvent) {
+function defaultForm(event?: SpecialEvent, defaultType?: SpecialEventType) {
   return {
-    event_type: event?.event_type ?? 'world_series' as SpecialEventType,
+    event_type: event?.event_type ?? defaultType ?? 'world_series' as SpecialEventType,
     event_date: event?.event_date ?? new Date().toISOString().split('T')[0],
     seat_section: event?.seat_section ?? '',
     seat_row: event?.seat_row ?? '',
@@ -60,8 +62,9 @@ function defaultForm(event?: SpecialEvent) {
   }
 }
 
-export default function SpecialEventForm({ event, onClose, onSaved }: Props) {
-  const [form, setForm] = useState(() => defaultForm(event))
+export default function SpecialEventForm({ event, defaultType, allowedTypes, onClose, onSaved }: Props) {
+  const [form, setForm] = useState(() => defaultForm(event, defaultType))
+  const visibleTypes = allowedTypes ? EVENT_TYPES.filter(et => allowedTypes.includes(et.value)) : EVENT_TYPES
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [photoFile, setPhotoFile] = useState<File | null>(null)
@@ -195,25 +198,29 @@ export default function SpecialEventForm({ event, onClose, onSaved }: Props) {
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 pb-6">
-          {sectionHead('Event Type')}
-          <div className="grid grid-cols-2 gap-2 mb-2">
-            {EVENT_TYPES.map((et) => (
-              <button
-                key={et.value}
-                type="button"
-                onClick={() => set('event_type', et.value)}
-                className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
-                style={{
-                  backgroundColor: form.event_type === et.value ? 'rgba(31,111,235,0.2)' : '#1C2430',
-                  border: `1.5px solid ${form.event_type === et.value ? '#1F6FEB' : '#30363D'}`,
-                  color: form.event_type === et.value ? '#1F6FEB' : '#8B949E',
-                }}
-              >
-                <span>{et.icon}</span>
-                <span>{et.label}</span>
-              </button>
-            ))}
-          </div>
+          {visibleTypes.length > 1 && (
+            <>
+              {sectionHead('Event Type')}
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                {visibleTypes.map((et) => (
+                  <button
+                    key={et.value}
+                    type="button"
+                    onClick={() => set('event_type', et.value)}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
+                    style={{
+                      backgroundColor: form.event_type === et.value ? 'rgba(31,111,235,0.2)' : '#1C2430',
+                      border: `1.5px solid ${form.event_type === et.value ? '#1F6FEB' : '#30363D'}`,
+                      color: form.event_type === et.value ? '#1F6FEB' : '#8B949E',
+                    }}
+                  >
+                    <span>{et.icon}</span>
+                    <span>{et.label}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           {sectionHead('Event Info')}
           <div className="grid grid-cols-2 gap-3">

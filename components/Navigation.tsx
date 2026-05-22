@@ -9,7 +9,6 @@ import {
   Building2,
   Trophy,
   Plane,
-  Star,
   LogOut,
 } from 'lucide-react'
 import UpNextPill from '@/components/UpNextPill'
@@ -20,7 +19,6 @@ const NAV_ITEMS = [
   { href: '/map',            label: 'Map',    icon: Map             },
   { href: '/milestones',     label: 'Goals',  icon: Trophy          },
   { href: '/trips',          label: 'Trips',  icon: Plane           },
-  { href: '/special-events', label: 'Events', icon: Star            },
 ]
 
 export default function Navigation() {

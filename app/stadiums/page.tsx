@@ -1,15 +1,16 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
-import { Search, Home, MapPin, Map, Trophy, Plane, X, ChevronRight } from 'lucide-react'
-import type { Stadium } from '@/types'
+import { Search, Home, MapPin, Map, Trophy, Plane, X, ChevronRight, Plus, Pencil, Trash2 } from 'lucide-react'
+import type { Stadium, SpecialEvent, SpecialEventType } from '@/types'
 import TeamLogo from '@/components/TeamLogo'
+import SpecialEventForm from '@/components/SpecialEventForm'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Category = 'mlb' | 'historical' | 'spring'
+type Category = 'mlb' | 'historical' | 'spring' | 'events'
 type SortKey = 'team' | 'name' | 'state' | 'division'
 interface VisitRow { stadium_id: string; visit_date: string }
 interface NextGameInfo { date: string; opponentAbbr: string }
@@ -49,6 +50,48 @@ const NAV = [
   { label: 'Goals', href: '/milestones', icon: Trophy  },
   { label: 'Trips', href: '/trips',      icon: Plane   },
 ]
+
+// ─── Event helpers ────────────────────────────────────────────────────────────
+
+const EVENT_TYPE_META: Record<string, { label: string; icon: string }> = {
+  world_series:     { label: 'World Series',    icon: '🏆' },
+  all_star_game:    { label: 'All-Star Game',   icon: '⭐' },
+  postseason:       { label: 'Postseason',      icon: '🍂' },
+  spring_training:  { label: 'Spring Training', icon: '🌸' },
+  minor_league:     { label: 'Minor League',    icon: '🌱' },
+  historic_ballpark:{ label: 'Historic Ballpark', icon: '🏛️' },
+  international:    { label: 'International',   icon: '🌍' },
+  other:            { label: 'Other',           icon: '📝' },
+}
+
+const EVENTS_TAB_TYPES: { value: SpecialEventType; label: string; icon: string }[] = [
+  { value: 'world_series',  label: 'World Series', icon: '🏆' },
+  { value: 'all_star_game', label: 'All-Star',     icon: '⭐' },
+  { value: 'postseason',    label: 'Postseason',   icon: '🍂' },
+  { value: 'minor_league',  label: 'Minor League', icon: '🌱' },
+  { value: 'international', label: 'International',icon: '🌍' },
+  { value: 'other',         label: 'Other',        icon: '📝' },
+]
+
+function eventTitle(e: SpecialEvent): string {
+  if (e.event_type === 'historic_ballpark') return e.venue_name ?? 'Historic Ballpark'
+  if (e.event_type === 'spring_training') return e.home_team ? `${e.home_team} Spring Training` : 'Spring Training'
+  if (e.event_type === 'world_series') return (e.home_team && e.visiting_team) ? `${e.home_team} vs ${e.visiting_team}` : 'World Series'
+  if (e.event_type === 'all_star_game') return 'MLB All-Star Game'
+  if (e.event_type === 'postseason') return (e.home_team && e.visiting_team) ? `${e.home_team} vs ${e.visiting_team}` : `Postseason${e.series_round ? ` · ${e.series_round}` : ''}`
+  if (e.event_type === 'minor_league') return e.home_team ? `${e.home_team}${e.ml_level ? ` (${e.ml_level})` : ''}` : 'Minor League'
+  if (e.event_type === 'international') return e.series_name ?? 'International Game'
+  if (e.event_type === 'other') return e.custom_title ?? 'Other Experience'
+  return 'Special Event'
+}
+
+function eventSubtitle(e: SpecialEvent): string {
+  const parts: string[] = []
+  if (e.stadium_name) parts.push(e.stadium_name)
+  const loc = [e.city, e.state ?? e.country].filter(Boolean).join(', ')
+  if (loc) parts.push(loc)
+  return parts.join(' · ')
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -221,11 +264,53 @@ function SectionHeader({ children, count }: { children: React.ReactNode; count: 
   )
 }
 
+// ─── Event row ────────────────────────────────────────────────────────────────
+
+function EventRow({ event, onEdit, onDelete }: { event: SpecialEvent; onEdit: () => void; onDelete: () => void }) {
+  const meta = EVENT_TYPE_META[event.event_type]
+  const title = eventTitle(event)
+  const subtitle = eventSubtitle(event)
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '12px 16px', borderRadius: 10,
+      backgroundColor: '#161B22', border: '1px solid #30363D',
+      marginBottom: 8,
+    }}>
+      <span style={{ fontSize: 22, flexShrink: 0 }}>{meta?.icon ?? '📝'}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {title}
+        </div>
+        <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>
+          {fmtDate(event.event_date)}{subtitle ? ` · ${subtitle}` : ''}
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+        <button
+          onClick={onEdit}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8B949E', padding: '4px 6px', borderRadius: 6 }}
+        >
+          <Pencil size={15} />
+        </button>
+        <button
+          onClick={onDelete}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#F85149', padding: '4px 6px', borderRadius: 6 }}
+        >
+          <Trash2 size={15} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StadiumsPage() {
   const [stadiums, setStadiums]     = useState<Stadium[]>([])
   const [visits, setVisits]         = useState<VisitRow[]>([])
+  const [events, setEvents]         = useState<SpecialEvent[]>([])
   const [loading, setLoading]       = useState(true)
   const [search, setSearch]         = useState('')
   const [showSearch, setShowSearch] = useState(false)
@@ -234,19 +319,54 @@ export default function StadiumsPage() {
   const [activeCategory, setActiveCategory] = useState<Category>('mlb')
   const [nextGames, setNextGames]   = useState<Record<string, NextGameInfo>>({})
 
+  const [showForm, setShowForm]           = useState(false)
+  const [editingEvent, setEditingEvent]   = useState<SpecialEvent | undefined>()
+  const [formDefaultType, setFormDefaultType] = useState<SpecialEventType>('world_series')
+  const [formAllowedTypes, setFormAllowedTypes] = useState<SpecialEventType[] | undefined>()
+  const [eventsTypeFilter, setEventsTypeFilter] = useState<SpecialEventType | 'all'>('all')
+
+  const loadEvents = useCallback(async () => {
+    const supabase = createClient()
+    const { data } = await supabase.from('special_events').select('*').order('event_date', { ascending: false })
+    setEvents((data as SpecialEvent[]) ?? [])
+  }, [])
+
   useEffect(() => {
     const supabase = createClient()
     Promise.all([
       supabase.from('stadiums').select('*').order('team'),
       supabase.from('stadium_visits').select('stadium_id, visit_date').order('visit_date', { ascending: false }),
       fetch('/api/next-games').then(r => r.ok ? r.json() : {}),
-    ]).then(([{ data: s }, { data: v }, games]) => {
+      supabase.from('special_events').select('*').order('event_date', { ascending: false }),
+    ]).then(([{ data: s }, { data: v }, games, { data: ev }]) => {
       setStadiums(s ?? [])
       setVisits((v as VisitRow[]) ?? [])
       setNextGames(games ?? {})
+      setEvents((ev as SpecialEvent[]) ?? [])
       setLoading(false)
     })
   }, [])
+
+  function openAddForm(defaultType: SpecialEventType, allowedTypes?: SpecialEventType[]) {
+    setEditingEvent(undefined)
+    setFormDefaultType(defaultType)
+    setFormAllowedTypes(allowedTypes)
+    setShowForm(true)
+  }
+
+  function openEditForm(event: SpecialEvent) {
+    setEditingEvent(event)
+    setFormDefaultType(event.event_type)
+    setFormAllowedTypes(undefined)
+    setShowForm(true)
+  }
+
+  async function deleteEvent(id: string) {
+    if (!confirm('Delete this event?')) return
+    const supabase = createClient()
+    await supabase.from('special_events').delete().eq('id', id)
+    await loadEvents()
+  }
 
   const visitedIds = useMemo(() => new Set(visits.map(v => v.stadium_id)), [visits])
 
@@ -265,7 +385,6 @@ export default function StadiumsPage() {
   const visitedCount = visitedIds.size
   const pct = Math.round((visitedCount / 30) * 100)
 
-  // All filtered stadiums (search + league + sort — no visited filter)
   const filtered = useMemo(() => {
     if (activeCategory !== 'mlb') return []
     const list = stadiums.filter(s => {
@@ -281,10 +400,34 @@ export default function StadiumsPage() {
   const visitedList   = useMemo(() => filtered.filter(s =>  visitedIds.has(s.id)), [filtered, visitedIds])
   const unvisitedList = useMemo(() => filtered.filter(s => !visitedIds.has(s.id)), [filtered, visitedIds])
 
+  const historicEvents = useMemo(() =>
+    events.filter(e => e.event_type === 'historic_ballpark')
+      .sort((a, b) => b.event_date.localeCompare(a.event_date)),
+    [events])
+
+  const springEvents = useMemo(() =>
+    events.filter(e => e.event_type === 'spring_training')
+      .sort((a, b) => b.event_date.localeCompare(a.event_date)),
+    [events])
+
+  const EVENTS_SPECIAL_SET: SpecialEventType[] = ['world_series', 'all_star_game', 'postseason', 'minor_league', 'international', 'other']
+
+  const otherEvents = useMemo(() =>
+    events.filter(e => EVENTS_SPECIAL_SET.includes(e.event_type))
+      .sort((a, b) => b.event_date.localeCompare(a.event_date)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [events])
+
+  const filteredOtherEvents = useMemo(() => {
+    if (eventsTypeFilter === 'all') return otherEvents
+    return otherEvents.filter(e => e.event_type === eventsTypeFilter)
+  }, [otherEvents, eventsTypeFilter])
+
   const CATEGORIES: { key: Category; label: string }[] = [
     { key: 'mlb',        label: 'MLB'             },
     { key: 'historical', label: 'Historical'      },
     { key: 'spring',     label: 'Spring Training' },
+    { key: 'events',     label: 'Events'          },
   ]
 
   return (
@@ -351,18 +494,20 @@ export default function StadiumsPage() {
                   Chasing all 30 MLB ballparks
                 </div>
               </div>
-              <button
-                onClick={() => { setShowSearch(v => !v); if (showSearch) setSearch('') }}
-                aria-label="Toggle search"
-                style={{
-                  background: 'rgba(139,148,158,0.1)', border: '1px solid #30363D',
-                  borderRadius: '50%', width: 36, height: 36, flexShrink: 0,
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginTop: 2,
-                }}
-              >
-                {showSearch ? <X size={16} color="#8B949E" /> : <Search size={16} color="#8B949E" />}
-              </button>
+              {activeCategory === 'mlb' && (
+                <button
+                  onClick={() => { setShowSearch(v => !v); if (showSearch) setSearch('') }}
+                  aria-label="Toggle search"
+                  style={{
+                    background: 'rgba(139,148,158,0.1)', border: '1px solid #30363D',
+                    borderRadius: '50%', width: 36, height: 36, flexShrink: 0,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    marginTop: 2,
+                  }}
+                >
+                  {showSearch ? <X size={16} color="#8B949E" /> : <Search size={16} color="#8B949E" />}
+                </button>
+              )}
             </div>
 
             {/* Progress bar */}
@@ -414,86 +559,87 @@ export default function StadiumsPage() {
           </div>
         </div>
 
-        {/* ── Filters (sticky) ─────────────────────────────────── */}
-        <div style={{
-          position: 'sticky', top: 0, zIndex: 20,
-          backgroundColor: '#0B1117', borderBottom: '1px solid #30363D',
-        }}>
-          <div style={{ maxWidth: 960, margin: '0 auto', padding: '10px 16px' }}>
+        {/* ── Filters (sticky, MLB only) ────────────────────────── */}
+        {activeCategory === 'mlb' && (
+          <div style={{
+            position: 'sticky', top: 0, zIndex: 20,
+            backgroundColor: '#0B1117', borderBottom: '1px solid #30363D',
+          }}>
+            <div style={{ maxWidth: 960, margin: '0 auto', padding: '10px 16px' }}>
 
-            {showSearch && (
-              <input
-                type="text"
-                placeholder="Search team, stadium, city..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                autoFocus
-                style={{
-                  width: '100%', padding: '8px 12px', borderRadius: 8, marginBottom: 10,
-                  border: '1.5px solid #30363D', fontSize: 14,
-                  backgroundColor: '#1C2430', color: '#E6EDF3',
-                  outline: 'none', boxSizing: 'border-box',
-                }}
-              />
-            )}
-
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-              {/* Scroll-to-section pills */}
-              <button
-                onClick={() => scrollToSection('visited-section')}
-                style={{
-                  padding: '5px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600,
-                  cursor: 'pointer', transition: 'all 0.15s',
-                  backgroundColor: 'rgba(63,185,80,0.1)',
-                  color: '#3FB950',
-                  border: '1.5px solid rgba(63,185,80,0.3)',
-                }}
-              >
-                Visited <span style={{ fontWeight: 400, fontSize: 12 }}>({visitedCount})</span>
-              </button>
-              <button
-                onClick={() => scrollToSection('not-yet-section')}
-                style={{
-                  padding: '5px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600,
-                  cursor: 'pointer', transition: 'all 0.15s',
-                  backgroundColor: 'transparent',
-                  color: '#8B949E',
-                  border: '1.5px solid #30363D',
-                }}
-              >
-                Not Yet <span style={{ fontWeight: 400, fontSize: 12 }}>({30 - visitedCount})</span>
-              </button>
-
-              <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
-                <select
-                  value={filterLeague}
-                  onChange={e => setFilterLeague(e.target.value as 'all' | 'AL' | 'NL')}
+              {showSearch && (
+                <input
+                  type="text"
+                  placeholder="Search team, stadium, city..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  autoFocus
                   style={{
-                    padding: '5px 8px', borderRadius: 8, border: '1.5px solid #30363D',
-                    fontSize: 13, color: '#8B949E', backgroundColor: '#1C2430', cursor: 'pointer',
+                    width: '100%', padding: '8px 12px', borderRadius: 8, marginBottom: 10,
+                    border: '1.5px solid #30363D', fontSize: 14,
+                    backgroundColor: '#1C2430', color: '#E6EDF3',
+                    outline: 'none', boxSizing: 'border-box',
+                  }}
+                />
+              )}
+
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => scrollToSection('visited-section')}
+                  style={{
+                    padding: '5px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600,
+                    cursor: 'pointer', transition: 'all 0.15s',
+                    backgroundColor: 'rgba(63,185,80,0.1)',
+                    color: '#3FB950',
+                    border: '1.5px solid rgba(63,185,80,0.3)',
                   }}
                 >
-                  <option value="all">All</option>
-                  <option value="AL">AL</option>
-                  <option value="NL">NL</option>
-                </select>
-                <select
-                  value={sortKey}
-                  onChange={e => setSortKey(e.target.value as SortKey)}
+                  Visited <span style={{ fontWeight: 400, fontSize: 12 }}>({visitedCount})</span>
+                </button>
+                <button
+                  onClick={() => scrollToSection('not-yet-section')}
                   style={{
-                    padding: '5px 8px', borderRadius: 8, border: '1.5px solid #30363D',
-                    fontSize: 13, color: '#8B949E', backgroundColor: '#1C2430', cursor: 'pointer',
+                    padding: '5px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600,
+                    cursor: 'pointer', transition: 'all 0.15s',
+                    backgroundColor: 'transparent',
+                    color: '#8B949E',
+                    border: '1.5px solid #30363D',
                   }}
                 >
-                  <option value="team">Team</option>
-                  <option value="name">Stadium</option>
-                  <option value="state">State</option>
-                  <option value="division">Division</option>
-                </select>
+                  Not Yet <span style={{ fontWeight: 400, fontSize: 12 }}>({30 - visitedCount})</span>
+                </button>
+
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+                  <select
+                    value={filterLeague}
+                    onChange={e => setFilterLeague(e.target.value as 'all' | 'AL' | 'NL')}
+                    style={{
+                      padding: '5px 8px', borderRadius: 8, border: '1.5px solid #30363D',
+                      fontSize: 13, color: '#8B949E', backgroundColor: '#1C2430', cursor: 'pointer',
+                    }}
+                  >
+                    <option value="all">All</option>
+                    <option value="AL">AL</option>
+                    <option value="NL">NL</option>
+                  </select>
+                  <select
+                    value={sortKey}
+                    onChange={e => setSortKey(e.target.value as SortKey)}
+                    style={{
+                      padding: '5px 8px', borderRadius: 8, border: '1.5px solid #30363D',
+                      fontSize: 13, color: '#8B949E', backgroundColor: '#1C2430', cursor: 'pointer',
+                    }}
+                  >
+                    <option value="team">Team</option>
+                    <option value="name">Stadium</option>
+                    <option value="state">State</option>
+                    <option value="division">Division</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* ── Content ──────────────────────────────────────────── */}
         <div style={{ maxWidth: 960, margin: '0 auto', padding: '20px 16px' }}>
@@ -501,13 +647,204 @@ export default function StadiumsPage() {
             <div style={{ textAlign: 'center', padding: '56px 16px', color: '#8B949E', fontSize: 15 }}>
               Loading parks…
             </div>
-          ) : activeCategory !== 'mlb' ? (
-            <div style={{ textAlign: 'center', padding: '56px 16px', color: '#8B949E', fontSize: 15 }}>
-              {activeCategory === 'historical'
-                ? 'No historical ballparks tracked yet.'
-                : 'No spring training parks tracked yet.'}
+          ) : activeCategory === 'historical' ? (
+            /* ── Historical tab ──────────────────────────────── */
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: '#E6EDF3' }}>Historic Ballparks</div>
+                  <div style={{ fontSize: 13, color: '#8B949E', marginTop: 3 }}>
+                    Museums, landmarks, and legendary venues
+                  </div>
+                </div>
+                <button
+                  onClick={() => openAddForm('historic_ballpark', ['historic_ballpark'])}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '8px 16px', borderRadius: 8, border: 'none',
+                    cursor: 'pointer', backgroundColor: '#1F6FEB',
+                    color: '#fff', fontWeight: 600, fontSize: 13, flexShrink: 0,
+                  }}
+                >
+                  <Plus size={15} /> Log Visit
+                </button>
+              </div>
+              {historicEvents.length === 0 ? (
+                <div style={{
+                  backgroundColor: '#161B22', borderRadius: 12, border: '2px dashed #30363D',
+                  padding: '48px 24px', textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: 32, marginBottom: 10 }}>🏛️</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', marginBottom: 6 }}>
+                    No historic ballpark visits yet
+                  </div>
+                  <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 16 }}>
+                    Visited the Hall of Fame or a legendary venue? Log it here.
+                  </div>
+                  <button
+                    onClick={() => openAddForm('historic_ballpark', ['historic_ballpark'])}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      padding: '9px 18px', borderRadius: 8, border: 'none',
+                      cursor: 'pointer', backgroundColor: '#1F6FEB',
+                      color: '#fff', fontWeight: 600, fontSize: 13,
+                    }}
+                  >
+                    <Plus size={15} /> Log Your First Visit
+                  </button>
+                </div>
+              ) : (
+                historicEvents.map(e => (
+                  <EventRow key={e.id} event={e} onEdit={() => openEditForm(e)} onDelete={() => deleteEvent(e.id)} />
+                ))
+              )}
             </div>
+
+          ) : activeCategory === 'spring' ? (
+            /* ── Spring Training tab ─────────────────────────── */
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: '#E6EDF3' }}>Spring Training</div>
+                  <div style={{ fontSize: 13, color: '#8B949E', marginTop: 3 }}>
+                    Cactus League & Grapefruit League games
+                  </div>
+                </div>
+                <button
+                  onClick={() => openAddForm('spring_training', ['spring_training'])}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '8px 16px', borderRadius: 8, border: 'none',
+                    cursor: 'pointer', backgroundColor: '#1F6FEB',
+                    color: '#fff', fontWeight: 600, fontSize: 13, flexShrink: 0,
+                  }}
+                >
+                  <Plus size={15} /> Log Game
+                </button>
+              </div>
+              {springEvents.length === 0 ? (
+                <div style={{
+                  backgroundColor: '#161B22', borderRadius: 12, border: '2px dashed #30363D',
+                  padding: '48px 24px', textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: 32, marginBottom: 10 }}>🌸</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', marginBottom: 6 }}>
+                    No spring training games logged yet
+                  </div>
+                  <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 16 }}>
+                    Made it to Arizona or Florida for spring ball? Log it here.
+                  </div>
+                  <button
+                    onClick={() => openAddForm('spring_training', ['spring_training'])}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      padding: '9px 18px', borderRadius: 8, border: 'none',
+                      cursor: 'pointer', backgroundColor: '#1F6FEB',
+                      color: '#fff', fontWeight: 600, fontSize: 13,
+                    }}
+                  >
+                    <Plus size={15} /> Log Your First Game
+                  </button>
+                </div>
+              ) : (
+                springEvents.map(e => (
+                  <EventRow key={e.id} event={e} onEdit={() => openEditForm(e)} onDelete={() => deleteEvent(e.id)} />
+                ))
+              )}
+            </div>
+
+          ) : activeCategory === 'events' ? (
+            /* ── Events tab ──────────────────────────────────── */
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: '#E6EDF3' }}>Special Events</div>
+                  <div style={{ fontSize: 13, color: '#8B949E', marginTop: 3 }}>
+                    Postseason, All-Star, World Series &amp; more
+                  </div>
+                </div>
+                <button
+                  onClick={() => openAddForm('world_series', EVENTS_SPECIAL_SET)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '8px 16px', borderRadius: 8, border: 'none',
+                    cursor: 'pointer', backgroundColor: '#1F6FEB',
+                    color: '#fff', fontWeight: 600, fontSize: 13, flexShrink: 0,
+                  }}
+                >
+                  <Plus size={15} /> Log Event
+                </button>
+              </div>
+
+              {/* Type filter chips */}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+                <button
+                  onClick={() => setEventsTypeFilter('all')}
+                  style={{
+                    padding: '5px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600,
+                    cursor: 'pointer', border: '1.5px solid',
+                    borderColor: eventsTypeFilter === 'all' ? '#1F6FEB' : '#30363D',
+                    backgroundColor: eventsTypeFilter === 'all' ? 'rgba(31,111,235,0.12)' : 'transparent',
+                    color: eventsTypeFilter === 'all' ? '#1F6FEB' : '#8B949E',
+                  }}
+                >
+                  All <span style={{ fontWeight: 400, fontSize: 12 }}>({otherEvents.length})</span>
+                </button>
+                {EVENTS_TAB_TYPES.map(t => {
+                  const count = otherEvents.filter(e => e.event_type === t.value).length
+                  if (count === 0) return null
+                  const active = eventsTypeFilter === t.value
+                  return (
+                    <button
+                      key={t.value}
+                      onClick={() => setEventsTypeFilter(t.value)}
+                      style={{
+                        padding: '5px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600,
+                        cursor: 'pointer', border: '1.5px solid',
+                        borderColor: active ? '#1F6FEB' : '#30363D',
+                        backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent',
+                        color: active ? '#1F6FEB' : '#8B949E',
+                      }}
+                    >
+                      {t.icon} {t.label} <span style={{ fontWeight: 400, fontSize: 12 }}>({count})</span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {filteredOtherEvents.length === 0 ? (
+                <div style={{
+                  backgroundColor: '#161B22', borderRadius: 12, border: '2px dashed #30363D',
+                  padding: '48px 24px', textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: 32, marginBottom: 10 }}>🏆</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', marginBottom: 6 }}>
+                    No special events logged yet
+                  </div>
+                  <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 16 }}>
+                    Attended a World Series game, All-Star Game, or postseason? Log it here.
+                  </div>
+                  <button
+                    onClick={() => openAddForm('world_series', EVENTS_SPECIAL_SET)}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      padding: '9px 18px', borderRadius: 8, border: 'none',
+                      cursor: 'pointer', backgroundColor: '#1F6FEB',
+                      color: '#fff', fontWeight: 600, fontSize: 13,
+                    }}
+                  >
+                    <Plus size={15} /> Log Your First Event
+                  </button>
+                </div>
+              ) : (
+                filteredOtherEvents.map(e => (
+                  <EventRow key={e.id} event={e} onEdit={() => openEditForm(e)} onDelete={() => deleteEvent(e.id)} />
+                ))
+              )}
+            </div>
+
           ) : (
+            /* ── MLB tab ─────────────────────────────────────── */
             <>
               {/* Visited section */}
               <div id="visited-section" style={{ marginBottom: 40, scrollMarginTop: 60 }}>
@@ -602,6 +939,20 @@ export default function StadiumsPage() {
           )
         })}
       </div>
+
+      {/* ── Special Event Form modal ──────────────────────────────── */}
+      {showForm && (
+        <SpecialEventForm
+          event={editingEvent}
+          defaultType={formDefaultType}
+          allowedTypes={formAllowedTypes}
+          onClose={() => setShowForm(false)}
+          onSaved={async () => {
+            setShowForm(false)
+            await loadEvents()
+          }}
+        />
+      )}
 
       <style>{`
         .stadium-card:hover {

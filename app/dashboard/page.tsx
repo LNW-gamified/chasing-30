@@ -3,7 +3,7 @@ import { MILESTONES } from '@/lib/milestones'
 import type { Stadium, StadiumVisit, SpecialEvent, SpecialVisit, Trip } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
-import { Home, Map, MapPin, Trophy, Plane, Star } from 'lucide-react'
+import { Home, Map, MapPin, Trophy, Plane } from 'lucide-react'
 import TodayGames, { type TodayGame } from '@/components/TodayGames'
 import Standings from '@/components/Standings'
 import FavoriteTeamPicker from '@/components/FavoriteTeamPicker'
@@ -162,7 +162,6 @@ const NAV = [
   { label: 'Map',    href: '/map',             icon: Map     },
   { label: 'Goals',  href: '/milestones',      icon: Trophy  },
   { label: 'Trips',  href: '/trips',           icon: Plane   },
-  { label: 'Events', href: '/special-events',  icon: Star    },
 ]
 
 // ─── Page ─────────────────────────────────────────────────────────────────────

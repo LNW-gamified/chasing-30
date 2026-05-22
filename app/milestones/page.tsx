@@ -3,7 +3,7 @@ import MilestoneGrid from '@/components/MilestoneGrid'
 import { MILESTONES } from '@/lib/milestones'
 import { STATIC_EXPERIENCES } from '@/lib/static-experiences'
 import Link from 'next/link'
-import { Home, MapPin, Map, Trophy, Plane, Star } from 'lucide-react'
+import { Home, MapPin, Map, Trophy, Plane } from 'lucide-react'
 import type { Stadium, StadiumVisit, SpecialEvent, SpecialVisit, SerializableMilestone } from '@/types'
 import UpNextPill from '@/components/UpNextPill'
 import SpecialVisitButton from '@/components/SpecialVisitButton'
@@ -14,7 +14,6 @@ const NAV = [
   { label: 'Map',    href: '/map',           icon: Map   },
   { label: 'Goals',  href: '/milestones',    icon: Trophy },
   { label: 'Trips',  href: '/trips',         icon: Plane },
-  { label: 'Events', href: '/special-events', icon: Star },
 ]
 
 export const RANK_TIERS = [
