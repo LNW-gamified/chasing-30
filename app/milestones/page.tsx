@@ -3,17 +3,18 @@ import MilestoneGrid from '@/components/MilestoneGrid'
 import { MILESTONES } from '@/lib/milestones'
 import { STATIC_EXPERIENCES } from '@/lib/static-experiences'
 import Link from 'next/link'
-import { Home, MapPin, Map, Trophy, Plane } from 'lucide-react'
-import type { Stadium, StadiumVisit, SpecialEvent, SerializableMilestone } from '@/types'
+import { Home, MapPin, Map, Trophy, Plane, Star } from 'lucide-react'
+import type { Stadium, StadiumVisit, SpecialEvent, SpecialVisit, SerializableMilestone } from '@/types'
 import UpNextPill from '@/components/UpNextPill'
 import SpecialVisitButton from '@/components/SpecialVisitButton'
 
 const NAV = [
-  { label: 'Home',  href: '/dashboard',  icon: Home },
-  { label: 'Parks', href: '/stadiums',   icon: MapPin },
-  { label: 'Map',   href: '/map',        icon: Map },
-  { label: 'Goals', href: '/milestones', icon: Trophy },
-  { label: 'Trips', href: '/trips',      icon: Plane },
+  { label: 'Home',   href: '/dashboard',     icon: Home  },
+  { label: 'Parks',  href: '/stadiums',      icon: MapPin },
+  { label: 'Map',    href: '/map',           icon: Map   },
+  { label: 'Goals',  href: '/milestones',    icon: Trophy },
+  { label: 'Trips',  href: '/trips',         icon: Plane },
+  { label: 'Events', href: '/special-events', icon: Star },
 ]
 
 export const RANK_TIERS = [
@@ -84,15 +85,16 @@ export default async function MilestonesPage() {
     supabase.from('stadium_visits').select('*'),
     supabase.from('special_events').select('*'),
     supabase.from('achievement_claims').select('achievement_id'),
-    supabase.from('special_visits').select('id, visit_type, venue, visit_date').order('visit_date', { ascending: false }),
+    supabase.from('special_visits').select('*').order('visit_date', { ascending: false }),
   ])
 
   const allStadiums: Stadium[] = stadiums ?? []
   const allVisits: StadiumVisit[] = visits ?? []
   const allEvents: SpecialEvent[] = events ?? []
+  const allSpecialVisits: SpecialVisit[] = (specialVisits ?? []) as SpecialVisit[]
 
-  const earned = MILESTONES.filter(m => m.check(allVisits, allStadiums, allEvents))
-  const unearned = MILESTONES.filter(m => !m.check(allVisits, allStadiums, allEvents))
+  const earned = MILESTONES.filter(m => m.check(allVisits, allStadiums, allEvents, allSpecialVisits))
+  const unearned = MILESTONES.filter(m => !m.check(allVisits, allStadiums, allEvents, allSpecialVisits))
   const totalPoints = earned.reduce((sum, m) => sum + (MILESTONE_POINTS[m.id] ?? 25), 0)
   const currentRank = getRank(totalPoints)
   const nextRank = getNextRank(totalPoints)

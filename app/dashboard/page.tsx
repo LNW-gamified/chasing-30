@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase-server'
 import { MILESTONES } from '@/lib/milestones'
-import type { Stadium, StadiumVisit, SpecialEvent, Trip } from '@/types'
+import type { Stadium, StadiumVisit, SpecialEvent, SpecialVisit, Trip } from '@/types'
+import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
-import { Home, Map, MapPin, Trophy, Plane } from 'lucide-react'
+import { Home, Map, MapPin, Trophy, Plane, Star } from 'lucide-react'
 import TodayGames, { type TodayGame } from '@/components/TodayGames'
 import Standings from '@/components/Standings'
 import FavoriteTeamPicker from '@/components/FavoriteTeamPicker'
@@ -43,10 +44,6 @@ async function fetchTodayGames(favAbbr: string | null): Promise<TodayGame[]> {
         isFinal:   g.status?.abstractGameState === 'Final',
         isFavorite: favAbbr !== null && (awayAbbr === favAbbr || homeAbbr === favAbbr),
       }
-    })
-    console.log(`[Dashboard] favAbbr="${favAbbr}" — checking ${games.length} games`)
-    games.forEach(g => {
-      console.log(`  gamePk=${g.gamePk} away=${g.awayAbbr} home=${g.homeAbbr} → isFavorite=${g.isFavorite}`)
     })
     return games.sort((a, b) => (b.isFavorite ? 1 : 0) - (a.isFavorite ? 1 : 0))
   } catch {
@@ -160,11 +157,12 @@ function ProgressRing({ visited, total, size = 130 }: { visited: number; total: 
 // ─── Nav ──────────────────────────────────────────────────────────────────────
 
 const NAV = [
-  { label: 'Home',  href: '/dashboard',  icon: Home   },
-  { label: 'Parks', href: '/stadiums',   icon: MapPin  },
-  { label: 'Map',   href: '/map',        icon: Map     },
-  { label: 'Goals', href: '/milestones', icon: Trophy  },
-  { label: 'Trips', href: '/trips',      icon: Plane   },
+  { label: 'Home',   href: '/dashboard',      icon: Home   },
+  { label: 'Parks',  href: '/stadiums',        icon: MapPin  },
+  { label: 'Map',    href: '/map',             icon: Map     },
+  { label: 'Goals',  href: '/milestones',      icon: Trophy  },
+  { label: 'Trips',  href: '/trips',           icon: Plane   },
+  { label: 'Events', href: '/special-events',  icon: Star    },
 ]
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -185,7 +183,7 @@ export default async function DashboardPage() {
     supabase.from('special_events').select('*'),
     supabase.from('trips').select('*, stadium:stadiums(*)').order('start_date', { ascending: true }),
     supabase.auth.getUser(),
-    supabase.from('special_visits').select('id'),
+    supabase.from('special_visits').select('*'),
   ])
 
   const userId = user?.id ?? ''
@@ -193,15 +191,16 @@ export default async function DashboardPage() {
     ? await supabase.from('user_settings').select('favorite_team_abbr').eq('user_id', userId).single()
     : { data: null }
 
-  const allStadiums: Stadium[]     = stadiums ?? []
-  const allVisits:   StadiumVisit[] = visits ?? []
-  const allEvents:   SpecialEvent[] = events ?? []
-  const allTrips:    Trip[]         = trips ?? []
+  const allStadiums:     Stadium[]      = stadiums ?? []
+  const allVisits:       StadiumVisit[] = visits ?? []
+  const allEvents:       SpecialEvent[] = events ?? []
+  const allTrips:        Trip[]         = trips ?? []
+  const allSpecialVisits: SpecialVisit[] = (specialVisits ?? []) as SpecialVisit[]
 
   const visitedIds   = new Set(allVisits.map(v => v.stadium_id))
   const visitedCount = visitedIds.size
 
-  const earnedMilestones = MILESTONES.filter(m => m.check(allVisits, allStadiums, allEvents))
+  const earnedMilestones = MILESTONES.filter(m => m.check(allVisits, allStadiums, allEvents, allSpecialVisits))
 
   const points = computePoints(visitedCount, allVisits.length, earnedMilestones.length)
   const rank   = getRank(points)
@@ -230,7 +229,7 @@ export default async function DashboardPage() {
   // ─── My Stats ───────────────────────────────────────────────────────────────
 
   const gamesAttended      = allVisits.length
-  const specialVisitCount  = specialVisits?.length ?? 0
+  const specialVisitCount  = allSpecialVisits.length
 
   const totalSpent = allTrips
     .filter(t => t.status === 'completed')
@@ -410,7 +409,7 @@ export default async function DashboardPage() {
                 {[
                   { icon: '⚾', value: gamesAttended.toString(),         label: 'Games Attended'  },
                   { icon: '📋', value: specialVisitCount.toString(),      label: 'Special Visits'  },
-                  { icon: '💰', value: `$${totalSpent.toLocaleString()}`, label: 'Total Spent'     },
+                  { icon: '💰', value: formatCurrency(totalSpent),        label: 'Total Spent'     },
                   { icon: '🏆', value: favDivision,                       label: 'Fav Division'    },
                   { icon: '👁', value: mostSeenTeam,                      label: 'Most Seen'       },
                 ].map(({ icon, value, label }) => (

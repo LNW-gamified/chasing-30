@@ -1,4 +1,4 @@
-import type { Milestone, StadiumVisit, Stadium, SpecialEvent } from '@/types'
+import type { Milestone, StadiumVisit, Stadium, SpecialEvent, SpecialVisit } from '@/types'
 
 function visitedIds(visits: StadiumVisit[]): Set<string> {
   return new Set(visits.map((v) => v.stadium_id))
@@ -196,42 +196,53 @@ export const MILESTONES: Milestone[] = [
     name: 'Beyond the Diamond',
     description: 'Log your first special baseball experience',
     icon: '🌟',
-    check: (_v, _s, events) => (events ?? []).length >= 1,
+    check: (_v, _s, events, specialVisits) =>
+      (events ?? []).length >= 1 || (specialVisits ?? []).length >= 1,
   },
   {
     id: 'world_series_attendance',
     name: 'World Series Witness',
     description: 'Attend a World Series game',
     icon: '🏆',
-    check: (_v, _s, events) => (events ?? []).some((e: SpecialEvent) => e.event_type === 'world_series'),
+    check: (_v, _s, events, specialVisits) =>
+      (events ?? []).some((e: SpecialEvent) => e.event_type === 'world_series') ||
+      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'world_series'),
   },
   {
     id: 'all_star_attendance',
     name: 'Midsummer Classic',
     description: 'Attend the MLB All-Star Game',
     icon: '⭐',
-    check: (_v, _s, events) => (events ?? []).some((e: SpecialEvent) => e.event_type === 'all_star_game'),
+    check: (_v, _s, events, specialVisits) =>
+      (events ?? []).some((e: SpecialEvent) => e.event_type === 'all_star_game') ||
+      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'all_star'),
   },
   {
     id: 'postseason_attendance',
     name: 'October Baseball',
     description: 'Attend any MLB postseason game',
     icon: '🍂',
-    check: (_v, _s, events) => (events ?? []).some((e: SpecialEvent) => e.event_type === 'postseason'),
+    check: (_v, _s, events, specialVisits) =>
+      (events ?? []).some((e: SpecialEvent) => e.event_type === 'postseason') ||
+      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'playoff'),
   },
   {
     id: 'spring_training_attendance',
     name: 'Spring Awakening',
     description: 'Attend a spring training game',
     icon: '🌸',
-    check: (_v, _s, events) => (events ?? []).some((e: SpecialEvent) => e.event_type === 'spring_training'),
+    check: (_v, _s, events, specialVisits) =>
+      (events ?? []).some((e: SpecialEvent) => e.event_type === 'spring_training') ||
+      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'spring_training'),
   },
   {
     id: 'minor_league_attendance',
     name: 'Minor League Maven',
     description: 'Attend a minor league game',
     icon: '🌱',
-    check: (_v, _s, events) => (events ?? []).some((e: SpecialEvent) => e.event_type === 'minor_league'),
+    check: (_v, _s, events, specialVisits) =>
+      (events ?? []).some((e: SpecialEvent) => e.event_type === 'minor_league') ||
+      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'minor_league'),
   },
   {
     id: 'hall_of_fame_visit',
@@ -258,7 +269,9 @@ export const MILESTONES: Milestone[] = [
     name: 'Global Ambassador',
     description: 'Attend an international MLB game',
     icon: '🌍',
-    check: (_v, _s, events) => (events ?? []).some((e: SpecialEvent) => e.event_type === 'international'),
+    check: (_v, _s, events, specialVisits) =>
+      (events ?? []).some((e: SpecialEvent) => e.event_type === 'international') ||
+      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'international'),
   },
   {
     id: 'historic_ballparks_all',

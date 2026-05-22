@@ -52,28 +52,48 @@ function computeEarnedMilestones(
     if (condition) earned.push({ icon, name, description })
   }
 
-  addIf(gamesAttended >= 1, '⚾', 'First Pitch', 'Attend your first MLB game')
-  addIf(gamesAttended >= 5, '🎯', '5 Games Attended', 'Attend 5 games total')
-  addIf(gamesAttended >= 10, '🔥', '10 Games Attended', 'Attend 10 games total')
-  addIf(visitedCount >= 5, '🏟️', '5 Stadiums', 'Visit 5 different stadiums')
-  addIf(visitedCount >= 10, '🗺️', '10 Stadiums', 'Visit 10 different stadiums')
-  addIf(visitedCount >= 15, '✈️', '15 Stadiums', 'Visit 15 different stadiums')
-  addIf(visitedCount >= 20, '🌎', '20 Stadiums', 'Visit 20 different stadiums')
-  addIf(visitedCount >= 25, '🏆', '25 Stadiums', 'Visit 25 different stadiums')
-  addIf(visitedCount >= 30, '⭐', 'Chasing 30 Complete!', 'Visit all 30 MLB stadiums')
-  addIf(specialEventsCount >= 1, '🎉', 'Special Event', 'Attend a special baseball event')
+  // Games attended
+  addIf(gamesAttended >= 1,  '⚾', 'First Pitch',          'Attend your first MLB game')
+  addIf(gamesAttended >= 5,  '🎟️', 'Season Ticket Holder', 'Attend 5 total games')
+  addIf(gamesAttended >= 10, '🤩', 'Superfan',             'Attend 10 total games')
 
+  // Stadium counts
+  addIf(visitedCount >= 5,  '🚗', 'Road Warrior',    'Visit 5 different stadiums')
+  addIf(visitedCount >= 10, '🔟', 'Double Digits',   'Visit 10 different stadiums')
+  addIf(visitedCount >= 15, '🏟️', 'Halfway There',   'Visit 15 different stadiums')
+  addIf(visitedCount >= 20, '🎯', 'On Deck',         'Visit 20 different stadiums')
+  addIf(visitedCount >= 25, '🏃', 'Final Stretch',   'Visit 25 different stadiums')
+  addIf(visitedCount >= 30, '🏆', 'The Full 30',     'Visit all 30 MLB stadiums')
+
+  // Special events
+  addIf(specialEventsCount >= 1, '🌟', 'Beyond the Diamond', 'Log your first special baseball experience')
+
+  // Division completions
+  const divIcons: Record<string, string> = {
+    'AL East': '🗽', 'AL Central': '🌽', 'AL West': '🌵',
+    'NL East': '🦅', 'NL Central': '🐻', 'NL West': '🌉',
+  }
   for (const div of DIVISIONS) {
     const [league, division] = div.split(' ')
     const group = allStadiums.filter((s) => s.league === league && s.division === division)
     if (group.length > 0 && group.every((s) => visitedSet.has(s.id))) {
-      const icons: Record<string, string> = {
-        'AL East': '🔵', 'AL Central': '🟡', 'AL West': '🟠',
-        'NL East': '🔴', 'NL Central': '🟢', 'NL West': '🟣',
-      }
-      addIf(true, icons[div] ?? '🏅', `${div} Complete`, `Visit all stadiums in the ${div}`)
+      addIf(true, divIcons[div] ?? '🏅', `${div} Complete`, `Visit all stadiums in the ${div}`)
     }
   }
+
+  // League completions
+  const alStadiums = allStadiums.filter(s => s.league === 'AL')
+  const nlStadiums = allStadiums.filter(s => s.league === 'NL')
+  addIf(alStadiums.length > 0 && alStadiums.every(s => visitedSet.has(s.id)), '🇺🇸', 'Junior Circuit', 'Visit all 15 American League stadiums')
+  addIf(nlStadiums.length > 0 && nlStadiums.every(s => visitedSet.has(s.id)), '⭐', 'Senior Circuit', 'Visit all 15 National League stadiums')
+
+  // Coast/region sweeps
+  const eastStadiums    = allStadiums.filter(s => s.division === 'East')
+  const centralStadiums = allStadiums.filter(s => s.division === 'Central')
+  const westStadiums    = allStadiums.filter(s => s.division === 'West')
+  addIf(eastStadiums.length > 0    && eastStadiums.every(s => visitedSet.has(s.id)),    '🌅', 'East Coast Tour',       'Visit all East division stadiums')
+  addIf(centralStadiums.length > 0 && centralStadiums.every(s => visitedSet.has(s.id)), '🌾', 'Midwest Swing',         'Visit all Central division stadiums')
+  addIf(westStadiums.length > 0    && westStadiums.every(s => visitedSet.has(s.id)),    '🌊', 'West Coast Wanderer',   'Visit all West division stadiums')
 
   return earned
 }

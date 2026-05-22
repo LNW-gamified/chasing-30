@@ -189,7 +189,7 @@ export interface Milestone {
   name: string
   description: string
   icon: string
-  check: (visits: StadiumVisit[], stadiums: Stadium[], events?: SpecialEvent[]) => boolean
+  check: (visits: StadiumVisit[], stadiums: Stadium[], events?: SpecialEvent[], specialVisits?: SpecialVisit[]) => boolean
   earned_at?: string | null
 }
 

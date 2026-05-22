@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import TeamLogo from '@/components/TeamLogo'
-import { MLB_TEAM_IDS } from '@/lib/mlb-api'
 
 interface NextTrip {
   id: string
@@ -19,7 +18,7 @@ function daysUntil(dateStr: string): number {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const target = new Date(dateStr + 'T00:00:00')
-  return Math.round((target.getTime() - today.getTime()) / 86400000)
+  return Math.max(0, Math.round((target.getTime() - today.getTime()) / 86400000))
 }
 
 export default function UpNextPill({ compact = false }: { compact?: boolean }) {

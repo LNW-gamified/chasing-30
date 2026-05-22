@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase-server'
 import AppShell from '@/components/AppShell'
 import { haversineDistance, formatCurrency } from '@/lib/utils'
-import type { Stadium, StadiumVisit, Trip, SpecialEvent, SpecialEventType } from '@/types'
+import type { Stadium, StadiumVisit, Trip, SpecialEvent, SpecialEventType, SpecialVisit } from '@/types'
 import { BarChart3, TrendingUp, DollarSign, MapPin, Trophy, Users, Star } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 
@@ -19,17 +19,19 @@ const EVENT_LABELS: Record<SpecialEventType, string> = {
 export default async function StatsPage() {
   const supabase = await createClient()
 
-  const [{ data: stadiums }, { data: visits }, { data: trips }, { data: events }] = await Promise.all([
+  const [{ data: stadiums }, { data: visits }, { data: trips }, { data: events }, { data: specialVisits }] = await Promise.all([
     supabase.from('stadiums').select('*'),
     supabase.from('stadium_visits').select('*'),
     supabase.from('trips').select('*'),
     supabase.from('special_events').select('*'),
+    supabase.from('special_visits').select('id, visit_type'),
   ])
 
   const allStadiums: Stadium[] = stadiums ?? []
   const allVisits: StadiumVisit[] = visits ?? []
   const allTrips: Trip[] = trips ?? []
   const allEvents: SpecialEvent[] = events ?? []
+  const allSpecialVisits: Pick<SpecialVisit, 'id' | 'visit_type'>[] = (specialVisits ?? []) as Pick<SpecialVisit, 'id' | 'visit_type'>[]
 
   const visitedIds = new Set(allVisits.map((v) => v.stadium_id))
   const visitedStadiums = allStadiums.filter((s) => visitedIds.has(s.id))
@@ -61,12 +63,14 @@ export default async function StatsPage() {
   const topTeamSeen =
     Object.entries(teamSeenCounts).sort((a, b) => b[1] - a[1])[0] ?? ['N/A', 0]
 
-  // Farthest trip — from first visited stadium to all others
+  // Farthest trip — from chronologically first visited stadium to all others
   let farthestStadium: Stadium | null = null
   let farthestMiles = 0
   if (visitedStadiums.length >= 2) {
-    const origin = visitedStadiums[0]
-    for (const s of visitedStadiums.slice(1)) {
+    const firstVisitId = [...allVisits].sort((a, b) => a.visit_date.localeCompare(b.visit_date))[0]?.stadium_id
+    const origin = allStadiums.find(s => s.id === firstVisitId) ?? visitedStadiums[0]
+    for (const s of visitedStadiums) {
+      if (s.id === origin.id) continue
       const dist = haversineDistance(origin.lat, origin.lng, s.lat, s.lng)
       if (dist > farthestMiles) {
         farthestMiles = dist
@@ -439,11 +443,11 @@ export default async function StatsPage() {
       )}
 
       {/* Special Events section */}
-      {allEvents.length > 0 && (
+      {(allEvents.length > 0 || allSpecialVisits.length > 0) && (
         <div className="mt-6 card p-6">
           <div className="flex items-center gap-2 font-semibold mb-4" style={{ color: '#E6EDF3' }}>
             <Star size={18} style={{ color: '#F5A623' }} />
-            Special Events ({allEvents.length})
+            Special Events &amp; Visits ({allEvents.length + allSpecialVisits.length})
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {(Object.entries(EVENT_LABELS) as [SpecialEventType, string][]).map(([type, label]) => {
