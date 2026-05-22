@@ -303,8 +303,14 @@ export default async function MilestonesPage() {
         backgroundColor: 'rgba(11,17,23,0.95)', backdropFilter: 'blur(10px)',
         borderBottom: '1px solid #30363D', padding: '8px 16px',
       }}>
-        <span style={{ fontSize: 16, fontWeight: 800, color: '#E6EDF3' }}>🏆 Goals</span>
-        <UpNextPill compact />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 0 }}>
+          <span style={{ fontSize: 16, fontWeight: 800, color: '#E6EDF3' }}>🏆 Goals</span>
+          <UpNextPill compact />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0, marginLeft: 12 }}>
+          <span style={{ fontSize: 9, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>Rank</span>
+          <span style={{ fontSize: 14, fontWeight: 800, color: '#F5A623', whiteSpace: 'nowrap' }}>{currentRank.icon} {currentRank.name}</span>
+        </div>
       </div>
 
       {/* ── Mobile bottom tab bar ────────────────────────────────── */}

@@ -713,7 +713,7 @@ export default function MilestoneGrid({
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: isEarned ? '#E6EDF3' : '#C9D1D9', marginBottom: 3, lineHeight: 1.3 }}>{m.name}</div>
-                  <div style={{ fontSize: 11, color: '#8B949E', lineHeight: 1.4, marginBottom: progress && !isEarned ? 8 : 24 }}>{m.description}</div>
+                  <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.4, marginBottom: progress && !isEarned ? 8 : 24 }}>{m.description}</div>
                 </div>
 
                 {/* Progress bar (in-progress, not earned) */}
@@ -771,7 +771,7 @@ export default function MilestoneGrid({
 
                 {/* Repeatable count badge */}
                 {isRepeatable && hasClaims && (
-                  <div style={{ position: 'absolute', top: 10, left: 10, fontSize: 10, fontWeight: 800, color: '#F5A623', background: 'rgba(245,166,35,0.18)', padding: '2px 8px', borderRadius: 20 }}>
+                  <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 9, fontWeight: 800, color: '#F5A623', background: 'rgba(245,166,35,0.18)', padding: '2px 7px', borderRadius: 999 }}>
                     {isBobble ? `${count} collected` : `${count}×`}
                   </div>
                 )}
@@ -784,9 +784,9 @@ export default function MilestoneGrid({
 
                 {/* + Log button for repeatable */}
                 {isRepeatable && (
-                  <div style={{ position: 'absolute', bottom: 8, right: 10, display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(31,111,235,0.15)', border: '1px solid rgba(31,111,235,0.3)', borderRadius: 20, padding: '2px 8px' }}>
-                    <Plus size={9} color="#58A6FF" />
-                    <span style={{ fontSize: 9, fontWeight: 700, color: '#58A6FF' }}>Log</span>
+                  <div style={{ position: 'absolute', bottom: 8, right: 10, display: 'flex', alignItems: 'center', gap: 3, background: '#39FF14', borderRadius: 20, padding: '3px 9px' }}>
+                    <Plus size={10} color="#0B1117" />
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#0B1117' }}>Log</span>
                   </div>
                 )}
 
@@ -795,7 +795,7 @@ export default function MilestoneGrid({
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: hasClaims ? '#E6EDF3' : '#C9D1D9', marginBottom: 3, lineHeight: 1.3 }}>{s.name}</div>
-                  <div style={{ fontSize: 11, color: '#8B949E', lineHeight: 1.4, marginBottom: 20 }}>{s.description}</div>
+                  <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.4, marginBottom: 20 }}>{s.description}</div>
                 </div>
               </button>
             )

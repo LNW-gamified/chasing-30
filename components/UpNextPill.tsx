@@ -84,7 +84,7 @@ export default function UpNextPill({ compact = false }: { compact?: boolean }) {
             {next.stadiumName}
           </div>
         </div>
-        <span style={{ fontSize: 15, color: '#F5A623', fontWeight: 800, flexShrink: 0 }}>
+        <span style={{ fontSize: 14, color: '#F5A623', fontWeight: 800, flexShrink: 0 }}>
           {label}
         </span>
       </Link>
