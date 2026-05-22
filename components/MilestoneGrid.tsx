@@ -869,12 +869,12 @@ export default function MilestoneGrid({
                           <span style={{ fontSize: 11, fontWeight: 600, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.1)', padding: '2px 7px', borderRadius: 20 }}>{typeInfo?.emoji} {typeInfo?.label}</span>
                         </div>
                         {stadium && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                            <TeamLogo abbreviation={stadium.abbreviation} size={14} />
-                            <span style={{ fontSize: 11, color: '#8B949E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stadium.name}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
+                            <TeamLogo abbreviation={stadium.abbreviation} size={26} />
+                            <span style={{ fontSize: 13, fontWeight: 600, color: '#C9D1D9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stadium.name}</span>
                           </div>
                         )}
-                        <div style={{ fontSize: 11, color: '#484F58' }}>{formatDate(claim.claim_date)}</div>
+                        <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 500 }}>{formatDate(claim.claim_date)}</div>
                       </div>
                     </div>
                   )
