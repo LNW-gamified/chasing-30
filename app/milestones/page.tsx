@@ -144,58 +144,85 @@ export default async function MilestonesPage() {
       {/* ── Main content ─────────────────────────────────────────── */}
       <main className="md:ml-[240px]" style={{ minHeight: '100vh', paddingBottom: 80 }}>
 
-        {/* Hero */}
-        <div style={{ backgroundColor: '#161B22', borderBottom: '1px solid #30363D', padding: '36px 16px 0' }}>
-          <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
+        {/* ── Gamified Hero ─────────────────────────────────────── */}
+        <div style={{ backgroundColor: '#0D1117', borderBottom: '1px solid #30363D', padding: '32px 16px 28px', overflow: 'hidden', position: 'relative' }}>
+          {/* Background radial glow */}
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(245,166,35,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-            {/* Shield icon */}
-            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', position: 'relative', width: 80, height: 90, marginBottom: 8 }}>
-              <svg width={80} height={90} viewBox="0 0 80 90" fill="none" style={{ position: 'absolute', inset: 0 }}>
-                <path d="M40 6L9 20V44C9 62 23 78 40 84C57 78 71 62 71 44V20L40 6Z"
-                  fill="rgba(245,166,35,0.15)" stroke="#F5A623" strokeWidth={2.5} strokeLinejoin="round" />
+          <div style={{ maxWidth: 560, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
+
+            {/* Animated rank badge */}
+            <div className="rank-badge-glow" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', position: 'relative', width: 100, height: 112, marginBottom: 12 }}>
+              <svg width={100} height={112} viewBox="0 0 100 112" fill="none" style={{ position: 'absolute', inset: 0 }}>
+                <path d="M50 6L10 22V54C10 78 28 98 50 106C72 98 90 78 90 54V22L50 6Z"
+                  fill="url(#rankGrad)" stroke="#F5A623" strokeWidth={2} strokeLinejoin="round" />
+                <defs>
+                  <linearGradient id="rankGrad" x1="50" y1="6" x2="50" y2="106" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="rgba(245,166,35,0.25)" />
+                    <stop offset="1" stopColor="rgba(245,100,10,0.1)" />
+                  </linearGradient>
+                </defs>
               </svg>
-              <span style={{ position: 'relative', zIndex: 1, fontSize: 34 }}>{currentRank.icon}</span>
+              <span style={{ position: 'relative', zIndex: 1, fontSize: 42, lineHeight: 1 }}>{currentRank.icon}</span>
             </div>
 
-            <h1 style={{ fontSize: 28, fontWeight: 800, color: '#E6EDF3', margin: '0 0 6px' }}>
+            {/* Rank name */}
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.15em', color: '#F5A623', textTransform: 'uppercase', marginBottom: 6 }}>
+              Current Rank
+            </div>
+            <h1 style={{ fontSize: 32, fontWeight: 900, color: '#E6EDF3', margin: '0 0 4px', letterSpacing: '-0.5px' }}>
               {currentRank.name}
             </h1>
             <div style={{ fontSize: 15, color: '#8B949E', marginBottom: 24 }}>
-              {totalPoints.toLocaleString()} points
+              {totalPoints.toLocaleString()} XP
             </div>
 
-            {/* Stats row */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-              {[
-                { label: 'Earned', value: totalEarned },
-                { label: 'In Progress', value: inProgress },
-                { label: 'Total', value: totalAchievements },
-              ].map(({ label, value }, i, arr) => (
-                <div key={label} style={{
-                  flex: 1, maxWidth: 110, textAlign: 'center',
-                  borderRight: i < arr.length - 1 ? '1px solid #30363D' : 'none',
-                  padding: '0 12px',
-                }}>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#E6EDF3', lineHeight: 1 }}>{value}</div>
-                  <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4 }}>{label}</div>
+            {/* XP Progress bar */}
+            {nextRank ? (
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#F5A623' }}>{currentRank.icon} {currentRank.name}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#8B949E' }}>{nextRank.icon} {nextRank.name}</span>
                 </div>
-              ))}
-            </div>
-
-            {/* Next rank hint */}
-            {nextRank && (
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                backgroundColor: 'rgba(139,148,158,0.08)', padding: '7px 16px',
-                borderRadius: 20, fontSize: 13, color: '#8B949E',
-                marginBottom: 28,
-              }}>
-                Next:&nbsp;<strong style={{ color: '#E6EDF3' }}>{nextRank.name}</strong>
-                <span style={{ color: '#30363D', margin: '0 2px' }}>·</span>
-                {nextRank.minPts - totalPoints} pts away
+                <div style={{ position: 'relative', height: 12, background: '#1C2430', borderRadius: 8, overflow: 'hidden', border: '1px solid #30363D' }}>
+                  <div style={{
+                    position: 'absolute', inset: '0 auto 0 0',
+                    width: `${Math.min(100, Math.round((totalPoints - currentRank.minPts) / (nextRank.minPts - currentRank.minPts) * 100))}%`,
+                    background: 'linear-gradient(90deg, #F5A623, #E8820C)',
+                    borderRadius: 8, transition: 'width 0.6s ease',
+                    minWidth: totalPoints > currentRank.minPts ? 12 : 0,
+                  }} />
+                  <div className="xp-bar-shine" />
+                </div>
+                <div style={{ fontSize: 12, color: '#8B949E', marginTop: 6 }}>
+                  <strong style={{ color: '#E6EDF3' }}>{nextRank.minPts - totalPoints}</strong> XP to {nextRank.name}
+                </div>
+              </div>
+            ) : (
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ position: 'relative', height: 12, background: 'linear-gradient(90deg, #F5A623, #E8820C)', borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(245,166,35,0.3)' }}>
+                  <div className="xp-bar-shine" />
+                </div>
+                <div style={{ fontSize: 12, color: '#3FB950', marginTop: 6, fontWeight: 700 }}>🏆 Max Rank Achieved</div>
               </div>
             )}
-            {!nextRank && <div style={{ marginBottom: 28 }} />}
+
+            {/* Stat pills */}
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 20px', borderRadius: 14, background: 'rgba(63,185,80,0.1)', border: '1px solid rgba(63,185,80,0.25)', minWidth: 80 }}>
+                <span style={{ fontSize: 28, fontWeight: 900, color: '#3FB950', lineHeight: 1 }}>{totalEarned}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#3FB950', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Earned</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 20px', borderRadius: 14, background: 'rgba(31,111,235,0.1)', border: '1px solid rgba(31,111,235,0.25)', minWidth: 80 }}>
+                <span style={{ fontSize: 28, fontWeight: 900, color: '#58A6FF', lineHeight: 1 }}>{inProgress}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#58A6FF', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>In Progress</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 20px', borderRadius: 14, background: 'rgba(139,148,158,0.08)', border: '1px solid #30363D', minWidth: 80 }}>
+                <span style={{ fontSize: 28, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{totalAchievements}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Total</span>
+              </div>
+            </div>
+
           </div>
         </div>
 

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Check, X, Share2, Calendar, MapPin, Search, ChevronRight } from 'lucide-react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { Check, X, Share2, Calendar, MapPin, Search, ChevronRight, Zap, Hand, Lock, Plus } from 'lucide-react'
 import type { SerializableMilestone, StadiumVisit, Stadium, SpecialEvent } from '@/types'
 import { createClient } from '@/lib/supabase'
 import TeamLogo from '@/components/TeamLogo'
@@ -236,6 +236,71 @@ function getItemDisplayName(claim: AchievementClaim): string {
   return GIVEAWAY_TYPES.find(t => t.value === claim.giveaway_type)?.label ?? 'Item'
 }
 
+// ── Category definitions ───────────────────────────────────────────────────
+
+type CategoryKey = 'all' | 'stadiums' | 'division' | 'gameday' | 'experiences' | 'collection' | 'earned'
+
+const CATEGORIES: { key: CategoryKey; label: string; emoji: string }[] = [
+  { key: 'all',         label: 'All',              emoji: '🎯' },
+  { key: 'earned',      label: 'Earned',           emoji: '✅' },
+  { key: 'stadiums',    label: 'Stadiums',         emoji: '🏟️' },
+  { key: 'division',    label: 'Division & League', emoji: '🗺️' },
+  { key: 'gameday',     label: 'Game Day',         emoji: '⚾' },
+  { key: 'experiences', label: 'Experiences',      emoji: '🌟' },
+  { key: 'collection',  label: 'Collection',       emoji: '🎁' },
+]
+
+const STADIUM_COUNT_IDS = new Set([
+  'first_game', 'five_games', 'ten_games',
+  'five_stadiums', 'ten_stadiums', 'fifteen_stadiums',
+  'twenty_stadiums', 'twentyfive_stadiums', 'all_stadiums',
+])
+const DIVISION_IDS = new Set([
+  'al_east', 'al_central', 'al_west',
+  'nl_east', 'nl_central', 'nl_west',
+  'american_league', 'national_league',
+  'east_coast', 'midwest', 'west_coast',
+])
+const GAMEDAY_IDS = new Set([
+  'walk_off_witness', 'double_walk_off', 'no_hit_wonder', 'perfect_day',
+  'committee_work', 'extra_credit', 'marathon_man', 'lights_out',
+  'grand_slam_witness', 'full_cycle', 'history_maker', 'run_factory', 'pitchers_duel',
+])
+const EXPERIENCE_MILESTONE_IDS = new Set([
+  'first_special_event', 'world_series_attendance', 'all_star_attendance',
+  'postseason_attendance', 'spring_training_attendance', 'minor_league_attendance',
+  'hall_of_fame_visit', 'field_of_dreams_visit', 'international_game', 'historic_ballparks_all',
+])
+const COLLECTION_IDS = new Set(['bobblehead', 'foul_ball', 'autograph', 'met_player', 'jumbotron', 'seventh_inning', 'fireworks_night', 'rivalry_game', 'enemy_territory', 'rain_delay', 'early_bird', 'jersey_day', 'night_owl'])
+
+function milestoneCategory(id: string): CategoryKey {
+  if (STADIUM_COUNT_IDS.has(id)) return 'stadiums'
+  if (DIVISION_IDS.has(id))      return 'division'
+  if (GAMEDAY_IDS.has(id))       return 'gameday'
+  if (EXPERIENCE_MILESTONE_IDS.has(id)) return 'experiences'
+  return 'stadiums'
+}
+
+// ── Confetti ───────────────────────────────────────────────────────────────
+
+const CONFETTI_COLORS = ['#F5A623', '#3FB950', '#1F6FEB', '#F85149', '#A78BFA', '#58A6FF', '#FF7B72']
+
+function ConfettiPiece({ color, left, delay, size }: { color: string; left: number; delay: number; size: number }) {
+  return (
+    <div
+      className="confetti-piece"
+      style={{
+        position: 'fixed', top: -20, left: `${left}%`, zIndex: 9999,
+        width: size, height: size * 0.6,
+        backgroundColor: color, borderRadius: 2,
+        animationDelay: `${delay}s`,
+        animationDuration: `${1.6 + Math.random() * 0.8}s`,
+        pointerEvents: 'none',
+      }}
+    />
+  )
+}
+
 // ── Component Props ────────────────────────────────────────────────────────
 
 interface Props {
@@ -257,9 +322,11 @@ type SelectedItem =
 export default function MilestoneGrid({
   earned, unearned, allVisits, allStadiums, allEvents, currentRankName, rankTiers,
 }: Props) {
-  const [filter, setFilter]     = useState<'all' | 'earned' | 'places' | 'experiences'>('all')
+  const [filter, setFilter]     = useState<CategoryKey>('all')
   const [search, setSearch]     = useState('')
   const [selected, setSelected] = useState<SelectedItem | null>(null)
+  const [confetti, setConfetti] = useState<{ id: number; color: string; left: number; delay: number; size: number }[]>([])
+  const confettiIdRef           = useRef(0)
 
   // Claims
   const [claims, setClaims] = useState<AchievementClaim[]>([])
@@ -371,24 +438,52 @@ export default function MilestoneGrid({
     return STATIC_EXPERIENCES.filter(s => claimedIds.has(s.id)).length
   }, [claims])
 
-  const allMilestones       = [...earned, ...unearned]
-  const filteredMilestones  = allMilestones.filter(m => {
-    if (filter === 'earned')      return earnedIds.has(m.id)
-    if (filter === 'places')      return PLACES_IDS.has(m.id)
-    if (filter === 'experiences') return EXPERIENCE_IDS.has(m.id)
-    return true
-  }).filter(m => {
-    if (!search) return true
-    const q = search.toLowerCase()
-    return m.name.toLowerCase().includes(q) || m.description.toLowerCase().includes(q)
-  })
+  // Active challenges: unearned milestones closest to completion
+  const activeChallenges = useMemo(() => {
+    return unearned
+      .map(m => ({ m, prog: getMilestoneProgress(m.id, allVisits, allStadiums, allEvents) }))
+      .filter(({ prog }) => prog && prog.current > 0 && prog.current < prog.total)
+      .sort((a, b) => {
+        const pa = a.prog!.current / a.prog!.total
+        const pb = b.prog!.current / b.prog!.total
+        return pb - pa
+      })
+      .slice(0, 3)
+  }, [unearned, allVisits, allStadiums, allEvents])
 
-  const showStatics     = filter === 'all' || filter === 'experiences'
-  const filteredStatics = showStatics ? STATIC_EXPERIENCES.filter(s => {
-    if (!search) return true
-    const q = search.toLowerCase()
-    return s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
-  }) : []
+  // Filtered milestones by category
+  const allMilestones = [...earned, ...unearned]
+  const filteredMilestones = useMemo(() => {
+    return allMilestones.filter(m => {
+      if (filter === 'earned')      return earnedIds.has(m.id)
+      if (filter === 'stadiums')    return STADIUM_COUNT_IDS.has(m.id)
+      if (filter === 'division')    return DIVISION_IDS.has(m.id)
+      if (filter === 'gameday')     return GAMEDAY_IDS.has(m.id)
+      if (filter === 'experiences') return EXPERIENCE_MILESTONE_IDS.has(m.id)
+      if (filter === 'collection')  return false
+      return true
+    }).filter(m => {
+      if (!search) return true
+      const q = search.toLowerCase()
+      return m.name.toLowerCase().includes(q) || m.description.toLowerCase().includes(q)
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, search, earned, unearned, earnedIds])
+
+  const showStatics = filter === 'all' || filter === 'experiences' || filter === 'collection' || filter === 'earned'
+  const filteredStatics = useMemo(() => {
+    if (!showStatics) return []
+    return STATIC_EXPERIENCES.filter(s => {
+      if (filter === 'collection') return COLLECTION_IDS.has(s.id)
+      if (filter === 'earned') {
+        const claimedIds = new Set(claims.map(c => c.achievement_id))
+        return claimedIds.has(s.id)
+      }
+      if (!search) return true
+      const q = search.toLowerCase()
+      return s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
+    })
+  }, [showStatics, filter, search, claims])
 
   const milestoneContext = selected?.type === 'milestone' && selected.isEarned
     ? getSerializableMilestoneContext(selected.milestone, allVisits, allStadiums, allEvents)
@@ -396,7 +491,6 @@ export default function MilestoneGrid({
 
   const sortedVisits = [...allVisits].sort((a, b) => b.visit_date.localeCompare(a.visit_date))
 
-  // Collection derived state
   const giveawayClaims = useMemo(
     () => claims.filter(c => c.giveaway_type != null),
     [claims]
@@ -424,7 +518,18 @@ export default function MilestoneGrid({
       .sort((a, b) => b.claim_date.localeCompare(a.claim_date))
   }, [giveawayClaims, collectionTypeFilter, collectionTeamFilter, allVisits, allStadiums])
 
-  // Shared input style
+  function fireConfetti() {
+    const pieces = Array.from({ length: 55 }, (_, i) => ({
+      id: ++confettiIdRef.current * 100 + i,
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      left: Math.random() * 100,
+      delay: Math.random() * 0.5,
+      size: 7 + Math.random() * 8,
+    }))
+    setConfetti(pieces)
+    setTimeout(() => setConfetti([]), 2800)
+  }
+
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 12px', borderRadius: 10,
     border: '1px solid #30363D', fontSize: 13, color: '#E6EDF3',
@@ -443,213 +548,280 @@ export default function MilestoneGrid({
 
   return (
     <>
-      <div style={{ maxWidth: 800, margin: '0 auto', padding: '28px 16px 0' }}>
+      {/* Confetti layer */}
+      {confetti.map(p => (
+        <ConfettiPiece key={p.id} color={p.color} left={p.left} delay={p.delay} size={p.size} />
+      ))}
 
-        {/* Rank progression strip */}
-        <div style={{
-          overflowX: 'auto', display: 'flex', alignItems: 'center',
-          marginBottom: 28, paddingBottom: 4,
-          msOverflowStyle: 'none', scrollbarWidth: 'none',
-        }}>
+      <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 16px 0' }}>
+
+        {/* ── Rank progression strip ──────────────────────────────────────── */}
+        <div className="no-scrollbar" style={{ overflowX: 'auto', display: 'flex', alignItems: 'center', marginBottom: 28, paddingBottom: 4 }}>
           {rankTiers.map((tier, i) => {
             const isCurrent = tier.name === currentRankName
             const isPast    = i < currentRankIdx
             return (
               <div key={tier.name} style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                <div style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                  padding: '8px 10px', borderRadius: 12,
-                  backgroundColor: isCurrent ? 'rgba(245,166,35,0.1)' : 'transparent',
-                  border: `1.5px solid ${isCurrent ? 'rgba(245,166,35,0.35)' : 'transparent'}`,
-                }}>
-                  <div style={{
-                    width: 38, height: 38, borderRadius: '50%',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: isPast ? 0 : 17,
-                    backgroundColor: isCurrent ? 'rgba(245,166,35,0.15)' : isPast ? 'rgba(63,185,80,0.1)' : 'rgba(139,148,158,0.08)',
-                    border: `2px solid ${isCurrent ? '#F5A623' : isPast ? 'rgba(63,185,80,0.35)' : '#30363D'}`,
-                  }}>
-                    {isPast ? <Check size={15} color="#3FB950" strokeWidth={3} /> : tier.icon}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 10px', borderRadius: 12, backgroundColor: isCurrent ? 'rgba(245,166,35,0.1)' : 'transparent', border: `1.5px solid ${isCurrent ? 'rgba(245,166,35,0.35)' : 'transparent'}` }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: isPast ? 0 : 16, backgroundColor: isCurrent ? 'rgba(245,166,35,0.15)' : isPast ? 'rgba(63,185,80,0.1)' : 'rgba(139,148,158,0.08)', border: `2px solid ${isCurrent ? '#F5A623' : isPast ? 'rgba(63,185,80,0.35)' : '#30363D'}` }}>
+                    {isPast ? <Check size={14} color="#3FB950" strokeWidth={3} /> : tier.icon}
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: isCurrent ? 700 : 500, color: isCurrent ? '#F5A623' : '#8B949E', whiteSpace: 'nowrap' }}>
-                    {tier.name}
-                  </span>
+                  <span style={{ fontSize: 10, fontWeight: isCurrent ? 700 : 500, color: isCurrent ? '#F5A623' : '#8B949E', whiteSpace: 'nowrap' }}>{tier.name}</span>
                 </div>
-                {i < rankTiers.length - 1 && (
-                  <div style={{ width: 18, height: 2, flexShrink: 0, backgroundColor: i < currentRankIdx ? 'rgba(63,185,80,0.3)' : '#30363D' }} />
-                )}
+                {i < rankTiers.length - 1 && <div style={{ width: 16, height: 2, flexShrink: 0, backgroundColor: i < currentRankIdx ? 'rgba(63,185,80,0.3)' : '#30363D' }} />}
               </div>
             )
           })}
         </div>
 
-        {/* Filter tabs + search */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {(['all', 'earned', 'places', 'experiences'] as const).map(f => (
-              <button key={f} onClick={() => setFilter(f)} style={{
-                padding: '7px 15px', borderRadius: 20, fontSize: 13, fontWeight: 600,
-                backgroundColor: filter === f ? '#1C2430' : 'rgba(139,148,158,0.08)',
-                color: filter === f ? '#E6EDF3' : '#8B949E',
-                border: filter === f ? '1px solid #484F58' : '1px solid transparent',
-                cursor: 'pointer', whiteSpace: 'nowrap',
-              }}>
-                {f === 'earned' ? `Earned (${earned.length + earnedStaticCount})` : f.charAt(0).toUpperCase() + f.slice(1)}
+        {/* ── Active Challenges ───────────────────────────────────────────── */}
+        {activeChallenges.length > 0 && filter === 'all' && !search && (
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
+              🔥 Active Challenges
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {activeChallenges.map(({ m, prog }) => {
+                const pct = Math.round((prog!.current / prog!.total) * 100)
+                const left = prog!.total - prog!.current
+                const isDiv = DIVISION_IDS.has(m.id)
+                return (
+                  <button
+                    key={m.id}
+                    className="challenge-card"
+                    onClick={() => setSelected({ type: 'milestone', milestone: m, isEarned: false })}
+                    style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14, border: '1px solid rgba(31,111,235,0.3)', backgroundColor: 'rgba(31,111,235,0.06)', cursor: 'pointer', textAlign: 'left', width: '100%' }}
+                  >
+                    <div style={{ width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, backgroundColor: 'rgba(31,111,235,0.1)', flexShrink: 0 }}>{m.icon}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3' }}>{m.name}</span>
+                        <span style={{ fontSize: 11, color: '#58A6FF', fontWeight: 700, flexShrink: 0, marginLeft: 8 }}>{left} away</span>
+                      </div>
+                      <div style={{ position: 'relative', height: 6, background: '#1C2430', borderRadius: 4, overflow: 'hidden', marginBottom: 4 }}>
+                        <div style={{ position: 'absolute', inset: '0 auto 0 0', width: `${pct}%`, background: isDiv ? 'linear-gradient(90deg,#1F6FEB,#58A6FF)' : 'linear-gradient(90deg,#F5A623,#E8820C)', borderRadius: 4, minWidth: 8 }} />
+                      </div>
+                      <div style={{ fontSize: 11, color: '#8B949E' }}>{prog!.current} / {prog!.total} · {pct}% complete</div>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Category card carousel ──────────────────────────────────────── */}
+        <div className="no-scrollbar" style={{ overflowX: 'auto', display: 'flex', gap: 8, marginBottom: 20, paddingBottom: 4 }}>
+          {CATEGORIES.map(cat => {
+            const active = filter === cat.key
+            let count: number | null = null
+            if (cat.key === 'earned')      count = earned.length + earnedStaticCount
+            if (cat.key === 'stadiums')    count = allMilestones.filter(m => STADIUM_COUNT_IDS.has(m.id)).length
+            if (cat.key === 'division')    count = allMilestones.filter(m => DIVISION_IDS.has(m.id)).length
+            if (cat.key === 'gameday')     count = allMilestones.filter(m => GAMEDAY_IDS.has(m.id)).length
+            if (cat.key === 'experiences') count = allMilestones.filter(m => EXPERIENCE_MILESTONE_IDS.has(m.id)).length + STATIC_EXPERIENCES.filter(s => !COLLECTION_IDS.has(s.id)).length
+            if (cat.key === 'collection')  count = STATIC_EXPERIENCES.filter(s => COLLECTION_IDS.has(s.id)).length
+            return (
+              <button
+                key={cat.key}
+                onClick={() => setFilter(cat.key)}
+                style={{
+                  flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                  padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${active ? 'rgba(31,111,235,0.5)' : '#30363D'}`,
+                  backgroundColor: active ? 'rgba(31,111,235,0.12)' : '#161B22',
+                  cursor: 'pointer', minWidth: 72, transition: 'all 0.15s',
+                }}
+              >
+                <span style={{ fontSize: 20 }}>{cat.emoji}</span>
+                <span style={{ fontSize: 11, fontWeight: active ? 700 : 500, color: active ? '#58A6FF' : '#8B949E', whiteSpace: 'nowrap' }}>{cat.label}</span>
+                {count !== null && <span style={{ fontSize: 10, fontWeight: 700, color: active ? '#58A6FF' : '#484F58' }}>{count}</span>}
               </button>
-            ))}
-          </div>
-          <div style={{ position: 'relative', flex: 1, minWidth: 140, maxWidth: 220 }}>
-            <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#8B949E', pointerEvents: 'none' }} />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search..."
-              style={{ width: '100%', padding: '7px 10px 7px 30px', borderRadius: 20, border: '1px solid #30363D', fontSize: 13, color: '#E6EDF3', backgroundColor: '#1C2430', outline: 'none', boxSizing: 'border-box' }}
-            />
-          </div>
+            )
+          })}
         </div>
 
-        {/* Achievement list */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 32 }}>
+        {/* ── Search bar ─────────────────────────────────────────────────── */}
+        <div style={{ position: 'relative', marginBottom: 20 }}>
+          <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#8B949E', pointerEvents: 'none' }} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search achievements..."
+            style={{ width: '100%', padding: '10px 12px 10px 34px', borderRadius: 12, border: '1px solid #30363D', fontSize: 13, color: '#E6EDF3', backgroundColor: '#161B22', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+          />
+        </div>
 
-          {/* ── Milestone rows (auto_api / auto_visit) ── */}
+        {/* ── Achievement card grid ───────────────────────────────────────── */}
+        <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12, marginBottom: 40 }}>
+
+          {/* Auto-tracked milestone cards */}
           {filteredMilestones.map(m => {
-            const isEarned  = earnedIds.has(m.id)
-            const isPlace   = PLACES_IDS.has(m.id)
-            const pts       = MILESTONE_POINTS[m.id] ?? 25
-            const progress  = getMilestoneProgress(m.id, allVisits, allStadiums, allEvents)
-            const pct       = progress ? Math.round((progress.current / progress.total) * 100) : 0
+            const isEarned = earnedIds.has(m.id)
+            const pts      = MILESTONE_POINTS[m.id] ?? 25
+            const progress = getMilestoneProgress(m.id, allVisits, allStadiums, allEvents)
+            const pct      = progress ? Math.round((progress.current / progress.total) * 100) : 0
+            const isDiv    = DIVISION_IDS.has(m.id)
 
             return (
               <button
                 key={m.id}
-                onClick={() => setSelected({ type: 'milestone', milestone: m, isEarned })}
-                style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 10px', borderRadius: 12, border: 'none', backgroundColor: 'transparent', cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'background-color 0.15s' }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#1C2430' }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                onClick={() => { setSelected({ type: 'milestone', milestone: m, isEarned }); if (isEarned) fireConfetti() }}
+                style={{
+                  position: 'relative', display: 'flex', flexDirection: 'column',
+                  padding: '16px 14px 14px', borderRadius: 16, border: 'none', cursor: 'pointer',
+                  textAlign: 'left', overflow: 'hidden', minHeight: 150,
+                  background: isEarned
+                    ? 'linear-gradient(135deg, #1A1500 0%, #2A1E00 100%)'
+                    : '#161B22',
+                  borderWidth: 1.5, borderStyle: 'solid',
+                  borderColor: isEarned ? 'rgba(245,166,35,0.4)' : '#30363D',
+                  filter: !isEarned && !progress?.current ? 'grayscale(30%)' : 'none',
+                  opacity: !isEarned && !progress?.current ? 0.7 : 1,
+                  transition: 'opacity 0.15s, border-color 0.15s',
+                }}
               >
-                <div style={{
-                  width: 44, height: 44, borderRadius: 10, flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, position: 'relative',
-                  backgroundColor: isEarned ? 'rgba(245,166,35,0.12)' : isPlace ? 'rgba(31,111,235,0.07)' : 'rgba(245,166,35,0.07)',
-                  border: `1.5px solid ${isEarned ? 'rgba(245,166,35,0.25)' : '#30363D'}`,
-                  filter: isEarned ? 'none' : 'grayscale(55%)',
-                }}>
-                  {m.icon}
-                  {isEarned && (
-                    <div style={{ position: 'absolute', bottom: -4, right: -4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid #0B1117', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Check size={8} color="#0B1117" strokeWidth={3.5} />
-                    </div>
-                  )}
+                {/* Earned shine overlay */}
+                {isEarned && <div className="earned-card-shine" />}
+
+                {/* Locked overlay */}
+                {!isEarned && !progress?.current && (
+                  <div style={{ position: 'absolute', top: 10, right: 10 }}>
+                    <Lock size={12} color="#484F58" />
+                  </div>
+                )}
+
+                {/* Points badge */}
+                <div style={{ position: 'absolute', top: 10, right: isEarned ? 10 : 26, fontSize: 10, fontWeight: 800, color: isEarned ? '#F5A623' : '#484F58', background: isEarned ? 'rgba(245,166,35,0.15)' : 'rgba(48,54,61,0.5)', padding: '2px 7px', borderRadius: 20 }}>
+                  +{pts}
                 </div>
+
+                {/* Auto-tracked badge */}
+                <div style={{ position: 'absolute', bottom: 10, left: 10, display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <Zap size={9} color={isEarned ? '#F5A623' : '#484F58'} />
+                  <span style={{ fontSize: 9, fontWeight: 700, color: isEarned ? '#F5A623' : '#484F58', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Auto</span>
+                </div>
+
+                {/* Icon */}
+                <div style={{ fontSize: 32, marginBottom: 10, filter: isEarned ? 'none' : 'grayscale(60%)', lineHeight: 1 }}>{m.icon}</div>
+
+                {/* Earned check */}
+                {isEarned && (
+                  <div style={{ position: 'absolute', top: 10, left: 10, width: 20, height: 20, borderRadius: '50%', backgroundColor: '#3FB950', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Check size={10} color="#0B1117" strokeWidth={3.5} />
+                  </div>
+                )}
 
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: isEarned ? '#E6EDF3' : '#8B949E', marginBottom: 1 }}>{m.name}</div>
-                  <div style={{ fontSize: 13, color: '#8B949E', marginBottom: progress && !isEarned ? 6 : 0 }}>{m.description}</div>
-                  {progress && !isEarned && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ flex: 1, height: 4, borderRadius: 4, backgroundColor: '#30363D', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', borderRadius: 4, width: `${pct}%`, backgroundColor: isPlace ? '#1F6FEB' : '#F5A623', transition: 'width 0.4s ease' }} />
-                      </div>
-                      <span style={{ fontSize: 11, color: '#8B949E', flexShrink: 0 }}>{progress.current}/{progress.total}</span>
-                    </div>
-                  )}
+                  <div style={{ fontSize: 13, fontWeight: 700, color: isEarned ? '#E6EDF3' : '#C9D1D9', marginBottom: 3, lineHeight: 1.3 }}>{m.name}</div>
+                  <div style={{ fontSize: 11, color: '#8B949E', lineHeight: 1.4, marginBottom: progress && !isEarned ? 8 : 24 }}>{m.description}</div>
                 </div>
 
-                <div style={{ flexShrink: 0 }}>
-                  {isEarned
-                    ? <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: 20, backgroundColor: 'rgba(63,185,80,0.12)', fontSize: 12, fontWeight: 700, color: '#3FB950' }}>+{pts}</span>
-                    : <span style={{ fontSize: 12, color: '#30363D', fontWeight: 600 }}>+{pts}</span>
-                  }
-                </div>
+                {/* Progress bar (in-progress, not earned) */}
+                {progress && !isEarned && progress.current > 0 && (
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ height: 4, background: '#1C2430', borderRadius: 3, overflow: 'hidden', marginBottom: 3 }}>
+                      <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: isDiv ? 'linear-gradient(90deg,#1F6FEB,#58A6FF)' : 'linear-gradient(90deg,#F5A623,#E8820C)', minWidth: 6, transition: 'width 0.4s ease' }} />
+                    </div>
+                    <span style={{ fontSize: 10, color: '#8B949E' }}>{progress.current}/{progress.total}</span>
+                  </div>
+                )}
               </button>
             )
           })}
 
-          {/* ── Static experience rows (manual_once / manual_repeatable) ── */}
+          {/* Manual static experience cards */}
           {filteredStatics.map(s => {
             const expClaims    = claims.filter(c => c.achievement_id === s.id)
             const hasClaims    = expClaims.length > 0
             const isRepeatable = s.tracking_type === 'manual_repeatable'
             const isBobble     = s.id === 'bobblehead'
+            const count        = expClaims.length
 
             return (
               <button
                 key={s.id}
                 onClick={() => setSelected({ type: 'static', experience: s })}
-                style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 10px', borderRadius: 12, border: 'none', backgroundColor: 'transparent', cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'background-color 0.15s' }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#1C2430' }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                style={{
+                  position: 'relative', display: 'flex', flexDirection: 'column',
+                  padding: '16px 14px 14px', borderRadius: 16, border: 'none', cursor: 'pointer',
+                  textAlign: 'left', overflow: 'hidden', minHeight: 150,
+                  background: hasClaims
+                    ? 'linear-gradient(135deg, #1A1500 0%, #2A1E00 100%)'
+                    : '#161B22',
+                  borderWidth: 1.5, borderStyle: 'solid',
+                  borderColor: hasClaims ? 'rgba(245,166,35,0.4)' : '#30363D',
+                  opacity: !hasClaims ? 0.75 : 1,
+                  transition: 'opacity 0.15s',
+                }}
               >
-                <div style={{
-                  width: 44, height: 44, borderRadius: 10, flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, position: 'relative',
-                  filter: hasClaims ? 'none' : 'grayscale(60%)',
-                  backgroundColor: hasClaims ? 'rgba(245,166,35,0.12)' : 'rgba(139,148,158,0.08)',
-                  border: `1.5px solid ${hasClaims ? 'rgba(245,166,35,0.25)' : '#30363D'}`,
-                }}>
-                  {s.icon}
-                  {hasClaims && (
-                    <div style={{ position: 'absolute', bottom: -4, right: -4, width: 16, height: 16, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid #0B1117', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Check size={8} color="#0B1117" strokeWidth={3.5} />
-                    </div>
-                  )}
+                {hasClaims && <div className="earned-card-shine" />}
+
+                {!hasClaims && (
+                  <div style={{ position: 'absolute', top: 10, right: 10 }}>
+                    <Lock size={12} color="#484F58" />
+                  </div>
+                )}
+
+                {/* Earned check */}
+                {hasClaims && !isRepeatable && (
+                  <div style={{ position: 'absolute', top: 10, left: 10, width: 20, height: 20, borderRadius: '50%', backgroundColor: '#3FB950', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Check size={10} color="#0B1117" strokeWidth={3.5} />
+                  </div>
+                )}
+
+                {/* Repeatable count badge */}
+                {isRepeatable && hasClaims && (
+                  <div style={{ position: 'absolute', top: 10, left: 10, fontSize: 10, fontWeight: 800, color: '#F5A623', background: 'rgba(245,166,35,0.18)', padding: '2px 8px', borderRadius: 20 }}>
+                    {isBobble ? `${count} collected` : `${count}×`}
+                  </div>
+                )}
+
+                {/* Manual badge */}
+                <div style={{ position: 'absolute', bottom: 10, left: 10, display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <Hand size={9} color={hasClaims ? '#F5A623' : '#484F58'} />
+                  <span style={{ fontSize: 9, fontWeight: 700, color: hasClaims ? '#F5A623' : '#484F58', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Manual</span>
                 </div>
+
+                {/* + Log button for repeatable */}
+                {isRepeatable && (
+                  <div style={{ position: 'absolute', bottom: 8, right: 10, display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(31,111,235,0.15)', border: '1px solid rgba(31,111,235,0.3)', borderRadius: 20, padding: '2px 8px' }}>
+                    <Plus size={9} color="#58A6FF" />
+                    <span style={{ fontSize: 9, fontWeight: 700, color: '#58A6FF' }}>Log</span>
+                  </div>
+                )}
+
+                {/* Icon */}
+                <div style={{ fontSize: 32, marginBottom: 10, filter: hasClaims ? 'none' : 'grayscale(60%)', lineHeight: 1, marginTop: hasClaims && !isRepeatable ? 14 : 0 }}>{s.icon}</div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: hasClaims ? '#E6EDF3' : '#8B949E', marginBottom: 1 }}>{s.name}</div>
-                  <div style={{ fontSize: 13, color: '#8B949E' }}>{s.description}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: hasClaims ? '#E6EDF3' : '#C9D1D9', marginBottom: 3, lineHeight: 1.3 }}>{s.name}</div>
+                  <div style={{ fontSize: 11, color: '#8B949E', lineHeight: 1.4, marginBottom: 20 }}>{s.description}</div>
                 </div>
-
-                {isRepeatable && hasClaims ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)', padding: '3px 9px', borderRadius: 20 }}>
-                      {isBobble ? `${expClaims.length} collected` : `${expClaims.length}×`}
-                    </span>
-                    <ChevronRight size={15} color="#484F58" />
-                  </div>
-                ) : !isRepeatable && hasClaims ? (
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', padding: '3px 10px', borderRadius: 20, flexShrink: 0 }}>
-                    ✓ Done
-                  </span>
-                ) : (
-                  <span style={{ fontSize: 12, color: '#484F58', fontWeight: 500, flexShrink: 0 }}>
-                    {isRepeatable ? 'Log +' : 'Mark Done'}
-                  </span>
-                )}
               </button>
             )
           })}
 
           {filteredMilestones.length === 0 && filteredStatics.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '48px 0' }}>
+            <div className="col-span-2 md:col-span-3" style={{ textAlign: 'center', padding: '48px 0' }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>🔍</div>
               <div style={{ fontSize: 16, fontWeight: 600, color: '#8B949E', marginBottom: 4 }}>No matches</div>
-              <div style={{ fontSize: 14, color: '#8B949E' }}>Try a different filter or search term</div>
+              <div style={{ fontSize: 14, color: '#8B949E' }}>Try a different category or search term</div>
             </div>
           )}
         </div>
 
-        {/* ── My Collection section ─────────────────────────────────────────── */}
-        {giveawayClaims.length > 0 && (
+        {/* ── My Collection section ───────────────────────────────────────── */}
+        {giveawayClaims.length > 0 && (filter === 'all' || filter === 'collection') && (
           <div style={{ marginBottom: 48 }}>
-            {/* Header */}
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
               <div>
-                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#E6EDF3', marginBottom: 2 }}>
-                  🎁 My Collection
-                </h2>
-                <div style={{ fontSize: 13, color: '#8B949E' }}>
-                  {giveawayClaims.length} item{giveawayClaims.length !== 1 ? 's' : ''} collected
-                </div>
+                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#E6EDF3', marginBottom: 2 }}>🎁 My Collection</h2>
+                <div style={{ fontSize: 13, color: '#8B949E' }}>{giveawayClaims.length} item{giveawayClaims.length !== 1 ? 's' : ''} collected</div>
               </div>
             </div>
 
-            {/* Type filter pills */}
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-              <button onClick={() => setCollectionTypeFilter('all')} style={pillStyle(collectionTypeFilter === 'all')}>
-                All ({giveawayClaims.length})
-              </button>
+              <button onClick={() => setCollectionTypeFilter('all')} style={pillStyle(collectionTypeFilter === 'all')}>All ({giveawayClaims.length})</button>
               {GIVEAWAY_TYPES.filter(t => giveawayClaims.some(c => c.giveaway_type === t.value)).map(t => (
                 <button key={t.value} onClick={() => setCollectionTypeFilter(t.value)} style={pillStyle(collectionTypeFilter === t.value)}>
                   {t.emoji} {t.label} ({giveawayClaims.filter(c => c.giveaway_type === t.value).length})
@@ -657,22 +829,11 @@ export default function MilestoneGrid({
               ))}
             </div>
 
-            {/* Team filter — only show when 2+ teams represented */}
             {collectionTeams.length > 1 && (
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
-                <button onClick={() => setCollectionTeamFilter('all')} style={pillStyle(collectionTeamFilter === 'all')}>
-                  All Teams
-                </button>
+                <button onClick={() => setCollectionTeamFilter('all')} style={pillStyle(collectionTeamFilter === 'all')}>All Teams</button>
                 {collectionTeams.map(abbr => (
-                  <button
-                    key={abbr}
-                    onClick={() => setCollectionTeamFilter(abbr)}
-                    title={abbr}
-                    style={{
-                      padding: '3px', borderRadius: 8, border: `2px solid ${collectionTeamFilter === abbr ? '#1F6FEB' : 'transparent'}`,
-                      background: 'none', cursor: 'pointer',
-                    }}
-                  >
+                  <button key={abbr} onClick={() => setCollectionTeamFilter(abbr)} title={abbr} style={{ padding: '3px', borderRadius: 8, border: `2px solid ${collectionTeamFilter === abbr ? '#1F6FEB' : 'transparent'}`, background: 'none', cursor: 'pointer' }}>
                     <TeamLogo abbreviation={abbr} size={28} />
                   </button>
                 ))}
@@ -680,11 +841,8 @@ export default function MilestoneGrid({
             )}
             {collectionTeams.length === 1 && <div style={{ marginBottom: 16 }} />}
 
-            {/* Grid */}
             {filteredCollection.length === 0 ? (
-              <div style={{ textAlign: 'center', color: '#8B949E', fontSize: 14, padding: '24px 0' }}>
-                No items match this filter.
-              </div>
+              <div style={{ textAlign: 'center', color: '#8B949E', fontSize: 14, padding: '24px 0' }}>No items match this filter.</div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12 }}>
                 {filteredCollection.map(claim => {
@@ -693,54 +851,30 @@ export default function MilestoneGrid({
                   const photoUrl = claim.extra_data?.photo_url ? String(claim.extra_data.photo_url) : null
                   const itemName = getItemDisplayName(claim)
                   const typeInfo = GIVEAWAY_TYPES.find(t => t.value === claim.giveaway_type)
-
                   return (
-                    <div key={claim.id} style={{
-                      backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden',
-                    }}>
-                      {/* Photo or team logo placeholder */}
+                    <div key={claim.id} style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden' }}>
                       <div style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden', backgroundColor: '#1C2430' }}>
                         {photoUrl ? (
-                          /* eslint-disable-next-line @next/next/no-img-element */
-                          <img
-                            src={photoUrl}
-                            alt={itemName}
-                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                          />
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={photoUrl} alt={itemName} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                         ) : (
                           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {stadium
-                              ? <TeamLogo abbreviation={stadium.abbreviation} size={60} />
-                              : <span style={{ fontSize: 40 }}>{typeInfo?.emoji ?? '🎁'}</span>
-                            }
+                            {stadium ? <TeamLogo abbreviation={stadium.abbreviation} size={60} /> : <span style={{ fontSize: 40 }}>{typeInfo?.emoji ?? '🎁'}</span>}
                           </div>
                         )}
                       </div>
-
-                      {/* Card info */}
                       <div style={{ padding: '10px 12px 12px' }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {itemName}
-                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{itemName}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4, flexWrap: 'wrap' }}>
-                          <span style={{
-                            fontSize: 11, fontWeight: 600, color: '#F5A623',
-                            backgroundColor: 'rgba(245,166,35,0.1)', padding: '2px 7px', borderRadius: 20,
-                          }}>
-                            {typeInfo?.emoji} {typeInfo?.label}
-                          </span>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.1)', padding: '2px 7px', borderRadius: 20 }}>{typeInfo?.emoji} {typeInfo?.label}</span>
                         </div>
                         {stadium && (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                             <TeamLogo abbreviation={stadium.abbreviation} size={14} />
-                            <span style={{ fontSize: 11, color: '#8B949E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {stadium.name}
-                            </span>
+                            <span style={{ fontSize: 11, color: '#8B949E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stadium.name}</span>
                           </div>
                         )}
-                        <div style={{ fontSize: 11, color: '#484F58' }}>
-                          {formatDate(claim.claim_date)}
-                        </div>
+                        <div style={{ fontSize: 11, color: '#484F58' }}>{formatDate(claim.claim_date)}</div>
                       </div>
                     </div>
                   )
@@ -759,9 +893,11 @@ export default function MilestoneGrid({
           onClick={closeModal}
         >
           <div
-            style={{ width: '100%', maxWidth: 360, borderRadius: 20, backgroundColor: '#161B22', position: 'relative', border: selected.isEarned ? '1px solid rgba(245,166,35,0.3)' : '1px solid #30363D' }}
+            className={selected.isEarned ? 'unlock-card' : undefined}
+            style={{ width: '100%', maxWidth: 360, borderRadius: 20, backgroundColor: '#161B22', position: 'relative', border: selected.isEarned ? '1px solid rgba(245,166,35,0.4)' : '1px solid #30363D', overflow: 'hidden' }}
             onClick={e => e.stopPropagation()}
           >
+            {selected.isEarned && <div className="earned-card-shine" style={{ position: 'absolute', top: 0, bottom: 0, width: '60%', background: 'linear-gradient(105deg,transparent,rgba(245,166,35,0.08),transparent)', pointerEvents: 'none', animation: 'earned-shine 3s ease-in-out infinite' }} />}
             <button onClick={closeModal} style={{ position: 'absolute', top: 14, right: 14, zIndex: 10, width: 30, height: 30, borderRadius: '50%', border: 'none', backgroundColor: 'rgba(139,148,158,0.12)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <X size={15} color="#8B949E" />
             </button>

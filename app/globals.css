@@ -234,3 +234,51 @@ select.input { cursor: pointer; }
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+
+/* ── Goals page gamified elements ───────────────────────────────────── */
+@keyframes rank-pulse {
+  0%, 100% { filter: drop-shadow(0 0 12px rgba(245,166,35,0.6)); }
+  50%       { filter: drop-shadow(0 0 24px rgba(245,166,35,0.9)); }
+}
+.rank-badge-glow { animation: rank-pulse 2.5s ease-in-out infinite; }
+
+@keyframes xp-bar-shine {
+  0%   { left: -60%; }
+  100% { left: 120%; }
+}
+.xp-bar-shine {
+  position: absolute; top: 0; bottom: 0; width: 60px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  animation: xp-bar-shine 2.2s ease-in-out infinite;
+}
+
+@keyframes challenge-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(31,111,235,0.0); }
+  50%       { box-shadow: 0 0 0 3px rgba(31,111,235,0.18); }
+}
+.challenge-card { animation: challenge-pulse 3s ease-in-out infinite; }
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(120vh) rotate(720deg); opacity: 0; }
+}
+.confetti-piece { animation: confetti-fall 2s ease-in forwards; }
+
+@keyframes unlock-card-in {
+  0%   { transform: translateY(60px) scale(0.85); opacity: 0; }
+  60%  { transform: translateY(-8px) scale(1.03); opacity: 1; }
+  100% { transform: translateY(0)    scale(1);    opacity: 1; }
+}
+.unlock-card { animation: unlock-card-in 0.55s cubic-bezier(0.23,1,0.32,1) forwards; }
+
+/* Achievement collectible cards */
+@keyframes earned-shine {
+  0%   { left: -80%; }
+  100% { left: 150%; }
+}
+.earned-card-shine {
+  position: absolute; top: 0; bottom: 0; width: 45%;
+  background: linear-gradient(105deg, transparent 0%, rgba(245,166,35,0.22) 50%, transparent 100%);
+  animation: earned-shine 3s ease-in-out infinite;
+  pointer-events: none;
+}
