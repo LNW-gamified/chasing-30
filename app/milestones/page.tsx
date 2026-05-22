@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Home, MapPin, Map, Trophy, Plane } from 'lucide-react'
 import type { Stadium, StadiumVisit, SpecialEvent, SerializableMilestone } from '@/types'
 import UpNextPill from '@/components/UpNextPill'
+import SpecialVisitButton from '@/components/SpecialVisitButton'
 
 const NAV = [
   { label: 'Home',  href: '/dashboard',  icon: Home },
@@ -78,11 +79,12 @@ function toSerializable(ms: typeof MILESTONES): SerializableMilestone[] {
 export default async function MilestonesPage() {
   const supabase = await createClient()
 
-  const [{ data: stadiums }, { data: visits }, { data: events }, { data: claims }] = await Promise.all([
+  const [{ data: stadiums }, { data: visits }, { data: events }, { data: claims }, { data: specialVisits }] = await Promise.all([
     supabase.from('stadiums').select('*'),
     supabase.from('stadium_visits').select('*'),
     supabase.from('special_events').select('*'),
     supabase.from('achievement_claims').select('achievement_id'),
+    supabase.from('special_visits').select('id, visit_type, venue, visit_date').order('visit_date', { ascending: false }),
   ])
 
   const allStadiums: Stadium[] = stadiums ?? []
@@ -236,6 +238,58 @@ export default async function MilestonesPage() {
           currentRankName={currentRank.name}
           rankTiers={RANK_TIERS}
         />
+
+        {/* ── Special Visits section ────────────────────────────────── */}
+        <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 16px 40px' }}>
+          <div style={{ borderTop: '1px solid #30363D', paddingTop: 28 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#E6EDF3' }}>📋 Special Visits</div>
+                <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
+                  {(specialVisits ?? []).length > 0
+                    ? `${(specialVisits ?? []).length} logged`
+                    : 'Minor league, spring training, tours & more'}
+                </div>
+              </div>
+              <SpecialVisitButton label="Log Visit" variant="primary" />
+            </div>
+
+            {(specialVisits ?? []).length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {(specialVisits ?? []).slice(0, 5).map((sv: any) => {
+                  const TYPE_EMOJI: Record<string, string> = {
+                    minor_league: '⚾', spring_training: '🌞', international: '🌍',
+                    all_star: '🏆', world_series: '🎯', playoff: '🥇',
+                    stadium_tour: '🏭', college: '🎓', independent: '🏟️', other: '📺',
+                  }
+                  const emoji = TYPE_EMOJI[sv.visit_type] ?? '📋'
+                  const label = sv.visit_type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+                  const dt = new Date(sv.visit_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  return (
+                    <div key={sv.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D' }}>
+                      <span style={{ fontSize: 22, flexShrink: 0 }}>{emoji}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sv.venue}</div>
+                        <div style={{ fontSize: 12, color: '#8B949E' }}>{label} · {dt}</div>
+                      </div>
+                    </div>
+                  )
+                })}
+                {(specialVisits ?? []).length > 5 && (
+                  <div style={{ textAlign: 'center', fontSize: 13, color: '#8B949E', paddingTop: 4 }}>
+                    +{(specialVisits ?? []).length - 5} more
+                  </div>
+                )}
+              </div>
+            )}
+
+            {(specialVisits ?? []).length === 0 && (
+              <div style={{ textAlign: 'center', padding: '32px 0', color: '#484F58', fontSize: 13 }}>
+                No special visits yet. Tap Log Visit to add your first!
+              </div>
+            )}
+          </div>
+        </div>
       </main>
 
       {/* ── Mobile top header ────────────────────────────────────── */}

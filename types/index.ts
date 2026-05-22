@@ -205,6 +205,42 @@ export interface StadiumWithVisit extends Stadium {
   visits: StadiumVisit[]
 }
 
+export type SpecialVisitType =
+  | 'minor_league'
+  | 'spring_training'
+  | 'international'
+  | 'all_star'
+  | 'world_series'
+  | 'playoff'
+  | 'stadium_tour'
+  | 'college'
+  | 'independent'
+  | 'other'
+
+export interface SpecialVisit {
+  id: string
+  visit_type: SpecialVisitType
+  venue: string
+  city: string | null
+  state: string | null
+  visit_date: string
+  teams: string | null
+  description: string | null
+  notes: string | null
+  is_mlb_event: boolean
+  game_pk: number | null
+  ticket_section: string | null
+  ticket_row: string | null
+  ticket_seats: string[] | null
+  ticket_confirmation: string | null
+  moments: string[] | null
+  photos: string[] | null
+  game_data: Record<string, unknown> | null
+  attendance: number | null
+  created_by: string | null
+  created_at: string
+}
+
 export interface StopChecklistItem {
   id: string
   stop_id: string

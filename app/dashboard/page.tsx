@@ -7,6 +7,7 @@ import TodayGames, { type TodayGame } from '@/components/TodayGames'
 import Standings from '@/components/Standings'
 import FavoriteTeamPicker from '@/components/FavoriteTeamPicker'
 import UpNextPill from '@/components/UpNextPill'
+import DashboardSpecialVisitButton from '@/components/DashboardSpecialVisitButton'
 
 // ─── MLB API ──────────────────────────────────────────────────────────────────
 
@@ -177,12 +178,14 @@ export default async function DashboardPage() {
     { data: events },
     { data: trips },
     { data: { user } },
+    { data: specialVisits },
   ] = await Promise.all([
     supabase.from('stadiums').select('*').order('league').order('division').order('name'),
     supabase.from('stadium_visits').select('*').order('visit_date', { ascending: false }),
     supabase.from('special_events').select('*'),
     supabase.from('trips').select('*, stadium:stadiums(*)').order('start_date', { ascending: true }),
     supabase.auth.getUser(),
+    supabase.from('special_visits').select('id'),
   ])
 
   const userId = user?.id ?? ''
@@ -226,7 +229,8 @@ export default async function DashboardPage() {
 
   // ─── My Stats ───────────────────────────────────────────────────────────────
 
-  const gamesAttended = allVisits.length
+  const gamesAttended      = allVisits.length
+  const specialVisitCount  = specialVisits?.length ?? 0
 
   const totalSpent = allTrips
     .filter(t => t.status === 'completed')
@@ -393,6 +397,7 @@ export default async function DashboardPage() {
               }}>
                 Plan Next Trip →
               </Link>
+              <DashboardSpecialVisitButton />
             </div>
 
             {/* ── My Stats Card ────────────────────────────────────────────── */}
@@ -401,12 +406,13 @@ export default async function DashboardPage() {
                 MY STATS
               </div>
               {/* gap-px + dark bg creates 1px dividers between cells at every breakpoint */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-px" style={{ background: '#30363D' }}>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-px" style={{ background: '#30363D' }}>
                 {[
-                  { icon: '⚾', value: gamesAttended.toString(),         label: 'Games Attended' },
-                  { icon: '💰', value: `$${totalSpent.toLocaleString()}`, label: 'Total Spent'    },
-                  { icon: '🏆', value: favDivision,                       label: 'Fav Division'   },
-                  { icon: '👁', value: mostSeenTeam,                      label: 'Most Seen'      },
+                  { icon: '⚾', value: gamesAttended.toString(),         label: 'Games Attended'  },
+                  { icon: '📋', value: specialVisitCount.toString(),      label: 'Special Visits'  },
+                  { icon: '💰', value: `$${totalSpent.toLocaleString()}`, label: 'Total Spent'     },
+                  { icon: '🏆', value: favDivision,                       label: 'Fav Division'    },
+                  { icon: '👁', value: mostSeenTeam,                      label: 'Most Seen'       },
                 ].map(({ icon, value, label }) => (
                   <div key={label} style={{ background: '#161B22', padding: 16 }}>
                     <div style={{ fontSize: 24, marginBottom: 6 }}>{icon}</div>
