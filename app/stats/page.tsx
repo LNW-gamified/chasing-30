@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase-server'
-import AppShell from '@/components/AppShell'
 import { haversineDistance, formatCurrency } from '@/lib/utils'
 import type { Stadium, StadiumVisit, Trip, SpecialEvent, SpecialEventType, SpecialVisit } from '@/types'
 import { BarChart3, TrendingUp, DollarSign, MapPin, Trophy, Users, Star } from 'lucide-react'
@@ -189,7 +188,7 @@ export default async function StatsPage() {
   ]
 
   return (
-    <AppShell>
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px' }}>
       {/* ESPN-style hero stat */}
       <div
         className="card mb-8 p-8 text-center"
@@ -463,6 +462,6 @@ export default async function StatsPage() {
           </div>
         </div>
       )}
-    </AppShell>
+    </div>
   )
 }

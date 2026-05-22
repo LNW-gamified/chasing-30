@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import AppShell from '@/components/AppShell'
 import TeamLogo from '@/components/TeamLogo'
 import { formatDate } from '@/lib/utils'
 import type { Stadium } from '@/types'
@@ -224,7 +223,7 @@ export default function OptimizerPage() {
   const years = [currentYear, currentYear + 1]
 
   return (
-    <AppShell>
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px' }}>
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link href="/trips" className="p-2 rounded-lg" style={{ color: '#8B949E', backgroundColor: 'rgba(255,255,255,0.04)' }}>
@@ -581,6 +580,6 @@ export default function OptimizerPage() {
           )}
         </div>
       )}
-    </AppShell>
+    </div>
   )
 }

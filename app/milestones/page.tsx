@@ -3,18 +3,8 @@ import MilestoneGrid from '@/components/MilestoneGrid'
 import { MILESTONES } from '@/lib/milestones'
 import { STATIC_EXPERIENCES } from '@/lib/static-experiences'
 import Link from 'next/link'
-import { Home, MapPin, Map, Trophy, Plane } from 'lucide-react'
 import type { Stadium, StadiumVisit, SpecialEvent, SpecialVisit, SerializableMilestone } from '@/types'
-import UpNextPill from '@/components/UpNextPill'
 import SpecialVisitButton from '@/components/SpecialVisitButton'
-
-const NAV = [
-  { label: 'Home',   href: '/dashboard',     icon: Home  },
-  { label: 'Parks',  href: '/stadiums',      icon: MapPin },
-  { label: 'Map',    href: '/map',           icon: Map   },
-  { label: 'Goals',  href: '/milestones',    icon: Trophy },
-  { label: 'Trips',  href: '/trips',         icon: Plane },
-]
 
 export const RANK_TIERS = [
   { name: 'Rookie',       minPts: 0,    icon: '🌱' },
@@ -106,50 +96,8 @@ export default async function MilestonesPage() {
   const totalEarned = earned.length + earnedStaticCount
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0B1117' }}>
-
-      {/* ── Desktop sidebar ──────────────────────────────────────── */}
-      <aside className="hidden md:flex flex-col" style={{
-        position: 'fixed', top: 0, left: 0, bottom: 0, width: 256,
-        backgroundColor: '#0B1117', borderRight: '1px solid #30363D', zIndex: 40, overflowY: 'auto',
-      }}>
-        <div style={{ padding: '1.5rem 1.25rem', borderBottom: '1px solid #30363D' }}>
-          <div style={{ fontSize: '1.125rem', fontWeight: 900, color: '#E6EDF3' }}>⚾ Chasing 30</div>
-          <div style={{ fontSize: '0.75rem', color: '#8B949E', marginTop: 2 }}>MLB Stadium Tracker</div>
-        </div>
-        <div style={{ padding: '12px 12px 0' }}>
-          <UpNextPill />
-        </div>
-        <nav style={{ flex: 1, padding: '0.75rem' }}>
-          {NAV.map(({ label, href, icon: Icon }) => {
-            const active = href === '/milestones'
-            return (
-              <Link key={href} href={href} style={{
-                display: 'flex', alignItems: 'center', gap: '0.75rem',
-                padding: '0.625rem 0.875rem', borderRadius: 10, marginBottom: 2,
-                color: active ? '#E6EDF3' : '#8B949E',
-                backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent',
-                fontWeight: active ? 600 : 400, fontSize: '0.9375rem', textDecoration: 'none',
-                borderLeft: active ? '3px solid #1F6FEB' : '3px solid transparent',
-              }}>
-                <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
-                {label}
-              </Link>
-            )
-          })}
-        </nav>
-        <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #30363D' }}>
-          <div style={{ fontSize: '0.8125rem', color: '#8B949E', marginBottom: 6 }}>
-            {visitedCount} / 30 · {Math.round((visitedCount / 30) * 100)}% complete
-          </div>
-          <div style={{ height: 4, background: '#30363D', borderRadius: 3, overflow: 'hidden' }}>
-            <div style={{ width: `${Math.round((visitedCount / 30) * 100)}%`, height: '100%', background: '#3FB950', borderRadius: 3 }} />
-          </div>
-        </div>
-      </aside>
-
-      {/* ── Main content ─────────────────────────────────────────── */}
-      <main className="md:ml-[240px]" style={{ minHeight: '100vh', paddingBottom: 80 }}>
+    <div>
+      <main style={{ minHeight: '100vh' }}>
 
         {/* ── Gamified Hero ─────────────────────────────────────── */}
         <div style={{ backgroundColor: '#0D1117', borderBottom: '1px solid #30363D', padding: '32px 16px 28px', overflow: 'hidden', position: 'relative' }}>
@@ -296,44 +244,6 @@ export default async function MilestonesPage() {
           </div>
         </div>
       </main>
-
-      {/* ── Mobile top header ────────────────────────────────────── */}
-      <div className="flex md:hidden items-center justify-between" style={{
-        position: 'sticky', top: 0, zIndex: 30,
-        backgroundColor: 'rgba(11,17,23,0.95)', backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid #30363D', padding: '8px 16px',
-      }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 0 }}>
-          <span style={{ fontSize: 16, fontWeight: 800, color: '#E6EDF3' }}>🏆 Goals</span>
-          <UpNextPill compact />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0, marginLeft: 12 }}>
-          <span style={{ fontSize: 9, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>Rank</span>
-          <span style={{ fontSize: 14, fontWeight: 800, color: '#F5A623', whiteSpace: 'nowrap' }}>{currentRank.icon} {currentRank.name}</span>
-        </div>
-      </div>
-
-      {/* ── Mobile bottom tab bar ────────────────────────────────── */}
-      <div className="flex md:hidden" style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
-        backgroundColor: 'rgba(11,17,23,0.96)', borderTop: '1px solid #30363D',
-        backdropFilter: 'blur(12px)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-      }}>
-        {NAV.map(({ label, href, icon: Icon }) => {
-          const active = href === '/milestones'
-          return (
-            <Link key={href} href={href} style={{
-              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-              justifyContent: 'center', textDecoration: 'none', padding: '10px 0',
-              color: active ? '#1F6FEB' : '#8B949E', gap: 3,
-            }}>
-              <Icon size={21} strokeWidth={active ? 2.5 : 1.8} />
-              {active && <span style={{ fontSize: '0.6rem', fontWeight: 700, lineHeight: 1 }}>{label}</span>}
-            </Link>
-          )
-        })}
-      </div>
     </div>
   )
 }

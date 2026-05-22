@@ -10,10 +10,7 @@ import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber } from '@/types'
 import { fetchUpcomingHomeGames, type UpcomingGame } from '@/lib/mlb-api'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 import Link from 'next/link'
-import {
-  ArrowLeft, Plus, Pencil, Save, Loader2,
-  Home, MapPin, Map, Trophy, Plane,
-} from 'lucide-react'
+import { ArrowLeft, Plus, Pencil, Save, Loader2 } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 
 const GAME_EVENT_LABELS: Record<string, string> = {
@@ -48,14 +45,6 @@ const TEAM_GRADIENTS: Record<string, [string, string]> = {
   TEX: ['#003278', '#C0111F'], TOR: ['#134A8E', '#1D2D5C'],
   WSH: ['#14225A', '#AB0003'], ATL: ['#13274F', '#CE1141'],
 }
-
-const NAV = [
-  { label: 'Home',  href: '/dashboard',  icon: Home },
-  { label: 'Parks', href: '/stadiums',   icon: MapPin },
-  { label: 'Map',   href: '/map',        icon: Map },
-  { label: 'Goals', href: '/milestones', icon: Trophy },
-  { label: 'Trips', href: '/trips',      icon: Plane },
-]
 
 type MiniStadium = { id: string; league: string; division: string }
 type ActiveTab = 'games-attended' | 'upcoming-games' | 'stadium-info'
@@ -222,92 +211,18 @@ export default function StadiumDetailPage() {
   function openAdd() { setEditingVisit(undefined); setShowForm(true) }
   function openEdit(visit: StadiumVisit) { setEditingVisit(visit); setShowForm(true) }
 
-  // ── Sidebar ─────────────────────────────────────────────────────────────────
-  const sidebar = (
-    <aside
-      className="hidden md:flex flex-col"
-      style={{
-        position: 'fixed', top: 0, left: 0, bottom: 0, width: 240,
-        backgroundColor: '#161B22', borderRight: '1px solid #30363D', zIndex: 40,
-      }}
-    >
-      <div style={{ padding: '24px 20px 16px' }}>
-        <div style={{ fontWeight: 900, fontSize: 20, color: '#E6EDF3', letterSpacing: '-0.5px' }}>
-          ⚾ Chasing 30
-        </div>
-      </div>
-      <nav style={{ flex: 1, padding: '4px 12px' }}>
-        {NAV.map(({ label, href, icon: Icon }) => {
-          const active = href === '/stadiums'
-          return (
-            <Link key={href} href={href} style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              padding: '10px 12px', borderRadius: 10, marginBottom: 2,
-              color: active ? '#E6EDF3' : '#8B949E',
-              backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent',
-              fontWeight: active ? 700 : 500, fontSize: 15, textDecoration: 'none',
-            }}>
-              <Icon size={20} color={active ? '#1F6FEB' : '#8B949E'} />
-              {label}
-            </Link>
-          )
-        })}
-      </nav>
-      <div style={{ padding: '16px 20px', borderTop: '1px solid #30363D' }}>
-        <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Progress
-        </div>
-        <div style={{ fontWeight: 800, fontSize: 22, color: '#E6EDF3' }}>
-          {allVisitedIds.size}<span style={{ fontWeight: 400, fontSize: 14, color: '#8B949E' }}> / 30</span>
-        </div>
-      </div>
-    </aside>
-  )
-
-  const bottomNav = (
-    <div className="flex md:hidden" style={{
-      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
-      backgroundColor: '#161B22', borderTop: '1px solid #30363D',
-      paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-    }}>
-      {NAV.map(({ label, href, icon: Icon }) => {
-        const active = href === '/stadiums'
-        return (
-          <Link key={href} href={href} style={{
-            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-            justifyContent: 'center', textDecoration: 'none', padding: '10px 0', minHeight: 56,
-            color: active ? '#1F6FEB' : '#8B949E', gap: 3,
-          }}>
-            <Icon size={22} color={active ? '#1F6FEB' : '#8B949E'} />
-            {active && <span style={{ fontSize: 11, fontWeight: 700, color: '#1F6FEB' }}>{label}</span>}
-          </Link>
-        )
-      })}
-    </div>
-  )
-
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#0B1117' }}>
-        {sidebar}
-        <main className="md:ml-[240px]" style={{ paddingBottom: 80 }}>
-          <div style={{ height: 260, backgroundColor: '#1C2430' }} />
-          <div style={{ textAlign: 'center', padding: '40px 16px', color: '#8B949E' }}>Loading...</div>
-        </main>
-        {bottomNav}
+      <div>
+        <div style={{ height: 260, backgroundColor: '#1C2430' }} />
+        <div style={{ textAlign: 'center', padding: '40px 16px', color: '#8B949E' }}>Loading...</div>
       </div>
     )
   }
 
   if (!stadium) {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#0B1117' }}>
-        {sidebar}
-        <main className="md:ml-[240px]" style={{ padding: 32, paddingBottom: 80 }}>
-          <div style={{ color: '#8B949E' }}>Stadium not found.</div>
-        </main>
-        {bottomNav}
-      </div>
+      <div style={{ padding: 32, color: '#8B949E' }}>Stadium not found.</div>
     )
   }
 
@@ -321,10 +236,8 @@ export default function StadiumDetailPage() {
   ]
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0B1117', color: '#E6EDF3' }}>
-      {sidebar}
-
-      <main className="md:ml-[240px]" style={{ minHeight: '100vh', paddingBottom: 80 }}>
+    <div style={{ color: '#E6EDF3' }}>
+      <main style={{ minHeight: '100vh' }}>
 
         {/* ── HERO ─────────────────────────────────────────────────── */}
         <div style={{ position: 'relative', height: 260, overflow: 'hidden' }}>
@@ -826,8 +739,6 @@ export default function StadiumDetailPage() {
           </div>{/* /tab content */}
         </div>{/* /max-width */}
       </main>
-
-      {bottomNav}
 
       {/* ── Autofill toast ──────────────────────────────────────── */}
       {autofillState && (

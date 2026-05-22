@@ -6,7 +6,7 @@ import TripForm from '@/components/TripForm'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip } from '@/types'
 import Link from 'next/link'
-import { Plus, Home, MapPin, Map as MapIcon, Trophy, Plane, ChevronRight } from 'lucide-react'
+import { Plus, ChevronRight } from 'lucide-react'
 import { getTeamLogoUrl } from '@/lib/team-logos'
 import TeamLogo from '@/components/TeamLogo'
 
@@ -22,16 +22,6 @@ type TripWithExtras = Trip & {
   stadium: Stadium | null
   trip_stops: StopMini[]
 }
-
-// ── Nav ───────────────────────────────────────────────────────────────────────
-
-const NAV = [
-  { label: 'Home',  href: '/dashboard',  Icon: Home    },
-  { label: 'Parks', href: '/stadiums',   Icon: MapPin  },
-  { label: 'Map',   href: '/map',        Icon: MapIcon },
-  { label: 'Goals', href: '/milestones', Icon: Trophy  },
-  { label: 'Trips', href: '/trips',      Icon: Plane   },
-]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -122,13 +112,6 @@ function statusPill(status: Trip['status']) {
   return null
 }
 
-// ── Sidebar + nav constants ───────────────────────────────────────────────────
-
-const sidebarStyle: React.CSSProperties = {
-  position: 'fixed', top: 0, left: 0, bottom: 0, width: 240, zIndex: 40,
-  backgroundColor: '#161B22', borderRight: '1px solid #30363D',
-}
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function TripsPage() {
@@ -166,67 +149,9 @@ export default function TripsPage() {
     { key: 'past',     label: 'Past Trips',     list: past    },
   ].filter(s => s.list.length > 0)
 
-  // ── Sidebar (shared) ────────────────────────────────────────────────────────
-  const sidebar = (
-    <aside className="hidden md:flex flex-col" style={sidebarStyle}>
-      <div style={{ padding: '24px 20px 16px' }}>
-        <div style={{ fontWeight: 900, fontSize: 20, color: '#E6EDF3', letterSpacing: '-0.5px' }}>⚾ Chasing 30</div>
-      </div>
-      <nav style={{ flex: 1, padding: '4px 12px' }}>
-        {NAV.map(({ label, href, Icon }) => {
-          const active = href === '/trips'
-          return (
-            <Link key={href} href={href} style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              padding: '10px 12px', borderRadius: 10, marginBottom: 2,
-              color: active ? '#E6EDF3' : '#8B949E',
-              backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent',
-              fontWeight: active ? 700 : 500, fontSize: 15, textDecoration: 'none',
-            }}>
-              <Icon size={20} color={active ? '#1F6FEB' : '#8B949E'} />
-              {label}
-            </Link>
-          )
-        })}
-      </nav>
-      <div style={{ padding: '16px 20px', borderTop: '1px solid #30363D' }}>
-        <div style={{ fontSize: 12, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Trips</div>
-        <div style={{ fontWeight: 800, fontSize: 22, color: '#E6EDF3' }}>
-          {trips.length}<span style={{ fontWeight: 400, fontSize: 14, color: '#8B949E' }}> total</span>
-        </div>
-      </div>
-    </aside>
-  )
-
-  // ── Mobile bottom bar (shared) ──────────────────────────────────────────────
-  const bottomBar = (
-    <div className="flex md:hidden" style={{
-      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
-      backgroundColor: '#161B22', borderTop: '1px solid #30363D',
-      paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-    }}>
-      {NAV.map(({ label, href, Icon }) => {
-        const active = href === '/trips'
-        return (
-          <Link key={href} href={href} style={{
-            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-            justifyContent: 'center', textDecoration: 'none', padding: '10px 0', minHeight: 56,
-            gap: 3,
-          }}>
-            <Icon size={22} color={active ? '#1F6FEB' : '#8B949E'} />
-            {active && <span style={{ fontSize: 11, fontWeight: 700, color: '#1F6FEB' }}>{label}</span>}
-          </Link>
-        )
-      })}
-    </div>
-  )
-
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0B1117' }}>
-      {sidebar}
-
-      <main className="md:ml-[240px]" style={{ paddingBottom: 88 }}>
-        <div style={{ maxWidth: 800, margin: '0 auto', padding: '28px 16px 0' }}>
+    <div>
+      <div style={{ maxWidth: 800, margin: '0 auto', padding: '28px 16px 0' }}>
 
           {/* ── Header ─────────────────────────────────────────────── */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
@@ -498,10 +423,7 @@ export default function TripsPage() {
               ))}
             </div>
           )}
-        </div>
-      </main>
-
-      {bottomBar}
+      </div>
 
       {showForm && (
         <TripForm
@@ -513,3 +435,4 @@ export default function TripsPage() {
     </div>
   )
 }
+

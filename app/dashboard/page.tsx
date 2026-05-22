@@ -3,11 +3,9 @@ import { MILESTONES } from '@/lib/milestones'
 import type { Stadium, StadiumVisit, SpecialEvent, SpecialVisit, Trip } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
-import { Home, Map, MapPin, Trophy, Plane } from 'lucide-react'
 import TodayGames, { type TodayGame } from '@/components/TodayGames'
 import Standings from '@/components/Standings'
 import FavoriteTeamPicker from '@/components/FavoriteTeamPicker'
-import UpNextPill from '@/components/UpNextPill'
 import DashboardSpecialVisitButton from '@/components/DashboardSpecialVisitButton'
 
 // ─── MLB API ──────────────────────────────────────────────────────────────────
@@ -154,16 +152,6 @@ function ProgressRing({ visited, total, size = 130 }: { visited: number; total: 
   )
 }
 
-// ─── Nav ──────────────────────────────────────────────────────────────────────
-
-const NAV = [
-  { label: 'Home',   href: '/dashboard',      icon: Home   },
-  { label: 'Parks',  href: '/stadiums',        icon: MapPin  },
-  { label: 'Map',    href: '/map',             icon: Map     },
-  { label: 'Goals',  href: '/milestones',      icon: Trophy  },
-  { label: 'Trips',  href: '/trips',           icon: Plane   },
-]
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
@@ -266,102 +254,8 @@ export default async function DashboardPage() {
     border: '1px solid #30363D',
   }
 
-  const headerBlock = (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '12px 16px',
-      background: '#0B1117',
-      borderBottom: '1px solid #30363D',
-      position: 'sticky', top: 0, zIndex: 20,
-    }}>
-      <div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.15 }}>
-          ⚾ Chasing 30
-        </div>
-        <div style={{
-          marginTop: 5,
-          display: 'inline-flex', alignItems: 'center',
-          background: 'rgba(245,166,35,0.12)', border: '1px solid rgba(245,166,35,0.25)',
-          borderRadius: 999, padding: '2px 10px',
-          fontSize: 12, fontWeight: 600, color: '#F5A623',
-        }}>
-          {rank} · {points} pts
-        </div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <UpNextPill compact />
-        <div style={{
-          width: 32, height: 32, borderRadius: '50%',
-          background: 'rgba(31,111,235,0.18)', border: '1px solid rgba(31,111,235,0.3)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#8B949E', fontWeight: 700, fontSize: '0.9rem',
-          flexShrink: 0,
-        }}>
-          {name.charAt(0).toUpperCase()}
-        </div>
-      </div>
-    </div>
-  )
-
   return (
-    <div style={{ background: '#0B1117', color: '#E6EDF3', minHeight: '100vh', overflowX: 'hidden', maxWidth: '100vw' }}>
-      <div style={{ display: 'flex' }}>
-
-        {/* ── Desktop sidebar ──────────────────────────────────────────────── */}
-        <aside
-          className="hidden md:flex flex-col"
-          style={{
-            position: 'fixed', top: 0, left: 0, bottom: 0, width: 240, zIndex: 30,
-            background: '#0B1117', borderRight: '1px solid #30363D', overflowY: 'auto',
-          }}
-        >
-          <div style={{ padding: '1.5rem 1.25rem', borderBottom: '1px solid #30363D' }}>
-            <div style={{ fontSize: '1.125rem', fontWeight: 900, color: '#E6EDF3' }}>⚾ Chasing 30</div>
-            <div style={{ fontSize: '0.75rem', color: '#8B949E', marginTop: 2 }}>MLB Stadium Tracker</div>
-          </div>
-          <nav style={{ flex: 1, padding: '0.75rem' }}>
-            {NAV.map(({ label, href, icon: Icon }, i) => {
-              const active = i === 0
-              return (
-                <Link key={href} href={href} style={{
-                  display: 'flex', alignItems: 'center', gap: '0.75rem',
-                  padding: '0.625rem 0.875rem', borderRadius: 10, marginBottom: 2,
-                  backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent',
-                  color: active ? '#E6EDF3' : '#8B949E',
-                  fontWeight: active ? 600 : 400,
-                  fontSize: '0.9375rem', textDecoration: 'none',
-                  borderLeft: active ? '3px solid #1F6FEB' : '3px solid transparent',
-                }}>
-                  <Icon size={18} />
-                  <span>{label}</span>
-                </Link>
-              )
-            })}
-          </nav>
-          <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #30363D' }}>
-            <div style={{ fontSize: '0.8125rem', color: '#8B949E', marginBottom: 6 }}>
-              {visitedCount} / 30 · {pct}% complete
-            </div>
-            <div style={{ height: 4, background: '#30363D', borderRadius: 3, overflow: 'hidden' }}>
-              <div style={{ width: `${pct}%`, height: '100%', background: '#3FB950', borderRadius: 3 }} />
-            </div>
-          </div>
-        </aside>
-
-        {/* ── Main ─────────────────────────────────────────────────────────── */}
-        <main
-          className="flex-1 md:pl-60"
-          style={{ paddingBottom: '5.5rem', maxWidth: '100%', overflowX: 'hidden' }}
-        >
-          {/* Header — mobile only (sidebar takes over on desktop) */}
-          <div className="md:hidden">
-            {headerBlock}
-          </div>
-          {/* Header — desktop (shows in main content area, not sidebar) */}
-          <div className="hidden md:block">
-            {headerBlock}
-          </div>
-
+    <div style={{ color: '#E6EDF3', overflowX: 'hidden', maxWidth: '100%' }}>
           <div style={{ maxWidth: 800, width: '100%', margin: '0 auto', padding: '1.25rem 1rem', overflowX: 'hidden', boxSizing: 'border-box' }}>
 
             {/* ── Hero Progress Card ───────────────────────────────────────── */}
@@ -456,43 +350,6 @@ export default async function DashboardPage() {
             <Standings favAbbr={favAbbr} />
 
           </div>
-        </main>
-      </div>
-
-      {/* ── Mobile bottom tab bar ─────────────────────────────────────────── */}
-      <nav
-        className="md:hidden"
-        style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
-          background: 'rgba(11,17,23,0.85)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderTop: '1px solid #30363D',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-around', padding: '0.6rem 0 0.5rem' }}>
-          {NAV.map(({ label, href, icon: Icon }, i) => {
-            const active = i === 0
-            return (
-              <Link
-                key={href}
-                href={href}
-                style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                  minWidth: 44, textDecoration: 'none',
-                  color: active ? '#1F6FEB' : '#8B949E',
-                }}
-              >
-                <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
-                {active && (
-                  <span style={{ fontSize: '0.6rem', fontWeight: 700, lineHeight: 1 }}>{label}</span>
-                )}
-              </Link>
-            )
-          })}
-        </div>
-      </nav>
     </div>
   )
 }

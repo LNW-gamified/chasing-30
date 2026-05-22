@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import Navigation from '@/components/Navigation'
 import TripForm from '@/components/TripForm'
 import TeamLogo from '@/components/TeamLogo'
 import { getTeamLogoUrlById, getTeamAbbrById } from '@/lib/team-logos'
@@ -147,26 +146,18 @@ export default function TripDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#0B1117' }}>
-        <Navigation />
-        <main className="md:ml-64" style={{ paddingBottom: 88 }}>
-          <div style={{ height: 220, backgroundColor: '#1C2430' }} />
-          <div style={{ textAlign: 'center', padding: '48px 16px', color: '#8B949E', fontSize: 14 }}>
-            Loading…
-          </div>
-        </main>
+      <div>
+        <div style={{ height: 220, backgroundColor: '#1C2430' }} />
+        <div style={{ textAlign: 'center', padding: '48px 16px', color: '#8B949E', fontSize: 14 }}>
+          Loading…
+        </div>
       </div>
     )
   }
 
   if (!trip) {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#0B1117' }}>
-        <Navigation />
-        <main className="md:ml-64" style={{ padding: '32px 16px', paddingBottom: 88 }}>
-          <div style={{ color: '#8B949E' }}>Trip not found.</div>
-        </main>
-      </div>
+      <div style={{ padding: '32px 16px', color: '#8B949E' }}>Trip not found.</div>
     )
   }
 
@@ -217,10 +208,8 @@ export default function TripDetailPage() {
   const heroGradient = `linear-gradient(135deg, ${h1} 0%, ${h2} 100%)`
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0B1117' }}>
-      <Navigation />
-
-      <main className="md:ml-64" style={{ minHeight: '100vh', paddingBottom: 88 }}>
+    <div>
+      <main style={{ minHeight: '100vh' }}>
 
         {/* ── HERO BANNER ────────────────────────────────────────── */}
         <div style={{ position: 'relative', height: 230, overflow: 'hidden', background: heroGradient }}>

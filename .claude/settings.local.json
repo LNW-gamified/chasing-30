@@ -28,7 +28,9 @@
       "Bash(curl -s https://ssrffcjbtdtyhjamyyio.supabase.co/rest/v1/ -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcmZmY2pidGR0eWhqYW15eWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxODg4NTgsImV4cCI6MjA5Mzc2NDg1OH0.OqwruHN3epB4nRmCH4zi_IH9mtaBlixVJGE1VcLxbr0' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcmZmY2pidGR0eWhqYW15eWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxODg4NTgsImV4cCI6MjA5Mzc2NDg1OH0.OqwruHN3epB4nRmCH4zi_IH9mtaBlixVJGE1VcLxbr0')",
       "Bash(python3 -c ' *)",
       "Bash(curl -s https://ssrffcjbtdtyhjamyyio.supabase.co/rest/v1/ -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcmZmY2pidGR0eWhqYW15eWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxODg4NTgsImV4cCI6MjA5Mzc2NDg1OH0.OqwruHN3epB4nRmCH4zi_IH9mtaBlixVJGE1VcLxbr0' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcmZmY2pidGR0eWhqYW15eWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxODg4NTgsImV4cCI6MjA5Mzc2NDg1OH0.OqwruHN3epB4nRmCH4zi_IH9mtaBlixVJGE1VcLxbr0' -o C:/Temp/supabase_schema.json)",
-      "Bash(dir supabase\\\\migrations /b)"
+      "Bash(dir supabase\\\\migrations /b)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\later\\\\chasing-30\\\\app\\\\special-events\\\\page.tsx\" -Force)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\later\\\\chasing-30\\\\app\\\\special-events\" -Force -ErrorAction SilentlyContinue)"
     ]
   }
 }

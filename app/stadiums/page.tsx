@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
-import { Search, Home, MapPin, Map, Trophy, Plane, X, ChevronRight, Plus, Pencil, Trash2 } from 'lucide-react'
+import { Search, X, ChevronRight, Plus, Pencil, Trash2 } from 'lucide-react'
 import type { Stadium, SpecialEvent, SpecialEventType } from '@/types'
 import TeamLogo from '@/components/TeamLogo'
 import SpecialEventForm from '@/components/SpecialEventForm'
@@ -40,16 +40,6 @@ const TEAM_NICKNAME: Record<string, string> = {
   SEA: 'Mariners',  STL: 'Cardinals', TB:  'Rays',       TEX: 'Rangers',
   TOR: 'Blue Jays', WSH: 'Nationals',
 }
-
-// ─── Nav ─────────────────────────────────────────────────────────────────────
-
-const NAV = [
-  { label: 'Home',  href: '/dashboard',  icon: Home   },
-  { label: 'Parks', href: '/stadiums',   icon: MapPin  },
-  { label: 'Map',   href: '/map',        icon: Map     },
-  { label: 'Goals', href: '/milestones', icon: Trophy  },
-  { label: 'Trips', href: '/trips',      icon: Plane   },
-]
 
 // ─── Event helpers ────────────────────────────────────────────────────────────
 
@@ -431,52 +421,10 @@ export default function StadiumsPage() {
   ]
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0B1117', color: '#E6EDF3', overflowX: 'hidden' }}>
-
-      {/* ── Desktop sidebar ──────────────────────────────────────── */}
-      <aside
-        className="hidden md:flex flex-col"
-        style={{
-          position: 'fixed', top: 0, left: 0, bottom: 0, width: 240,
-          backgroundColor: '#0B1117', borderRight: '1px solid #30363D', zIndex: 40,
-          overflowY: 'auto',
-        }}
-      >
-        <div style={{ padding: '24px 20px 16px', borderBottom: '1px solid #30363D' }}>
-          <div style={{ fontWeight: 900, fontSize: 18, color: '#E6EDF3' }}>⚾ Chasing 30</div>
-          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>MLB Stadium Tracker</div>
-        </div>
-        <nav style={{ flex: 1, padding: '8px 12px' }}>
-          {NAV.map(({ label, href, icon: Icon }) => {
-            const active = href === '/stadiums'
-            return (
-              <Link key={href} href={href} style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '10px 12px', borderRadius: 10, marginBottom: 2,
-                color: active ? '#E6EDF3' : '#8B949E',
-                backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent',
-                fontWeight: active ? 600 : 400, fontSize: 15,
-                textDecoration: 'none',
-                borderLeft: active ? '3px solid #1F6FEB' : '3px solid transparent',
-              }}>
-                <Icon size={18} color={active ? '#1F6FEB' : '#8B949E'} />
-                {label}
-              </Link>
-            )
-          })}
-        </nav>
-        <div style={{ padding: '16px 20px', borderTop: '1px solid #30363D' }}>
-          <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 6 }}>
-            {visitedCount} / 30 · {pct}% complete
-          </div>
-          <div style={{ height: 4, backgroundColor: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
-            <div style={{ height: '100%', borderRadius: 4, width: `${pct}%`, backgroundColor: '#3FB950', transition: 'width 0.5s' }} />
-          </div>
-        </div>
-      </aside>
+    <div style={{ color: '#E6EDF3', overflowX: 'hidden' }}>
 
       {/* ── Main content ─────────────────────────────────────────── */}
-      <main className="md:ml-[240px]" style={{ minHeight: '100vh', paddingBottom: 80 }}>
+      <main style={{ minHeight: '100vh' }}>
 
         {/* ── Hero progress banner ─────────────────────────────── */}
         <div style={{ backgroundColor: '#161B22', borderBottom: '1px solid #30363D' }}>
@@ -907,38 +855,6 @@ export default function StadiumsPage() {
         </div>
 
       </main>
-
-      {/* ── Mobile bottom tab bar ────────────────────────────────── */}
-      <div
-        className="flex md:hidden"
-        style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
-          backgroundColor: 'rgba(11,17,23,0.92)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderTop: '1px solid #30363D',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        }}
-      >
-        {NAV.map(({ label, href, icon: Icon }) => {
-          const active = href === '/stadiums'
-          return (
-            <Link key={href} href={href} style={{
-              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-              justifyContent: 'center', textDecoration: 'none',
-              padding: '10px 0', minHeight: 56,
-              color: active ? '#1F6FEB' : '#8B949E', gap: 3,
-            }}>
-              <Icon size={22} color={active ? '#1F6FEB' : '#8B949E'} strokeWidth={active ? 2.5 : 1.8} />
-              {active && (
-                <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#1F6FEB', lineHeight: 1 }}>
-                  {label}
-                </span>
-              )}
-            </Link>
-          )
-        })}
-      </div>
 
       {/* ── Special Event Form modal ──────────────────────────────── */}
       {showForm && (
