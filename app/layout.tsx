@@ -2,10 +2,18 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { createClient } from '@/lib/supabase-server'
 import AppShell from '@/components/AppShell'
+import InstallPrompt from '@/components/InstallPrompt'
+import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar'
 
 export const metadata: Metadata = {
   title: 'Chasing 30',
-  description: 'Personal MLB stadium tracker and trip planner',
+  description: 'Track your journey to visit all 30 MLB ballparks',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Chasing 30',
+  },
 }
 
 const RANK_TIERS = [
@@ -26,15 +34,15 @@ function daysUntil(dateStr: string): number {
 
 function computeXP(visitedCount: number, gamesCount: number): number {
   let xp = 0
-  if (gamesCount >= 1)   xp += 25
+  if (gamesCount >= 1)    xp += 25
   if (visitedCount >= 5)  xp += 50
   if (visitedCount >= 10) xp += 75
   if (visitedCount >= 15) xp += 100
   if (visitedCount >= 20) xp += 125
   if (visitedCount >= 25) xp += 150
   if (visitedCount >= 30) xp += 300
-  if (gamesCount >= 5)   xp += 35
-  if (gamesCount >= 10)  xp += 50
+  if (gamesCount >= 5)    xp += 35
+  if (gamesCount >= 10)   xp += 50
   return xp
 }
 
@@ -46,10 +54,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  const sharedHead = (
+    <>
+      <meta name="theme-color" content="#0a0e1a" />
+      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      <meta name="apple-mobile-web-app-title" content="Chasing 30" />
+      <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+      <link rel="manifest" href="/manifest.json" />
+    </>
+  )
+
   if (!user) {
     return (
       <html lang="en" className="h-full">
-        <body className="h-full" style={{ backgroundColor: '#0B1117' }}>{children}</body>
+        <head>{sharedHead}</head>
+        <body className="h-full" style={{ backgroundColor: '#0B1117' }}>
+          <ServiceWorkerRegistrar />
+          {children}
+        </body>
       </html>
     )
   }
@@ -85,7 +108,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" className="h-full">
+      <head>{sharedHead}</head>
       <body className="h-full" style={{ backgroundColor: '#0B1117' }}>
+        <ServiceWorkerRegistrar />
         <AppShell
           nextTrip={nextTrip}
           visitedCount={visitedCount}
@@ -96,6 +121,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         >
           {children}
         </AppShell>
+        <InstallPrompt />
       </body>
     </html>
   )
