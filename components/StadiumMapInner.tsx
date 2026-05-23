@@ -26,9 +26,15 @@ const TEAM_PRIMARY: Record<string, string> = {
   TOR: '#134A8E', WSH: '#AB0003',
 }
 
-type Filter = 'all' | 'visited' | 'not-yet'
+type TypeFilter   = 'all' | 'stadiums' | 'specials'
+type StatusFilter = 'all' | 'visited'  | 'not-yet'
 
-const FILTERS: { id: Filter; label: string }[] = [
+const TYPE_FILTERS: { id: TypeFilter; label: string }[] = [
+  { id: 'all',      label: 'All'               },
+  { id: 'stadiums', label: 'Stadiums'          },
+  { id: 'specials', label: 'Special Locations' },
+]
+const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: 'all',     label: 'All'     },
   { id: 'visited', label: 'Visited' },
   { id: 'not-yet', label: 'Not Yet' },
@@ -42,30 +48,39 @@ function MapInitializer({ mapRef }: { mapRef: React.MutableRefObject<L.Map | nul
   return null
 }
 
-// ── Destination pin icon factory ────────────────────────────────────────────
+// ── Special location pin icon (5-pointed star) ──────────────────────────────
+// Star polygon points centered at (22,22) on a 44×44 canvas,
+// outer radius 19, inner radius 8, starting at top.
 
-function makeDestinationIcon(icon: string, visited: boolean): L.DivIcon {
-  const ring  = visited ? '#F5A623' : 'rgba(245,166,35,0.5)'
-  const bg    = visited ? 'rgba(245,166,35,0.2)' : 'rgba(20,20,30,0.85)'
-  const badge = visited
-    ? `<div style="position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:#F5A623;border:2px solid #0B1117;display:flex;align-items:center;justify-content:center;font-size:9px;color:#000;font-weight:900;line-height:1;">✓</div>`
+const STAR_POINTS = '22,3 26.7,15.5 40.6,16.1 29.6,24.5 33.2,37.4 22,30 10.8,37.4 14.4,24.5 3.4,16.1 17.3,15.5'
+
+function makeSpecialLocationIcon(icon: string, visited: boolean): L.DivIcon {
+  const stroke = visited ? '#F5A623' : 'rgba(245,166,35,0.55)'
+  const fill   = visited ? 'rgba(245,166,35,0.22)' : 'rgba(20,20,30,0.88)'
+  const badge  = visited
+    ? `<div style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#F5A623;border:2px solid #0B1117;display:flex;align-items:center;justify-content:center;font-size:9px;color:#000;font-weight:900;line-height:1;">✓</div>`
     : ''
   return L.divIcon({
     html: `
-      <div style="position:relative;width:40px;height:40px;">
-        <div style="
-          width:40px;height:40px;border-radius:10px;
-          border:2.5px solid ${ring};
-          box-shadow:0 2px 10px rgba(0,0,0,0.6);
-          background:${bg};
-          display:flex;align-items:center;justify-content:center;
-          font-size:22px;line-height:1;
-        ">${icon}</div>
+      <div style="position:relative;width:44px;height:44px;">
+        <svg width="44" height="44" viewBox="0 0 44 44" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
+          <polygon
+            points="${STAR_POINTS}"
+            fill="${fill}"
+            stroke="${stroke}"
+            stroke-width="2"
+            stroke-linejoin="round"
+            filter="drop-shadow(0 2px 6px rgba(0,0,0,0.7))"
+          />
+        </svg>
+        <div style="position:absolute;top:0;left:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;">
+          ${icon}
+        </div>
         ${badge}
       </div>`,
     className: '',
-    iconSize:   [40, 40],
-    iconAnchor: [20, 20],
+    iconSize:   [44, 44],
+    iconAnchor: [22, 22],
   })
 }
 
@@ -118,17 +133,33 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
   const router = useRouter()
   const mapRef = useRef<L.Map | null>(null)
 
-  const [filter,          setFilter]          = useState<Filter>('all')
-  const [selected,        setSelected]        = useState<StadiumWithVisit | null>(null)
-  const [selectedDest,    setSelectedDest]    = useState<CuratedDestination | null>(null)
-  const [showLegend,      setShowLegend]      = useState(false)
+  const [typeFilter,   setTypeFilter]   = useState<TypeFilter>('all')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [selected,     setSelected]     = useState<StadiumWithVisit | null>(null)
+  const [selectedDest, setSelectedDest] = useState<CuratedDestination | null>(null)
+  const [showLegend,   setShowLegend]   = useState(false)
 
-  // Filtered stadium list
-  const visibleStadiums = useMemo(() => stadiums.filter(s => {
-    if (filter === 'visited')                          return s.visited
-    if (filter === 'not-yet') return !s.visited
-    return true
-  }), [stadiums, filter])
+  // Filtered stadium list — never show when typeFilter='specials'
+  const visibleStadiums = useMemo(() => {
+    if (typeFilter === 'specials') return []
+    return stadiums.filter(s => {
+      if (statusFilter === 'visited')  return s.visited
+      if (statusFilter === 'not-yet')  return !s.visited
+      return true
+    })
+  }, [stadiums, typeFilter, statusFilter])
+
+  // Filtered destination list — never show historic_stadium (stadium tours overlap MLB markers)
+  const visibleDests = useMemo(() => {
+    if (typeFilter === 'stadiums') return []
+    return destinations.filter(d => {
+      if (d.type === 'historic_stadium') return false
+      if (d.lat === null || d.lng === null) return false
+      if (statusFilter === 'visited')  return visitedDestinationIds.has(d.slug)
+      if (statusFilter === 'not-yet')  return !visitedDestinationIds.has(d.slug)
+      return true
+    })
+  }, [destinations, typeFilter, statusFilter, visitedDestinationIds])
 
   // Pre-build icons per stadium (memoised to avoid Leaflet re-renders)
   const icons = useMemo(() => {
@@ -139,12 +170,13 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
     return m
   }, [stadiums])
 
-  // Pre-build destination icons
+  // Pre-build destination icons (exclude historic_stadium tours)
   const destIcons = useMemo(() => {
     const m = new Map<string, L.DivIcon>()
     for (const d of destinations) {
+      if (d.type === 'historic_stadium') continue
       if (d.lat !== null && d.lng !== null) {
-        m.set(d.slug, makeDestinationIcon(d.icon, visitedDestinationIds.has(d.slug)))
+        m.set(d.slug, makeSpecialLocationIcon(d.icon, visitedDestinationIds.has(d.slug)))
       }
     }
     return m
@@ -158,6 +190,19 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
       () => {}
     )
   }
+
+  const pillStyle = (active: boolean): React.CSSProperties => ({
+    flexShrink: 0,
+    padding: '8px 16px', borderRadius: 999, cursor: 'pointer',
+    fontSize: 13, fontWeight: 600,
+    backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+    backgroundColor: active ? 'rgba(230,237,243,0.93)' : 'rgba(11,17,23,0.72)',
+    color:           active ? '#0B1117' : 'rgba(230,237,243,0.85)',
+    border: active ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.12)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+    transition: 'background-color 0.15s, color 0.15s',
+    whiteSpace: 'nowrap' as const,
+  })
 
   return (
     <div style={{ position: 'relative', height: '100%', width: '100%' }}>
@@ -187,8 +232,8 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
           />
         ))}
 
-        {/* Destination markers */}
-        {destinations.filter(d => d.lat !== null && d.lng !== null).map(d => (
+        {/* Special location markers (no historic_stadium tours) */}
+        {visibleDests.map(d => (
           <Marker
             key={d.slug}
             position={[d.lat!, d.lng!]}
@@ -199,56 +244,50 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
 
       </MapContainer>
 
-      {/* ── Filter pills row (floating top) ──────────────────────────── */}
+      {/* ── Two-row filter area (floating top) ───────────────────────── */}
       <div style={{
         position: 'absolute', top: 12, left: 12, right: 12, zIndex: 1000,
-        display: 'flex', alignItems: 'center', gap: 8,
-        overflowX: 'auto', scrollbarWidth: 'none',
-        msOverflowStyle: 'none',
+        display: 'flex', flexDirection: 'column', gap: 8,
       }}>
-        {/* Back arrow */}
-        <button
-          onClick={() => router.back()}
-          aria-label="Go back"
-          style={{
-            flexShrink: 0, width: 38, height: 38, borderRadius: '50%',
-            backgroundColor: 'rgba(11,17,23,0.72)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
-          }}
-        >
-          <ChevronLeft size={18} color="#E6EDF3" strokeWidth={2.5} />
-        </button>
-
-        {/* Filter pills */}
-        {FILTERS.map(f => (
+        {/* Row 1: Back button + Type filter */}
+        <div className="no-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto' }}>
           <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
+            onClick={() => router.back()}
+            aria-label="Go back"
             style={{
-              flexShrink: 0,
-              padding: '8px 20px', borderRadius: 999, cursor: 'pointer',
-              fontSize: 14, fontWeight: 600,
-              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-              backgroundColor: filter === f.id ? 'rgba(230,237,243,0.93)' : 'rgba(11,17,23,0.72)',
-              color:           filter === f.id ? '#0B1117' : 'rgba(230,237,243,0.85)',
-              border: filter === f.id ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.12)',
+              flexShrink: 0, width: 38, height: 38, borderRadius: '50%',
+              backgroundColor: 'rgba(11,17,23,0.72)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
-              transition: 'background-color 0.15s, color 0.15s',
             }}
           >
-            {f.label}
+            <ChevronLeft size={18} color="#E6EDF3" strokeWidth={2.5} />
           </button>
-        ))}
+
+          {TYPE_FILTERS.map(f => (
+            <button key={f.id} onClick={() => setTypeFilter(f.id)} style={pillStyle(typeFilter === f.id)}>
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Row 2: Status filter (offset to clear back button) */}
+        <div className="no-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto', paddingLeft: 46 }}>
+          {STATUS_FILTERS.map(f => (
+            <button key={f.id} onClick={() => setStatusFilter(f.id)} style={pillStyle(statusFilter === f.id)}>
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* ── Legend button (top right) ─────────────────────────────────── */}
+      {/* ── Legend button (top right, below two filter rows) ─────────── */}
       <button
         onClick={() => { setShowLegend(l => !l); setSelected(null) }}
         aria-label="Map legend"
         style={{
-          position: 'absolute', top: 60, right: 12, zIndex: 1000,
+          position: 'absolute', top: 108, right: 12, zIndex: 1000,
           width: 40, height: 40, borderRadius: '50%',
           backgroundColor: 'rgba(11,17,23,0.72)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
           border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer',
@@ -262,16 +301,17 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
       {/* ── Legend panel ──────────────────────────────────────────────── */}
       {showLegend && (
         <div style={{
-          position: 'absolute', top: 108, right: 12, zIndex: 1000,
+          position: 'absolute', top: 156, right: 12, zIndex: 1000,
           backgroundColor: '#161B22', borderRadius: 14,
           padding: '14px 16px',
           border: '1px solid #30363D',
-          minWidth: 196,
+          minWidth: 210,
         }}>
           <div style={{ fontWeight: 700, fontSize: 13, color: '#E6EDF3', marginBottom: 12 }}>
             Map Legend
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* Visited stadium */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
                 width: 32, height: 32, borderRadius: '50%',
@@ -290,6 +330,7 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
               </div>
               <span style={{ fontSize: 13, color: '#8B949E' }}>Visited stadium</span>
             </div>
+            {/* Not yet stadium */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
                 width: 32, height: 32, borderRadius: '50%',
@@ -299,23 +340,37 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
               }} />
               <span style={{ fontSize: 13, color: '#8B949E' }}>Not yet visited</span>
             </div>
-            {destinations.length > 0 && (
+            {destinations.some(d => d.type !== 'historic_stadium' && d.lat !== null) && (
               <>
+                {/* Visited special location */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                    border: '2.5px solid #F5A623', backgroundColor: 'rgba(245,166,35,0.2)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
-                  }}>🏆</div>
-                  <span style={{ fontSize: 13, color: '#8B949E' }}>Visited destination</span>
+                  <div style={{ flexShrink: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="32" height="32" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+                      <polygon
+                        points={STAR_POINTS}
+                        fill="rgba(245,166,35,0.22)"
+                        stroke="#F5A623"
+                        strokeWidth="2.5"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                  <span style={{ fontSize: 13, color: '#8B949E' }}>Visited special location</span>
                 </div>
+                {/* Not yet special location */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                    border: '2.5px solid rgba(245,166,35,0.5)', backgroundColor: 'rgba(20,20,30,0.85)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
-                  }}>📍</div>
-                  <span style={{ fontSize: 13, color: '#8B949E' }}>Baseball destination</span>
+                  <div style={{ flexShrink: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="32" height="32" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+                      <polygon
+                        points={STAR_POINTS}
+                        fill="rgba(20,20,30,0.88)"
+                        stroke="rgba(245,166,35,0.55)"
+                        strokeWidth="2.5"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                  <span style={{ fontSize: 13, color: '#8B949E' }}>Special location</span>
                 </div>
               </>
             )}
