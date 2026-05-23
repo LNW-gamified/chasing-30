@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Check, X, Share2, Calendar, MapPin, Search, ChevronRight, Zap, Hand, Lock, Plus } from 'lucide-react'
+import { Check, X, Share2, Calendar, MapPin, Search, ChevronRight, Zap, Hand, Lock, Plus, Pencil } from 'lucide-react'
 import type { SerializableMilestone, StadiumVisit, Stadium, SpecialEvent } from '@/types'
 import { createClient } from '@/lib/supabase'
 import TeamLogo from '@/components/TeamLogo'
@@ -344,6 +344,19 @@ export default function MilestoneGrid({
   const [collectionTypeFilter, setCollectionTypeFilter] = useState<string>('all')
   const [collectionTeamFilter, setCollectionTeamFilter] = useState<string>('all')
 
+  // Edit claim state
+  const [editingClaim,       setEditingClaim]      = useState<AchievementClaim | null>(null)
+  const [editingExp,         setEditingExp]         = useState<StaticExperience | null>(null)
+  const [editVisitId,        setEditVisitId]        = useState('')
+  const [editGiveawayType,   setEditGiveawayType]   = useState<GiveawayTypeValue>('bobblehead')
+  const [editBobbleheadName, setEditBobbleheadName] = useState('')
+  const [editPlayerName,     setEditPlayerName]     = useState('')
+  const [editNotes,          setEditNotes]          = useState('')
+  const [editClaimDate,      setEditClaimDate]      = useState('')
+  const [editPhotoFile,      setEditPhotoFile]      = useState<File | null>(null)
+  const [editDeletePhoto,    setEditDeletePhoto]    = useState(false)
+  const [editSaving,         setEditSaving]         = useState(false)
+
   // ── Data loading ──────────────────────────────────────────────────────────
 
   const fetchClaims = useCallback(async () => {
@@ -426,6 +439,84 @@ export default function MilestoneGrid({
     const supabase = createClient()
     await supabase.from('achievement_claims').delete().eq('id', claimId)
     setClaims(prev => prev.filter(c => c.id !== claimId))
+  }
+
+  function openEditClaim(claim: AchievementClaim, exp: StaticExperience) {
+    setEditingClaim(claim)
+    setEditingExp(exp)
+    setEditVisitId(claim.stadium_visit_id ?? '')
+    setEditGiveawayType((claim.giveaway_type as GiveawayTypeValue) ?? 'bobblehead')
+    setEditBobbleheadName(claim.extra_data?.bobblehead_name ? String(claim.extra_data.bobblehead_name) : '')
+    setEditPlayerName(claim.extra_data?.player_name ? String(claim.extra_data.player_name) : '')
+    setEditNotes(claim.notes ?? '')
+    setEditClaimDate(claim.claim_date)
+    setEditPhotoFile(null)
+    setEditDeletePhoto(false)
+  }
+
+  function closeEditModal() {
+    setEditingClaim(null)
+    setEditingExp(null)
+    setEditPhotoFile(null)
+    setEditDeletePhoto(false)
+  }
+
+  async function saveEditClaim() {
+    if (!editingClaim || !editingExp) return
+    setEditSaving(true)
+    const supabase = createClient()
+
+    // Copy existing extra_data string fields
+    const extra: Record<string, string> = {}
+    for (const [k, v] of Object.entries(editingClaim.extra_data)) {
+      if (typeof v === 'string') extra[k] = v
+    }
+
+    // Handle photo changes
+    if (editDeletePhoto) {
+      delete extra.photo_url
+    } else if (editPhotoFile) {
+      const ext  = editPhotoFile.name.split('.').pop() ?? 'jpg'
+      const path = `${editingExp.id}/${Date.now()}.${ext}`
+      const { data: up } = await supabase.storage
+        .from('achievement-photos')
+        .upload(path, editPhotoFile, { cacheControl: '3600', upsert: false })
+      if (up) {
+        const { data: { publicUrl } } = supabase.storage
+          .from('achievement-photos')
+          .getPublicUrl(up.path)
+        extra.photo_url = publicUrl
+      }
+    }
+
+    // Extra-data fields per achievement type
+    if (editingExp.id === 'bobblehead') {
+      if (editBobbleheadName.trim()) extra.bobblehead_name = editBobbleheadName.trim()
+      else delete extra.bobblehead_name
+    }
+    if (PLAYER_NAME_EXP.has(editingExp.id)) {
+      if (editPlayerName.trim()) extra.player_name = editPlayerName.trim()
+      else delete extra.player_name
+    }
+
+    // Derive claim_date: prefer selected visit's date, else the edited date field
+    const selectedVisit = editVisitId ? allVisits.find(v => v.id === editVisitId) : null
+    const claimDate = selectedVisit?.visit_date ?? editClaimDate
+
+    await supabase
+      .from('achievement_claims')
+      .update({
+        stadium_visit_id: editVisitId || null,
+        claim_date:       claimDate,
+        notes:            editNotes.trim() || null,
+        extra_data:       extra,
+        giveaway_type:    editingExp.id === 'bobblehead' ? editGiveawayType : editingClaim.giveaway_type,
+      })
+      .eq('id', editingClaim.id)
+
+    await fetchClaims()
+    setEditSaving(false)
+    closeEditModal()
   }
 
   // ── Derived state ─────────────────────────────────────────────────────────
@@ -1060,9 +1151,17 @@ export default function MilestoneGrid({
                         </div>
                       )}
                       {claim.notes && <div style={{ fontSize: 13, color: '#8B949E', fontStyle: 'italic' }}>&ldquo;{claim.notes}&rdquo;</div>}
-                      <button onClick={() => { removeClaim(claim.id); closeModal() }} style={{ marginTop: 12, fontSize: 12, color: '#484F58', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
-                        Remove
-                      </button>
+                      <div style={{ marginTop: 12, display: 'flex', gap: 16, alignItems: 'center' }}>
+                        <button
+                          onClick={() => openEditClaim(claim, exp)}
+                          style={{ fontSize: 12, color: '#58A6FF', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: 4 }}
+                        >
+                          <Pencil size={11} /> Edit
+                        </button>
+                        <button onClick={() => { removeClaim(claim.id); closeModal() }} style={{ fontSize: 12, color: '#484F58', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                          Remove
+                        </button>
+                      </div>
                     </div>
                   )
                 })()}
@@ -1232,13 +1331,22 @@ export default function MilestoneGrid({
                               </div>
 
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
-                                <button
-                                  onClick={() => removeClaim(claim.id)}
-                                  title="Remove"
-                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#484F58', padding: 2, display: 'flex', alignItems: 'center' }}
-                                >
-                                  <X size={13} />
-                                </button>
+                                <div style={{ display: 'flex', gap: 2 }}>
+                                  <button
+                                    onClick={() => openEditClaim(claim, exp)}
+                                    title="Edit"
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#484F58', padding: 2, display: 'flex', alignItems: 'center' }}
+                                  >
+                                    <Pencil size={13} />
+                                  </button>
+                                  <button
+                                    onClick={() => removeClaim(claim.id)}
+                                    title="Remove"
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#484F58', padding: 2, display: 'flex', alignItems: 'center' }}
+                                  >
+                                    <X size={13} />
+                                  </button>
+                                </div>
                                 {photoUrl && (
                                   /* eslint-disable-next-line @next/next/no-img-element */
                                   <img
@@ -1255,6 +1363,214 @@ export default function MilestoneGrid({
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── Edit claim modal ─────────────────────────────────────────────────── */}
+      {editingClaim && editingExp && (() => {
+        const isBobble    = editingExp.id === 'bobblehead'
+        const showsPlayer = PLAYER_NAME_EXP.has(editingExp.id)
+        const existingPhotoUrl    = editingClaim.extra_data?.photo_url ? String(editingClaim.extra_data.photo_url) : null
+        const showExistingPhoto   = !!existingPhotoUrl && !editDeletePhoto && !editPhotoFile
+        const showDeletedNotice   = !!existingPhotoUrl && editDeletePhoto && !editPhotoFile
+
+        const editItemNamePlaceholder =
+          editGiveawayType === 'bobblehead' ? 'Item name (e.g. Josh Naylor Bobblehead)' :
+          editGiveawayType === 'jersey'     ? 'Item name (e.g. Home White Jersey)' :
+          editGiveawayType === 'hat'        ? 'Item name (e.g. Summer Bucket Hat)' :
+          editGiveawayType === 'figurine'   ? 'Item name (e.g. Mike Trout Figurine)' :
+          editGiveawayType === 'poster'     ? 'Item name (e.g. 2025 Opening Day Poster)' :
+          'Item name or description'
+
+        return (
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, backgroundColor: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(4px)' }}
+            onClick={closeEditModal}
+          >
+            <div
+              style={{ width: '100%', maxWidth: 480, borderRadius: 20, backgroundColor: '#161B22', border: '1px solid #30363D', maxHeight: '88vh', overflowY: 'auto' }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div style={{ position: 'sticky', top: 0, backgroundColor: '#161B22', zIndex: 1, padding: '16px 20px', borderBottom: '1px solid #30363D', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 20 }}>{editingExp.icon}</span>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3' }}>Edit {editingExp.name}</div>
+                </div>
+                <button onClick={closeEditModal} style={{ width: 30, height: 30, borderRadius: '50%', border: 'none', backgroundColor: 'rgba(139,148,158,0.12)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <X size={15} color="#8B949E" />
+                </button>
+              </div>
+
+              <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+                {/* Game selector */}
+                <div style={{ position: 'relative' }}>
+                  <select
+                    value={editVisitId}
+                    onChange={e => {
+                      const val = e.target.value
+                      setEditVisitId(val)
+                      const v = allVisits.find(v => v.id === val)
+                      if (v) setEditClaimDate(v.visit_date)
+                    }}
+                    style={{ ...inputStyle, paddingRight: 36, appearance: 'none', WebkitAppearance: 'none' }}
+                  >
+                    <option value="">No game linked</option>
+                    {sortedVisits.map(v => (
+                      <option key={v.id} value={v.id}>{visitLabel(v, allStadiums)}</option>
+                    ))}
+                  </select>
+                  <ChevronRight size={14} color="#484F58" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%) rotate(90deg)', pointerEvents: 'none' }} />
+                </div>
+
+                {/* Claim date */}
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', marginBottom: 4 }}>Date</div>
+                  <input
+                    type="date"
+                    value={editClaimDate}
+                    onChange={e => setEditClaimDate(e.target.value)}
+                    style={inputStyle}
+                  />
+                </div>
+
+                {/* Giveaway type (bobblehead only) */}
+                {isBobble && (
+                  <div style={{ position: 'relative' }}>
+                    <select
+                      value={editGiveawayType}
+                      onChange={e => setEditGiveawayType(e.target.value as GiveawayTypeValue)}
+                      style={{ ...inputStyle, paddingRight: 36, appearance: 'none', WebkitAppearance: 'none' }}
+                    >
+                      {GIVEAWAY_TYPES.map(t => (
+                        <option key={t.value} value={t.value}>{t.emoji} {t.label}</option>
+                      ))}
+                    </select>
+                    <ChevronRight size={14} color="#484F58" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%) rotate(90deg)', pointerEvents: 'none' }} />
+                  </div>
+                )}
+
+                {/* Item name (bobblehead) */}
+                {isBobble && (
+                  <input
+                    type="text"
+                    placeholder={editItemNamePlaceholder}
+                    value={editBobbleheadName}
+                    onChange={e => setEditBobbleheadName(e.target.value)}
+                    style={inputStyle}
+                  />
+                )}
+
+                {/* Player name (autograph / met_player) */}
+                {showsPlayer && (
+                  <input
+                    type="text"
+                    placeholder={editingExp.id === 'autograph' ? 'Whose autograph? (e.g. Shohei Ohtani)' : 'Which player? (e.g. Mike Trout)'}
+                    value={editPlayerName}
+                    onChange={e => setEditPlayerName(e.target.value)}
+                    style={inputStyle}
+                  />
+                )}
+
+                {/* Notes */}
+                <textarea
+                  placeholder="Notes (optional)"
+                  value={editNotes}
+                  onChange={e => setEditNotes(e.target.value)}
+                  rows={2}
+                  style={{ ...inputStyle, resize: 'vertical' }}
+                />
+
+                {/* Photo management */}
+                <div>
+                  <input
+                    type="file"
+                    id="edit-photo-input"
+                    accept="image/*"
+                    onChange={e => {
+                      const f = e.target.files?.[0] ?? null
+                      setEditPhotoFile(f)
+                      if (f) setEditDeletePhoto(false)
+                      ;(e.target as HTMLInputElement).value = ''
+                    }}
+                    style={{ display: 'none' }}
+                  />
+
+                  {showExistingPhoto && (
+                    <div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={existingPhotoUrl!} alt="Current photo" style={{ width: '100%', maxHeight: 160, objectFit: 'cover', borderRadius: 10, display: 'block', marginBottom: 6 }} />
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          onClick={() => setEditDeletePhoto(true)}
+                          style={{ flex: 1, padding: '7px 0', borderRadius: 8, border: '1px solid rgba(248,81,73,0.35)', backgroundColor: 'rgba(248,81,73,0.08)', color: '#F85149', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                        >
+                          Remove photo
+                        </button>
+                        <label
+                          htmlFor="edit-photo-input"
+                          style={{ flex: 1, padding: '7px 0', borderRadius: 8, border: '1px solid #30363D', backgroundColor: 'rgba(139,148,158,0.08)', color: '#8B949E', fontSize: 12, fontWeight: 600, cursor: 'pointer', textAlign: 'center', display: 'block' }}
+                        >
+                          Replace photo
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {showDeletedNotice && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 10, backgroundColor: 'rgba(248,81,73,0.08)', border: '1px solid rgba(248,81,73,0.2)' }}>
+                      <span style={{ fontSize: 12, color: '#F85149', flex: 1 }}>Photo will be removed on save</span>
+                      <button onClick={() => setEditDeletePhoto(false)} style={{ fontSize: 12, color: '#58A6FF', background: 'none', border: 'none', cursor: 'pointer' }}>Undo</button>
+                    </div>
+                  )}
+
+                  {editPhotoFile && (
+                    <div style={{ position: 'relative' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={URL.createObjectURL(editPhotoFile)}
+                        alt="Preview"
+                        style={{ width: '100%', maxHeight: 160, objectFit: 'cover', borderRadius: 10, display: 'block' }}
+                      />
+                      <button
+                        onClick={() => setEditPhotoFile(null)}
+                        style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <X size={12} color="#fff" />
+                      </button>
+                    </div>
+                  )}
+
+                  {!existingPhotoUrl && !editPhotoFile && (
+                    <label
+                      htmlFor="edit-photo-input"
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 12px', borderRadius: 10, border: '1.5px dashed #30363D', backgroundColor: '#0B1117', cursor: 'pointer', fontSize: 13, color: '#8B949E' }}
+                    >
+                      📷 Add photo (optional)
+                    </label>
+                  )}
+                </div>
+
+                {/* Action buttons */}
+                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                  <button
+                    onClick={closeEditModal}
+                    style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '1px solid #30363D', backgroundColor: 'transparent', color: '#8B949E', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveEditClaim}
+                    disabled={editSaving}
+                    style={{ flex: 2, padding: '12px 0', borderRadius: 12, border: 'none', backgroundColor: editSaving ? '#30363D' : '#1F6FEB', color: '#fff', fontSize: 14, fontWeight: 700, cursor: editSaving ? 'default' : 'pointer' }}
+                  >
+                    {editSaving ? 'Saving…' : 'Save Changes'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
