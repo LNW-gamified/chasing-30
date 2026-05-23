@@ -3,8 +3,9 @@ import MilestoneGrid from '@/components/MilestoneGrid'
 import { MILESTONES } from '@/lib/milestones'
 import { STATIC_EXPERIENCES } from '@/lib/static-experiences'
 import Link from 'next/link'
-import type { Stadium, StadiumVisit, SpecialEvent, SpecialVisit, SerializableMilestone } from '@/types'
+import type { Stadium, StadiumVisit, SpecialEvent, SpecialVisit, DestinationVisit, SerializableMilestone } from '@/types'
 import SpecialVisitButton from '@/components/SpecialVisitButton'
+import { DESTINATIONS, DESTINATION_GROUPS, destinationLocation } from '@/lib/destinations'
 
 export const RANK_TIERS = [
   { name: 'Rookie',       minPts: 0,    icon: '🌱' },
@@ -27,6 +28,7 @@ export const MILESTONE_POINTS: Record<string, number> = {
   hall_of_fame_visit: 75, field_of_dreams_visit: 75,
   international_game: 100, historic_ballparks_all: 200,
   first_special_event: 30,
+  factory_tour: 50, full_experience: 100,
 }
 
 function getRank(pts: number) {
@@ -69,21 +71,23 @@ function toSerializable(ms: typeof MILESTONES): SerializableMilestone[] {
 export default async function MilestonesPage() {
   const supabase = await createClient()
 
-  const [{ data: stadiums }, { data: visits }, { data: events }, { data: claims }, { data: specialVisits }] = await Promise.all([
+  const [{ data: stadiums }, { data: visits }, { data: events }, { data: claims }, { data: specialVisits }, { data: destVisits }] = await Promise.all([
     supabase.from('stadiums').select('*'),
     supabase.from('stadium_visits').select('*'),
     supabase.from('special_events').select('*'),
     supabase.from('achievement_claims').select('achievement_id'),
     supabase.from('special_visits').select('*').order('visit_date', { ascending: false }),
+    supabase.from('destination_visits').select('*, destination:destinations(*)').order('visit_date', { ascending: false }),
   ])
 
   const allStadiums: Stadium[] = stadiums ?? []
   const allVisits: StadiumVisit[] = visits ?? []
   const allEvents: SpecialEvent[] = events ?? []
   const allSpecialVisits: SpecialVisit[] = (specialVisits ?? []) as SpecialVisit[]
+  const allDestVisits: DestinationVisit[] = (destVisits ?? []) as DestinationVisit[]
 
-  const earned = MILESTONES.filter(m => m.check(allVisits, allStadiums, allEvents, allSpecialVisits))
-  const unearned = MILESTONES.filter(m => !m.check(allVisits, allStadiums, allEvents, allSpecialVisits))
+  const earned = MILESTONES.filter(m => m.check(allVisits, allStadiums, allEvents, allSpecialVisits, allDestVisits))
+  const unearned = MILESTONES.filter(m => !m.check(allVisits, allStadiums, allEvents, allSpecialVisits, allDestVisits))
   const totalPoints = earned.reduce((sum, m) => sum + (MILESTONE_POINTS[m.id] ?? 25), 0)
   const currentRank = getRank(totalPoints)
   const nextRank = getNextRank(totalPoints)
@@ -191,6 +195,72 @@ export default async function MilestonesPage() {
           currentRankName={currentRank.name}
           rankTiers={RANK_TIERS}
         />
+
+        {/* ── Baseball Destinations section ─────────────────────────── */}
+        {(() => {
+          const visitedSlugs = new Set(allDestVisits.map((dv: any) => dv.destination?.slug).filter(Boolean))
+          const visitedCount = visitedSlugs.size
+          return (
+            <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 16px 0' }}>
+              <div style={{ borderTop: '1px solid #30363D', paddingTop: 28, marginBottom: 28 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#E6EDF3' }}>🗺️ Baseball Destinations</div>
+                    <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
+                      {visitedCount}/{DESTINATIONS.length} visited
+                    </div>
+                  </div>
+                  <Link href="/trips" style={{
+                    padding: '8px 16px', borderRadius: 20, border: 'none',
+                    backgroundColor: '#1F6FEB', color: '#fff',
+                    fontSize: 13, fontWeight: 700, textDecoration: 'none',
+                  }}>
+                    Plan Trip
+                  </Link>
+                </div>
+
+                {DESTINATION_GROUPS.map(group => {
+                  const groupDests = DESTINATIONS.filter(d => group.types.includes(d.type))
+                  const groupVisited = groupDests.filter(d => visitedSlugs.has(d.slug)).length
+                  return (
+                    <div key={group.label} style={{ marginBottom: 20 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {group.icon} {group.label}
+                        <span style={{ fontSize: 12, color: '#484F58' }}>({groupVisited}/{groupDests.length})</span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
+                        {groupDests.map(d => {
+                          const isVisited = visitedSlugs.has(d.slug)
+                          return (
+                            <div key={d.slug} style={{
+                              background: `linear-gradient(135deg, ${d.heroColor[0]}, ${d.heroColor[1]})`,
+                              borderRadius: 12, padding: '12px 14px',
+                              border: isVisited ? '1.5px solid #F5A623' : '1px solid #30363D',
+                              position: 'relative', overflow: 'hidden',
+                              opacity: isVisited ? 1 : 0.6,
+                            }}>
+                              {isVisited && (
+                                <div style={{
+                                  position: 'absolute', top: 8, right: 8,
+                                  width: 20, height: 20, borderRadius: '50%',
+                                  background: '#F5A623', display: 'flex', alignItems: 'center',
+                                  justifyContent: 'center', fontSize: 10, color: '#000', fontWeight: 900,
+                                }}>✓</div>
+                              )}
+                              <div style={{ fontSize: 24, marginBottom: 6 }}>{d.icon}</div>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.3 }}>{d.name}</div>
+                              <div style={{ fontSize: 10, color: '#8B949E', marginTop: 2 }}>{destinationLocation(d)}</div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* ── Special Visits section ────────────────────────────────── */}
         <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 16px 40px' }}>

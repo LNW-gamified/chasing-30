@@ -1,4 +1,4 @@
-import type { Milestone, StadiumVisit, Stadium, SpecialEvent, SpecialVisit } from '@/types'
+import type { Milestone, StadiumVisit, Stadium, SpecialEvent, SpecialVisit, DestinationVisit } from '@/types'
 
 function visitedIds(visits: StadiumVisit[]): Set<string> {
   return new Set(visits.map((v) => v.stadium_id))
@@ -204,27 +204,32 @@ export const MILESTONES: Milestone[] = [
     name: 'World Series Witness',
     description: 'Attend a World Series game',
     icon: '🏆',
-    check: (_v, _s, events, specialVisits) =>
+    check: (_v, _s, events, specialVisits, destinationVisits) =>
       (events ?? []).some((e: SpecialEvent) => e.event_type === 'world_series') ||
-      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'world_series'),
+      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'world_series') ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'world_series'),
   },
   {
     id: 'all_star_attendance',
     name: 'Midsummer Classic',
     description: 'Attend the MLB All-Star Game',
     icon: '⭐',
-    check: (_v, _s, events, specialVisits) =>
+    check: (_v, _s, events, specialVisits, destinationVisits) =>
       (events ?? []).some((e: SpecialEvent) => e.event_type === 'all_star_game') ||
-      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'all_star'),
+      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'all_star') ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'all_star_game'),
   },
   {
     id: 'postseason_attendance',
     name: 'October Baseball',
     description: 'Attend any MLB postseason game',
     icon: '🍂',
-    check: (_v, _s, events, specialVisits) =>
+    check: (_v, _s, events, specialVisits, destinationVisits) =>
       (events ?? []).some((e: SpecialEvent) => e.event_type === 'postseason') ||
-      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'playoff'),
+      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'playoff') ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) =>
+        ['wild_card_game', 'division_series', 'championship_series', 'world_series'].includes((dv.destination as any)?.slug)
+      ),
   },
   {
     id: 'spring_training_attendance',
@@ -249,19 +254,23 @@ export const MILESTONES: Milestone[] = [
     name: 'Cooperstown Pilgrim',
     description: 'Visit the National Baseball Hall of Fame',
     icon: '🏛️',
-    check: (_v, _s, events) =>
+    check: (_v, _s, events, _sv, destinationVisits) =>
       (events ?? []).some((e: SpecialEvent) =>
         e.event_type === 'historic_ballpark' && e.venue_name === 'National Baseball Hall of Fame'
-      ),
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'hall_of_fame'),
   },
   {
     id: 'field_of_dreams_visit',
     name: 'Build It, They Come',
     description: 'Visit Field of Dreams in Iowa',
     icon: '🌽',
-    check: (_v, _s, events) =>
+    check: (_v, _s, events, _sv, destinationVisits) =>
       (events ?? []).some((e: SpecialEvent) =>
         e.event_type === 'historic_ballpark' && e.venue_name === 'Field of Dreams'
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) =>
+        ['field_of_dreams', 'dreams_game'].includes((dv.destination as any)?.slug)
       ),
   },
   {
@@ -386,5 +395,25 @@ export const MILESTONES: Milestone[] = [
     description: 'Watch a 1-0 masterpiece in person',
     icon: '🎯',
     check: (visits) => visits.some(v => v.game_events?.includes('pitchers_duel')),
+  },
+
+  // ── Baseball Destination achievements ─────────────────────────────────
+  {
+    id: 'factory_tour',
+    name: 'Factory Tour',
+    description: 'Visit the Louisville Slugger or Rawlings baseball factory',
+    icon: '🪵',
+    check: (_v, _s, _e, _sv, destinationVisits) =>
+      (destinationVisits ?? []).some((dv: DestinationVisit) =>
+        ['louisville_slugger', 'rawlings_factory'].includes((dv.destination as any)?.slug)
+      ),
+  },
+  {
+    id: 'full_experience',
+    name: 'The Full Experience',
+    description: 'Visit 5 or more baseball destinations',
+    icon: '🗺️',
+    check: (_v, _s, _e, _sv, destinationVisits) =>
+      new Set((destinationVisits ?? []).map((dv: DestinationVisit) => dv.destination_id)).size >= 5,
   },
 ]

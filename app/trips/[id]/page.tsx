@@ -9,8 +9,9 @@ import { getTeamLogoUrlById, getTeamAbbrById } from '@/lib/team-logos'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip, TripStop, StopChecklistItem } from '@/types'
 import Link from 'next/link'
-import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink } from 'lucide-react'
 import StopChecklist from '@/components/StopChecklist'
+import { DESTINATION_BY_SLUG, destinationLocation, EXPERIENCE_TYPES } from '@/lib/destinations'
 
 type TripWithStadium = Trip & { stadium: Stadium | null }
 
@@ -63,7 +64,7 @@ export default function TripDetailPage() {
   async function load() {
     const supabase = createClient()
     const [{ data: t }, { data: s }, { data: st }] = await Promise.all([
-      supabase.from('trips').select('*, stadium:stadiums(*)').eq('id', id).single(),
+      supabase.from('trips').select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, description, lat, lng, is_mlb_event, website_url)').eq('id', id).single(),
       supabase.from('stadiums').select('*').order('name'),
       supabase.from('trip_stops').select(
         'id, trip_id, stadium_id, sort_order, game_date, game_time, opponent, opponent_team_id, ' +
@@ -202,10 +203,19 @@ export default function TripDetailPage() {
   const dr = dateRange()
   const countdownDays = trip.status === 'planned' ? daysUntil(trip.start_date) : null
 
-  // Hero gradient from first stop's team colors
-  const heroAbbr = sortedStops[0]?.stadium?.abbreviation ?? ''
-  const [h1, h2] = TEAM_COLORS[heroAbbr] ?? ['#1F3C6E', '#0B1117']
-  const heroGradient = `linear-gradient(135deg, ${h1} 0%, ${h2} 100%)`
+  const isDestinationTrip = (trip as any).trip_type === 'destination'
+  const destSlug = (trip as any).destination?.slug ?? null
+  const destInfo = destSlug ? DESTINATION_BY_SLUG[destSlug] : null
+
+  // Hero gradient: destination color or team color
+  let heroGradient: string
+  if (isDestinationTrip && destInfo) {
+    heroGradient = `linear-gradient(135deg, ${destInfo.heroColor[0]}, ${destInfo.heroColor[1]})`
+  } else {
+    const heroAbbr = sortedStops[0]?.stadium?.abbreviation ?? ''
+    const [h1, h2] = TEAM_COLORS[heroAbbr] ?? ['#1F3C6E', '#0B1117']
+    heroGradient = `linear-gradient(135deg, ${h1} 0%, ${h2} 100%)`
+  }
 
   return (
     <div>
@@ -309,6 +319,35 @@ export default function TripDetailPage() {
                     {trip.end_date && trip.end_date !== trip.start_date
                       && ` – ${formatDate(trip.end_date)}`}
                   </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Destination info ───────────────────────────────────── */}
+          {isDestinationTrip && destInfo && (
+            <div style={{
+              backgroundColor: '#161B22', borderRadius: 14,
+              border: '1px solid #30363D', padding: '16px 18px',
+              marginBottom: 16, display: 'flex', gap: 14, alignItems: 'flex-start',
+            }}>
+              <div style={{ fontSize: 40, flexShrink: 0, lineHeight: 1 }}>{destInfo.icon}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 17, fontWeight: 800, color: '#E6EDF3', marginBottom: 2 }}>{destInfo.name}</div>
+                <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 8 }}>{destinationLocation(destInfo)}</div>
+                {(trip as any).experience_type && (trip as any).experience_type !== 'other' && (
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '3px 10px', borderRadius: 20, marginBottom: 6,
+                    background: 'rgba(245,166,35,0.12)', color: '#F5A623',
+                    fontSize: 12, fontWeight: 600,
+                  }}>
+                    {EXPERIENCE_TYPES.find(e => e.value === (trip as any).experience_type)?.icon ?? '📍'}
+                    {' '}{EXPERIENCE_TYPES.find(e => e.value === (trip as any).experience_type)?.label ?? (trip as any).experience_type}
+                  </div>
+                )}
+                {destInfo.description && (
+                  <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.5 }}>{destInfo.description}</div>
                 )}
               </div>
             </div>

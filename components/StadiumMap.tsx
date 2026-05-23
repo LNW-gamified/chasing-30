@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import type { StadiumWithVisit } from '@/types'
+import type { CuratedDestination } from '@/lib/destinations'
 
 const StadiumMapInner = dynamic(() => import('./StadiumMapInner'), {
   ssr: false,
@@ -16,6 +17,12 @@ const StadiumMapInner = dynamic(() => import('./StadiumMapInner'), {
   ),
 })
 
-export default function StadiumMap({ stadiums }: { stadiums: StadiumWithVisit[] }) {
-  return <StadiumMapInner stadiums={stadiums} />
+interface Props {
+  stadiums: StadiumWithVisit[]
+  destinations?: CuratedDestination[]
+  visitedDestinationIds?: Set<string>
+}
+
+export default function StadiumMap({ stadiums, destinations, visitedDestinationIds }: Props) {
+  return <StadiumMapInner stadiums={stadiums} destinations={destinations} visitedDestinationIds={visitedDestinationIds} />
 }

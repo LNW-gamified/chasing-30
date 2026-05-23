@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import TripForm from '@/components/TripForm'
+import DestinationTripForm from '@/components/DestinationTripForm'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip } from '@/types'
 import Link from 'next/link'
-import { Plus, ChevronRight } from 'lucide-react'
+import { Plus, ChevronRight, Building2, MapPin } from 'lucide-react'
 import { getTeamLogoUrl } from '@/lib/team-logos'
 import TeamLogo from '@/components/TeamLogo'
+import { DESTINATION_BY_SLUG } from '@/lib/destinations'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -114,17 +116,21 @@ function statusPill(status: Trip['status']) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+type FormType = 'stadium' | 'destination'
+
 export default function TripsPage() {
   const [trips,    setTrips]    = useState<TripWithExtras[]>([])
   const [stadiums, setStadiums] = useState<Stadium[]>([])
   const [loading,  setLoading]  = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [showTypePicker, setShowTypePicker] = useState(false)
+  const [formType, setFormType] = useState<FormType>('stadium')
 
   async function load() {
     const supabase = createClient()
     const [{ data: t }, { data: s }] = await Promise.all([
       supabase.from('trips')
-        .select('*, stadium:stadiums(*), trip_stops(id, stadium_id, stadium:stadiums(id, abbreviation, name))')
+        .select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, is_mlb_event), trip_stops(id, stadium_id, stadium:stadiums(id, abbreviation, name))')
         .order('created_at', { ascending: false }),
       supabase.from('stadiums').select('*').order('name'),
     ])
@@ -165,17 +171,59 @@ export default function TripsPage() {
                 </p>
               )}
             </div>
-            <button
-              onClick={() => setShowForm(true)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '9px 18px', borderRadius: 20, border: 'none',
-                backgroundColor: '#1F6FEB', color: '#E6EDF3',
-                fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
-              }}
-            >
-              <Plus size={15} /> New Trip
-            </button>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowTypePicker(p => !p)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '9px 18px', borderRadius: 20, border: 'none',
+                  backgroundColor: '#1F6FEB', color: '#E6EDF3',
+                  fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
+                }}
+              >
+                <Plus size={15} /> New Trip
+              </button>
+              {showTypePicker && (
+                <div style={{
+                  position: 'absolute', right: 0, top: '110%', zIndex: 50,
+                  background: '#161B22', border: '1px solid #30363D', borderRadius: 12,
+                  padding: 8, minWidth: 220, boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                }}>
+                  <button
+                    onClick={() => { setFormType('stadium'); setShowForm(true); setShowTypePicker(false) }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                      background: 'none', border: 'none', cursor: 'pointer', padding: '10px 12px',
+                      borderRadius: 8, color: '#E6EDF3', textAlign: 'left',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#1C2128')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                  >
+                    <Building2 size={18} style={{ color: '#1F6FEB', flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>Stadium Trip</div>
+                      <div style={{ fontSize: 12, color: '#8B949E' }}>Multi-stop MLB ballpark road trip</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => { setFormType('destination'); setShowForm(true); setShowTypePicker(false) }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                      background: 'none', border: 'none', cursor: 'pointer', padding: '10px 12px',
+                      borderRadius: 8, color: '#E6EDF3', textAlign: 'left',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#1C2128')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                  >
+                    <MapPin size={18} style={{ color: '#F5A623', flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>Baseball Destination</div>
+                      <div style={{ fontSize: 12, color: '#8B949E' }}>HOF, events, historic sites & more</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* ── Road Trip Optimizer card ────────────────────────────── */}
@@ -254,17 +302,25 @@ export default function TripsPage() {
                   {/* 1-col mobile / 2-col desktop */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {list.map(trip => {
+                      const isDestination = (trip as any).trip_type === 'destination'
                       const abbrs      = tripAbbrs(trip)
                       const stadCount  = tripStadiumCount(trip)
                       const days       = tripDays(trip)
                       const dateRange  = tripDateRange(trip)
-                      const difficulty = computeDifficulty(trip)
+                      const difficulty = isDestination ? null : computeDifficulty(trip)
                       const sp         = statusPill(trip.status)
                       const est    = trip.est_tickets + trip.est_travel + trip.est_hotel + trip.est_food + trip.est_parking
                       const actual = trip.actual_tickets + trip.actual_travel + trip.actual_hotel + trip.actual_food + trip.actual_parking
                       const hasActual  = actual > 0
                       const pct        = est > 0 && hasActual ? Math.min((actual / est) * 100, 100) : 0
                       const overBudget = hasActual && actual > est
+
+                      const destInfo = isDestination && (trip as any).destination?.slug
+                        ? DESTINATION_BY_SLUG[(trip as any).destination.slug]
+                        : null
+                      const heroGrad = isDestination && destInfo
+                        ? `linear-gradient(135deg, ${destInfo.heroColor[0]}, ${destInfo.heroColor[1]})`
+                        : heroGradient(trip.status, abbrs)
 
                       return (
                         <div key={trip.id} style={{
@@ -274,27 +330,36 @@ export default function TripsPage() {
                           {/* Hero */}
                           <div style={{
                             position: 'relative', height: 140,
-                            background: heroGradient(trip.status, abbrs), overflow: 'hidden',
+                            background: heroGrad, overflow: 'hidden',
                           }}>
-                            {/* Dark gradient overlay — keeps text readable over any team color */}
                             <div style={{
                               position: 'absolute', inset: 0, pointerEvents: 'none',
                               background: 'linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.52) 100%)',
                             }} />
-                            {/* Logo tiles */}
-                            <div style={{
-                              position: 'absolute', right: 14, top: '50%',
-                              transform: 'translateY(-50%)', display: 'flex', gap: 8,
-                            }}>
-                              {abbrs.slice(0, 2).map(abbr => (
-                                <TeamLogo key={abbr} abbreviation={abbr} size={52} />
-                              ))}
-                            </div>
-                            {/* Trip name + date stacked */}
+                            {isDestination && destInfo ? (
+                              <div style={{
+                                position: 'absolute', right: 14, top: '50%',
+                                transform: 'translateY(-50%)', fontSize: 48, opacity: 0.8,
+                              }}>{destInfo.icon}</div>
+                            ) : (
+                              <div style={{
+                                position: 'absolute', right: 14, top: '50%',
+                                transform: 'translateY(-50%)', display: 'flex', gap: 8,
+                              }}>
+                                {abbrs.slice(0, 2).map(abbr => (
+                                  <TeamLogo key={abbr} abbreviation={abbr} size={52} />
+                                ))}
+                              </div>
+                            )}
                             <div style={{
                               position: 'absolute', bottom: 13, left: 16,
-                              right: abbrs.length > 0 ? 128 : 16,
+                              right: (isDestination || abbrs.length > 0) ? 80 : 16,
                             }}>
+                              {isDestination && (
+                                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 2 }}>
+                                  Baseball Destination
+                                </div>
+                              )}
                               <div style={{
                                 fontSize: 19, fontWeight: 800, color: '#ffffff', lineHeight: 1.2,
                                 textShadow: '0 1px 6px rgba(0,0,0,0.5)',
@@ -315,8 +380,21 @@ export default function TripsPage() {
 
                           {/* Card body */}
                           <div style={{ padding: '14px 16px' }}>
-                            {/* Overlapping logo circles */}
-                            {abbrs.length > 0 && (
+                            {/* Destination info row */}
+                            {isDestination && destInfo && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                                <span style={{ fontSize: 20 }}>{destInfo.icon}</span>
+                                <div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{destInfo.name}</div>
+                                  <div style={{ fontSize: 11, color: '#8B949E' }}>
+                                    {destInfo.city !== 'Various' ? `${destInfo.city}${destInfo.state ? `, ${destInfo.state}` : ''}` : 'Location varies'}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Stadium logos */}
+                            {!isDestination && abbrs.length > 0 && (
                               <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
                                 {abbrs.map((abbr, i) => (
                                   <div key={abbr} style={{
@@ -345,17 +423,17 @@ export default function TripsPage() {
 
                             {/* Countdown badge */}
                             {trip.status === 'planned' && (() => {
-                              const days = daysUntil(trip.start_date)
-                              if (days === null || days < 0) return null
+                              const d = daysUntil(trip.start_date)
+                              if (d === null || d < 0) return null
                               return (
                                 <div style={{
                                   display: 'inline-flex', alignItems: 'center', gap: 5,
                                   padding: '3px 10px', borderRadius: 20, marginBottom: 10,
-                                  backgroundColor: days === 0 ? 'rgba(63,185,80,0.12)' : 'rgba(245,166,35,0.1)',
-                                  color: days === 0 ? '#3FB950' : '#F5A623',
+                                  backgroundColor: d === 0 ? 'rgba(63,185,80,0.12)' : 'rgba(245,166,35,0.1)',
+                                  color: d === 0 ? '#3FB950' : '#F5A623',
                                   fontSize: 12, fontWeight: 700,
                                 }}>
-                                  {days === 0 ? '🎉 Today!' : `📅 ${days} day${days !== 1 ? 's' : ''} away`}
+                                  {d === 0 ? '🎉 Today!' : `📅 ${d} day${d !== 1 ? 's' : ''} away`}
                                 </div>
                               )
                             })()}
@@ -397,6 +475,14 @@ export default function TripsPage() {
                                     {difficulty}
                                   </span>
                                 )}
+                                {(trip as any).experience_type && isDestination && (
+                                  <span style={{
+                                    padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                                    background: 'rgba(245,166,35,0.12)', color: '#F5A623',
+                                  }}>
+                                    {(trip as any).experience_type.charAt(0).toUpperCase() + (trip as any).experience_type.slice(1)}
+                                  </span>
+                                )}
                                 {sp && (
                                   <span style={{
                                     padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600,
@@ -425,11 +511,23 @@ export default function TripsPage() {
           )}
       </div>
 
-      {showForm && (
+      {showForm && formType === 'stadium' && (
         <TripForm
           stadiums={stadiums}
           onClose={() => setShowForm(false)}
           onSaved={() => { setShowForm(false); load() }}
+        />
+      )}
+      {showForm && formType === 'destination' && (
+        <DestinationTripForm
+          onClose={() => setShowForm(false)}
+          onSaved={() => { setShowForm(false); load() }}
+        />
+      )}
+      {showTypePicker && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+          onClick={() => setShowTypePicker(false)}
         />
       )}
     </div>

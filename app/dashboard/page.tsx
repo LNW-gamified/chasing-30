@@ -164,6 +164,7 @@ export default async function DashboardPage() {
     { data: trips },
     { data: { user } },
     { data: specialVisits },
+    { data: destVisits },
   ] = await Promise.all([
     supabase.from('stadiums').select('*').order('league').order('division').order('name'),
     supabase.from('stadium_visits').select('*').order('visit_date', { ascending: false }),
@@ -171,6 +172,7 @@ export default async function DashboardPage() {
     supabase.from('trips').select('*, stadium:stadiums(*)').order('start_date', { ascending: true }),
     supabase.auth.getUser(),
     supabase.from('special_visits').select('*'),
+    supabase.from('destination_visits').select('destination_id'),
   ])
 
   const userId = user?.id ?? ''
@@ -212,6 +214,8 @@ export default async function DashboardPage() {
   const favAbbr = (userSettings as any)?.favorite_team_abbr ?? null
 
   const todayGames = await fetchTodayGames(favAbbr)
+
+  const destinationsVisited = new Set((destVisits ?? []).map((dv: any) => dv.destination_id)).size
 
   // ─── My Stats ───────────────────────────────────────────────────────────────
 
@@ -298,13 +302,14 @@ export default async function DashboardPage() {
                 MY STATS
               </div>
               {/* gap-px + dark bg creates 1px dividers between cells at every breakpoint */}
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-px" style={{ background: '#30363D' }}>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-px" style={{ background: '#30363D' }}>
                 {[
-                  { icon: '⚾', value: gamesAttended.toString(),         label: 'Games Attended'  },
-                  { icon: '📋', value: specialVisitCount.toString(),      label: 'Special Visits'  },
-                  { icon: '💰', value: formatCurrency(totalSpent),        label: 'Total Spent'     },
-                  { icon: '🏆', value: favDivision,                       label: 'Fav Division'    },
-                  { icon: '👁', value: mostSeenTeam,                      label: 'Most Seen'       },
+                  { icon: '⚾', value: gamesAttended.toString(),               label: 'Games Attended'       },
+                  { icon: '📋', value: specialVisitCount.toString(),            label: 'Special Visits'       },
+                  { icon: '🗺️', value: destinationsVisited.toString(),          label: 'Destinations Visited' },
+                  { icon: '💰', value: formatCurrency(totalSpent),              label: 'Total Spent'          },
+                  { icon: '🏆', value: favDivision,                             label: 'Fav Division'         },
+                  { icon: '👁', value: mostSeenTeam,                            label: 'Most Seen'            },
                 ].map(({ icon, value, label }) => (
                   <div key={label} style={{ background: '#161B22', padding: 16 }}>
                     <div style={{ fontSize: 24, marginBottom: 6 }}>{icon}</div>

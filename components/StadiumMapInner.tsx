@@ -5,6 +5,8 @@ import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { StadiumWithVisit } from '@/types'
+import type { CuratedDestination } from '@/lib/destinations'
+import { destinationLocation } from '@/lib/destinations'
 import { getTeamLogoUrl, LIGHT_BG_LOGO_TEAMS } from '@/lib/team-logos'
 import TeamLogo from '@/components/TeamLogo'
 import Link from 'next/link'
@@ -38,6 +40,33 @@ function MapInitializer({ mapRef }: { mapRef: React.MutableRefObject<L.Map | nul
   const map = useMap()
   useEffect(() => { mapRef.current = map }, [map, mapRef])
   return null
+}
+
+// ── Destination pin icon factory ────────────────────────────────────────────
+
+function makeDestinationIcon(icon: string, visited: boolean): L.DivIcon {
+  const ring  = visited ? '#F5A623' : 'rgba(245,166,35,0.5)'
+  const bg    = visited ? 'rgba(245,166,35,0.2)' : 'rgba(20,20,30,0.85)'
+  const badge = visited
+    ? `<div style="position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:#F5A623;border:2px solid #0B1117;display:flex;align-items:center;justify-content:center;font-size:9px;color:#000;font-weight:900;line-height:1;">✓</div>`
+    : ''
+  return L.divIcon({
+    html: `
+      <div style="position:relative;width:40px;height:40px;">
+        <div style="
+          width:40px;height:40px;border-radius:10px;
+          border:2.5px solid ${ring};
+          box-shadow:0 2px 10px rgba(0,0,0,0.6);
+          background:${bg};
+          display:flex;align-items:center;justify-content:center;
+          font-size:22px;line-height:1;
+        ">${icon}</div>
+        ${badge}
+      </div>`,
+    className: '',
+    iconSize:   [40, 40],
+    iconAnchor: [20, 20],
+  })
 }
 
 // ── Stadium pin icon factory ────────────────────────────────────────────────
@@ -81,15 +110,18 @@ function makeStadiumIcon(logoUrl: string, visited: boolean, abbr: string): L.Div
 
 interface Props {
   stadiums: StadiumWithVisit[]
+  destinations?: CuratedDestination[]
+  visitedDestinationIds?: Set<string>
 }
 
-export default function StadiumMapInner({ stadiums }: Props) {
+export default function StadiumMapInner({ stadiums, destinations = [], visitedDestinationIds = new Set() }: Props) {
   const router = useRouter()
   const mapRef = useRef<L.Map | null>(null)
 
-  const [filter,      setFilter]      = useState<Filter>('all')
-  const [selected,    setSelected]    = useState<StadiumWithVisit | null>(null)
-  const [showLegend,  setShowLegend]  = useState(false)
+  const [filter,          setFilter]          = useState<Filter>('all')
+  const [selected,        setSelected]        = useState<StadiumWithVisit | null>(null)
+  const [selectedDest,    setSelectedDest]    = useState<CuratedDestination | null>(null)
+  const [showLegend,      setShowLegend]      = useState(false)
 
   // Filtered stadium list
   const visibleStadiums = useMemo(() => stadiums.filter(s => {
@@ -106,6 +138,17 @@ export default function StadiumMapInner({ stadiums }: Props) {
     }
     return m
   }, [stadiums])
+
+  // Pre-build destination icons
+  const destIcons = useMemo(() => {
+    const m = new Map<string, L.DivIcon>()
+    for (const d of destinations) {
+      if (d.lat !== null && d.lng !== null) {
+        m.set(d.slug, makeDestinationIcon(d.icon, visitedDestinationIds.has(d.slug)))
+      }
+    }
+    return m
+  }, [destinations, visitedDestinationIds])
 
   // Location button handler
   function handleLocate() {
@@ -140,7 +183,17 @@ export default function StadiumMapInner({ stadiums }: Props) {
             key={s.id}
             position={[s.lat, s.lng]}
             icon={icons.get(s.id)!}
-            eventHandlers={{ click: () => { setSelected(s); setShowLegend(false) } }}
+            eventHandlers={{ click: () => { setSelected(s); setSelectedDest(null); setShowLegend(false) } }}
+          />
+        ))}
+
+        {/* Destination markers */}
+        {destinations.filter(d => d.lat !== null && d.lng !== null).map(d => (
+          <Marker
+            key={d.slug}
+            position={[d.lat!, d.lng!]}
+            icon={destIcons.get(d.slug)!}
+            eventHandlers={{ click: () => { setSelectedDest(d); setSelected(null); setShowLegend(false) } }}
           />
         ))}
 
@@ -212,7 +265,6 @@ export default function StadiumMapInner({ stadiums }: Props) {
             Map Legend
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {/* Visited */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
                 width: 32, height: 32, borderRadius: '50%',
@@ -231,7 +283,6 @@ export default function StadiumMapInner({ stadiums }: Props) {
               </div>
               <span style={{ fontSize: 13, color: '#8B949E' }}>Visited stadium</span>
             </div>
-            {/* Unvisited */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
                 width: 32, height: 32, borderRadius: '50%',
@@ -241,6 +292,26 @@ export default function StadiumMapInner({ stadiums }: Props) {
               }} />
               <span style={{ fontSize: 13, color: '#8B949E' }}>Not yet visited</span>
             </div>
+            {destinations.length > 0 && (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                    border: '2.5px solid #F5A623', backgroundColor: 'rgba(245,166,35,0.2)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
+                  }}>🏆</div>
+                  <span style={{ fontSize: 13, color: '#8B949E' }}>Visited destination</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                    border: '2.5px solid rgba(245,166,35,0.5)', backgroundColor: 'rgba(20,20,30,0.85)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
+                  }}>📍</div>
+                  <span style={{ fontSize: 13, color: '#8B949E' }}>Baseball destination</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -258,6 +329,65 @@ export default function StadiumMapInner({ stadiums }: Props) {
       >
         <Navigation size={20} color="#1F6FEB" strokeWidth={2} />
       </button>
+
+      {/* ── Destination popup card ───────────────────────────────────── */}
+      {selectedDest && (
+        <div className="absolute left-3 right-3 z-[1000] bottom-20 md:bottom-5 md:left-auto md:right-4 md:w-96">
+          <div style={{
+            backgroundColor: '#161B22', borderRadius: 18, padding: 16,
+            border: '1px solid #30363D', display: 'flex', alignItems: 'center', gap: 14,
+            position: 'relative', minHeight: 112,
+          }}>
+            <button
+              onClick={() => setSelectedDest(null)}
+              aria-label="Close"
+              style={{
+                position: 'absolute', top: 10, right: 10,
+                width: 28, height: 28, borderRadius: '50%',
+                backgroundColor: '#1C2430', border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <X size={14} color="#8B949E" strokeWidth={2.5} />
+            </button>
+            <div style={{
+              width: 56, height: 56, borderRadius: 12, flexShrink: 0,
+              background: `linear-gradient(135deg, ${selectedDest.heroColor[0]}, ${selectedDest.heroColor[1]})`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 28,
+            }}>
+              {selectedDest.icon}
+            </div>
+            <div style={{ flex: 1, minWidth: 0, paddingRight: 24 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3', marginBottom: 2, lineHeight: 1.2 }}>
+                {selectedDest.name}
+              </div>
+              <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 8 }}>
+                {destinationLocation(selectedDest)}
+              </div>
+              {visitedDestinationIds.has(selectedDest.slug) ? (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  padding: '3px 10px', borderRadius: 20,
+                  backgroundColor: 'rgba(245,166,35,0.12)', color: '#F5A623',
+                  fontSize: 12, fontWeight: 600,
+                }}>
+                  ✓ Visited
+                </span>
+              ) : (
+                <Link href="/trips" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  padding: '3px 10px', borderRadius: 20,
+                  backgroundColor: 'rgba(31,111,235,0.12)', color: '#1F6FEB',
+                  fontSize: 12, fontWeight: 600, textDecoration: 'none',
+                }}>
+                  Plan Trip
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Stadium popup card (bottom slide-up) ─────────────────────── */}
       {selected && (

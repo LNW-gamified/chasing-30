@@ -113,6 +113,9 @@ export interface Trip {
   start_date: string | null
   end_date: string | null
   status: 'planned' | 'completed' | 'cancelled'
+  trip_type: 'stadium' | 'destination'
+  destination_id: string | null
+  experience_type: 'tour' | 'game' | 'festival' | 'pilgrimage' | 'other' | null
   est_tickets: number
   est_travel: number
   est_hotel: number
@@ -127,6 +130,35 @@ export interface Trip {
   created_by: string | null
   created_at: string
   stadium?: Stadium
+}
+
+export interface Destination {
+  id: string
+  slug: string
+  name: string
+  city: string
+  state: string | null
+  country: string
+  type: 'hall_of_fame' | 'special_event' | 'historic_stadium' | 'amateur' | 'factory' | 'other'
+  description: string | null
+  lat: number | null
+  lng: number | null
+  is_mlb_event: boolean
+  website_url: string | null
+  created_at: string
+}
+
+export interface DestinationVisit {
+  id: string
+  destination_id: string
+  trip_id: string | null
+  visit_date: string
+  experience_type: 'tour' | 'game' | 'festival' | 'pilgrimage' | 'other' | null
+  notes: string | null
+  moments: string[] | null
+  created_by: string | null
+  created_at: string
+  destination?: Destination
 }
 
 export interface RetiredNumber {
@@ -189,7 +221,7 @@ export interface Milestone {
   name: string
   description: string
   icon: string
-  check: (visits: StadiumVisit[], stadiums: Stadium[], events?: SpecialEvent[], specialVisits?: SpecialVisit[]) => boolean
+  check: (visits: StadiumVisit[], stadiums: Stadium[], events?: SpecialEvent[], specialVisits?: SpecialVisit[], destinationVisits?: DestinationVisit[]) => boolean
   earned_at?: string | null
 }
 
