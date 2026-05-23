@@ -162,8 +162,7 @@ function StadiumCard({
         <div style={{ padding: '8px 12px 10px', display: 'flex', flexDirection: 'column', flex: 1, gap: 2 }}>
           <div style={{
             fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2,
-            display: '-webkit-box', WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical', overflow: 'hidden',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
             {stadium.team}
           </div>
@@ -619,21 +618,21 @@ export default function StadiumsPage() {
               </div>
               {historicEvents.length === 0 ? (
                 <div style={{
-                  backgroundColor: '#161B22', borderRadius: 12, border: '2px dashed #30363D',
-                  padding: '48px 24px', textAlign: 'center',
+                  backgroundColor: '#161B22', borderRadius: 12,
+                  padding: '56px 24px', textAlign: 'center',
                 }}>
-                  <div style={{ fontSize: 32, marginBottom: 10 }}>🏛️</div>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>🏛️</div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', marginBottom: 6 }}>
                     No historic ballpark visits yet
                   </div>
-                  <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 20 }}>
                     Visited the Hall of Fame or a legendary venue? Log it here.
                   </div>
                   <button
                     onClick={() => openAddForm('historic_ballpark', ['historic_ballpark'])}
                     style={{
                       display: 'inline-flex', alignItems: 'center', gap: 6,
-                      padding: '9px 18px', borderRadius: 8, border: 'none',
+                      padding: '10px 20px', borderRadius: 10, border: 'none',
                       cursor: 'pointer', backgroundColor: '#1F6FEB',
                       color: '#fff', fontWeight: 600, fontSize: 13,
                     }}
@@ -672,21 +671,21 @@ export default function StadiumsPage() {
               </div>
               {springEvents.length === 0 ? (
                 <div style={{
-                  backgroundColor: '#161B22', borderRadius: 12, border: '2px dashed #30363D',
-                  padding: '48px 24px', textAlign: 'center',
+                  backgroundColor: '#161B22', borderRadius: 12,
+                  padding: '56px 24px', textAlign: 'center',
                 }}>
-                  <div style={{ fontSize: 32, marginBottom: 10 }}>🌸</div>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>🌸</div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', marginBottom: 6 }}>
                     No spring training games logged yet
                   </div>
-                  <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 20 }}>
                     Made it to Arizona or Florida for spring ball? Log it here.
                   </div>
                   <button
                     onClick={() => openAddForm('spring_training', ['spring_training'])}
                     style={{
                       display: 'inline-flex', alignItems: 'center', gap: 6,
-                      padding: '9px 18px', borderRadius: 8, border: 'none',
+                      padding: '10px 20px', borderRadius: 10, border: 'none',
                       cursor: 'pointer', backgroundColor: '#1F6FEB',
                       color: '#fff', fontWeight: 600, fontSize: 13,
                     }}
@@ -762,21 +761,21 @@ export default function StadiumsPage() {
 
               {filteredOtherEvents.length === 0 ? (
                 <div style={{
-                  backgroundColor: '#161B22', borderRadius: 12, border: '2px dashed #30363D',
-                  padding: '48px 24px', textAlign: 'center',
+                  backgroundColor: '#161B22', borderRadius: 12,
+                  padding: '56px 24px', textAlign: 'center',
                 }}>
-                  <div style={{ fontSize: 32, marginBottom: 10 }}>🏆</div>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>🏆</div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', marginBottom: 6 }}>
                     No special events logged yet
                   </div>
-                  <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 20 }}>
                     Attended a World Series game, All-Star Game, or postseason? Log it here.
                   </div>
                   <button
                     onClick={() => openAddForm('world_series', EVENTS_SPECIAL_SET)}
                     style={{
                       display: 'inline-flex', alignItems: 'center', gap: 6,
-                      padding: '9px 18px', borderRadius: 8, border: 'none',
+                      padding: '10px 20px', borderRadius: 10, border: 'none',
                       cursor: 'pointer', backgroundColor: '#1F6FEB',
                       color: '#fff', fontWeight: 600, fontSize: 13,
                     }}
@@ -799,13 +798,17 @@ export default function StadiumsPage() {
                 <SectionHeader count={visitedList.length}>Visited</SectionHeader>
                 {visitedList.length === 0 ? (
                   <div style={{
-                    backgroundColor: '#161B22', borderRadius: 12, border: '2px dashed #30363D',
-                    padding: '32px 24px', textAlign: 'center',
+                    backgroundColor: '#161B22', borderRadius: 12,
+                    padding: '40px 24px', textAlign: 'center',
                   }}>
+                    <div style={{ fontSize: 36, marginBottom: 10 }}>⚾</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', marginBottom: 6 }}>
+                      {search || filterLeague !== 'all' ? 'No parks match your filters' : 'No parks visited yet'}
+                    </div>
                     <div style={{ fontSize: 13, color: '#8B949E' }}>
                       {search || filterLeague !== 'all'
-                        ? 'No visited parks match your filters.'
-                        : 'No parks visited yet — tap any card to mark your first!'}
+                        ? 'Try adjusting your search or filters.'
+                        : 'Head to a game and log your first stadium!'}
                     </div>
                   </div>
                 ) : (

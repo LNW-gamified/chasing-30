@@ -9,7 +9,7 @@ import { getTeamLogoUrlById, getTeamAbbrById } from '@/lib/team-logos'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip, TripStop, StopChecklistItem } from '@/types'
 import Link from 'next/link'
-import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink, MoreHorizontal } from 'lucide-react'
 import StopChecklist from '@/components/StopChecklist'
 import { DESTINATION_BY_SLUG, destinationLocation, EXPERIENCE_TYPES } from '@/lib/destinations'
 
@@ -60,6 +60,7 @@ export default function TripDetailPage() {
   const [completeStep,   setCompleteStep]   = useState('')
   const [completeError,  setCompleteError]  = useState('')
   const [checklistItems, setChecklistItems] = useState<StopChecklistItem[]>([])
+  const [showDeleteMenu,  setShowDeleteMenu]  = useState(false)
 
   async function load() {
     const supabase = createClient()
@@ -242,8 +243,8 @@ export default function TripDetailPage() {
             </Link>
           </div>
 
-          {/* Status badge — top right */}
-          <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}>
+          {/* Status badge + ellipsis menu — top right */}
+          <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{
               display: 'inline-flex', alignItems: 'center',
               padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700,
@@ -253,6 +254,41 @@ export default function TripDetailPage() {
             }}>
               {sc.label}
             </span>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowDeleteMenu(v => !v)}
+                aria-label="More options"
+                style={{
+                  width: 34, height: 34, borderRadius: '50%',
+                  backgroundColor: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <MoreHorizontal size={16} color="#fff" strokeWidth={2} />
+              </button>
+              {showDeleteMenu && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 20,
+                  backgroundColor: '#1C2430', borderRadius: 10,
+                  border: '1px solid #30363D',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                  minWidth: 160, overflow: 'hidden',
+                }}>
+                  <button
+                    onClick={() => { setShowDeleteMenu(false); handleDelete() }}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '12px 16px', background: 'none', border: 'none',
+                      cursor: 'pointer', color: '#F85149', fontSize: 14, fontWeight: 600,
+                      textAlign: 'left',
+                    }}
+                  >
+                    <Trash2 size={14} /> Delete Trip
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Trip info — bottom */}
@@ -355,48 +391,33 @@ export default function TripDetailPage() {
 
           {/* ── Action buttons ─────────────────────────────────────── */}
           <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            gap: 8, marginBottom: 20, flexWrap: 'wrap',
+            display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, flexWrap: 'wrap',
           }}>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {trip.status === 'planned' && (
-                <button
-                  onClick={() => { setCompleteDate(new Date().toISOString().split('T')[0]); setShowComplete(true) }}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '9px 16px', borderRadius: 10,
-                    border: '1px solid rgba(63,185,80,0.35)',
-                    backgroundColor: 'rgba(63,185,80,0.08)', color: '#3FB950',
-                    fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
-                  }}
-                >
-                  <CheckCircle size={15} /> Mark Complete
-                </button>
-              )}
+            {trip.status === 'planned' && (
               <button
-                onClick={() => setShowEdit(true)}
+                onClick={() => { setCompleteDate(new Date().toISOString().split('T')[0]); setShowComplete(true) }}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   padding: '9px 16px', borderRadius: 10,
-                  border: '1px solid #30363D',
-                  backgroundColor: '#1C2430', color: '#E6EDF3',
-                  fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+                  border: '1px solid rgba(63,185,80,0.35)',
+                  backgroundColor: 'rgba(63,185,80,0.08)', color: '#3FB950',
+                  fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
                 }}
               >
-                <Pencil size={14} /> Edit Trip
+                <CheckCircle size={15} /> Mark Complete
               </button>
-            </div>
+            )}
             <button
-              onClick={handleDelete}
+              onClick={() => setShowEdit(true)}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 padding: '9px 16px', borderRadius: 10,
-                border: '1px solid rgba(248,81,73,0.3)',
-                backgroundColor: 'rgba(248,81,73,0.08)', color: '#F85149',
+                border: '1px solid #30363D',
+                backgroundColor: '#1C2430', color: '#E6EDF3',
                 fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             >
-              <Trash2 size={14} /> Delete
+              <Pencil size={14} /> Edit Trip
             </button>
           </div>
 
@@ -458,7 +479,7 @@ export default function TripDetailPage() {
             <div style={{
               backgroundColor: '#161B22', borderRadius: 14,
               border: '1px solid #30363D', padding: '14px 20px',
-              marginBottom: 20, display: 'flex', gap: 28,
+              marginBottom: 28, display: 'flex', gap: 28,
               overflowX: 'auto', scrollbarWidth: 'none',
             }}>
               <div style={{ flexShrink: 0 }}>
@@ -494,7 +515,7 @@ export default function TripDetailPage() {
 
           {/* ── Itinerary ──────────────────────────────────────────── */}
           {sortedStops.length > 0 && (
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 28 }}>
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12,
                 fontSize: 11, fontWeight: 700, color: '#8B949E',
@@ -597,25 +618,24 @@ export default function TripDetailPage() {
 
                         {/* Matchup row */}
                         {stadium && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
                             {/* Home team */}
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
                               <TeamLogo
                                 abbreviation={stadium.abbreviation}
-                                size={52}
-                                style={{ borderRadius: 12, border: '1px solid #30363D' }}
+                                size={56}
+                                style={{ borderRadius: '50%', border: '2px solid rgba(255,255,255,0.12)' }}
                               />
-                              <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', letterSpacing: '0.04em' }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', letterSpacing: '0.06em' }}>
                                 {stadium.abbreviation}
                               </span>
                             </div>
 
-                            <div style={{
-                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                              padding: '6px 10px', borderRadius: 8,
-                              backgroundColor: '#1C2430', border: '1px solid #30363D',
-                            }}>
-                              <span style={{ fontSize: 9, fontWeight: 700, color: '#484F58', letterSpacing: '0.1em', textTransform: 'uppercase' }}>vs</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              <span style={{
+                                fontSize: 18, fontWeight: 900, color: '#484F58',
+                                letterSpacing: '-0.02em', lineHeight: 1,
+                              }}>VS</span>
                             </div>
 
                             {/* Opponent */}
@@ -624,21 +644,20 @@ export default function TripDetailPage() {
                                 {stop.opponent_team_id ? (
                                   <TeamLogo
                                     abbreviation={getTeamAbbrById(stop.opponent_team_id) || 'MLB'}
-                                    size={52}
+                                    size={56}
+                                    style={{ borderRadius: '50%', border: '2px solid rgba(255,255,255,0.12)' }}
                                   />
                                 ) : (
                                   <div style={{
-                                    width: 52, height: 52, borderRadius: 12, flexShrink: 0,
-                                    background: 'rgba(255, 255, 255, 0.15)',
-                                    backdropFilter: 'blur(8px)',
-                                    WebkitBackdropFilter: 'blur(8px)',
-                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    width: 56, height: 56, borderRadius: '50%', flexShrink: 0,
+                                    background: 'rgba(255,255,255,0.1)',
+                                    border: '2px solid rgba(255,255,255,0.12)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                   }}>
-                                    <span style={{ fontSize: 22 }}>⚾</span>
+                                    <span style={{ fontSize: 24 }}>⚾</span>
                                   </div>
                                 )}
-                                <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', letterSpacing: '0.04em' }}>
+                                <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', letterSpacing: '0.06em' }}>
                                   {stop.opponent_team_id
                                     ? getTeamAbbrById(stop.opponent_team_id)
                                     : stop.opponent.replace('vs ', '')}

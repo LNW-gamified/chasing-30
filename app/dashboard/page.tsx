@@ -3,6 +3,7 @@ import { MILESTONES } from '@/lib/milestones'
 import type { Stadium, StadiumVisit, SpecialEvent, SpecialVisit, Trip } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
+import { CalendarDays, ClipboardList, MapPin, DollarSign, Trophy, Eye } from 'lucide-react'
 import TodayGames, { type TodayGame } from '@/components/TodayGames'
 import Standings from '@/components/Standings'
 import FavoriteTeamPicker from '@/components/FavoriteTeamPicker'
@@ -263,7 +264,7 @@ export default async function DashboardPage() {
           <div style={{ maxWidth: 800, width: '100%', margin: '0 auto', padding: '1.25rem 1rem', overflowX: 'hidden', boxSizing: 'border-box' }}>
 
             {/* ── Hero Progress Card ───────────────────────────────────────── */}
-            <div style={{ ...card, padding: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
+            <div style={{ ...card, padding: '1.5rem', marginBottom: '1.25rem', textAlign: 'center' }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 18 }}>
                 My Progress
               </div>
@@ -297,26 +298,26 @@ export default async function DashboardPage() {
             </div>
 
             {/* ── My Stats Card ────────────────────────────────────────────── */}
-            <div style={{ ...card, marginBottom: '1rem', overflow: 'hidden' }}>
+            <div style={{ ...card, marginBottom: '1.25rem', overflow: 'hidden' }}>
               <div style={{ padding: '1.25rem 1.25rem 0.75rem', fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 MY STATS
               </div>
               {/* gap-px + dark bg creates 1px dividers between cells at every breakpoint */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-px" style={{ background: '#30363D' }}>
                 {[
-                  { icon: '⚾', value: gamesAttended.toString(),               label: 'Games Attended'       },
-                  { icon: '📋', value: specialVisitCount.toString(),            label: 'Special Visits'       },
-                  { icon: '🗺️', value: destinationsVisited.toString(),          label: 'Destinations Visited' },
-                  { icon: '💰', value: formatCurrency(totalSpent),              label: 'Total Spent'          },
-                  { icon: '🏆', value: favDivision,                             label: 'Fav Division'         },
-                  { icon: '👁', value: mostSeenTeam,                            label: 'Most Seen'            },
-                ].map(({ icon, value, label }) => (
+                  { Icon: CalendarDays,   value: gamesAttended.toString(),      label: 'Games Attended'       },
+                  { Icon: ClipboardList,  value: specialVisitCount.toString(),  label: 'Special Visits'       },
+                  { Icon: MapPin,         value: destinationsVisited.toString(), label: 'Destinations Visited' },
+                  { Icon: DollarSign,     value: formatCurrency(totalSpent),    label: 'Total Spent'          },
+                  { Icon: Trophy,         value: favDivision,                   label: 'Fav Division'         },
+                  { Icon: Eye,            value: mostSeenTeam,                  label: 'Most Seen'            },
+                ].map(({ Icon, value, label }) => (
                   <div key={label} style={{ background: '#161B22', padding: 16 }}>
-                    <div style={{ fontSize: 24, marginBottom: 6 }}>{icon}</div>
-                    <div style={{ fontSize: 32, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1, marginBottom: 4 }}>
+                    <Icon size={22} color="#1F6FEB" strokeWidth={1.8} style={{ marginBottom: 8 }} />
+                    <div style={{ fontSize: 28, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1, marginBottom: 4 }}>
                       {value}
                     </div>
-                    <div style={{ fontSize: 14, color: '#8B949E' }}>{label}</div>
+                    <div style={{ fontSize: 13, color: '#8B949E' }}>{label}</div>
                   </div>
                 ))}
               </div>
@@ -332,7 +333,7 @@ export default async function DashboardPage() {
                   <div key={label}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                       <span style={{ fontSize: 14, color: '#E6EDF3' }}>{label}</span>
-                      <span style={{ fontSize: 13, color: '#8B949E' }}>{vis}/{total}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#1F6FEB' }}>{vis}/{total}</span>
                     </div>
                     <div style={{ height: 7, background: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
                       <div style={{

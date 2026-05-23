@@ -2,14 +2,14 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { Plus, X, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, X, ChevronDown, ChevronUp, Beer, Camera, ShoppingBag, CheckCircle2 } from 'lucide-react'
 import type { StopChecklistItem } from '@/types'
 
 const CATEGORIES = [
-  { id: 'food_drinks', icon: '🍺', label: 'Food & Drinks'       },
-  { id: 'souvenirs',   icon: '🛍️', label: 'Souvenirs'            },
-  { id: 'moments',     icon: '📸', label: 'Moments to Capture'  },
-  { id: 'must_do',     icon: '✅', label: 'Must Do'              },
+  { id: 'food_drinks', Icon: Beer,          label: 'Food & Drinks',      color: '#F5A623' },
+  { id: 'souvenirs',   Icon: ShoppingBag,   label: 'Souvenirs',          color: '#58A6FF' },
+  { id: 'moments',     Icon: Camera,        label: 'Moments to Capture', color: '#BC8CFF' },
+  { id: 'must_do',     Icon: CheckCircle2,  label: 'Must Do',            color: '#3FB950' },
 ] as const
 
 type CategoryId = typeof CATEGORIES[number]['id']
@@ -75,9 +75,9 @@ export default function StopChecklist({ stopId, items, onReload }: Props) {
               {totalItems} item{totalItems !== 1 ? 's' : ''} · {checkedCount} checked
             </span>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               {CATEGORIES.map(cat => (
-                <span key={cat.id} style={{ fontSize: 15, lineHeight: 1 }}>{cat.icon}</span>
+                <cat.Icon key={cat.id} size={14} color={cat.color} strokeWidth={1.8} />
               ))}
               <span style={{ fontSize: 11, color: '#484F58', marginLeft: 2 }}>Add items</span>
             </div>
@@ -104,9 +104,10 @@ export default function StopChecklist({ stopId, items, onReload }: Props) {
                 <div style={{
                   fontSize: 10, fontWeight: 700, color: '#8B949E',
                   textTransform: 'uppercase', letterSpacing: '0.07em',
-                  marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4,
+                  marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5,
                 }}>
-                  <span>{cat.icon}</span> {cat.label}
+                  <cat.Icon size={12} color={cat.color} strokeWidth={2} />
+                  {cat.label}
                 </div>
 
                 {/* Items */}

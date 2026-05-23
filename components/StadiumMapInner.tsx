@@ -212,8 +212,10 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
           aria-label="Go back"
           style={{
             flexShrink: 0, width: 38, height: 38, borderRadius: '50%',
-            backgroundColor: '#161B22', border: '1px solid #30363D', cursor: 'pointer',
+            backgroundColor: 'rgba(11,17,23,0.72)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
           }}
         >
           <ChevronLeft size={18} color="#E6EDF3" strokeWidth={2.5} />
@@ -226,10 +228,13 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
             onClick={() => setFilter(f.id)}
             style={{
               flexShrink: 0,
-              padding: '8px 18px', borderRadius: 20, border: filter === f.id ? '1px solid #484F58' : '1px solid #30363D', cursor: 'pointer',
+              padding: '8px 20px', borderRadius: 999, cursor: 'pointer',
               fontSize: 14, fontWeight: 600,
-              backgroundColor: filter === f.id ? '#E6EDF3' : '#161B22',
-              color:           filter === f.id ? '#0B1117' : '#8B949E',
+              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+              backgroundColor: filter === f.id ? 'rgba(230,237,243,0.93)' : 'rgba(11,17,23,0.72)',
+              color:           filter === f.id ? '#0B1117' : 'rgba(230,237,243,0.85)',
+              border: filter === f.id ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.12)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
               transition: 'background-color 0.15s, color 0.15s',
             }}
           >
@@ -245,8 +250,10 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
         style={{
           position: 'absolute', top: 60, right: 12, zIndex: 1000,
           width: 40, height: 40, borderRadius: '50%',
-          backgroundColor: '#161B22', border: '1px solid #30363D', cursor: 'pointer',
+          backgroundColor: 'rgba(11,17,23,0.72)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
         }}
       >
         <Info size={18} color="#8B949E" />
@@ -323,8 +330,10 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
         className="absolute right-3 z-[1000] bottom-20 md:bottom-5"
         style={{
           width: 44, height: 44, borderRadius: '50%',
-          backgroundColor: '#161B22', border: '1px solid #30363D', cursor: 'pointer',
+          backgroundColor: 'rgba(11,17,23,0.72)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
         }}
       >
         <Navigation size={20} color="#1F6FEB" strokeWidth={2} />
@@ -422,54 +431,55 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
             <TeamLogo abbreviation={selected.abbreviation} size={80} />
 
             {/* Info column */}
-            <div style={{ flex: 1, minWidth: 0, paddingRight: 28 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3', marginBottom: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {selected.team}
               </div>
               <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {selected.name}
               </div>
-              <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 10 }}>
+              <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 12 }}>
                 {selected.city}, {selected.state} · {selected.league} {selected.division}
               </div>
 
-              {selected.visited ? (
+              {selected.visited && (
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 4,
-                  padding: '3px 10px', borderRadius: 20,
+                  padding: '2px 8px', borderRadius: 20,
                   backgroundColor: 'rgba(63,185,80,0.12)', color: '#3FB950',
-                  fontSize: 12, fontWeight: 600,
+                  fontSize: 11, fontWeight: 600, marginBottom: 10,
                 }}>
                   ✓ Visited{selected.visits.length > 1 ? ` · ${selected.visits.length}×` : ''}
                 </span>
-              ) : (
+              )}
+
+              {/* Action buttons — always both */}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Link
+                  href={`/stadiums/${selected.id}`}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    padding: '7px 14px', borderRadius: 20,
+                    backgroundColor: '#1F6FEB', color: '#fff',
+                    fontSize: 13, fontWeight: 700, textDecoration: 'none',
+                  }}
+                >
+                  View Details
+                </Link>
                 <Link
                   href="/trips"
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 4,
-                    padding: '3px 10px', borderRadius: 20,
-                    backgroundColor: 'rgba(31,111,235,0.12)', color: '#1F6FEB',
-                    fontSize: 12, fontWeight: 600, textDecoration: 'none',
+                    padding: '7px 14px', borderRadius: 20,
+                    border: '1px solid rgba(31,111,235,0.35)',
+                    backgroundColor: 'rgba(31,111,235,0.08)', color: '#1F6FEB',
+                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
                   }}
                 >
                   Plan Trip
                 </Link>
-              )}
+              </div>
             </div>
-
-            {/* View button (purple) */}
-            <Link
-              href={`/stadiums/${selected.id}`}
-              style={{
-                flexShrink: 0,
-                padding: '8px 14px', borderRadius: 20,
-                backgroundColor: '#1F6FEB', color: '#E6EDF3',
-                fontSize: 13, fontWeight: 700, textDecoration: 'none',
-                alignSelf: 'center',
-              }}
-            >
-              View ›
-            </Link>
           </div>
         </div>
       )}

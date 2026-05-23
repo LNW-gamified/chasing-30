@@ -91,10 +91,10 @@ function BattersTable({ label, batters, totals }: {
     <div style={{ marginBottom: 16 }}>
       <div style={TABLE_HDR}>{label} BATTING</div>
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 420 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #30363D' }}>
-              <th style={{ textAlign: 'left', padding: '4px 6px', color: '#8B949E', fontWeight: 600, fontSize: 11, minWidth: 110 }}>Name</th>
+              <th style={{ textAlign: 'left', padding: '4px 6px', color: '#8B949E', fontWeight: 600, fontSize: 11, minWidth: 110, position: 'sticky', left: 0, backgroundColor: '#0D1117', zIndex: 2, borderRight: '1px solid rgba(48,54,61,0.5)' }}>Name</th>
               <th style={{ textAlign: 'left', padding: '4px 4px', color: '#8B949E', fontWeight: 600, fontSize: 11, minWidth: 28 }}>Pos</th>
               {['AB','R','H','RBI','BB','K','AVG','OPS'].map(h => (
                 <th key={h} style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontWeight: 600, fontSize: 11, minWidth: 30 }}>{h}</th>
@@ -107,7 +107,7 @@ function BattersTable({ label, batters, totals }: {
                 borderBottom: i < batters.length - 1 ? '1px solid rgba(48,54,61,0.5)' : 'none',
                 backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(28,36,48,0.3)',
               }}>
-                <td style={{ padding: '5px 6px', color: '#E6EDF3', fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>{b.name}</td>
+                <td style={{ padding: '5px 6px', color: '#E6EDF3', fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140, position: 'sticky', left: 0, backgroundColor: '#0D1117', zIndex: 1, borderRight: '1px solid rgba(48,54,61,0.5)' }}>{b.name}</td>
                 <td style={{ padding: '5px 4px', color: '#8B949E', fontSize: 11 }}>{b.pos}</td>
                 <td style={numCell(b.ab, true)}>{b.ab ?? '—'}</td>
                 <td style={numCell(b.r, (b.r ?? 0) > 0)}>{b.r ?? '—'}</td>
@@ -121,7 +121,7 @@ function BattersTable({ label, batters, totals }: {
             ))}
             {totals && (
               <tr style={{ borderTop: '1px solid #30363D', backgroundColor: 'rgba(28,36,48,0.6)' }}>
-                <td colSpan={2} style={{ padding: '5px 6px', color: '#8B949E', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>Totals</td>
+                <td colSpan={2} style={{ padding: '5px 6px', color: '#8B949E', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', position: 'sticky', left: 0, backgroundColor: '#1C2430', zIndex: 1 }}>Totals</td>
                 <td style={numCell(totals.atBats, true)}>{totals.atBats ?? '—'}</td>
                 <td style={numCell(totals.runs, true)}>{totals.runs ?? '—'}</td>
                 <td style={numCell(totals.hits, true)}>{totals.hits ?? '—'}</td>
@@ -147,10 +147,10 @@ function PitchersTable({ label, pitchers, winnerName, loserName, saveName }: {
     <div style={{ marginBottom: 16 }}>
       <div style={TABLE_HDR}>{label} PITCHING</div>
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 380 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #30363D' }}>
-              <th style={{ textAlign: 'left', padding: '4px 6px', color: '#8B949E', fontWeight: 600, fontSize: 11, minWidth: 110 }}>Name</th>
+              <th style={{ textAlign: 'left', padding: '4px 6px', color: '#8B949E', fontWeight: 600, fontSize: 11, minWidth: 110, position: 'sticky', left: 0, backgroundColor: '#0D1117', zIndex: 2, borderRight: '1px solid rgba(48,54,61,0.5)' }}>Name</th>
               {['IP','H','R','ER','BB','K','HR','ERA'].map(h => (
                 <th key={h} style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontWeight: 600, fontSize: 11, minWidth: 32 }}>{h}</th>
               ))}
@@ -168,7 +168,7 @@ function PitchersTable({ label, pitchers, winnerName, loserName, saveName }: {
                   borderBottom: i < pitchers.length - 1 ? '1px solid rgba(48,54,61,0.5)' : 'none',
                   backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(28,36,48,0.3)',
                 }}>
-                  <td style={{ padding: '5px 6px', color: '#E6EDF3', fontSize: 12, whiteSpace: 'nowrap', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <td style={{ padding: '5px 6px', color: '#E6EDF3', fontSize: 12, whiteSpace: 'nowrap', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', position: 'sticky', left: 0, backgroundColor: '#0D1117', zIndex: 1, borderRight: '1px solid rgba(48,54,61,0.5)' }}>
                     {p.name}
                     {dec && <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 800, color: decColor, border: `1px solid ${decColor}`, borderRadius: 4, padding: '1px 4px' }}>{dec}</span>}
                   </td>

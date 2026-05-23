@@ -10,7 +10,7 @@ import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber } from '@/types'
 import { fetchUpcomingHomeGames, type UpcomingGame } from '@/lib/mlb-api'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Pencil, Save, Loader2 } from 'lucide-react'
+import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 
 const GAME_EVENT_LABELS: Record<string, string> = {
@@ -251,12 +251,17 @@ export default function StadiumDetailPage() {
               src={stadiumPhoto}
               alt={stadium.name}
               onError={() => setStadiumPhoto(null)}
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              style={{
+                position: 'absolute', top: -4, left: -4, right: -4, bottom: -4,
+                width: 'calc(100% + 8px)', height: 'calc(100% + 8px)',
+                objectFit: 'cover', display: 'block',
+                filter: 'blur(4px) brightness(0.55)',
+              }}
             />
           )}
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 65%, rgba(0,0,0,0.82) 100%)',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.2) 35%, rgba(0,0,0,0.65) 65%, rgba(0,0,0,0.9) 100%)',
           }} />
           <div style={{ position: 'absolute', top: 16, left: 16, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 10 }}>
             <Link href="/stadiums" style={{
@@ -285,19 +290,21 @@ export default function StadiumDetailPage() {
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
 
           {/* ── STATS ROW ────────────────────────────────────────────── */}
-          <div style={{ backgroundColor: '#161B22', borderBottom: '1px solid #30363D' }}>
-            <div style={{ display: 'flex' }}>
+          <div style={{ backgroundColor: '#161B22', borderBottom: '1px solid #30363D', padding: '14px 12px' }}>
+            <div style={{ display: 'flex', gap: 8 }}>
               {[
-                { value: stadium.capacity ? stadium.capacity.toLocaleString() : '—', label: 'Capacity' },
-                { value: stadium.opened ? String(stadium.opened) : '—', label: 'Year Opened' },
-                { value: `${stadium.league} ${stadium.division}`, label: 'Division' },
-              ].map(({ value, label }, i, arr) => (
+                { Icon: Users,       value: stadium.capacity ? stadium.capacity.toLocaleString() : '—', label: 'Capacity'    },
+                { Icon: CalendarDays, value: stadium.opened ? String(stadium.opened) : '—',              label: 'Year Opened' },
+                { Icon: Trophy,      value: `${stadium.league} ${stadium.division}`,                    label: 'Division'    },
+              ].map(({ Icon, value, label }) => (
                 <div key={label} style={{
-                  flex: 1, textAlign: 'center', padding: '16px 8px',
-                  borderRight: i < arr.length - 1 ? '1px solid #30363D' : 'none',
+                  flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  backgroundColor: '#1C2430', borderRadius: 12, padding: '12px 6px',
+                  border: '1px solid #30363D',
                 }}>
-                  <div style={{ fontWeight: 800, fontSize: 18, color: '#E6EDF3', lineHeight: 1.2 }}>{value}</div>
-                  <div style={{ fontSize: 12, color: '#8B949E', marginTop: 3 }}>{label}</div>
+                  <Icon size={15} color="#1F6FEB" strokeWidth={2} style={{ marginBottom: 5 }} />
+                  <div style={{ fontSize: 9, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</div>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: '#E6EDF3', lineHeight: 1.2, textAlign: 'center' }}>{value}</div>
                 </div>
               ))}
             </div>
@@ -403,15 +410,15 @@ export default function StadiumDetailPage() {
           </div>
 
           {/* ── TAB CONTENT ──────────────────────────────────────────── */}
-          <div style={{ padding: '24px 16px' }}>
+          <div style={{ padding: '28px 16px' }}>
 
             {/* ── GAMES ATTENDED TAB ───────────────────────────────── */}
             {activeTab === 'games-attended' && (
               <section>
                 {visits.length === 0 ? (
-                  <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '2px dashed #30363D', padding: '40px 24px', textAlign: 'center' }}>
+                  <div style={{ backgroundColor: '#161B22', borderRadius: 14, padding: '48px 24px', textAlign: 'center' }}>
                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-                      <TeamLogo abbreviation={stadium.abbreviation} size={60} />
+                      <TeamLogo abbreviation={stadium.abbreviation} size={64} />
                     </div>
                     <div style={{ fontWeight: 700, fontSize: 16, color: '#E6EDF3', marginBottom: 6 }}>
                       Your first game at {stadium.name}
@@ -422,7 +429,7 @@ export default function StadiumDetailPage() {
                     <button
                       onClick={openAdd}
                       style={{
-                        padding: '10px 24px', borderRadius: 10, fontSize: 14, fontWeight: 700,
+                        padding: '11px 24px', borderRadius: 10, fontSize: 14, fontWeight: 700,
                         backgroundColor: '#1F6FEB', color: '#ffffff', border: 'none', cursor: 'pointer',
                         display: 'inline-flex', alignItems: 'center', gap: 6,
                       }}
@@ -437,6 +444,7 @@ export default function StadiumDetailPage() {
                       {visits.map((visit) => {
                         const isExpanded = expandedVisit === visit.id
                         const hasScore = visit.home_runs != null && visit.away_runs != null
+                        const homeWon = hasScore && (visit.home_runs! > visit.away_runs!)
                         return (
                           <button
                             key={visit.id}
@@ -474,8 +482,14 @@ export default function StadiumDetailPage() {
                                   {formatDate(visit.visit_date)}
                                 </div>
                                 {hasScore ? (
-                                  <div style={{ fontSize: 13, fontWeight: 900, color: '#ffffff', marginTop: 1, lineHeight: 1.2 }}>
-                                    {visit.visiting_team} {visit.away_runs} · {visit.home_team} {visit.home_runs}
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1 }}>
+                                    <div style={{
+                                      width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+                                      backgroundColor: homeWon ? '#3FB950' : '#484F58',
+                                    }} />
+                                    <div style={{ fontSize: 13, fontWeight: 900, color: '#ffffff', lineHeight: 1.2 }}>
+                                      {visit.visiting_team} {visit.away_runs} · {visit.home_team} {visit.home_runs}
+                                    </div>
                                   </div>
                                 ) : (
                                   <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -625,15 +639,15 @@ export default function StadiumDetailPage() {
                       </div>
                     </div>
                   ) : (
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '2px dashed #30363D', padding: '32px 24px', textAlign: 'center' }}>
-                      <div style={{ fontSize: 28, marginBottom: 8 }}>💬</div>
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, padding: '40px 24px', textAlign: 'center' }}>
+                      <div style={{ fontSize: 32, marginBottom: 10 }}>💬</div>
                       <div style={{ fontWeight: 700, fontSize: 15, color: '#E6EDF3', marginBottom: 4 }}>Be the first to share</div>
-                      <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 16 }}>Parking, food, best seats...</div>
+                      <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 20 }}>Parking tips, best food spots, recommended seats...</div>
                       <button
                         onClick={() => { setNoteInput(''); setEditingNote(true) }}
-                        style={{ padding: '9px 20px', borderRadius: 8, fontSize: 14, fontWeight: 700, border: '1.5px solid #30363D', backgroundColor: '#1C2430', cursor: 'pointer', color: '#8B949E' }}
+                        style={{ padding: '10px 22px', borderRadius: 10, fontSize: 14, fontWeight: 700, border: 'none', backgroundColor: '#1F6FEB', cursor: 'pointer', color: '#fff' }}
                       >
-                        + Add a Note
+                        Add a Note
                       </button>
                     </div>
                   )}

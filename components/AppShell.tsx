@@ -129,25 +129,16 @@ export default function AppShell({ children, nextTrip, visitedCount, rankName, r
         </header>
 
         {/* Page content */}
-        <div style={{ paddingBottom: hasTrip ? 96 : 56 }} className="appshell-content">
+        <div style={{ paddingBottom: 56 }} className="appshell-content">
           {children}
         </div>
 
-        {/* Mobile Up Next banner (above tab bar, only when trip exists) */}
-        {nextTrip && (
-          <Link href={`/trips/${nextTrip.id}`} className="flex md:hidden items-center gap-2" style={{ position: 'fixed', bottom: 56, left: 0, right: 0, zIndex: 39, height: 40, padding: '0 14px', backgroundColor: 'rgba(11,17,23,0.98)', borderTop: '1px solid rgba(31,111,235,0.25)', textDecoration: 'none' }}>
-            {nextTrip.stadiumAbbr && <TeamLogo abbreviation={nextTrip.stadiumAbbr} size={22} />}
-            <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextTrip.stadiumName}</span>
-            <span style={{ fontSize: 12, fontWeight: 800, color: '#F5A623', flexShrink: 0 }}>{tripLabel}</span>
-          </Link>
-        )}
-
         {/* Mobile bottom tab bar */}
-        <nav className="flex md:hidden" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, height: 56, backgroundColor: 'rgba(11,17,23,0.97)', borderTop: '1px solid #30363D', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+        <nav className="flex md:hidden" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, height: 56, backgroundColor: 'rgba(11,17,23,0.75)', borderTop: '1px solid rgba(48,54,61,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           {NAV.map(({ href, label, icon: Icon }) => {
             const active = isActive(href, pathname)
             return (
-              <Link key={href} href={href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', padding: '8px 0', gap: 3, color: active ? '#1F6FEB' : '#8B949E' }}>
+              <Link key={href} href={href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', padding: '8px 0', gap: 3, color: active ? '#1F6FEB' : 'rgba(230,237,243,0.6)' }}>
                 <Icon size={21} strokeWidth={active ? 2.5 : 1.8} />
                 {active && <span style={{ fontSize: '0.6rem', fontWeight: 700, lineHeight: 1 }}>{label}</span>}
               </Link>
@@ -158,6 +149,7 @@ export default function AppShell({ children, nextTrip, visitedCount, rankName, r
 
       <style>{`
         @media (min-width: 768px) { .appshell-content { padding-bottom: 0 !important; } }
+        .appshell-content { padding-bottom: 56px; }
       `}</style>
     </>
   )

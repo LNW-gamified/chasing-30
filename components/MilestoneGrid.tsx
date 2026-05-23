@@ -301,6 +301,46 @@ function ConfettiPiece({ color, left, delay, size }: { color: string; left: numb
   )
 }
 
+// ── Milestone progress helper ──────────────────────────────────────────────
+
+function getMilestoneProgress(
+  id: string,
+  allVisits: StadiumVisit[],
+  allStadiums: Stadium[]
+): { current: number; total: number; label: string } | null {
+  const visitedIds = new Set(allVisits.map(v => v.stadium_id))
+  const visitedCount = visitedIds.size
+  const gameCount = allVisits.length
+
+  const divP = (league: string, division: string) => {
+    const div = allStadiums.filter(s => s.league === league && s.division === division)
+    return { current: div.filter(s => visitedIds.has(s.id)).length, total: div.length, label: 'Parks' }
+  }
+
+  switch (id) {
+    case 'five_stadiums':       return { current: Math.min(visitedCount, 5),  total: 5,  label: 'Parks' }
+    case 'ten_stadiums':        return { current: Math.min(visitedCount, 10), total: 10, label: 'Parks' }
+    case 'fifteen_stadiums':    return { current: Math.min(visitedCount, 15), total: 15, label: 'Parks' }
+    case 'twenty_stadiums':     return { current: Math.min(visitedCount, 20), total: 20, label: 'Parks' }
+    case 'twentyfive_stadiums': return { current: Math.min(visitedCount, 25), total: 25, label: 'Parks' }
+    case 'all_stadiums':        return { current: visitedCount,               total: 30, label: 'Parks' }
+    case 'al_east':    return divP('AL', 'East')
+    case 'al_central': return divP('AL', 'Central')
+    case 'al_west':    return divP('AL', 'West')
+    case 'nl_east':    return divP('NL', 'East')
+    case 'nl_central': return divP('NL', 'Central')
+    case 'nl_west':    return divP('NL', 'West')
+    case 'american_league': { const al = allStadiums.filter(s => s.league === 'AL'); return { current: al.filter(s => visitedIds.has(s.id)).length, total: al.length, label: 'AL Parks' } }
+    case 'national_league': { const nl = allStadiums.filter(s => s.league === 'NL'); return { current: nl.filter(s => visitedIds.has(s.id)).length, total: nl.length, label: 'NL Parks' } }
+    case 'east_coast':  { const g = allStadiums.filter(s => s.division === 'East');    return { current: g.filter(s => visitedIds.has(s.id)).length, total: g.length, label: 'Parks' } }
+    case 'midwest':     { const g = allStadiums.filter(s => s.division === 'Central'); return { current: g.filter(s => visitedIds.has(s.id)).length, total: g.length, label: 'Parks' } }
+    case 'west_coast':  { const g = allStadiums.filter(s => s.division === 'West');    return { current: g.filter(s => visitedIds.has(s.id)).length, total: g.length, label: 'Parks' } }
+    case 'five_games':  return { current: Math.min(gameCount, 5),  total: 5,  label: 'Games' }
+    case 'ten_games':   return { current: Math.min(gameCount, 10), total: 10, label: 'Games' }
+    default: return null
+  }
+}
+
 // ── Component Props ────────────────────────────────────────────────────────
 
 interface Props {
@@ -955,11 +995,38 @@ export default function MilestoneGrid({
                 )
               })()}
 
-              {!selected.isEarned && (
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 18px', borderRadius: 20, backgroundColor: 'rgba(139,148,158,0.08)', color: '#8B949E', fontSize: 13, fontWeight: 600 }}>
-                  🔒 Keep going — you&apos;ll get there
-                </div>
-              )}
+              {!selected.isEarned && (() => {
+                const prog = getMilestoneProgress(selected.milestone.id, allVisits, allStadiums)
+                if (!prog) {
+                  return (
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 18px', borderRadius: 20, backgroundColor: 'rgba(139,148,158,0.08)', color: '#8B949E', fontSize: 13, fontWeight: 600 }}>
+                      🔒 Not yet unlocked
+                    </div>
+                  )
+                }
+                const maxDots = 15
+                const step = prog.total <= maxDots ? 1 : Math.ceil(prog.total / maxDots)
+                const totalDots = Math.ceil(prog.total / step)
+                const filledDots = Math.min(Math.floor(prog.current / step), totalDots)
+                return (
+                  <div style={{ width: '100%' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', marginBottom: 10 }}>
+                      <span style={{ color: filledDots > 0 ? '#3FB950' : '#8B949E' }}>{prog.current}</span>
+                      {' '}<span style={{ fontWeight: 400 }}>of</span>{' '}
+                      {prog.total} {prog.label}
+                    </div>
+                    <div style={{ display: 'flex', gap: 4, justifyContent: 'center', flexWrap: 'wrap' }}>
+                      {Array.from({ length: totalDots }).map((_, i) => (
+                        <div key={i} style={{
+                          width: 10, height: 10, borderRadius: 3,
+                          backgroundColor: i < filledDots ? '#3FB950' : '#30363D',
+                          transition: 'background-color 0.2s',
+                        }} />
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           </div>
         </div>
