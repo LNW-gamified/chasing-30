@@ -216,7 +216,7 @@ function StadiumCard({
                     fontSize: 10, fontWeight: 600, color: '#8B949E',
                     border: '1px solid #30363D',
                     padding: '2px 7px', borderRadius: 999,
-                  }}>Not Yet</span>
+                  }}>On the List</span>
                   {nextGame && (
                     <span style={{
                       fontSize: 11, color: '#8B949E',
@@ -432,7 +432,7 @@ export default function StadiumsPage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
-                  My Parks
+                  The Ballparks
                 </div>
                 <div style={{ fontSize: 28, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1, marginBottom: 4 }}>
                   {visitedCount} of 30 visited
@@ -553,7 +553,7 @@ export default function StadiumsPage() {
                     border: '1.5px solid #30363D',
                   }}
                 >
-                  Not Yet <span style={{ fontWeight: 400, fontSize: 12 }}>({30 - visitedCount})</span>
+                  On the List <span style={{ fontWeight: 400, fontSize: 12 }}>({30 - visitedCount})</span>
                 </button>
 
                 <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
@@ -803,7 +803,7 @@ export default function StadiumsPage() {
                   }}>
                     <div style={{ fontSize: 36, marginBottom: 10 }}>⚾</div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', marginBottom: 6 }}>
-                      {search || filterLeague !== 'all' ? 'No parks match your filters' : 'No parks visited yet'}
+                      {search || filterLeague !== 'all' ? 'No parks match your filters' : 'Your road trip starts here'}
                     </div>
                     <div style={{ fontSize: 13, color: '#8B949E' }}>
                       {search || filterLeague !== 'all'
@@ -829,7 +829,7 @@ export default function StadiumsPage() {
 
               {/* Not Yet section */}
               <div id="not-yet-section" style={{ scrollMarginTop: 60 }}>
-                <SectionHeader count={unvisitedList.length}>Not Yet</SectionHeader>
+                <SectionHeader count={unvisitedList.length}>On the List</SectionHeader>
                 {unvisitedList.length === 0 ? (
                   <div style={{
                     backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D',

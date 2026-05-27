@@ -185,7 +185,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
           <div className="flex justify-center gap-8 mt-5">
             <div>
               <div className="text-2xl font-bold" style={{ color: '#1F6FEB' }}>{progress.games_attended}</div>
-              <div className="text-xs" style={{ color: '#8B949E' }}>Games Attended</div>
+              <div className="text-xs" style={{ color: '#8B949E' }}>Games Witnessed</div>
             </div>
             {progress.special_events_count > 0 && (
               <div>
@@ -201,7 +201,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
           className="rounded-2xl p-5 mb-6"
           style={{ backgroundColor: '#161B22', border: '1px solid #30363D' }}
         >
-          <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>Division Progress</div>
+          <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>The Circuit</div>
           <div className="flex flex-col gap-3">
             {divisionBreakdown.map(({ label, visited, total }) => (
               <div key={label}>

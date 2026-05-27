@@ -266,7 +266,7 @@ export default async function DashboardPage() {
             {/* ── Hero Progress Card ───────────────────────────────────────── */}
             <div style={{ ...card, padding: '1.5rem', marginBottom: '1.25rem', textAlign: 'center' }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 18 }}>
-                My Progress
+                The Chase
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
                 <ProgressRing visited={visitedCount} total={30} size={150} />
@@ -278,6 +278,9 @@ export default async function DashboardPage() {
                 {visitedCount === 30
                   ? 'Legend status achieved!'
                   : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} remaining`}
+              </div>
+              <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 10, fontStyle: 'italic' }}>
+                Your journey continues
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 20 }}>
                 <span style={{ color: '#3FB950', fontSize: 14, fontWeight: 600 }}>{pct}% complete</span>
@@ -292,7 +295,7 @@ export default async function DashboardPage() {
                 padding: '11px 0', borderRadius: 999,
                 fontWeight: 600, fontSize: '0.9rem', textDecoration: 'none',
               }}>
-                Plan Next Trip →
+                Plan Your Next Road Trip
               </Link>
               <DashboardSpecialVisitButton />
             </div>
@@ -300,12 +303,12 @@ export default async function DashboardPage() {
             {/* ── My Stats Card ────────────────────────────────────────────── */}
             <div style={{ ...card, marginBottom: '1.25rem', overflow: 'hidden' }}>
               <div style={{ padding: '1.25rem 1.25rem 0.75rem', fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                MY STATS
+                YOUR SCOUTING REPORT
               </div>
               {/* gap-px + dark bg creates 1px dividers between cells at every breakpoint */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-px" style={{ background: '#30363D' }}>
                 {[
-                  { Icon: CalendarDays,   value: gamesAttended.toString(),      label: 'Games Attended'       },
+                  { Icon: CalendarDays,   value: gamesAttended.toString(),      label: 'Games Witnessed'      },
                   { Icon: ClipboardList,  value: specialVisitCount.toString(),  label: 'Special Visits'       },
                   { Icon: MapPin,         value: destinationsVisited.toString(), label: 'Destinations Visited' },
                   { Icon: DollarSign,     value: formatCurrency(totalSpent),    label: 'Total Spent'          },
@@ -326,7 +329,7 @@ export default async function DashboardPage() {
             {/* ── Division Progress ─────────────────────────────────────────── */}
             <div style={{ ...card, padding: '1.25rem', marginBottom: '1.5rem' }}>
               <div style={{ fontWeight: 600, color: '#E6EDF3', fontSize: 16, marginBottom: '0.875rem' }}>
-                Division Progress
+                The Circuit
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
                 {divProgress.map(({ label, vis, total }) => (

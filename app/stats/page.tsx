@@ -152,7 +152,7 @@ export default async function StatsPage() {
     },
     {
       icon: <TrendingUp size={20} />,
-      label: 'Games Attended',
+      label: 'Games Witnessed',
       value: allVisits.length.toString(),
       sub: `across ${visitedIds.size} stadium${visitedIds.size !== 1 ? 's' : ''}`,
       color: '#1F6FEB',

@@ -163,7 +163,7 @@ export default function TripsPage() {
           {/* ── Header ─────────────────────────────────────────────── */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
             <div>
-              <h1 style={{ fontSize: 32, fontWeight: 800, color: '#E6EDF3', margin: 0, lineHeight: 1.1 }}>Trips</h1>
+              <h1 style={{ fontSize: 32, fontWeight: 800, color: '#E6EDF3', margin: 0, lineHeight: 1.1 }}>The Road Trip Log</h1>
               {!loading && (
                 <p style={{ fontSize: 14, color: '#8B949E', marginTop: 6, marginBottom: 0 }}>
                   {planned.length} trip{planned.length !== 1 ? 's' : ''} planned
@@ -272,7 +272,7 @@ export default function TripsPage() {
               border: '1px solid #30363D',
             }}>
               <div style={{ fontSize: 52, marginBottom: 16 }}>✈️</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#E6EDF3', marginBottom: 8 }}>No trips yet</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#E6EDF3', marginBottom: 8 }}>Your road trip starts here</div>
               <div style={{ fontSize: 15, color: '#8B949E', marginBottom: 24 }}>
                 Plan your first stadium road trip
               </div>

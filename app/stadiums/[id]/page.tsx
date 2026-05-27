@@ -230,7 +230,7 @@ export default function StadiumDetailPage() {
   const colors = TEAM_GRADIENTS[stadium.abbreviation] ?? ['#0B1117', '#161B22']
 
   const TABS: { key: ActiveTab; label: string }[] = [
-    { key: 'games-attended',  label: 'Games Attended'  },
+    { key: 'games-attended',  label: 'Games Witnessed'  },
     { key: 'upcoming-games',  label: 'Upcoming Games'  },
     { key: 'stadium-info',    label: 'Stadium Info'    },
   ]
@@ -378,7 +378,7 @@ export default function StadiumDetailPage() {
                     letterSpacing: '-0.2px',
                   }}
                 >
-                  ✓ Mark Visited
+                  ✓ Mark as Visited
                 </button>
               </div>
             )}

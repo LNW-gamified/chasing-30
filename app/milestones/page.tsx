@@ -105,6 +105,9 @@ export default async function MilestonesPage() {
 
         {/* ── Gamified Hero ─────────────────────────────────────── */}
         <div style={{ backgroundColor: '#0D1117', borderBottom: '1px solid #30363D', padding: '32px 16px 28px', overflow: 'hidden', position: 'relative' }}>
+          <div style={{ textAlign: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.15em' }}>The Record Books</span>
+          </div>
           {/* Background radial glow */}
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(245,166,35,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
 

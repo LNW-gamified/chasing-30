@@ -37,7 +37,7 @@ const TYPE_FILTERS: { id: TypeFilter; label: string }[] = [
 const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: 'all',     label: 'All'     },
   { id: 'visited', label: 'Visited' },
-  { id: 'not-yet', label: 'Not Yet' },
+  { id: 'not-yet', label: 'On the List' },
 ]
 
 // ── Leaflet child components ────────────────────────────────────────────────

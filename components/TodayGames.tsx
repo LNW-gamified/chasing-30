@@ -97,7 +97,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
             fontSize: 12, fontWeight: 600, color: '#8B949E',
             textTransform: 'uppercase', letterSpacing: '0.1em',
           }}>
-            Today&apos;s Games
+            Today at the Ballpark
           </span>
           <span style={{ fontSize: 12, color: '#8B949E' }}>· {games.length} games</span>
         </div>

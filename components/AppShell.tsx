@@ -24,11 +24,11 @@ interface Props {
 }
 
 const NAV = [
-  { href: '/dashboard',  label: 'Home',  icon: LayoutDashboard },
-  { href: '/stadiums',   label: 'Parks', icon: Building2        },
-  { href: '/map',        label: 'Map',   icon: Map              },
-  { href: '/milestones', label: 'Goals', icon: Trophy           },
-  { href: '/trips',      label: 'Trips', icon: Plane            },
+  { href: '/dashboard',  label: 'Home',      icon: LayoutDashboard },
+  { href: '/stadiums',   label: 'Ballparks', icon: Building2        },
+  { href: '/map',        label: 'Map',       icon: Map              },
+  { href: '/milestones', label: 'Records',   icon: Trophy           },
+  { href: '/trips',      label: 'Road Trips', icon: Plane           },
 ]
 
 function daysLabel(days: number): string {
@@ -86,7 +86,7 @@ export default function AppShell({ children, nextTrip, visitedCount, rankName, r
             <Link href={`/trips/${nextTrip.id}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12, textDecoration: 'none', backgroundColor: 'rgba(31,111,235,0.08)', border: '1px solid rgba(31,111,235,0.2)' }}>
               {nextTrip.stadiumAbbr && <TeamLogo abbreviation={nextTrip.stadiumAbbr} size={28} />}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#1F6FEB', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Up Next</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#1F6FEB', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Next Stop</div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextTrip.stadiumName}</div>
               </div>
               <span style={{ fontSize: 13, fontWeight: 800, color: '#F5A623', flexShrink: 0 }}>{tripLabel}</span>
