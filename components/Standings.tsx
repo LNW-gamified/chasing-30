@@ -115,11 +115,7 @@ export default function Standings({ favAbbr }: Props) {
   const [loading, setLoading]         = useState(true)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [minsAgo, setMinsAgo]         = useState(0)
-  const [collapsed, setCollapsed]     = useState(true)
-
-  useEffect(() => {
-    if (window.innerWidth >= 768) setCollapsed(false)
-  }, [])
+  const [collapsed, setCollapsed]     = useState(false)
 
   const poll = useCallback(async () => {
     const data = await loadStandings()

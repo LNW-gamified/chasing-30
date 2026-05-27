@@ -53,14 +53,12 @@ export default function Navigation() {
               style={{
                 flex: 1, display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
-                padding: '10px 0', gap: 3, textDecoration: 'none',
+                padding: '12px 0', gap: 4, textDecoration: 'none',
                 color: active ? '#1F6FEB' : '#8B949E',
               }}
             >
-              <Icon size={21} strokeWidth={active ? 2.5 : 1.8} />
-              {active && (
-                <span style={{ fontSize: '0.6rem', fontWeight: 700, lineHeight: 1 }}>{label}</span>
-              )}
+              <Icon size={27} strokeWidth={active ? 2.5 : 1.8} />
+              <span style={{ fontSize: '0.6rem', fontWeight: active ? 700 : 400, lineHeight: 1 }}>{label}</span>
             </Link>
           )
         })}
