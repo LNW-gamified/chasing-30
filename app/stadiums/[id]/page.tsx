@@ -255,7 +255,7 @@ export default function StadiumDetailPage() {
                 position: 'absolute', top: -4, left: -4, right: -4, bottom: -4,
                 width: 'calc(100% + 8px)', height: 'calc(100% + 8px)',
                 objectFit: 'cover', display: 'block',
-                filter: 'blur(4px) brightness(0.55)',
+                filter: 'brightness(0.85)',
               }}
             />
           )}
