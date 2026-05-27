@@ -32,7 +32,7 @@ export default function UpNextPill({ compact = false }: { compact?: boolean }) {
       .from('trips')
       .select('id, name, start_date, trip_date, stadium:stadiums(name, abbreviation, team)')
       .eq('status', 'planned')
-      .order('start_date', { ascending: true })
+      .order('start_date', { ascending: true, nullsFirst: false })
       .then(({ data }) => {
         if (!data) return
         const upcoming = data.find((t: any) => {

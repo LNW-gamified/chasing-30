@@ -84,7 +84,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       .select('id, name, start_date, stadium:stadiums(name, abbreviation)')
       .eq('status', 'planned')
       .gte('start_date', today)
-      .order('start_date')
+      .order('start_date', { ascending: true, nullsFirst: false })
       .limit(1),
     supabase.from('stadium_visits').select('stadium_id'),
   ])

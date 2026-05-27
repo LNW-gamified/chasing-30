@@ -170,7 +170,7 @@ export default async function DashboardPage() {
     supabase.from('stadiums').select('*').order('league').order('division').order('name'),
     supabase.from('stadium_visits').select('*').order('visit_date', { ascending: false }),
     supabase.from('special_events').select('*'),
-    supabase.from('trips').select('*, stadium:stadiums(*)').order('start_date', { ascending: true }),
+    supabase.from('trips').select('*, stadium:stadiums(*)').order('start_date', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false }),
     supabase.auth.getUser(),
     supabase.from('special_visits').select('*'),
     supabase.from('destination_visits').select('destination_id'),
