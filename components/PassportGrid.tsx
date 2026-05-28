@@ -778,14 +778,14 @@ function PassportStamp({
   return (
     <div
       style={{
-        width: 106, flexShrink: 0,
+        width: 159, flexShrink: 0,
         position: 'relative',
         animation: earned ? `stamp-appear 0.5s cubic-bezier(0.23,1,0.32,1) ${Math.min(idx * 0.04, 1.2)}s both` : 'none',
         cursor: earned ? 'default' : 'default',
       }}
     >
       {/* Perforated stamp border */}
-      <svg width={106} height={148} viewBox="0 0 106 148" fill="none"
+      <svg width={159} height={222} viewBox="0 0 106 148" fill="none"
         style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
         <rect x="2" y="2" width="102" height="144" rx="4"
           fill={earned ? 'rgba(255,255,255,0.04)' : 'rgba(30,30,30,0.5)'}
@@ -796,59 +796,61 @@ function PassportStamp({
       {/* Stamp content */}
       <div style={{
         position: 'relative', zIndex: 1,
-        padding: '8px 7px 7px',
+        padding: '12px 10px 10px',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        height: 148, boxSizing: 'border-box',
+        height: 222, boxSizing: 'border-box',
       }}>
         {/* Header row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 5 }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 900, color: textColor, letterSpacing: '0.04em' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 7 }}>
+          <span style={{ fontFamily: 'monospace', fontSize: 15, fontWeight: 900, color: textColor, letterSpacing: '0.04em' }}>
             {def.abbr}
           </span>
-          <span style={{ fontFamily: 'monospace', fontSize: 7, color: textColor, letterSpacing: '0.16em', opacity: 0.6 }}>
+          <span style={{ fontFamily: 'monospace', fontSize: 11, color: textColor, letterSpacing: '0.16em', opacity: 0.6 }}>
             MLB
           </span>
         </div>
 
         {/* Illustration */}
         <div style={{
-          width: 80, height: 80, flexShrink: 0,
-          filter: earned ? 'none' : 'grayscale(1) opacity(0.2)',
+          width: 120, height: 120, flexShrink: 0,
+          filter: earned ? 'none' : 'grayscale(1) opacity(0.38)',
           overflow: 'hidden', position: 'relative',
         }}>
-          {def.art}
+          <div style={{ transform: 'scale(1.5)', transformOrigin: 'top left', width: 80, height: 80 }}>
+            {def.art}
+          </div>
           {/* Unearned ghost overlay */}
           {!earned && (
             <div style={{
               position: 'absolute', inset: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <span style={{ fontFamily: 'monospace', fontSize: 30, fontWeight: 900, color: '#484F58', opacity: 0.45 }}>?</span>
+              <span style={{ fontFamily: 'monospace', fontSize: 45, fontWeight: 900, color: '#484F58', opacity: 0.45 }}>?</span>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div style={{ textAlign: 'center', marginTop: 5, width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+        <div style={{ textAlign: 'center', marginTop: 7, width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
           <div style={{
-            fontFamily: 'monospace', fontSize: 7.5, fontWeight: 700, color: textColor,
+            fontFamily: 'monospace', fontSize: 11, fontWeight: 700, color: textColor,
             letterSpacing: '0.04em', textTransform: 'uppercase',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            opacity: earned ? 1 : 0.35,
+            opacity: earned ? 1 : 0.5,
           }}>
             {def.stadium}
           </div>
           <div style={{
-            fontFamily: 'monospace', fontSize: 7, color: textColor, opacity: earned ? 0.65 : 0.25,
-            letterSpacing: '0.04em', marginTop: 1,
+            fontFamily: 'monospace', fontSize: 10, color: textColor, opacity: earned ? 0.65 : 0.4,
+            letterSpacing: '0.04em', marginTop: 2,
           }}>
             {def.city}, {def.state}
           </div>
           {earned && fmtDate && (
             <div style={{
-              fontFamily: 'monospace', fontSize: 7.5, fontWeight: 700,
-              color: def.primary, marginTop: 3, letterSpacing: '0.05em',
-              borderTop: `1px solid ${def.primary}40`, paddingTop: 3,
+              fontFamily: 'monospace', fontSize: 11, fontWeight: 700,
+              color: def.primary, marginTop: 4, letterSpacing: '0.05em',
+              borderTop: `1px solid ${def.primary}40`, paddingTop: 4,
             }}>
               {fmtDate}
             </div>
@@ -859,12 +861,12 @@ function PassportStamp({
       {/* VISITED diagonal stamp for earned */}
       {earned && (
         <div style={{
-          position: 'absolute', top: 18, right: -2, zIndex: 2,
+          position: 'absolute', top: 27, right: -3, zIndex: 2,
           transform: 'rotate(25deg)',
-          fontFamily: 'monospace', fontSize: 7.5, fontWeight: 900,
+          fontFamily: 'monospace', fontSize: 11, fontWeight: 900,
           color: def.primary, letterSpacing: '0.12em', opacity: 0.55,
           border: `1px solid ${def.primary}`,
-          padding: '1px 5px', borderRadius: 2,
+          padding: '2px 7px', borderRadius: 3,
           pointerEvents: 'none',
         }}>
           VISITED
@@ -968,16 +970,19 @@ export default function PassportGrid({ stamps, userName, passportNo, earnedCount
 
         {/* Progress bar */}
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(197,164,126,0.55)', letterSpacing: '0.12em' }}>TOUR PROGRESS</span>
-            <span style={{ fontFamily: 'monospace', fontSize: 8, fontWeight: 700, color: '#C5A47E', letterSpacing: '0.08em' }}>{pct}%</span>
+            <span style={{ fontFamily: 'monospace', fontWeight: 900, color: '#E6C99A', letterSpacing: '0.04em' }}>
+              <span style={{ fontSize: 20 }}>{earnedCount}</span>
+              <span style={{ fontSize: 12, opacity: 0.7 }}> of 30</span>
+            </span>
           </div>
-          <div style={{ height: 6, background: 'rgba(197,164,126,0.1)', borderRadius: 4, overflow: 'hidden', border: '1px solid rgba(197,164,126,0.2)' }}>
+          <div style={{ height: 10, background: 'rgba(197,164,126,0.1)', borderRadius: 6, overflow: 'hidden', border: '1px solid rgba(197,164,126,0.2)' }}>
             <div style={{
-              width: `${pct}%`, height: '100%', borderRadius: 4,
+              width: `${pct}%`, height: '100%', borderRadius: 6,
               background: 'linear-gradient(90deg, #C5A47E, #E6C99A)',
               transition: 'width 0.8s ease',
-              minWidth: earnedCount > 0 ? 8 : 0,
+              minWidth: earnedCount > 0 ? 12 : 0,
             }}/>
           </div>
           <div style={{ fontFamily: 'monospace', fontSize: 7.5, color: 'rgba(197,164,126,0.45)', marginTop: 5, letterSpacing: '0.1em' }}>
@@ -1024,7 +1029,7 @@ export default function PassportGrid({ stamps, userName, passportNo, earnedCount
               {label}
             </div>
             {/* Stamps row */}
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-start' }}>
               {abbrs.map((abbr, colIdx) => {
                 const def = STAMP_DEFS.find(d => d.abbr === abbr)
                 if (!def) return null
@@ -1044,9 +1049,36 @@ export default function PassportGrid({ stamps, userName, passportNo, earnedCount
         ))}
       </div>
 
+      {/* ── Full-width Share CTA ────────────────────────────────────── */}
+      <div style={{ marginTop: 32, marginBottom: 8 }}>
+        <button
+          onClick={handleShare}
+          style={{
+            width: '100%', padding: '18px 24px', borderRadius: 14,
+            background: 'linear-gradient(135deg, rgba(197,164,126,0.18) 0%, rgba(197,164,126,0.08) 100%)',
+            border: '1.5px solid rgba(197,164,126,0.45)',
+            color: '#E6C99A', fontFamily: 'monospace',
+            fontSize: 14, fontWeight: 900, letterSpacing: '0.2em',
+            cursor: 'pointer', textTransform: 'uppercase',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+            boxShadow: '0 2px 16px rgba(197,164,126,0.08)',
+          }}
+        >
+          <span style={{ fontSize: 18 }}>{copied ? '✓' : '⬆'}</span>
+          {copied ? 'COPIED TO CLIPBOARD' : 'SHARE MY PASSPORT'}
+        </button>
+        <div style={{
+          textAlign: 'center', marginTop: 8,
+          fontFamily: 'monospace', fontSize: 9,
+          color: 'rgba(197,164,126,0.35)', letterSpacing: '0.1em',
+        }}>
+          {earnedCount} of 30 stadiums visited · Share your progress with friends
+        </div>
+      </div>
+
       {/* ── Footer ───────────────────────────────────────────────────── */}
       <div style={{
-        textAlign: 'center', marginTop: 8,
+        textAlign: 'center', marginTop: 24,
         fontFamily: 'monospace', fontSize: 8,
         color: 'rgba(197,164,126,0.3)', letterSpacing: '0.14em',
       }}>
