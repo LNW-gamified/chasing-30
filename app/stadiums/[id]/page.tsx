@@ -10,7 +10,7 @@ import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber } from '@/types'
 import { fetchUpcomingHomeGames, type UpcomingGame } from '@/lib/mlb-api'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy, Share2, MessageSquare, Hash, Building2, Map } from 'lucide-react'
+import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy, Share2, MessageSquare, Hash, Building2, Map, ChevronRight } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 
 const GAME_EVENT_LABELS: Record<string, string> = {
@@ -463,65 +463,73 @@ export default function StadiumDetailPage() {
                   </div>
                 ) : (
                   <>
-                    {/* 2-column thumbnail grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+                    {/* Compact game list */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
                       {visits.map((visit) => {
                         const isExpanded = expandedVisit === visit.id
                         const hasScore = visit.home_runs != null && visit.away_runs != null
                         const homeWon = hasScore && (visit.home_runs! > visit.away_runs!)
+                        const borderColor = hasScore
+                          ? (homeWon ? '#3FB950' : '#F85149')
+                          : '#30363D'
+                        const opponent = visit.visiting_team ?? '—'
+                        const scoreStr = hasScore
+                          ? ` · ${visit.away_runs}–${visit.home_runs}`
+                          : ''
                         return (
                           <button
                             key={visit.id}
                             onClick={() => setExpandedVisit(isExpanded ? null : visit.id)}
                             style={{
-                              border: `2px solid ${isExpanded ? '#3FB950' : 'transparent'}`,
-                              borderRadius: 12, overflow: 'hidden', cursor: 'pointer',
-                              padding: 0, backgroundColor: 'transparent', textAlign: 'left', width: '100%',
+                              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                              padding: '12px 14px',
+                              backgroundColor: isExpanded ? '#1C2430' : '#161B22',
+                              border: '1px solid #30363D',
+                              borderLeft: `3px solid ${borderColor}`,
+                              borderRadius: 12, cursor: 'pointer', textAlign: 'left',
                             }}
                           >
-                            <div style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden' }}>
-                              {visit.photo_url ? (
-                                /* eslint-disable-next-line @next/next/no-img-element */
-                                <img
-                                  src={visit.photo_url}
-                                  alt={`Game ${formatDate(visit.visit_date)}`}
-                                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                                />
-                              ) : (
-                                <div style={{
-                                  position: 'absolute', inset: 0,
-                                  background: `linear-gradient(160deg, ${colors[0]}, ${colors[1]})`,
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                }}>
-                                  <TeamLogo abbreviation={stadium.abbreviation} size={44} />
-                                </div>
-                              )}
-                              {/* Bottom overlay */}
-                              <div style={{
-                                position: 'absolute', bottom: 0, left: 0, right: 0,
-                                background: 'linear-gradient(to top, rgba(0,0,0,0.82), transparent)',
-                                padding: '20px 8px 8px',
-                              }}>
-                                <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>
-                                  {formatDate(visit.visit_date)}
-                                </div>
-                                {hasScore ? (
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1 }}>
-                                    <div style={{
-                                      width: 12, height: 12, borderRadius: '50%', flexShrink: 0,
-                                      backgroundColor: homeWon ? '#3FB950' : '#F85149',
-                                      boxShadow: homeWon ? '0 0 5px #3FB95088' : '0 0 5px #F8514988',
-                                    }} />
-                                    <div style={{ fontSize: 13, fontWeight: 900, color: '#ffffff', lineHeight: 1.2 }}>
-                                      {visit.visiting_team} {visit.away_runs} · {visit.home_team} {visit.home_runs}
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {visit.home_team} vs {visit.visiting_team}
-                                  </div>
-                                )}
+                            {/* Thumbnail or logo */}
+                            {visit.photo_url ? (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img
+                                src={visit.photo_url}
+                                alt={`Game ${formatDate(visit.visit_date)}`}
+                                style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', flexShrink: 0, display: 'block' }}
+                              />
+                            ) : (
+                              <div style={{ width: 40, height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <TeamLogo abbreviation={stadium.abbreviation} size={40} />
                               </div>
+                            )}
+
+                            {/* Center: date + matchup */}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 11, color: '#8B949E', marginBottom: 3, fontWeight: 500 }}>
+                                {formatDate(visit.visit_date)}
+                              </div>
+                              <div style={{
+                                fontSize: 14, fontWeight: 700, color: '#E6EDF3',
+                                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                              }}>
+                                vs {opponent}{scoreStr}
+                              </div>
+                            </div>
+
+                            {/* Right: win/loss dot + chevron */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                              {hasScore && (
+                                <div style={{
+                                  width: 10, height: 10, borderRadius: '50%',
+                                  backgroundColor: homeWon ? '#3FB950' : '#F85149',
+                                  boxShadow: homeWon ? '0 0 5px #3FB95088' : '0 0 5px #F8514988',
+                                }} />
+                              )}
+                              <ChevronRight
+                                size={16}
+                                color={isExpanded ? '#E6EDF3' : '#484F58'}
+                                style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}
+                              />
                             </div>
                           </button>
                         )
