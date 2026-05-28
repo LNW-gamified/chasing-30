@@ -235,6 +235,31 @@ select.input { cursor: pointer; }
   to   { transform: rotate(360deg); }
 }
 
+/* ── Dashboard card elevation + hover lift ──────────────────────────── */
+.dash-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+@media (hover: hover) {
+  .dash-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 36px rgba(0,0,0,0.55) !important;
+  }
+}
+
+/* ── Hero card rotating seam ─────────────────────────────────────────── */
+@keyframes hero-seam-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.hero-seam-rotate { animation: hero-seam-rotate 80s linear infinite; }
+
+/* ── Departure board scan line ───────────────────────────────────────── */
+@keyframes departure-scan {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(220%); }
+}
+.departure-scan { animation: departure-scan 3.5s ease-in-out infinite; }
+
 /* ── Goals page gamified elements ───────────────────────────────────── */
 @keyframes rank-pulse {
   0%, 100% { filter: drop-shadow(0 0 12px rgba(245,166,35,0.6)); }
