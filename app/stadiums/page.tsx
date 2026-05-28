@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
-import { Search, X, ChevronRight, Plus, Pencil, Trash2 } from 'lucide-react'
+import { Search, X, ChevronRight, Plus, Pencil, Trash2, CalendarDays } from 'lucide-react'
 import type { Stadium, SpecialEvent, SpecialEventType } from '@/types'
 import TeamLogo from '@/components/TeamLogo'
 import SpecialEventForm from '@/components/SpecialEventForm'
@@ -135,11 +135,10 @@ function StadiumCard({
           transition: 'transform 0.15s, box-shadow 0.15s, border-color 0.15s, opacity 0.15s',
         }}
       >
-        {/* Gradient hero */}
+        {/* Gradient hero — fixed height so visited and unvisited cards are always the same */}
         <div style={{
           background: `linear-gradient(to bottom, ${hexToRgba(accent, 0.45)} 0%, transparent 100%)`,
-          paddingTop: 20,
-          paddingBottom: 14,
+          height: 136,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -159,7 +158,7 @@ function StadiumCard({
         </div>
 
         {/* Content */}
-        <div style={{ padding: '8px 12px 10px', display: 'flex', flexDirection: 'column', flex: 1, gap: 2 }}>
+        <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 2 }}>
           <div style={{
             fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2,
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -213,15 +212,18 @@ function StadiumCard({
                 <>
                   <span style={{
                     flexShrink: 0,
-                    fontSize: 10, fontWeight: 600, color: '#8B949E',
-                    border: '1px solid #30363D',
-                    padding: '2px 7px', borderRadius: 999,
+                    fontSize: 11, fontWeight: 700, color: '#58A6FF',
+                    backgroundColor: 'rgba(88,166,255,0.12)',
+                    border: '1.5px solid rgba(88,166,255,0.35)',
+                    padding: '3px 10px', borderRadius: 999,
                   }}>On the List</span>
                   {nextGame && (
                     <span style={{
-                      fontSize: 11, color: '#8B949E',
+                      display: 'inline-flex', alignItems: 'center', gap: 3,
+                      fontSize: 11, fontWeight: 600, color: '#C9D1D9',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0,
                     }}>
+                      <CalendarDays size={10} color="#8B949E" style={{ flexShrink: 0 }}/>
                       {nextGame.date} vs {TEAM_NICKNAME[nextGame.opponentAbbr] ?? nextGame.opponentAbbr}
                     </span>
                   )}
@@ -534,26 +536,26 @@ export default function StadiumsPage() {
                 <button
                   onClick={() => scrollToSection('visited-section')}
                   style={{
-                    padding: '5px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600,
+                    padding: '8px 18px', borderRadius: 999, fontSize: 14, fontWeight: 600,
                     cursor: 'pointer', transition: 'all 0.15s',
                     backgroundColor: 'rgba(63,185,80,0.1)',
                     color: '#3FB950',
                     border: '1.5px solid rgba(63,185,80,0.3)',
                   }}
                 >
-                  Visited <span style={{ fontWeight: 400, fontSize: 12 }}>({visitedCount})</span>
+                  Visited <span style={{ fontWeight: 400, fontSize: 13 }}>({visitedCount})</span>
                 </button>
                 <button
                   onClick={() => scrollToSection('not-yet-section')}
                   style={{
-                    padding: '5px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600,
+                    padding: '8px 18px', borderRadius: 999, fontSize: 14, fontWeight: 600,
                     cursor: 'pointer', transition: 'all 0.15s',
                     backgroundColor: 'transparent',
                     color: '#8B949E',
                     border: '1.5px solid #30363D',
                   }}
                 >
-                  On the List <span style={{ fontWeight: 400, fontSize: 12 }}>({30 - visitedCount})</span>
+                  On the List <span style={{ fontWeight: 400, fontSize: 13 }}>({30 - visitedCount})</span>
                 </button>
 
                 <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
@@ -561,8 +563,8 @@ export default function StadiumsPage() {
                     value={filterLeague}
                     onChange={e => setFilterLeague(e.target.value as 'all' | 'AL' | 'NL')}
                     style={{
-                      padding: '5px 8px', borderRadius: 8, border: '1.5px solid #30363D',
-                      fontSize: 13, color: '#8B949E', backgroundColor: '#1C2430', cursor: 'pointer',
+                      padding: '8px 10px', borderRadius: 8, border: '1.5px solid #30363D',
+                      fontSize: 14, color: '#8B949E', backgroundColor: '#1C2430', cursor: 'pointer',
                     }}
                   >
                     <option value="all">All</option>
@@ -573,8 +575,8 @@ export default function StadiumsPage() {
                     value={sortKey}
                     onChange={e => setSortKey(e.target.value as SortKey)}
                     style={{
-                      padding: '5px 8px', borderRadius: 8, border: '1.5px solid #30363D',
-                      fontSize: 13, color: '#8B949E', backgroundColor: '#1C2430', cursor: 'pointer',
+                      padding: '8px 10px', borderRadius: 8, border: '1.5px solid #30363D',
+                      fontSize: 14, color: '#8B949E', backgroundColor: '#1C2430', cursor: 'pointer',
                     }}
                   >
                     <option value="team">Team</option>
