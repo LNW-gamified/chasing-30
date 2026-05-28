@@ -8,6 +8,7 @@ import TodayGames, { type TodayGame } from '@/components/TodayGames'
 import Standings from '@/components/Standings'
 import FavoriteTeamPicker from '@/components/FavoriteTeamPicker'
 import DashboardSpecialVisitButton from '@/components/DashboardSpecialVisitButton'
+import OnThisDay, { type HistoryFact } from '@/components/OnThisDay'
 
 // ─── MLB API ──────────────────────────────────────────────────────────────────
 
@@ -141,6 +142,10 @@ function ProgressRing({ visited, total, size = 130 }: { visited: number; total: 
 export default async function DashboardPage() {
   const supabase = await createClient()
 
+  const todayDate = new Date()
+  const todayMonth = todayDate.getMonth() + 1
+  const todayDay   = todayDate.getDate()
+
   const [
     { data: stadiums },
     { data: visits },
@@ -149,6 +154,7 @@ export default async function DashboardPage() {
     { data: { user } },
     { data: specialVisits },
     { data: destVisits },
+    { data: historyFacts },
   ] = await Promise.all([
     supabase.from('stadiums').select('*').order('league').order('division').order('name'),
     supabase.from('stadium_visits').select('*').order('visit_date', { ascending: false }),
@@ -157,6 +163,11 @@ export default async function DashboardPage() {
     supabase.auth.getUser(),
     supabase.from('special_visits').select('*'),
     supabase.from('destination_visits').select('destination_id'),
+    supabase.from('baseball_history')
+      .select('id,year,fact,category,player_name,team')
+      .eq('month', todayMonth)
+      .eq('day', todayDay)
+      .order('year', { ascending: false }),
   ])
 
   const userId = user?.id ?? ''
@@ -169,6 +180,7 @@ export default async function DashboardPage() {
   const allEvents:       SpecialEvent[] = events ?? []
   const allTrips:        Trip[]         = trips ?? []
   const allSpecialVisits: SpecialVisit[] = (specialVisits ?? []) as SpecialVisit[]
+  const todayHistory:    HistoryFact[]  = (historyFacts ?? []) as HistoryFact[]
 
   const visitedIds   = new Set(allVisits.map(v => v.stadium_id))
   const visitedCount = visitedIds.size
@@ -280,6 +292,9 @@ export default async function DashboardPage() {
               </Link>
               <DashboardSpecialVisitButton />
             </div>
+
+            {/* ── On This Day ──────────────────────────────────────────────── */}
+            <OnThisDay facts={todayHistory} />
 
             {/* ── My Stats Card ────────────────────────────────────────────── */}
             <div style={{ ...card, marginBottom: '1.25rem', overflow: 'hidden' }}>
