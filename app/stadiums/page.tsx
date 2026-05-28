@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
+import PassportGrid, { type StampData } from '@/components/PassportGrid'
 import Link from 'next/link'
 import { Search, X, ChevronRight, Plus, Pencil, Trash2, CalendarDays } from 'lucide-react'
 import type { Stadium, SpecialEvent, SpecialEventType } from '@/types'
@@ -10,7 +11,7 @@ import SpecialEventForm from '@/components/SpecialEventForm'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Category = 'mlb' | 'historical' | 'spring' | 'events'
+type Category = 'mlb' | 'historical' | 'spring' | 'events' | 'passport'
 type SortKey = 'team' | 'name' | 'state' | 'division'
 interface VisitRow { stadium_id: string; visit_date: string }
 interface NextGameInfo { date: string; opponentAbbr: string }
@@ -296,6 +297,42 @@ function EventRow({ event, onEdit, onDelete }: { event: SpecialEvent; onEdit: ()
   )
 }
 
+// ─── Passport tab ─────────────────────────────────────────────────────────────
+
+function PassportTabContent({ stamps, earnedCount }: { stamps: StampData[]; earnedCount: number }) {
+  const [userInfo, setUserInfo] = useState<{ userName: string; passportNo: string } | null>(null)
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data: { user } }) => {
+      const meta = (user as any)?.user_metadata
+      const fullName: string = meta?.full_name ?? meta?.name ?? ''
+      const emailLocal = user?.email?.split('@')[0] ?? ''
+      const raw = fullName || emailLocal
+      const userName = raw.charAt(0).toUpperCase() + raw.slice(1)
+      const uid = user?.id ?? '00000000-0000-0000-0000-000000000000'
+      const passportNo = 'USR-' + uid.replace(/-/g, '').slice(0, 8).toUpperCase()
+      setUserInfo({ userName, passportNo })
+    })
+  }, [])
+
+  if (!userInfo) {
+    return (
+      <div style={{ textAlign: 'center', padding: '56px 16px', color: '#8B949E', fontSize: 15 }}>
+        Loading passport…
+      </div>
+    )
+  }
+
+  return (
+    <PassportGrid
+      stamps={stamps}
+      userName={userInfo.userName}
+      passportNo={userInfo.passportNo}
+      earnedCount={earnedCount}
+    />
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StadiumsPage() {
@@ -373,6 +410,17 @@ export default function StadiumsPage() {
     return map
   }, [visits])
 
+  const passportStamps = useMemo<StampData[]>(() =>
+    stadiums.map(s => ({
+      stadiumId: s.id,
+      abbr: s.abbreviation,
+      visitDate: visits
+        .filter(v => v.stadium_id === s.id)
+        .sort((a, b) => a.visit_date.localeCompare(b.visit_date))[0]?.visit_date ?? null,
+    })),
+    [stadiums, visits]
+  )
+
   const visitedCount = visitedIds.size
   const pct = Math.round((visitedCount / 30) * 100)
 
@@ -419,6 +467,7 @@ export default function StadiumsPage() {
     { key: 'historical', label: 'Historical'      },
     { key: 'spring',     label: 'Spring Training' },
     { key: 'events',     label: 'Events'          },
+    { key: 'passport',   label: 'Passport'        },
   ]
 
   return (
@@ -701,6 +750,10 @@ export default function StadiumsPage() {
                 ))
               )}
             </div>
+
+          ) : activeCategory === 'passport' ? (
+            /* ── Passport tab ────────────────────────────────── */
+            <PassportTabContent stamps={passportStamps} earnedCount={visitedCount} />
 
           ) : activeCategory === 'events' ? (
             /* ── Events tab ──────────────────────────────────── */

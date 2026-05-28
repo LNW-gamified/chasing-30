@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutDashboard, Building2, Map, Trophy, Plane, LogOut, Stamp } from 'lucide-react'
+import { LayoutDashboard, Building2, Map, Trophy, Plane, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import TeamLogo from '@/components/TeamLogo'
 
@@ -29,16 +29,14 @@ const DESKTOP_NAV = [
   { href: '/stadiums',   label: 'Ballparks', icon: Building2        },
   { href: '/map',        label: 'Map',       icon: Map              },
   { href: '/milestones', label: 'Records',   icon: Trophy           },
-  { href: '/passport',   label: 'Passport',  icon: Stamp            },
   { href: '/trips',      label: 'Road Trips', icon: Plane           },
 ]
 
-// Mobile: Map removed, Passport takes its slot
+// Mobile: Map removed
 const MOBILE_NAV = [
   { href: '/dashboard',  label: 'Home',      icon: LayoutDashboard },
   { href: '/stadiums',   label: 'Ballparks', icon: Building2        },
   { href: '/milestones', label: 'Records',   icon: Trophy           },
-  { href: '/passport',   label: 'Passport',  icon: Stamp            },
   { href: '/trips',      label: 'Road Trips', icon: Plane           },
 ]
 

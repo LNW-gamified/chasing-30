@@ -764,113 +764,71 @@ const GRID_ORDER = [
 
 // ── Passport Stamp ────────────────────────────────────────────────────────────
 
-function PassportStamp({
-  def, visitDate, idx,
-}: { def: StampDef; visitDate: string | null; idx: number }) {
+function PassportStamp({ def, visitDate }: { def: StampDef; visitDate: string | null }) {
   const earned = !!visitDate
-  const border = earned ? def.primary : '#30363D'
-  const textColor = earned ? def.primary : '#484F58'
-
   const fmtDate = visitDate
     ? new Date(visitDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null
 
   return (
-    <div
-      style={{
-        width: 159, flexShrink: 0,
-        position: 'relative',
-        animation: earned ? `stamp-appear 0.5s cubic-bezier(0.23,1,0.32,1) ${Math.min(idx * 0.04, 1.2)}s both` : 'none',
-        cursor: earned ? 'default' : 'default',
-      }}
-    >
-      {/* Perforated stamp border */}
-      <svg width={159} height={222} viewBox="0 0 106 148" fill="none"
-        style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
-        <rect x="2" y="2" width="102" height="144" rx="4"
-          fill={earned ? 'rgba(255,255,255,0.04)' : 'rgba(30,30,30,0.5)'}
-          stroke={border} strokeWidth="2.5" strokeDasharray="6,3.5"
-        />
-      </svg>
+    <div style={{
+      backgroundColor: '#161B22',
+      borderRadius: 12,
+      border: earned ? `1px solid ${def.primary}35` : '1px solid #21262D',
+      borderTop: earned ? `3px solid ${def.primary}` : '3px solid #21262D',
+      overflow: 'hidden',
+      opacity: earned ? 1 : 0.38,
+      position: 'relative',
+      boxShadow: earned ? `0 4px 20px ${def.primary}20` : 'none',
+      transition: 'opacity 0.2s',
+    }}>
+      {/* Header row */}
+      <div style={{ padding: '8px 10px 2px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{
+          fontFamily: 'monospace', fontSize: 11, fontWeight: 900,
+          color: earned ? def.primary : '#484F58', letterSpacing: '0.04em',
+        }}>{def.abbr}</span>
+        <span style={{ fontFamily: 'monospace', fontSize: 7, color: '#484F58', letterSpacing: '0.18em', opacity: 0.6 }}>MLB</span>
+      </div>
 
-      {/* Stamp content */}
-      <div style={{
-        position: 'relative', zIndex: 1,
-        padding: '12px 10px 10px',
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        height: 222, boxSizing: 'border-box',
-      }}>
-        {/* Header row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 7 }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 15, fontWeight: 900, color: textColor, letterSpacing: '0.04em' }}>
-            {def.abbr}
-          </span>
-          <span style={{ fontFamily: 'monospace', fontSize: 11, color: textColor, letterSpacing: '0.16em', opacity: 0.6 }}>
-            MLB
-          </span>
-        </div>
-
-        {/* Illustration */}
-        <div style={{
-          width: 120, height: 120, flexShrink: 0,
-          filter: earned ? 'none' : 'grayscale(1) opacity(0.38)',
-          overflow: 'hidden', position: 'relative',
-        }}>
-          <div style={{ transform: 'scale(1.5)', transformOrigin: 'top left', width: 80, height: 80 }}>
-            {def.art}
-          </div>
-          {/* Unearned ghost overlay */}
-          {!earned && (
-            <div style={{
-              position: 'absolute', inset: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <span style={{ fontFamily: 'monospace', fontSize: 45, fontWeight: 900, color: '#484F58', opacity: 0.45 }}>?</span>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div style={{ textAlign: 'center', marginTop: 7, width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-          <div style={{
-            fontFamily: 'monospace', fontSize: 11, fontWeight: 700, color: textColor,
-            letterSpacing: '0.04em', textTransform: 'uppercase',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            opacity: earned ? 1 : 0.5,
-          }}>
-            {def.stadium}
-          </div>
-          <div style={{
-            fontFamily: 'monospace', fontSize: 10, color: textColor, opacity: earned ? 0.65 : 0.4,
-            letterSpacing: '0.04em', marginTop: 2,
-          }}>
-            {def.city}, {def.state}
-          </div>
-          {earned && fmtDate && (
-            <div style={{
-              fontFamily: 'monospace', fontSize: 11, fontWeight: 700,
-              color: def.primary, marginTop: 4, letterSpacing: '0.05em',
-              borderTop: `1px solid ${def.primary}40`, paddingTop: 4,
-            }}>
-              {fmtDate}
-            </div>
-          )}
+      {/* Illustration — 120×120 container, art scaled 1.5× */}
+      <div style={{ width: 120, height: 120, margin: '4px auto 2px', overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
+        <div style={{ transform: 'scale(1.5)', transformOrigin: 'top left', width: 80, height: 80 }}>
+          {def.art}
         </div>
       </div>
 
-      {/* VISITED diagonal stamp for earned */}
+      {/* Footer */}
+      <div style={{ padding: '2px 10px 10px', textAlign: 'center' }}>
+        <div style={{
+          fontFamily: 'monospace', fontSize: 9, fontWeight: 700,
+          color: earned ? '#C9D1D9' : '#484F58',
+          textTransform: 'uppercase', letterSpacing: '0.04em',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>{def.stadium}</div>
+        <div style={{ fontFamily: 'monospace', fontSize: 8, color: '#484F58', marginTop: 2, letterSpacing: '0.04em' }}>
+          {def.city}, {def.state}
+        </div>
+        {earned && fmtDate && (
+          <div style={{
+            fontFamily: 'monospace', fontSize: 9, fontWeight: 700,
+            color: def.primary, marginTop: 5, paddingTop: 5,
+            borderTop: `1px solid ${def.primary}30`,
+          }}>{fmtDate}</div>
+        )}
+      </div>
+
+      {/* VISITED diagonal badge */}
       {earned && (
         <div style={{
-          position: 'absolute', top: 27, right: -3, zIndex: 2,
-          transform: 'rotate(25deg)',
-          fontFamily: 'monospace', fontSize: 11, fontWeight: 900,
-          color: def.primary, letterSpacing: '0.12em', opacity: 0.55,
+          position: 'absolute', top: 18, right: -5, zIndex: 2,
+          transform: 'rotate(28deg)',
+          fontFamily: 'monospace', fontSize: 9, fontWeight: 900,
+          color: def.primary, letterSpacing: '0.1em', opacity: 0.6,
           border: `1px solid ${def.primary}`,
-          padding: '2px 7px', borderRadius: 3,
+          padding: '1px 5px', borderRadius: 2,
           pointerEvents: 'none',
-        }}>
-          VISITED
-        </div>
+        }}>VISITED</div>
       )}
     </div>
   )
@@ -889,91 +847,95 @@ export default function PassportGrid({ stamps, userName, passportNo, earnedCount
   const [copied, setCopied] = useState(false)
   const gridRef = useRef<HTMLDivElement>(null)
 
-  // Build lookup: abbr → visitDate
   const visitMap = new Map(stamps.map(s => [s.abbr, s.visitDate]))
-
-  // Order stamps by GRID_ORDER
-  const orderedDefs = GRID_ORDER.map(abbr => STAMP_DEFS.find(d => d.abbr === abbr)!).filter(Boolean)
+  const pct = Math.round((earnedCount / 30) * 100)
 
   async function handleShare() {
-    const url = window.location.href
-    if (navigator.share) {
+    const url = typeof window !== 'undefined' ? window.location.href : ''
+    if (typeof navigator !== 'undefined' && navigator.share) {
       await navigator.share({ title: 'My Stadium Passport', text: `${userName} has visited ${earnedCount}/30 MLB stadiums!`, url })
-    } else {
+    } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
       await navigator.clipboard.writeText(url)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
   }
 
-  const pct = Math.round((earnedCount / 30) * 100)
+  const DIVISIONS = [
+    { label: 'American League East',    abbrs: ['BAL','BOS','NYY','TB','TOR']  },
+    { label: 'American League Central', abbrs: ['CWS','CLE','DET','KC','MIN']  },
+    { label: 'American League West',    abbrs: ['HOU','LAA','OAK','SEA','TEX'] },
+    { label: 'National League East',    abbrs: ['ATL','MIA','NYM','PHI','WSH'] },
+    { label: 'National League Central', abbrs: ['CHC','CIN','MIL','PIT','STL'] },
+    { label: 'National League West',    abbrs: ['ARI','COL','LAD','SD','SF']   },
+  ]
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 16px 48px' }}>
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 16px 48px' }}>
 
-      {/* ── Passport cover header ─────────────────────────────────── */}
+      {/* ── Header ────────────────────────────────────────────── */}
       <div style={{
-        background: 'linear-gradient(160deg, #0A1628 0%, #0D1F3C 50%, #081220 100%)',
-        border: '1px solid rgba(197,164,126,0.3)',
-        borderRadius: 16, padding: '28px 24px 24px',
-        marginBottom: 24, position: 'relative', overflow: 'hidden',
-        boxShadow: 'inset 0 1px 0 rgba(197,164,126,0.15)',
+        backgroundColor: '#0a0e1a',
+        borderRadius: 16,
+        border: '1px solid rgba(197,164,126,0.2)',
+        padding: '28px 28px 24px',
+        marginBottom: 32,
+        position: 'relative',
       }}>
-        {/* Gold trim lines */}
-        <div style={{ position: 'absolute', top: 8, left: 8, right: 8, height: 1.5, background: 'linear-gradient(90deg, transparent, rgba(197,164,126,0.5), transparent)' }}/>
-        <div style={{ position: 'absolute', bottom: 8, left: 8, right: 8, height: 1.5, background: 'linear-gradient(90deg, transparent, rgba(197,164,126,0.5), transparent)' }}/>
+        {/* Inline share button — top right */}
+        <button
+          onClick={handleShare}
+          style={{
+            position: 'absolute', top: 20, right: 20,
+            padding: '7px 16px', borderRadius: 20,
+            background: 'transparent',
+            border: '1.5px solid rgba(197,164,126,0.4)',
+            color: '#C5A47E', fontFamily: 'monospace',
+            fontSize: 10, fontWeight: 700, letterSpacing: '0.14em',
+            cursor: 'pointer', textTransform: 'uppercase',
+          }}
+        >
+          {copied ? '✓ COPIED' : '⬆ SHARE'}
+        </button>
 
-        {/* Seal + title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
-          {/* Baseball seal SVG */}
-          <svg width={56} height={56} viewBox="0 0 56 56" fill="none" style={{ flexShrink: 0 }}>
-            <circle cx="28" cy="28" r="26" fill="none" stroke="#C5A47E" strokeWidth="1.5"/>
-            <circle cx="28" cy="28" r="22" fill="rgba(197,164,126,0.08)" stroke="#C5A47E" strokeWidth="1"/>
-            <circle cx="28" cy="28" r="13" fill="rgba(197,164,126,0.1)" stroke="#C5A47E" strokeWidth="1"/>
-            {/* Baseball stitches */}
-            <path d="M18 22 C15 26 15 30 18 34" stroke="#C5A47E" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M38 22 C41 26 41 30 38 34" stroke="#C5A47E" strokeWidth="1.5" strokeLinecap="round"/>
-            {/* Stars around ring */}
-            {[0,60,120,180,240,300].map(deg => {
-              const r = (deg-90)*Math.PI/180
-              return <circle key={deg} cx={28+24*Math.cos(r)} cy={28+24*Math.sin(r)} r={1.5} fill="#C5A47E" opacity={0.8}/>
-            })}
-          </svg>
-          <div>
-            <div style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, color: '#C5A47E', letterSpacing: '0.22em', textTransform: 'uppercase' }}>
-              Stadium Passport
-            </div>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: 'rgba(197,164,126,0.6)', letterSpacing: '0.18em', marginTop: 3 }}>
-              UNITED STATES BASEBALL TOUR
-            </div>
-            <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(197,164,126,0.4)', letterSpacing: '0.12em', marginTop: 2 }}>
-              MAJOR LEAGUE BASEBALL · EST. 1869
-            </div>
+        {/* Title block */}
+        <div style={{ marginBottom: 0, paddingRight: 100 }}>
+          <div style={{
+            fontSize: 26, fontWeight: 900, color: '#E6C99A',
+            letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 4,
+          }}>
+            Stadium Passport
+          </div>
+          <div style={{
+            fontFamily: 'monospace', fontSize: 9, fontWeight: 700,
+            color: 'rgba(197,164,126,0.5)', letterSpacing: '0.2em', textTransform: 'uppercase',
+          }}>
+            United States Baseball Tour · Est. 1869
           </div>
         </div>
 
+        <div style={{ height: 1, background: 'rgba(197,164,126,0.12)', margin: '16px 0' }} />
+
         {/* Holder info */}
-        <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 20, paddingTop: 14, borderTop: '1px solid rgba(197,164,126,0.15)' }}>
+        <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', marginBottom: 20 }}>
           <div>
             <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(197,164,126,0.5)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 3 }}>Holder</div>
-            <div style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: '#E6C99A', letterSpacing: '0.06em' }}>{userName}</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 14, fontWeight: 700, color: '#E6C99A' }}>{userName}</div>
           </div>
           <div>
             <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(197,164,126,0.5)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 3 }}>Passport No.</div>
-            <div style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: '#E6C99A', letterSpacing: '0.06em' }}>{passportNo}</div>
-          </div>
-          <div>
-            <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(197,164,126,0.5)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 3 }}>Stamps</div>
-            <div style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: '#E6C99A', letterSpacing: '0.06em' }}>{earnedCount} / 30</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 14, fontWeight: 700, color: '#E6C99A' }}>{passportNo}</div>
           </div>
         </div>
 
         {/* Progress bar */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(197,164,126,0.55)', letterSpacing: '0.12em' }}>TOUR PROGRESS</span>
-            <span style={{ fontFamily: 'monospace', fontWeight: 900, color: '#E6C99A', letterSpacing: '0.04em' }}>
-              <span style={{ fontSize: 20 }}>{earnedCount}</span>
+            <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(197,164,126,0.5)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+              Tour Progress
+            </span>
+            <span style={{ fontFamily: 'monospace', fontWeight: 900, color: '#E6C99A' }}>
+              <span style={{ fontSize: 22 }}>{earnedCount}</span>
               <span style={{ fontSize: 12, opacity: 0.7 }}> of 30</span>
             </span>
           </div>
@@ -983,74 +945,49 @@ export default function PassportGrid({ stamps, userName, passportNo, earnedCount
               background: 'linear-gradient(90deg, #C5A47E, #E6C99A)',
               transition: 'width 0.8s ease',
               minWidth: earnedCount > 0 ? 12 : 0,
-            }}/>
+            }} />
           </div>
-          <div style={{ fontFamily: 'monospace', fontSize: 7.5, color: 'rgba(197,164,126,0.45)', marginTop: 5, letterSpacing: '0.1em' }}>
-            {30 - earnedCount} PARKS REMAINING ON THE TOUR
+          <div style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(197,164,126,0.35)', marginTop: 5, letterSpacing: '0.1em' }}>
+            {30 - earnedCount} parks remaining on the tour
           </div>
         </div>
-
-        {/* Share button */}
-        <button
-          onClick={handleShare}
-          style={{
-            position: 'absolute', top: 20, right: 20,
-            padding: '6px 14px', borderRadius: 20,
-            background: 'rgba(197,164,126,0.12)',
-            border: '1px solid rgba(197,164,126,0.35)',
-            color: '#C5A47E', fontFamily: 'monospace',
-            fontSize: 9, fontWeight: 700, letterSpacing: '0.14em',
-            cursor: 'pointer', textTransform: 'uppercase',
-            transition: 'all 0.2s',
-          }}
-        >
-          {copied ? '✓ COPIED' : '⬆ SHARE'}
-        </button>
       </div>
 
-      {/* ── Division section labels + stamp grid ──────────────────── */}
+      {/* ── Stamp grid ────────────────────────────────────────── */}
       <div ref={gridRef}>
-        {[
-          { label: 'American League East', abbrs: ['BAL','BOS','NYY','TB','TOR'] },
-          { label: 'American League Central', abbrs: ['CWS','CLE','DET','KC','MIN'] },
-          { label: 'American League West', abbrs: ['HOU','LAA','OAK','SEA','TEX'] },
-          { label: 'National League East', abbrs: ['ATL','MIA','NYM','PHI','WSH'] },
-          { label: 'National League Central', abbrs: ['CHC','CIN','MIL','PIT','STL'] },
-          { label: 'National League West', abbrs: ['ARI','COL','LAD','SD','SF'] },
-        ].map(({ label, abbrs }, rowIdx) => (
-          <div key={label} style={{ marginBottom: 24 }}>
-            {/* Division header */}
-            <div style={{
-              fontFamily: 'monospace', fontSize: 9, fontWeight: 700,
-              color: 'rgba(197,164,126,0.45)', letterSpacing: '0.18em',
-              textTransform: 'uppercase', marginBottom: 10,
-              paddingBottom: 6, borderBottom: '1px solid rgba(197,164,126,0.08)',
-            }}>
-              {label}
+        {DIVISIONS.map(({ label, abbrs }) => {
+          const earnedInDiv = abbrs.filter(a => {
+            const vd = visitMap.get(a)
+            return vd !== null && vd !== undefined
+          }).length
+          return (
+            <div key={label} style={{ marginBottom: 32 }}>
+              {/* Division header — gold left border accent */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                marginBottom: 12, paddingLeft: 14,
+                borderLeft: '3px solid #F5A623',
+              }}>
+                <span style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3' }}>{label}</span>
+                <span style={{ fontSize: 12, color: '#8B949E' }}>{earnedInDiv}/5</span>
+              </div>
+
+              {/* 3 cols mobile, 5 cols desktop */}
+              <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+                {abbrs.map(abbr => {
+                  const def = STAMP_DEFS.find(d => d.abbr === abbr)
+                  if (!def) return null
+                  const visitDate = visitMap.get(abbr) ?? null
+                  return <PassportStamp key={abbr} def={def} visitDate={visitDate} />
+                })}
+              </div>
             </div>
-            {/* Stamps row */}
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-              {abbrs.map((abbr, colIdx) => {
-                const def = STAMP_DEFS.find(d => d.abbr === abbr)
-                if (!def) return null
-                const visitDate = visitMap.get(abbr) ?? null
-                const globalIdx = rowIdx * 5 + colIdx
-                return (
-                  <PassportStamp
-                    key={abbr}
-                    def={def}
-                    visitDate={visitDate}
-                    idx={globalIdx}
-                  />
-                )
-              })}
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
-      {/* ── Full-width Share CTA ────────────────────────────────────── */}
-      <div style={{ marginTop: 32, marginBottom: 8 }}>
+      {/* ── Share CTA ─────────────────────────────────────────── */}
+      <div style={{ marginTop: 16 }}>
         <button
           onClick={handleShare}
           style={{
@@ -1068,21 +1005,12 @@ export default function PassportGrid({ stamps, userName, passportNo, earnedCount
           {copied ? 'COPIED TO CLIPBOARD' : 'SHARE MY PASSPORT'}
         </button>
         <div style={{
-          textAlign: 'center', marginTop: 8,
-          fontFamily: 'monospace', fontSize: 9,
-          color: 'rgba(197,164,126,0.35)', letterSpacing: '0.1em',
+          textAlign: 'center', marginTop: 12,
+          fontFamily: 'monospace', fontSize: 8,
+          color: 'rgba(197,164,126,0.25)', letterSpacing: '0.14em',
         }}>
-          {earnedCount} of 30 stadiums visited · Share your progress with friends
+          CHASING 30 · OFFICIAL STADIUM PASSPORT · VALID ALL 30 PARKS
         </div>
-      </div>
-
-      {/* ── Footer ───────────────────────────────────────────────────── */}
-      <div style={{
-        textAlign: 'center', marginTop: 24,
-        fontFamily: 'monospace', fontSize: 8,
-        color: 'rgba(197,164,126,0.3)', letterSpacing: '0.14em',
-      }}>
-        CHASING 30 · OFFICIAL STADIUM PASSPORT · VALID ALL 30 PARKS
       </div>
     </div>
   )
