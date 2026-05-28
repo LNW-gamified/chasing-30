@@ -243,96 +243,64 @@ export default async function DashboardPage() {
           className="dash-card"
           style={{
             ...card,
-            padding: '36px 24px 28px',
+            padding: '20px 24px 18px',
             marginBottom: SECTION_GAP,
             textAlign: 'center',
-            position: 'relative',
-            overflow: 'hidden',
-            background: 'linear-gradient(160deg, #0B1A0E 0%, #101D12 55%, #0D1810 100%)',
-            border: '1px solid #1E3020',
           }}
         >
-          {/* Subtle grass stripe texture */}
-          <div style={{
-            position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
-            backgroundImage: 'repeating-linear-gradient(180deg, transparent, transparent 20px, rgba(63,185,80,0.07) 20px, rgba(63,185,80,0.07) 22px)',
-          }}/>
-
-          {/* Rotating baseball seam — very faint watermark */}
-          <div style={{
-            position: 'absolute', top: '50%', left: '50%',
-            transform: 'translate(-50%, -50%)',
-            pointerEvents: 'none', opacity: 0.055, zIndex: 0,
-          }}>
-            <svg width={360} height={360} viewBox="0 0 360 360" fill="none" className="hero-seam-rotate">
-              <circle cx="180" cy="180" r="164" stroke="#3FB950" strokeWidth="2.5"/>
-              {/* Left seam curve */}
-              <path d="M108 180 C108 120 138 88 180 88 C222 88 252 120 252 180 C252 240 222 272 180 272 C138 272 108 240 108 180 Z"
-                fill="none" stroke="#3FB950" strokeWidth="5" strokeLinecap="round"/>
-              {/* Left stitch curve */}
-              <path d="M136 126 C124 144 124 162 136 180" fill="none" stroke="#3FB950" strokeWidth="3" strokeLinecap="round"/>
-              <path d="M224 126 C236 144 236 162 224 180" fill="none" stroke="#3FB950" strokeWidth="3" strokeLinecap="round"/>
-              <path d="M136 180 C124 198 124 216 136 234" fill="none" stroke="#3FB950" strokeWidth="3" strokeLinecap="round"/>
-              <path d="M224 180 C236 198 236 216 224 234" fill="none" stroke="#3FB950" strokeWidth="3" strokeLinecap="round"/>
-            </svg>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(63,185,80,0.55)', textTransform: 'uppercase', letterSpacing: '0.22em', marginBottom: 10 }}>
+            THE CHASE
           </div>
 
-          {/* Section label */}
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(63,185,80,0.6)', textTransform: 'uppercase', letterSpacing: '0.22em', marginBottom: 24 }}>
-              THE CHASE
-            </div>
+          {/* Hero ring */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <HeroRing visited={visitedCount} total={30} dots={ringDots} />
+          </div>
 
-            {/* Hero ring */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-              <HeroRing visited={visitedCount} total={30} dots={ringDots} />
-            </div>
+          {/* Primary stat line */}
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#E6EDF3', marginBottom: 3 }}>
+            {visitedCount === 30 ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, justifyContent: 'center' }}>
+                <Trophy size={16} color="#F5A623" /> All 30 stadiums conquered
+              </span>
+            ) : visitedCount === 0
+              ? 'The journey begins with one ballpark'
+              : `${visitedCount} of 30 MLB stadiums visited`}
+          </div>
+          <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 10 }}>
+            {visitedCount === 30
+              ? 'Hall of Famer status achieved!'
+              : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} remaining on the tour`}
+          </div>
 
-            {/* Primary stat line */}
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#E6EDF3', marginBottom: 6 }}>
-              {visitedCount === 30 ? (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-                  <Trophy size={20} color="#F5A623" /> All 30 stadiums conquered
-                </span>
-              ) : visitedCount === 0
-                ? 'The journey begins with one ballpark'
-                : `${visitedCount} of 30 MLB stadiums visited`}
+          {/* Sub-stats row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 14, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#3FB950', boxShadow: '0 0 5px rgba(63,185,80,0.5)' }}/>
+              <span style={{ fontSize: 12, color: '#3FB950', fontWeight: 700 }}>{pct}% complete</span>
             </div>
-            <div style={{ fontSize: 14, color: '#8B949E', marginBottom: 22 }}>
-              {visitedCount === 30
-                ? 'Hall of Famer status achieved!'
-                : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} remaining on the tour`}
-            </div>
+            <span style={{ color: '#21262D', fontSize: 14 }}>|</span>
+            <Link href="/milestones" style={{ fontSize: 12, color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
+              {earnedMilestones.length} milestone{earnedMilestones.length !== 1 ? 's' : ''} earned →
+            </Link>
+            <span style={{ color: '#21262D', fontSize: 14 }}>|</span>
+            <Link href="/passport" style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textDecoration: 'none' }}>
+              View Passport →
+            </Link>
+          </div>
 
-            {/* Sub-stats row */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 18, marginBottom: 24, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#3FB950', boxShadow: '0 0 6px rgba(63,185,80,0.5)' }}/>
-                <span style={{ fontSize: 13, color: '#3FB950', fontWeight: 700 }}>{pct}% complete</span>
-              </div>
-              <span style={{ color: '#21262D', fontSize: 16 }}>|</span>
-              <Link href="/milestones" style={{ fontSize: 13, color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
-                {earnedMilestones.length} milestone{earnedMilestones.length !== 1 ? 's' : ''} earned →
-              </Link>
-              <span style={{ color: '#21262D', fontSize: 16 }}>|</span>
-              <Link href="/passport" style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, textDecoration: 'none' }}>
-                View Passport →
-              </Link>
-            </div>
-
-            {/* CTAs */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, width: '100%', maxWidth: 380, margin: '0 auto' }}>
-              <Link href="/trips" style={{
-                display: 'block', width: '100%', textAlign: 'center',
-                padding: '13px 0', borderRadius: 999,
-                background: '#1F6FEB', color: '#fff',
-                fontWeight: 700, fontSize: 15, textDecoration: 'none',
-                boxShadow: '0 2px 16px rgba(31,111,235,0.45)',
-              }}>
-                Plan Road Trip
-              </Link>
-              <DashboardSpecialVisitButton />
-            </div>
+          {/* CTAs */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%', maxWidth: 340, margin: '0 auto' }}>
+            <Link href="/trips" style={{
+              display: 'block', width: '100%', textAlign: 'center',
+              padding: '9px 0', borderRadius: 999,
+              background: '#1F6FEB', color: '#fff',
+              fontWeight: 700, fontSize: 14, textDecoration: 'none',
+              boxShadow: '0 2px 12px rgba(31,111,235,0.35)',
+            }}>
+              Plan Road Trip
+            </Link>
+            <DashboardSpecialVisitButton />
           </div>
         </div>
 

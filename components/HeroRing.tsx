@@ -21,13 +21,13 @@ export default function HeroRing({ visited, total, dots }: Props) {
     return () => cancelAnimationFrame(id)
   }, [])
 
-  const size = 224
-  const sw   = 13
-  const r    = (size - sw * 2) / 2   // 99
+  const size = 140
+  const sw   = 8
+  const r    = (size - sw * 2) / 2   // 62
   const circ = 2 * Math.PI * r
   const pct  = total > 0 ? visited / total : 0
   const offset = circ - Math.max(pct, visited > 0 ? 0.02 : 0) * circ
-  const dotPx  = 18
+  const dotPx  = 12
   const dotHalf = dotPx / 2
 
   return (
@@ -94,12 +94,12 @@ export default function HeroRing({ visited, total, dots }: Props) {
         pointerEvents: 'none',
       }}>
         <span style={{
-          fontSize: 72, fontWeight: 900, color: '#E6EDF3',
-          lineHeight: 1, letterSpacing: '-4px',
+          fontSize: 44, fontWeight: 900, color: '#E6EDF3',
+          lineHeight: 1, letterSpacing: '-2px',
         }}>
           {visited}
         </span>
-        <span style={{ fontSize: 18, color: '#8B949E', fontWeight: 600, lineHeight: 1, marginTop: 4 }}>
+        <span style={{ fontSize: 13, color: '#8B949E', fontWeight: 600, lineHeight: 1, marginTop: 2 }}>
           / {total}
         </span>
       </div>

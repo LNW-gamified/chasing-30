@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import SpecialVisitForm from '@/components/SpecialVisitForm'
 import { useRouter } from 'next/navigation'
+import { ClipboardList } from 'lucide-react'
 
 export default function DashboardSpecialVisitButton() {
   const [open, setOpen] = useState(false)
@@ -14,14 +15,14 @@ export default function DashboardSpecialVisitButton() {
         onClick={() => setOpen(true)}
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          padding: '11px 0', borderRadius: 999, width: '80%',
+          padding: '8px 0', borderRadius: 999, width: '80%',
           background: 'transparent',
-          border: '1.5px solid rgba(201,209,217,0.25)',
-          color: '#8B949E', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+          border: '1.5px solid rgba(201,209,217,0.2)',
+          color: '#8B949E', fontWeight: 600, fontSize: 13, cursor: 'pointer',
           transition: 'border-color 0.2s, color 0.2s',
         }}
       >
-        📋 Log Special Visit
+        <ClipboardList size={14} /> Log Special Visit
       </button>
       {open && (
         <SpecialVisitForm
