@@ -126,13 +126,14 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
     : null
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Section header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         marginBottom: 14,
         paddingLeft: 14,
         borderLeft: '3px solid #F5A623',
+        flexShrink: 0,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 20, fontWeight: 800, color: '#E6EDF3', letterSpacing: '-0.3px' }}>
@@ -154,6 +155,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
           overflowX: 'auto', paddingBottom: 8,
           scrollSnapType: 'x mandatory',
           WebkitOverflowScrolling: 'touch',
+          flex: 1, alignContent: 'flex-start',
         }}
       >
         {games.map(g => {

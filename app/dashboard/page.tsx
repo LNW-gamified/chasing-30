@@ -226,70 +226,98 @@ export default async function DashboardPage() {
       <div style={{ maxWidth: 800, width: '100%', margin: '0 auto', padding: '1.5rem 1rem 2rem', overflowX: 'hidden', boxSizing: 'border-box' }}>
 
 
-        {/* ── HERO: The Chase ─────────────────────────────────────────── */}
+        {/* ── Hero row: The Chase (left) + Today at the Ballpark (right) ── */}
         <div
-          className="dash-card"
-          style={{
-            ...card,
-            padding: '20px 24px 18px',
-            marginBottom: SECTION_GAP,
-            textAlign: 'center',
-          }}
+          className={todayGames.length > 0 ? 'md:grid md:grid-cols-5 md:gap-4 md:items-stretch' : ''}
+          style={{ marginBottom: SECTION_GAP }}
         >
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(63,185,80,0.55)', textTransform: 'uppercase', letterSpacing: '0.22em', marginBottom: 10 }}>
-            THE CHASE
-          </div>
+          {/* Left column: The Chase */}
+          <div className={todayGames.length > 0 ? 'md:col-span-2 mb-4 md:mb-0' : ''}>
+            <div
+              className="dash-card"
+              style={{
+                ...card,
+                padding: '20px 20px 18px',
+                textAlign: 'center',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                boxSizing: 'border-box',
+              }}
+            >
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(63,185,80,0.55)', textTransform: 'uppercase', letterSpacing: '0.22em', marginBottom: 10 }}>
+                THE CHASE
+              </div>
 
-          {/* Hero ring */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-            <HeroRing visited={visitedCount} total={30} dots={ringDots} />
-          </div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+                <HeroRing visited={visitedCount} total={30} dots={ringDots} />
+              </div>
 
-          {/* Primary stat line */}
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#E6EDF3', marginBottom: 3 }}>
-            {visitedCount === 30 ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, justifyContent: 'center' }}>
-                <Trophy size={16} color="#F5A623" /> All 30 stadiums conquered
-              </span>
-            ) : visitedCount === 0
-              ? 'The journey begins with one ballpark'
-              : `${visitedCount} of 30 MLB stadiums visited`}
-          </div>
-          <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 10 }}>
-            {visitedCount === 30
-              ? 'Hall of Famer status achieved!'
-              : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} remaining on the tour`}
-          </div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#E6EDF3', marginBottom: 3 }}>
+                {visitedCount === 30 ? (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, justifyContent: 'center' }}>
+                    <Trophy size={16} color="#F5A623" /> All 30 stadiums conquered
+                  </span>
+                ) : visitedCount === 0
+                  ? 'The journey begins with one ballpark'
+                  : `${visitedCount} of 30 MLB stadiums visited`}
+              </div>
+              <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 10 }}>
+                {visitedCount === 30
+                  ? 'Hall of Famer status achieved!'
+                  : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} remaining on the tour`}
+              </div>
 
-          {/* Sub-stats row */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 14, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#3FB950', boxShadow: '0 0 5px rgba(63,185,80,0.5)' }}/>
-              <span style={{ fontSize: 12, color: '#3FB950', fontWeight: 700 }}>{pct}% complete</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#3FB950', boxShadow: '0 0 5px rgba(63,185,80,0.5)' }}/>
+                  <span style={{ fontSize: 12, color: '#3FB950', fontWeight: 700 }}>{pct}% complete</span>
+                </div>
+                <span style={{ color: '#21262D', fontSize: 14 }}>|</span>
+                <Link href="/milestones" style={{ fontSize: 12, color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
+                  {earnedMilestones.length} milestone{earnedMilestones.length !== 1 ? 's' : ''} earned →
+                </Link>
+                <span style={{ color: '#21262D', fontSize: 14 }}>|</span>
+                <Link href="/passport" style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textDecoration: 'none' }}>
+                  View Passport →
+                </Link>
+              </div>
+
+              {/* CTAs — pushed to bottom when column is taller than content */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%', maxWidth: 300, margin: 'auto auto 0' }}>
+                <Link href="/trips" style={{
+                  display: 'block', width: '100%', textAlign: 'center',
+                  padding: '9px 0', borderRadius: 999,
+                  background: '#1F6FEB', color: '#fff',
+                  fontWeight: 700, fontSize: 14, textDecoration: 'none',
+                  boxShadow: '0 2px 12px rgba(31,111,235,0.35)',
+                }}>
+                  Plan Road Trip
+                </Link>
+                <DashboardSpecialVisitButton />
+              </div>
             </div>
-            <span style={{ color: '#21262D', fontSize: 14 }}>|</span>
-            <Link href="/milestones" style={{ fontSize: 12, color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
-              {earnedMilestones.length} milestone{earnedMilestones.length !== 1 ? 's' : ''} earned →
-            </Link>
-            <span style={{ color: '#21262D', fontSize: 14 }}>|</span>
-            <Link href="/passport" style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textDecoration: 'none' }}>
-              View Passport →
-            </Link>
           </div>
 
-          {/* CTAs */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%', maxWidth: 340, margin: '0 auto' }}>
-            <Link href="/trips" style={{
-              display: 'block', width: '100%', textAlign: 'center',
-              padding: '9px 0', borderRadius: 999,
-              background: '#1F6FEB', color: '#fff',
-              fontWeight: 700, fontSize: 14, textDecoration: 'none',
-              boxShadow: '0 2px 12px rgba(31,111,235,0.35)',
-            }}>
-              Plan Road Trip
-            </Link>
-            <DashboardSpecialVisitButton />
-          </div>
+          {/* Right column: Today at the Ballpark */}
+          {todayGames.length > 0 && (
+            <div className="md:col-span-3">
+              <div
+                className="dash-card"
+                style={{
+                  ...card,
+                  padding: '20px 20px 16px',
+                  height: '100%',
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden',
+                }}
+              >
+                <TodayGames initialGames={todayGames} favAbbr={favAbbr} />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── Next Departure board ─────────────────────────────────────── */}
@@ -430,15 +458,8 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Today's Games ────────────────────────────────────────────── */}
+        {/* ── Favorite team picker + Standings ─────────────────────────── */}
         <FavoriteTeamPicker userId={userId} currentFavAbbr={favAbbr} />
-        {todayGames.length > 0 && (
-          <div style={{ marginBottom: SECTION_GAP }}>
-            <TodayGames initialGames={todayGames} favAbbr={favAbbr} />
-          </div>
-        )}
-
-        {/* ── Standings ────────────────────────────────────────────────── */}
         <Standings favAbbr={favAbbr} />
 
       </div>
