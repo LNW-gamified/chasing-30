@@ -55,10 +55,16 @@ async function fetchTodayGames(favAbbr: string | null): Promise<TodayGame[]> {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getFirstName(user: any): string {
-  const full = user?.user_metadata?.full_name ?? user?.user_metadata?.name
-  if (full) return (full as string).split(' ')[0]
-  const local = (user?.email ?? '').split('@')[0] as string
-  return local.charAt(0).toUpperCase() + local.slice(1)
+  const meta = user?.user_metadata
+  const full =
+    meta?.full_name ??
+    meta?.name ??
+    meta?.first_name ??
+    meta?.given_name ??
+    meta?.display_name ??
+    null
+  if (full) return (full as string).trim().split(/\s+/)[0]
+  return 'Your'
 }
 
 function fmtDate(d: string | null | undefined): string {
@@ -225,7 +231,7 @@ export default async function DashboardPage() {
             ⚾ CHASING 30
           </div>
           <h1 style={{ fontSize: 28, fontWeight: 900, color: '#E6EDF3', margin: '0 0 4px', letterSpacing: '-0.5px' }}>
-            {name ? `${name}'s Journey` : 'The Chase'}
+            {name === 'Your' ? 'Your Journey' : `${name}'s Journey`}
           </h1>
           <div style={{ fontSize: 13, color: '#8B949E' }}>
             Tracking your path through all 30 MLB ballparks
@@ -249,7 +255,7 @@ export default async function DashboardPage() {
           {/* Subtle grass stripe texture */}
           <div style={{
             position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
-            backgroundImage: 'repeating-linear-gradient(180deg, transparent, transparent 22px, rgba(63,185,80,0.025) 22px, rgba(63,185,80,0.025) 24px)',
+            backgroundImage: 'repeating-linear-gradient(180deg, transparent, transparent 20px, rgba(63,185,80,0.07) 20px, rgba(63,185,80,0.07) 22px)',
           }}/>
 
           {/* Rotating baseball seam — very faint watermark */}
@@ -313,12 +319,13 @@ export default async function DashboardPage() {
             </div>
 
             {/* CTAs */}
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, width: '100%', maxWidth: 380, margin: '0 auto' }}>
               <Link href="/trips" style={{
-                padding: '11px 28px', borderRadius: 999,
+                display: 'block', width: '100%', textAlign: 'center',
+                padding: '13px 0', borderRadius: 999,
                 background: '#1F6FEB', color: '#fff',
-                fontWeight: 700, fontSize: 14, textDecoration: 'none',
-                boxShadow: '0 2px 12px rgba(31,111,235,0.4)',
+                fontWeight: 700, fontSize: 15, textDecoration: 'none',
+                boxShadow: '0 2px 16px rgba(31,111,235,0.45)',
               }}>
                 Plan Road Trip
               </Link>
@@ -396,9 +403,9 @@ export default async function DashboardPage() {
               { Icon: CalendarDays, value: gamesAttended,        label: 'Games Witnessed',      valSize: 48, color: '#1F6FEB' },
               { Icon: ClipboardList, value: specialVisitCount,   label: 'Special Visits',        valSize: 48, color: '#1F6FEB' },
               { Icon: MapPin,        value: destinationsVisited,  label: 'Destinations',          valSize: 48, color: '#1F6FEB' },
-              { Icon: DollarSign,    value: formatCurrency(totalSpent), label: 'Total Spent',    valSize: 36, color: '#3FB950' },
-              { Icon: Trophy,        value: favDivision,          label: 'Fav Division',          valSize: favDivision.length > 6 ? 20 : 28, color: '#F5A623' },
-              { Icon: Eye,           value: mostSeenTeam,         label: 'Most Seen Team',        valSize: mostSeenTeam.length > 7 ? 18 : 26, color: '#F5A623' },
+              { Icon: DollarSign,    value: formatCurrency(totalSpent), label: 'Total Spent',    valSize: 44, color: '#3FB950' },
+              { Icon: Trophy,        value: favDivision,          label: 'Fav Division',          valSize: favDivision.length > 7 ? 22 : 30, color: '#F5A623' },
+              { Icon: Eye,           value: mostSeenTeam,         label: 'Most Seen Team',        valSize: mostSeenTeam.length > 7 ? 22 : 30, color: '#F5A623' },
             ] as const).map(({ Icon, value, label, valSize, color }) => (
               <div
                 key={label}
@@ -429,7 +436,7 @@ export default async function DashboardPage() {
         <div style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader label="The Circuit" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {divProgress.map(({ label, vis, total, teams }) => (
+            {divProgress.map(({ label, vis, total }) => (
               <div
                 key={label}
                 className="dash-card"
@@ -444,26 +451,6 @@ export default async function DashboardPage() {
                   }}>
                     {vis}<span style={{ color: '#484F58', fontWeight: 500 }}>/{total}</span>
                   </span>
-                </div>
-
-                {/* Team indicator dots */}
-                <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-                  {teams.map(({ abbr, visited: v }) => (
-                    <div key={abbr} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                      <span style={{
-                        fontSize: 9, fontWeight: 700,
-                        fontFamily: 'monospace', letterSpacing: '0.02em',
-                        color: v ? '#3FB950' : '#484F58',
-                      }}>
-                        {abbr}
-                      </span>
-                      <div style={{
-                        width: 7, height: 7, borderRadius: '50%',
-                        background: v ? '#3FB950' : '#21262D',
-                        boxShadow: v ? '0 0 5px rgba(63,185,80,0.55)' : 'none',
-                      }}/>
-                    </div>
-                  ))}
                 </div>
 
                 {/* Progress bar */}

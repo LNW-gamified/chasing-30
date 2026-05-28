@@ -21,9 +21,9 @@ export default function HeroRing({ visited, total, dots }: Props) {
     return () => cancelAnimationFrame(id)
   }, [])
 
-  const size = 200
-  const sw   = 12
-  const r    = (size - sw * 2) / 2   // 88
+  const size = 224
+  const sw   = 13
+  const r    = (size - sw * 2) / 2   // 99
   const circ = 2 * Math.PI * r
   const pct  = total > 0 ? visited / total : 0
   const offset = circ - Math.max(pct, visited > 0 ? 0.02 : 0) * circ
@@ -47,7 +47,7 @@ export default function HeroRing({ visited, total, dots }: Props) {
           strokeDashoffset={mounted ? offset : circ}
           style={{
             transition: 'stroke-dashoffset 1.4s cubic-bezier(0.22,1,0.36,1)',
-            filter: 'drop-shadow(0 0 10px rgba(63,185,80,0.45))',
+            filter: 'drop-shadow(0 0 14px rgba(63,185,80,0.75)) drop-shadow(0 0 32px rgba(63,185,80,0.35))',
           }}
         />
       </svg>
@@ -94,12 +94,12 @@ export default function HeroRing({ visited, total, dots }: Props) {
         pointerEvents: 'none',
       }}>
         <span style={{
-          fontSize: 68, fontWeight: 900, color: '#E6EDF3',
-          lineHeight: 1, letterSpacing: '-3px',
+          fontSize: 72, fontWeight: 900, color: '#E6EDF3',
+          lineHeight: 1, letterSpacing: '-4px',
         }}>
           {visited}
         </span>
-        <span style={{ fontSize: 17, color: '#8B949E', fontWeight: 600, lineHeight: 1, marginTop: 3 }}>
+        <span style={{ fontSize: 18, color: '#8B949E', fontWeight: 600, lineHeight: 1, marginTop: 4 }}>
           / {total}
         </span>
       </div>

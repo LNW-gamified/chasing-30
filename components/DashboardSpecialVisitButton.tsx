@@ -14,10 +14,11 @@ export default function DashboardSpecialVisitButton() {
         onClick={() => setOpen(true)}
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          padding: '10px 0', borderRadius: 999, width: '100%',
-          background: 'rgba(139,148,158,0.08)', border: '1px solid #30363D',
-          color: '#C9D1D9', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer',
-          marginTop: 8,
+          padding: '11px 0', borderRadius: 999, width: '80%',
+          background: 'transparent',
+          border: '1.5px solid rgba(201,209,217,0.25)',
+          color: '#8B949E', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+          transition: 'border-color 0.2s, color 0.2s',
         }}
       >
         📋 Log Special Visit
