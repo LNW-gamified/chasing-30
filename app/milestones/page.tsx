@@ -7,6 +7,7 @@ import type { Stadium, StadiumVisit, SpecialEvent, SpecialVisit, DestinationVisi
 import SpecialVisitButton from '@/components/SpecialVisitButton'
 import { DESTINATIONS, DESTINATION_GROUPS, destinationLocation } from '@/lib/destinations'
 import { RankBadge } from '@/components/RankBadge'
+import { Map, ClipboardList, Trophy } from 'lucide-react'
 
 export const RANK_TIERS = [
   { name: 'Sandlot Kid',       minPts: 0,    icon: '⚾', description: 'Where every legend begins' },
@@ -159,7 +160,9 @@ export default async function MilestonesPage() {
                 <div style={{ position: 'relative', height: 12, background: 'linear-gradient(90deg, #F5A623, #E8820C)', borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(245,166,35,0.3)' }}>
                   <div className="xp-bar-shine" />
                 </div>
-                <div style={{ fontSize: 12, color: '#3FB950', marginTop: 6, fontWeight: 700 }}>🏆 Max Rank Achieved</div>
+                <div style={{ fontSize: 12, color: '#3FB950', marginTop: 6, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                  <Trophy size={13} /> Max Rank Achieved
+                </div>
               </div>
             )}
 
@@ -202,7 +205,9 @@ export default async function MilestonesPage() {
               <div style={{ borderTop: '1px solid #30363D', paddingTop: 28, marginBottom: 28 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                   <div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: '#E6EDF3' }}>🗺️ Baseball Destinations</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#E6EDF3', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Map size={18} color="#8B949E" /> Baseball Destinations
+                    </div>
                     <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
                       {visitedCount}/{DESTINATIONS.length} visited
                     </div>
@@ -264,7 +269,9 @@ export default async function MilestonesPage() {
           <div style={{ borderTop: '1px solid #30363D', paddingTop: 28 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#E6EDF3' }}>📋 Special Visits</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#E6EDF3', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <ClipboardList size={18} color="#8B949E" /> Special Visits
+                </div>
                 <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
                   {(specialVisits ?? []).length > 0
                     ? `${(specialVisits ?? []).length} logged`

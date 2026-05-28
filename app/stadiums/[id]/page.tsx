@@ -10,7 +10,7 @@ import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber } from '@/types'
 import { fetchUpcomingHomeGames, type UpcomingGame } from '@/lib/mlb-api'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy, Share2 } from 'lucide-react'
+import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy, Share2, MessageSquare, Hash, Building2, Map } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 
 const GAME_EVENT_LABELS: Record<string, string> = {
@@ -61,10 +61,10 @@ const TEAM_GRADIENTS: Record<string, [string, string]> = {
 type MiniStadium = { id: string; league: string; division: string }
 type ActiveTab = 'games-attended' | 'upcoming-games' | 'stadium-info'
 
-function SectionTitle({ icon, children }: { icon: string; children: React.ReactNode }) {
+function SectionTitle({ Icon, children }: { Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-      <span style={{ fontSize: 18 }}>{icon}</span>
+      <Icon size={17} color="#8B949E" strokeWidth={2} />
       <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#E6EDF3' }}>{children}</h2>
     </div>
   )
@@ -555,7 +555,7 @@ export default function StadiumDetailPage() {
                 {/* Upcoming Home Games */}
                 {upcomingGames.length > 0 ? (
                   <section style={{ marginBottom: 32 }}>
-                    <SectionTitle icon="📅">Upcoming Home Games</SectionTitle>
+                    <SectionTitle Icon={CalendarDays}>Upcoming Home Games</SectionTitle>
                     <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #30363D' }}>
                       <div style={{ backgroundColor: '#0B1117' }}>
                         {upcomingGames.map((g, i) => {
@@ -599,7 +599,7 @@ export default function StadiumDetailPage() {
                   </section>
                 ) : (
                   <section style={{ marginBottom: 32 }}>
-                    <SectionTitle icon="📅">Upcoming Home Games</SectionTitle>
+                    <SectionTitle Icon={CalendarDays}>Upcoming Home Games</SectionTitle>
                     <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '24px 16px', textAlign: 'center', color: '#8B949E', fontSize: 14 }}>
                       No upcoming games found.{' '}
                       <a href="https://www.mlb.com/schedule" target="_blank" rel="noopener noreferrer" style={{ color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
@@ -611,7 +611,7 @@ export default function StadiumDetailPage() {
 
                 {/* Notes */}
                 <section style={{ marginBottom: 32 }}>
-                  <SectionTitle icon="💬">Notes</SectionTitle>
+                  <SectionTitle Icon={MessageSquare}>Notes</SectionTitle>
                   {editingNote ? (
                     <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: 16 }}>
                       <textarea
@@ -632,7 +632,7 @@ export default function StadiumDetailPage() {
                           disabled={savingNote}
                           style={{
                             padding: '9px 18px', borderRadius: 8, fontSize: 14, fontWeight: 700,
-                            backgroundColor: '#1F6FEB', color: '#0B1117', border: 'none', cursor: 'pointer',
+                            backgroundColor: teamColor, color: '#ffffff', border: 'none', cursor: 'pointer',
                             display: 'flex', alignItems: 'center', gap: 6,
                           }}
                         >
@@ -670,7 +670,7 @@ export default function StadiumDetailPage() {
                       <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 20 }}>Parking tips, best food spots, recommended seats...</div>
                       <button
                         onClick={() => { setNoteInput(''); setEditingNote(true) }}
-                        style={{ padding: '10px 22px', borderRadius: 10, fontSize: 14, fontWeight: 700, border: 'none', backgroundColor: '#1F6FEB', cursor: 'pointer', color: '#fff' }}
+                        style={{ padding: '10px 22px', borderRadius: 10, fontSize: 14, fontWeight: 700, border: 'none', backgroundColor: teamColor, cursor: 'pointer', color: '#fff' }}
                       >
                         Add a Note
                       </button>
@@ -686,7 +686,7 @@ export default function StadiumDetailPage() {
                 {/* Retired Numbers */}
                 {retiredNumbers.length > 0 && (
                   <section style={{ marginBottom: 32 }}>
-                    <SectionTitle icon="🔢">Retired Numbers</SectionTitle>
+                    <SectionTitle Icon={Hash}>Retired Numbers</SectionTitle>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                       {retiredNumbers.map(rn => (
                         <div key={rn.id} style={{
@@ -704,7 +704,7 @@ export default function StadiumDetailPage() {
 
                 {/* About */}
                 <section style={{ marginBottom: 32 }}>
-                  <SectionTitle icon="🏟️">About</SectionTitle>
+                  <SectionTitle Icon={Building2}>About</SectionTitle>
                   <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
                     {[
                       { label: 'Full Name', value: stadium.name },
@@ -729,7 +729,7 @@ export default function StadiumDetailPage() {
 
                 {/* Directions & Links */}
                 <section style={{ marginBottom: 32 }}>
-                  <SectionTitle icon="🗺️">Directions &amp; Links</SectionTitle>
+                  <SectionTitle Icon={Map}>Directions &amp; Links</SectionTitle>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <a
                       href={`https://maps.google.com/?q=${encodeURIComponent(stadium.name + ' ' + stadium.city + ' ' + stadium.state)}`}

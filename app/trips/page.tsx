@@ -7,7 +7,7 @@ import DestinationTripForm from '@/components/DestinationTripForm'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip } from '@/types'
 import Link from 'next/link'
-import { Plus, ChevronRight, Building2, MapPin } from 'lucide-react'
+import { Plus, ChevronRight, Building2, MapPin, Map, Plane } from 'lucide-react'
 import { getTeamLogoUrl } from '@/lib/team-logos'
 import TeamLogo from '@/components/TeamLogo'
 import { DESTINATION_BY_SLUG } from '@/lib/destinations'
@@ -239,8 +239,9 @@ export default function TripsPage() {
                 width: 52, height: 52, borderRadius: 14, flexShrink: 0,
                 backgroundColor: 'rgba(255,255,255,0.18)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 26,
-              }}>🗺️</div>
+              }}>
+                <Map size={26} color="rgba(255,255,255,0.9)" />
+              </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 18, fontWeight: 800, color: '#E6EDF3', marginBottom: 3 }}>
                   Road Trip Optimizer
@@ -271,7 +272,9 @@ export default function TripsPage() {
               backgroundColor: '#161B22', borderRadius: 16,
               border: '1px solid #30363D',
             }}>
-              <div style={{ fontSize: 52, marginBottom: 16 }}>✈️</div>
+              <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}>
+                <Plane size={52} color="#484F58" strokeWidth={1.2} />
+              </div>
               <div style={{ fontSize: 20, fontWeight: 700, color: '#E6EDF3', marginBottom: 8 }}>Your road trip starts here</div>
               <div style={{ fontSize: 15, color: '#8B949E', marginBottom: 24 }}>
                 Plan your first stadium road trip

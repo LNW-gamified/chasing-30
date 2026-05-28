@@ -6,7 +6,7 @@ import TeamLogo from '@/components/TeamLogo'
 import { formatDate } from '@/lib/utils'
 import type { Stadium } from '@/types'
 import Link from 'next/link'
-import { ArrowLeft, MapPin, Calendar, Zap, Clock, Plus, Loader2, AlertCircle, CheckCircle2, ChevronRight } from 'lucide-react'
+import { ArrowLeft, MapPin, Calendar, Zap, Clock, Plus, Loader2, AlertCircle, CheckCircle2, ChevronRight, Search, Car } from 'lucide-react'
 
 const MONTHS = [
   'January','February','March','April','May','June',
@@ -419,7 +419,9 @@ export default function OptimizerPage() {
         <div>
           {results.length === 0 ? (
             <div className="card p-10 text-center">
-              <div className="text-4xl mb-3">🔍</div>
+              <div className="flex justify-center mb-3">
+                <Search size={40} color="#484F58" strokeWidth={1.5} />
+              </div>
               <div className="text-lg font-semibold mb-1" style={{ color: '#8B949E' }}>No windows found</div>
               <div className="text-base" style={{ color: '#8B949E' }}>
                 Try expanding your date range, increasing max days, or selecting fewer teams.
@@ -529,7 +531,7 @@ export default function OptimizerPage() {
                                 return (
                                   <div className="flex items-center gap-1.5 py-1.5 pl-11" style={{ color: '#6E7681', fontSize: 12 }}>
                                     <div className="border-l border-dashed mr-1" style={{ borderColor: 'rgba(255,255,255,0.1)', height: 16 }} />
-                                    <span>🚗</span>
+                                    <Car size={12} style={{ flexShrink: 0 }} />
                                     <span>{driveMi.toLocaleString()} mi · ~{formatDriveTime(driveMin)}</span>
                                     <span style={{ color: 'rgba(255,255,255,0.15)' }}>·</span>
                                     <span>{gapDays} day{gapDays !== 1 ? 's' : ''} gap</span>

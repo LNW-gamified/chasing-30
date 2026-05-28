@@ -578,15 +578,15 @@ export default function TripDetailPage() {
                               href={seatGeekUrl}
                               target="_blank" rel="noopener noreferrer"
                               style={{
-                                display: 'inline-flex', alignItems: 'center', gap: 4,
-                                fontSize: 12, fontWeight: 600, color: '#1F6FEB',
+                                display: 'inline-flex', alignItems: 'center', gap: 5,
+                                fontSize: 12, fontWeight: 600, color: accentColor,
                                 textDecoration: 'none',
                                 padding: '5px 10px', borderRadius: 8,
-                                backgroundColor: 'rgba(31,111,235,0.1)',
-                                border: '1px solid rgba(31,111,235,0.2)',
+                                backgroundColor: `${accentColor}18`,
+                                border: `1px solid ${accentColor}40`,
                               }}
                             >
-                              🎫 Buy Tickets
+                              <Ticket size={12} /> Buy Tickets
                             </a>
                           )}
                         </div>
@@ -782,7 +782,9 @@ export default function TripDetailPage() {
               border: '1px solid #30363D', padding: '28px 20px',
               marginBottom: 20, textAlign: 'center',
             }}>
-              <div style={{ fontSize: 32, marginBottom: 10 }}>💰</div>
+              <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'center' }}>
+                <DollarSign size={32} color="#F5A623" strokeWidth={1.5} />
+              </div>
               <div style={{ fontSize: 16, fontWeight: 700, color: '#E6EDF3', marginBottom: 6 }}>
                 No budget added yet
               </div>
