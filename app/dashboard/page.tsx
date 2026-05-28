@@ -3,7 +3,7 @@ import { MILESTONES } from '@/lib/milestones'
 import type { Stadium, StadiumVisit, SpecialEvent, SpecialVisit, Trip } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
-import { CalendarDays, ClipboardList, MapPin, DollarSign, Trophy, Eye, CircleDot } from 'lucide-react'
+import { CalendarDays, ClipboardList, MapPin, DollarSign, Trophy, Eye } from 'lucide-react'
 import TodayGames, { type TodayGame } from '@/components/TodayGames'
 import Standings from '@/components/Standings'
 import FavoriteTeamPicker from '@/components/FavoriteTeamPicker'
@@ -225,18 +225,6 @@ export default async function DashboardPage() {
     <div style={{ color: '#E6EDF3', overflowX: 'hidden', maxWidth: '100%' }}>
       <div style={{ maxWidth: 800, width: '100%', margin: '0 auto', padding: '1.5rem 1rem 2rem', overflowX: 'hidden', boxSizing: 'border-box' }}>
 
-        {/* ── Page title ──────────────────────────────────────────────── */}
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#484F58', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}>
-            <CircleDot size={11} /> CHASING 30
-          </div>
-          <h1 style={{ fontSize: 28, fontWeight: 900, color: '#E6EDF3', margin: '0 0 4px', letterSpacing: '-0.5px' }}>
-            {name === 'Your' ? 'Your Journey' : `${name}'s Journey`}
-          </h1>
-          <div style={{ fontSize: 13, color: '#8B949E' }}>
-            Tracking your path through all 30 MLB ballparks
-          </div>
-        </div>
 
         {/* ── HERO: The Chase ─────────────────────────────────────────── */}
         <div
