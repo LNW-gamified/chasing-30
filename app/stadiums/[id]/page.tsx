@@ -10,7 +10,7 @@ import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber } from '@/types'
 import { fetchUpcomingHomeGames, type UpcomingGame } from '@/lib/mlb-api'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy } from 'lucide-react'
+import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy, Share2 } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 
 const GAME_EVENT_LABELS: Record<string, string> = {
@@ -26,6 +26,18 @@ const GAME_EVENT_LABELS: Record<string, string> = {
   grand_slam:          '💥 Grand slam',
   cycle:               '🔄 Hit for the cycle',
   milestone_hr:        '🏆 Milestone HR',
+}
+
+// Primary button color per team — recognizable brand color that reads with white text
+const TEAM_BTN_COLOR: Record<string, string> = {
+  ARI: '#A71930', ATL: '#CE1141', BAL: '#DF4601', BOS: '#BD3039',
+  CHC: '#0E3386', CWS: '#27251F', CIN: '#C6011F', CLE: '#00385D',
+  COL: '#33006F', DET: '#0C2C56', HOU: '#EB6E1F', KC:  '#004687',
+  LAA: '#BA0021', LAD: '#005A9C', MIA: '#00A3E0', MIL: '#12284B',
+  MIN: '#002B5C', NYM: '#002D72', NYY: '#003087', OAK: '#003831',
+  PHI: '#E81828', PIT: '#27251F', SD:  '#2F241D', SF:  '#FD5A1E',
+  SEA: '#005C5C', STL: '#C41E3A', TB:  '#092C5C', TEX: '#003278',
+  TOR: '#134A8E', WSH: '#AB0003',
 }
 
 const TEAM_GRADIENTS: Record<string, [string, string]> = {
@@ -226,8 +238,9 @@ export default function StadiumDetailPage() {
     )
   }
 
-  const visited = visits.length > 0
-  const colors = TEAM_GRADIENTS[stadium.abbreviation] ?? ['#0B1117', '#161B22']
+  const visited    = visits.length > 0
+  const colors     = TEAM_GRADIENTS[stadium.abbreviation] ?? ['#0B1117', '#161B22']
+  const teamColor  = TEAM_BTN_COLOR[stadium.abbreviation] ?? '#1F6FEB'
 
   const TABS: { key: ActiveTab; label: string }[] = [
     { key: 'games-attended',  label: 'Games Witnessed'  },
@@ -273,6 +286,21 @@ export default function StadiumDetailPage() {
               <ArrowLeft size={15} /> Back
             </Link>
           </div>
+          {/* Share icon — top right corner of hero */}
+          <button
+            onClick={shareStadium}
+            aria-label="Share this stadium"
+            style={{
+              position: 'absolute', top: 16, right: 16, zIndex: 10,
+              width: 38, height: 38, borderRadius: '50%',
+              backgroundColor: 'rgba(0,0,0,0.42)', backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer',
+            }}
+          >
+            <Share2 size={16} color="#ffffff" />
+          </button>
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 16px 18px', zIndex: 10 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.75)', marginBottom: 4 }}>
               {stadium.team}
@@ -333,37 +361,27 @@ export default function StadiumDetailPage() {
                     </div>
                   </div>
                 </div>
-                {/* Primary action */}
+                {/* Secondary action — Log Game (outlined) */}
                 <button
                   onClick={openAdd}
                   style={{
-                    width: '100%', padding: '13px', borderRadius: 12, fontSize: 15, fontWeight: 700,
-                    backgroundColor: '#1F6FEB', color: '#ffffff', border: 'none', cursor: 'pointer',
+                    width: '100%', padding: '11px', borderRadius: 12, fontSize: 14, fontWeight: 700,
+                    backgroundColor: 'transparent', color: teamColor,
+                    border: `1.5px solid ${teamColor}`,
+                    cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                    marginBottom: 8,
+                    marginBottom: 6,
                   }}
                 >
-                  <Plus size={16} /> Log Game
+                  <Plus size={15} /> Log Game
                 </button>
-                {/* Secondary actions */}
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    onClick={shareStadium}
-                    style={{
-                      flex: 1, padding: '9px', borderRadius: 10, fontSize: 13, fontWeight: 600,
-                      border: '1.5px solid #30363D', background: '#1C2430', cursor: 'pointer', color: '#8B949E',
-                    }}
-                  >
-                    Share
-                  </button>
+                {/* Undo as text link */}
+                <div style={{ textAlign: 'center' }}>
                   <button
                     onClick={undoLastVisit}
-                    style={{
-                      flex: 1, padding: '9px', borderRadius: 10, fontSize: 13, fontWeight: 600,
-                      border: '1.5px solid rgba(248,81,73,0.25)', background: 'rgba(248,81,73,0.07)', cursor: 'pointer', color: '#F85149',
-                    }}
+                    style={{ background: 'none', border: 'none', padding: '4px 8px', fontSize: 12, color: '#8B949E', cursor: 'pointer', textDecoration: 'underline' }}
                   >
-                    Undo Last
+                    Undo last visit
                   </button>
                 </div>
               </div>
@@ -373,9 +391,10 @@ export default function StadiumDetailPage() {
                   onClick={openAdd}
                   style={{
                     width: '100%', padding: '15px', borderRadius: 12, fontSize: 17, fontWeight: 800,
-                    backgroundColor: '#1F6FEB', color: '#ffffff', border: 'none', cursor: 'pointer',
+                    backgroundColor: teamColor, color: '#ffffff', border: 'none', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     letterSpacing: '-0.2px',
+                    boxShadow: `0 4px 16px ${teamColor}55`,
                   }}
                 >
                   ✓ Mark as Visited
@@ -416,7 +435,11 @@ export default function StadiumDetailPage() {
             {activeTab === 'games-attended' && (
               <section>
                 {visits.length === 0 ? (
-                  <div style={{ backgroundColor: '#161B22', borderRadius: 14, padding: '48px 24px', textAlign: 'center' }}>
+                  <div style={{
+                    background: `linear-gradient(160deg, ${colors[0]}22 0%, ${colors[1]}18 100%), #161B22`,
+                    borderRadius: 14, padding: '48px 24px', textAlign: 'center',
+                    border: `1px solid ${teamColor}22`,
+                  }}>
                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
                       <TeamLogo abbreviation={stadium.abbreviation} size={64} />
                     </div>
@@ -430,8 +453,9 @@ export default function StadiumDetailPage() {
                       onClick={openAdd}
                       style={{
                         padding: '11px 24px', borderRadius: 10, fontSize: 14, fontWeight: 700,
-                        backgroundColor: '#1F6FEB', color: '#ffffff', border: 'none', cursor: 'pointer',
+                        backgroundColor: teamColor, color: '#ffffff', border: 'none', cursor: 'pointer',
                         display: 'inline-flex', alignItems: 'center', gap: 6,
+                        boxShadow: `0 3px 12px ${teamColor}44`,
                       }}
                     >
                       <Plus size={14} /> Log Game
@@ -484,8 +508,9 @@ export default function StadiumDetailPage() {
                                 {hasScore ? (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1 }}>
                                     <div style={{
-                                      width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
-                                      backgroundColor: homeWon ? '#3FB950' : '#484F58',
+                                      width: 12, height: 12, borderRadius: '50%', flexShrink: 0,
+                                      backgroundColor: homeWon ? '#3FB950' : '#F85149',
+                                      boxShadow: homeWon ? '0 0 5px #3FB95088' : '0 0 5px #F8514988',
                                     }} />
                                     <div style={{ fontSize: 13, fontWeight: 900, color: '#ffffff', lineHeight: 1.2 }}>
                                       {visit.visiting_team} {visit.away_runs} · {visit.home_team} {visit.home_runs}
