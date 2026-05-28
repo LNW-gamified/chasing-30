@@ -316,18 +316,36 @@ export default function TripsPage() {
                       const pct        = est > 0 && hasActual ? Math.min((actual / est) * 100, 100) : 0
                       const overBudget = hasActual && actual > est
 
+                      const isUndated = !trip.start_date && !trip.end_date && !trip.trip_date
                       const destInfo = isDestination && (trip as any).destination?.slug
                         ? DESTINATION_BY_SLUG[(trip as any).destination.slug]
                         : null
                       const heroGrad = isDestination && destInfo
                         ? `linear-gradient(135deg, ${destInfo.heroColor[0]}, ${destInfo.heroColor[1]})`
-                        : heroGradient(trip.status, abbrs)
+                        : isUndated
+                          ? 'linear-gradient(135deg, #1E2530 0%, #1A1F2B 100%)'
+                          : heroGradient(trip.status, abbrs)
 
                       return (
                         <div key={trip.id} style={{
                           backgroundColor: '#161B22', borderRadius: 16,
-                          border: '1px solid #30363D', overflow: 'hidden',
+                          border: isUndated ? '1.5px dashed rgba(139,148,158,0.35)' : '1px solid #30363D',
+                          overflow: 'hidden',
                         }}>
+                          {/* Destination type header */}
+                          {isDestination && (
+                            <div style={{
+                              background: 'linear-gradient(90deg, rgba(245,166,35,0.18) 0%, rgba(245,166,35,0.06) 100%)',
+                              borderBottom: '1px solid rgba(245,166,35,0.18)',
+                              padding: '8px 16px',
+                              display: 'flex', alignItems: 'center', gap: 7,
+                            }}>
+                              <MapPin size={12} color="#F5A623" />
+                              <span style={{ fontSize: 11, fontWeight: 700, color: '#F5A623', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                                Baseball Destination
+                              </span>
+                            </div>
+                          )}
                           {/* Hero */}
                           <div style={{
                             position: 'relative', height: 140,
@@ -356,13 +374,8 @@ export default function TripsPage() {
                               position: 'absolute', bottom: 13, left: 16,
                               right: (isDestination || abbrs.length > 0) ? 80 : 16,
                             }}>
-                              {isDestination && (
-                                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 2 }}>
-                                  Baseball Destination
-                                </div>
-                              )}
                               <div style={{
-                                fontSize: 19, fontWeight: 800, color: '#ffffff', lineHeight: 1.2,
+                                fontSize: 23, fontWeight: 800, color: '#ffffff', lineHeight: 1.2,
                                 textShadow: '0 1px 6px rgba(0,0,0,0.5)',
                               }}>
                                 {trip.name}
@@ -422,17 +435,27 @@ export default function TripsPage() {
                               </div>
                             )}
 
-                            {/* Countdown badge */}
-                            {trip.status === 'planned' && (() => {
+                            {/* Undated pill */}
+                            {isUndated && (
+                              <div style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 4,
+                                padding: '3px 10px', borderRadius: 20, marginBottom: 10,
+                                backgroundColor: 'rgba(139,148,158,0.1)',
+                                color: '#8B949E', fontSize: 11, fontWeight: 600,
+                                border: '1px solid rgba(139,148,158,0.2)',
+                              }}>
+                                📋 No date set
+                              </div>
+                            )}
+                            {/* Countdown */}
+                            {trip.status === 'planned' && !isUndated && (() => {
                               const d = daysUntil(trip.start_date)
                               if (d === null || d < 0) return null
                               return (
                                 <div style={{
-                                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                                  padding: '3px 10px', borderRadius: 20, marginBottom: 10,
-                                  backgroundColor: d === 0 ? 'rgba(63,185,80,0.12)' : 'rgba(245,166,35,0.1)',
+                                  fontSize: 16, fontWeight: 800, marginBottom: 10,
                                   color: d === 0 ? '#3FB950' : '#F5A623',
-                                  fontSize: 12, fontWeight: 700,
+                                  letterSpacing: '-0.3px',
                                 }}>
                                   {d === 0 ? '🎉 Today!' : `📅 ${d} day${d !== 1 ? 's' : ''} away`}
                                 </div>
