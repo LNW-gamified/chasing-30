@@ -43,33 +43,7 @@ export default async function PassportPage() {
   const passportNo = 'USR-' + uid.replace(/-/g, '').slice(0, 8).toUpperCase()
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#080E18', color: '#E6EDF3' }}>
-      {/* Page header */}
-      <div style={{
-        padding: '24px 16px 20px',
-        borderBottom: '1px solid rgba(197,164,126,0.1)',
-        background: 'linear-gradient(180deg, rgba(197,164,126,0.05) 0%, transparent 100%)',
-        textAlign: 'center',
-      }}>
-        <div style={{
-          fontFamily: 'monospace', fontSize: 9, fontWeight: 700,
-          color: 'rgba(197,164,126,0.55)', letterSpacing: '0.24em',
-          textTransform: 'uppercase', marginBottom: 4,
-        }}>
-          ◈ OFFICIAL DOCUMENT
-        </div>
-        <h1 style={{
-          fontSize: 22, fontWeight: 900, color: '#E6C99A',
-          margin: '0 0 4px', letterSpacing: '0.02em',
-        }}>
-          Stadium Passport
-        </h1>
-        <p style={{ fontSize: 13, color: 'rgba(197,164,126,0.5)', margin: 0 }}>
-          {earnedCount} of 30 stadiums visited
-        </p>
-      </div>
-
-      {/* Main content */}
+    <div style={{ minHeight: '100vh', backgroundColor: '#0B1117', color: '#E6EDF3', paddingTop: 24 }}>
       <PassportGrid
         stamps={stamps}
         userName={userName}
