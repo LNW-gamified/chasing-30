@@ -4,14 +4,14 @@ import { useState, useEffect, useCallback } from 'react'
 import TeamLogo from '@/components/TeamLogo'
 
 export interface TodayGame {
-  gamePk:    number
-  gameDate:  string
-  awayAbbr:  string
-  homeAbbr:  string
-  awayScore: number | null
-  homeScore: number | null
-  isLive:    boolean
-  isFinal:   boolean
+  gamePk:     number
+  gameDate:   string
+  awayAbbr:   string
+  homeAbbr:   string
+  awayScore:  number | null
+  homeScore:  number | null
+  isLive:     boolean
+  isFinal:    boolean
   isFavorite: boolean
 }
 
@@ -20,7 +20,6 @@ interface Props {
   favAbbr:      string | null
 }
 
-// Home-team primary color for subtle card gradient
 const TEAM_HEX: Record<string, string> = {
   ARI:'#A71930', ATL:'#CE1141', BAL:'#DF4601', BOS:'#BD3039',
   CHC:'#0E3386', CWS:'#27251F', CIN:'#C6011F', CLE:'#00385D',
@@ -32,8 +31,14 @@ const TEAM_HEX: Record<string, string> = {
   TOR:'#134A8E', WSH:'#AB0003',
 }
 
-function favFirst(games: TodayGame[]): TodayGame[] {
-  return [...games].sort((a, b) => (b.isFavorite ? 1 : 0) - (a.isFavorite ? 1 : 0))
+// Sort: favorite first, then LIVE > FINAL > PREVIEW within each group
+function sortGames(games: TodayGame[]): TodayGame[] {
+  const rank = (g: TodayGame) => {
+    const favOffset   = g.isFavorite ? 0 : 100
+    const statusRank  = g.isLive ? 0 : g.isFinal ? 1 : 2
+    return favOffset + statusRank
+  }
+  return [...games].sort((a, b) => rank(a) - rank(b))
 }
 
 function inPollWindow(): boolean {
@@ -55,8 +60,7 @@ function StatusBadge({ isLive, isFinal }: { isLive: boolean; isFinal: boolean })
     <div style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       padding: '3px 10px', borderRadius: 20,
-      background: 'rgba(248,81,73,0.18)',
-      border: '1px solid rgba(248,81,73,0.4)',
+      background: 'rgba(248,81,73,0.18)', border: '1px solid rgba(248,81,73,0.4)',
     }}>
       <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#F85149' }} className="animate-pulse"/>
       <span style={{ fontSize: 11, fontWeight: 700, color: '#F85149', letterSpacing: '0.08em' }}>LIVE</span>
@@ -66,8 +70,7 @@ function StatusBadge({ isLive, isFinal }: { isLive: boolean; isFinal: boolean })
     <div style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       padding: '3px 10px', borderRadius: 20,
-      background: 'rgba(230,237,243,0.1)',
-      border: '1px solid rgba(230,237,243,0.2)',
+      background: 'rgba(230,237,243,0.1)', border: '1px solid rgba(230,237,243,0.2)',
     }}>
       <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', letterSpacing: '0.08em' }}>FINAL</span>
     </div>
@@ -76,8 +79,7 @@ function StatusBadge({ isLive, isFinal }: { isLive: boolean; isFinal: boolean })
     <div style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       padding: '3px 10px', borderRadius: 20,
-      background: 'rgba(31,111,235,0.15)',
-      border: '1px solid rgba(31,111,235,0.35)',
+      background: 'rgba(31,111,235,0.15)', border: '1px solid rgba(31,111,235,0.35)',
     }}>
       <span style={{ fontSize: 11, fontWeight: 700, color: '#58A6FF', letterSpacing: '0.08em' }}>PREVIEW</span>
     </div>
@@ -85,7 +87,7 @@ function StatusBadge({ isLive, isFinal }: { isLive: boolean; isFinal: boolean })
 }
 
 export default function TodayGames({ initialGames, favAbbr }: Props) {
-  const [games, setGames]             = useState<TodayGame[]>(() => favFirst(initialGames))
+  const [games, setGames]             = useState<TodayGame[]>(() => sortGames(initialGames))
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [secsAgo, setSecsAgo]         = useState(0)
 
@@ -99,7 +101,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
         ...g,
         isFavorite: favAbbr !== null && (g.awayAbbr === favAbbr || g.homeAbbr === favAbbr),
       }))
-      setGames(favFirst(withFav))
+      setGames(sortGames(withFav))
       setLastUpdated(new Date())
       setSecsAgo(0)
     } catch { /* keep existing data */ }
@@ -127,19 +129,18 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Section header */}
+
+      {/* ── Section header ─────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 14,
-        paddingLeft: 14,
-        borderLeft: '3px solid #F5A623',
-        flexShrink: 0,
+        marginBottom: 12, paddingLeft: 14,
+        borderLeft: '3px solid #F5A623', flexShrink: 0,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 20, fontWeight: 800, color: '#E6EDF3', letterSpacing: '-0.3px' }}>
+          <span style={{ fontSize: 18, fontWeight: 800, color: '#E6EDF3', letterSpacing: '-0.3px' }}>
             Today at the Ballpark
           </span>
-          <div className="animate-pulse" style={{ width: 8, height: 8, backgroundColor: '#F85149', borderRadius: '50%' }}/>
+          <div className="animate-pulse" style={{ width: 7, height: 7, backgroundColor: '#F85149', borderRadius: '50%' }}/>
           <span style={{ fontSize: 12, color: '#8B949E' }}>{games.length} games</span>
         </div>
         {updatedLabel && (
@@ -147,11 +148,11 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
         )}
       </div>
 
-      {/* Horizontal scroll card row */}
+      {/* ── Mobile: horizontal scroll (unchanged) ──────────────── */}
       <div
-        className="no-scrollbar"
+        className="flex md:hidden no-scrollbar"
         style={{
-          display: 'flex', gap: 14, flexWrap: 'nowrap',
+          gap: 14, flexWrap: 'nowrap',
           overflowX: 'auto', paddingBottom: 8,
           scrollSnapType: 'x mandatory',
           WebkitOverflowScrolling: 'touch',
@@ -163,70 +164,97 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
           const hasScore  = (g.isLive || g.isFinal) && g.awayScore !== null
           const awayWin   = hasScore && g.awayScore! > g.homeScore!
           const homeWin   = hasScore && g.homeScore! > g.awayScore!
-
           return (
             <div
               key={g.gamePk}
               style={{
-                minWidth: 210, flexShrink: 0,
-                scrollSnapAlign: 'start',
-                borderRadius: 14,
-                padding: '16px 18px 14px',
+                minWidth: 210, flexShrink: 0, scrollSnapAlign: 'start',
+                borderRadius: 14, padding: '16px 18px 14px',
                 border: g.isFavorite ? '2px solid #1F6FEB' : '1px solid #21262D',
-                boxShadow: g.isFavorite
-                  ? '0 4px 20px rgba(31,111,235,0.25)'
-                  : '0 4px 16px rgba(0,0,0,0.4)',
+                boxShadow: g.isFavorite ? '0 4px 20px rgba(31,111,235,0.25)' : '0 4px 16px rgba(0,0,0,0.4)',
                 position: 'relative', overflow: 'hidden',
-                // Team color gradient on background
                 background: `linear-gradient(135deg, ${homeColor}20 0%, #161B22 50%)`,
               }}
             >
-              {/* Fav indicator line */}
+              {g.isFavorite && (
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: '#1F6FEB' }}/>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+                  <TeamLogo abbreviation={g.awayAbbr} size={40}/>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: awayWin ? '#E6EDF3' : '#8B949E' }}>{g.awayAbbr}</span>
+                </div>
+                <div style={{ textAlign: 'center', flex: 1, padding: '0 8px' }}>
+                  {hasScore ? (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 36, fontWeight: 900, lineHeight: 1, color: awayWin ? '#E6EDF3' : '#8B949E', letterSpacing: '-1px' }}>{g.awayScore}</span>
+                      <span style={{ fontSize: 18, color: '#30363D', fontWeight: 300 }}>–</span>
+                      <span style={{ fontSize: 36, fontWeight: 900, lineHeight: 1, color: homeWin ? '#E6EDF3' : '#8B949E', letterSpacing: '-1px' }}>{g.homeScore}</span>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 600, whiteSpace: 'nowrap' }}>{fmtTime(g.gameDate)}</div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+                  <TeamLogo abbreviation={g.homeAbbr} size={40}/>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: homeWin ? '#E6EDF3' : '#8B949E' }}>{g.homeAbbr}</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <StatusBadge isLive={g.isLive} isFinal={g.isFinal}/>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* ── Desktop: 2×2 grid with vertical scroll ─────────────── */}
+      <div
+        className="hidden md:grid md:grid-cols-2 md:gap-2"
+        style={{ flex: 1, overflowY: 'auto', alignContent: 'start', paddingRight: 2 }}
+      >
+        {games.map(g => {
+          const homeColor = TEAM_HEX[g.homeAbbr] ?? '#1C2430'
+          const hasScore  = (g.isLive || g.isFinal) && g.awayScore !== null
+          const awayWin   = hasScore && g.awayScore! > g.homeScore!
+          const homeWin   = hasScore && g.homeScore! > g.awayScore!
+          return (
+            <div
+              key={g.gamePk}
+              style={{
+                borderRadius: 12, padding: '10px 12px',
+                border: g.isFavorite ? '1.5px solid #1F6FEB' : '1px solid #21262D',
+                position: 'relative', overflow: 'hidden',
+                background: `linear-gradient(135deg, ${homeColor}22 0%, #1C2430 65%)`,
+                boxShadow: g.isFavorite ? '0 2px 12px rgba(31,111,235,0.2)' : 'none',
+              }}
+            >
               {g.isFavorite && (
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: '#1F6FEB' }}/>
               )}
 
-              {/* Teams row */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                {/* Away team */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-                  <TeamLogo abbreviation={g.awayAbbr} size={40}/>
-                  <span style={{
-                    fontSize: 12, fontWeight: 700, color: awayWin ? '#E6EDF3' : '#8B949E',
-                    letterSpacing: '0.02em',
-                  }}>{g.awayAbbr}</span>
+              {/* Teams + score */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                  <TeamLogo abbreviation={g.awayAbbr} size={30}/>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: awayWin ? '#E6EDF3' : '#8B949E' }}>{g.awayAbbr}</span>
                 </div>
 
-                {/* Score / time */}
-                <div style={{ textAlign: 'center', flex: 1, padding: '0 8px' }}>
+                <div style={{ textAlign: 'center', flex: 1, padding: '0 6px' }}>
                   {hasScore ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                      <span style={{
-                        fontSize: 36, fontWeight: 900, lineHeight: 1,
-                        color: awayWin ? '#E6EDF3' : '#8B949E',
-                        letterSpacing: '-1px',
-                      }}>{g.awayScore}</span>
-                      <span style={{ fontSize: 18, color: '#30363D', fontWeight: 300 }}>–</span>
-                      <span style={{
-                        fontSize: 36, fontWeight: 900, lineHeight: 1,
-                        color: homeWin ? '#E6EDF3' : '#8B949E',
-                        letterSpacing: '-1px',
-                      }}>{g.homeScore}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                      <span style={{ fontSize: 22, fontWeight: 900, lineHeight: 1, color: awayWin ? '#E6EDF3' : '#8B949E', letterSpacing: '-1px' }}>{g.awayScore}</span>
+                      <span style={{ fontSize: 14, color: '#30363D', fontWeight: 300 }}>–</span>
+                      <span style={{ fontSize: 22, fontWeight: 900, lineHeight: 1, color: homeWin ? '#E6EDF3' : '#8B949E', letterSpacing: '-1px' }}>{g.homeScore}</span>
                     </div>
                   ) : (
-                    <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                      {fmtTime(g.gameDate)}
-                    </div>
+                    <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 600, whiteSpace: 'nowrap' }}>{fmtTime(g.gameDate)}</div>
                   )}
                 </div>
 
-                {/* Home team */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-                  <TeamLogo abbreviation={g.homeAbbr} size={40}/>
-                  <span style={{
-                    fontSize: 12, fontWeight: 700, color: homeWin ? '#E6EDF3' : '#8B949E',
-                    letterSpacing: '0.02em',
-                  }}>{g.homeAbbr}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                  <TeamLogo abbreviation={g.homeAbbr} size={30}/>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: homeWin ? '#E6EDF3' : '#8B949E' }}>{g.homeAbbr}</span>
                 </div>
               </div>
 
@@ -238,6 +266,16 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
           )
         })}
       </div>
+
+      {/* Scroll hint — desktop only, shown when > 4 games */}
+      {games.length > 4 && (
+        <div
+          className="hidden md:block"
+          style={{ textAlign: 'center', fontSize: 11, color: '#484F58', paddingTop: 6, flexShrink: 0 }}
+        >
+          ↓ {games.length - 4} more game{games.length - 4 !== 1 ? 's' : ''}
+        </div>
+      )}
     </div>
   )
 }
