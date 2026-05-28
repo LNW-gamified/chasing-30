@@ -49,38 +49,38 @@ function MapInitializer({ mapRef }: { mapRef: React.MutableRefObject<L.Map | nul
 }
 
 // ── Special location pin icon (5-pointed star) ──────────────────────────────
-// Star polygon points centered at (22,22) on a 44×44 canvas,
-// outer radius 19, inner radius 8, starting at top.
+// Star polygon points centered at (28,28) on a 56×56 canvas,
+// outer radius 24, inner radius 10, starting at top.
 
-const STAR_POINTS = '22,3 26.7,15.5 40.6,16.1 29.6,24.5 33.2,37.4 22,30 10.8,37.4 14.4,24.5 3.4,16.1 17.3,15.5'
+const STAR_POINTS = '28,4 33.88,19.91 50.83,20.58 37.51,31.09 42.11,47.43 28,38 13.89,47.43 18.49,31.09 5.17,20.58 22.12,19.91'
 
 function makeSpecialLocationIcon(icon: string, visited: boolean): L.DivIcon {
-  const stroke = visited ? '#F5A623' : 'rgba(245,166,35,0.55)'
-  const fill   = visited ? 'rgba(245,166,35,0.22)' : 'rgba(20,20,30,0.88)'
+  const stroke = '#F5A623'  // fully opaque gold on both states — visible on dark map
+  const fill   = visited ? 'rgba(245,166,35,0.28)' : 'rgba(245,166,35,0.10)'
   const badge  = visited
-    ? `<div style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#F5A623;border:2px solid #0B1117;display:flex;align-items:center;justify-content:center;font-size:9px;color:#000;font-weight:900;line-height:1;">✓</div>`
+    ? `<div style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#F5A623;border:2px solid #0B1117;display:flex;align-items:center;justify-content:center;font-size:10px;color:#000;font-weight:900;line-height:1;">✓</div>`
     : ''
   return L.divIcon({
     html: `
-      <div style="position:relative;width:44px;height:44px;">
-        <svg width="44" height="44" viewBox="0 0 44 44" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
+      <div style="position:relative;width:56px;height:56px;">
+        <svg width="56" height="56" viewBox="0 0 56 56" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
           <polygon
             points="${STAR_POINTS}"
             fill="${fill}"
             stroke="${stroke}"
-            stroke-width="2"
+            stroke-width="2.5"
             stroke-linejoin="round"
-            filter="drop-shadow(0 2px 6px rgba(0,0,0,0.7))"
+            filter="drop-shadow(0 2px 8px rgba(245,166,35,0.5)) drop-shadow(0 0 14px rgba(245,166,35,0.3))"
           />
         </svg>
-        <div style="position:absolute;top:0;left:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;">
+        <div style="position:absolute;top:0;left:0;width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;">
           ${icon}
         </div>
         ${badge}
       </div>`,
     className: '',
-    iconSize:   [44, 44],
-    iconAnchor: [22, 22],
+    iconSize:   [56, 56],
+    iconAnchor: [28, 28],
   })
 }
 
@@ -193,13 +193,13 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
 
   const pillStyle = (active: boolean): React.CSSProperties => ({
     flexShrink: 0,
-    padding: '8px 16px', borderRadius: 999, cursor: 'pointer',
-    fontSize: 13, fontWeight: 600,
-    backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-    backgroundColor: active ? 'rgba(230,237,243,0.93)' : 'rgba(11,17,23,0.72)',
-    color:           active ? '#0B1117' : 'rgba(230,237,243,0.85)',
-    border: active ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.12)',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+    padding: '6px 14px', borderRadius: 999, cursor: 'pointer',
+    fontSize: 12, fontWeight: 600,
+    backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+    backgroundColor: active ? 'rgba(230,237,243,0.82)' : 'rgba(11,17,23,0.48)',
+    color:           active ? '#0B1117' : 'rgba(230,237,243,0.78)',
+    border: active ? '1px solid rgba(255,255,255,0.22)' : '1px solid rgba(255,255,255,0.07)',
+    boxShadow: '0 2px 10px rgba(0,0,0,0.4)',
     transition: 'background-color 0.15s, color 0.15s',
     whiteSpace: 'nowrap' as const,
   })
@@ -209,14 +209,14 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
 
       {/* ── Leaflet map ──────────────────────────────────────────────── */}
       <MapContainer
-        center={[39.5, -98.35]}
-        zoom={5}
+        center={[38.0, -96.5]}
+        zoom={4}
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
       >
-        {/* Light "Voyager" tile style */}
+        {/* CartoDB Dark Matter — dark mode base map */}
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
 
@@ -345,7 +345,7 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
                 {/* Visited special location */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ flexShrink: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="32" height="32" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="32" height="32" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
                       <polygon
                         points={STAR_POINTS}
                         fill="rgba(245,166,35,0.22)"
@@ -360,7 +360,7 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
                 {/* Not yet special location */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ flexShrink: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="32" height="32" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="32" height="32" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
                       <polygon
                         points={STAR_POINTS}
                         fill="rgba(20,20,30,0.88)"
