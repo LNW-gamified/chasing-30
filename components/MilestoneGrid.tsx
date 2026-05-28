@@ -310,7 +310,7 @@ interface Props {
   allStadiums: Stadium[]
   allEvents: SpecialEvent[]
   currentRankName: string
-  rankTiers: Array<{ name: string; minPts: number; icon: string }>
+  rankTiers: Array<{ name: string; minPts: number; icon: string; description?: string }>
 }
 
 type SelectedItem =

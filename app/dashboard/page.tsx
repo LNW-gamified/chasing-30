@@ -50,23 +50,6 @@ async function fetchTodayGames(favAbbr: string | null): Promise<TodayGame[]> {
   }
 }
 
-// ─── Rank ─────────────────────────────────────────────────────────────────────
-
-function computePoints(visitedCount: number, totalGames: number, earned: number): number {
-  return visitedCount * 15 + totalGames * 5 + earned * 30
-}
-
-function getRank(pts: number): string {
-  if (pts >= 2000) return 'Hall of Famer'
-  if (pts >= 1200) return 'All-Star'
-  if (pts >= 800)  return 'Veteran'
-  if (pts >= 500)  return 'Journeyman'
-  if (pts >= 300)  return 'Minor Leaguer'
-  if (pts >= 150)  return 'Prospect'
-  if (pts >= 50)   return 'Farm Hand'
-  return 'Rookie'
-}
-
 // ─── User helpers ─────────────────────────────────────────────────────────────
 
 function getFirstName(user: any): string {
@@ -192,9 +175,7 @@ export default async function DashboardPage() {
 
   const earnedMilestones = MILESTONES.filter(m => m.check(allVisits, allStadiums, allEvents, allSpecialVisits))
 
-  const points = computePoints(visitedCount, allVisits.length, earnedMilestones.length)
-  const rank   = getRank(points)
-  const name   = getFirstName(user)
+  const name = getFirstName(user)
   const pct    = Math.round((visitedCount / 30) * 100)
 
   // Division progress
@@ -276,7 +257,7 @@ export default async function DashboardPage() {
               </div>
               <div style={{ fontSize: 14, color: '#8B949E', marginBottom: 14 }}>
                 {visitedCount === 30
-                  ? 'Legend status achieved!'
+                  ? 'Hall of Famer status achieved!'
                   : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} remaining`}
               </div>
               <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 10, fontStyle: 'italic' }}>

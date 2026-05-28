@@ -6,14 +6,15 @@ import Link from 'next/link'
 import type { Stadium, StadiumVisit, SpecialEvent, SpecialVisit, DestinationVisit, SerializableMilestone } from '@/types'
 import SpecialVisitButton from '@/components/SpecialVisitButton'
 import { DESTINATIONS, DESTINATION_GROUPS, destinationLocation } from '@/lib/destinations'
+import { RankBadge } from '@/components/RankBadge'
 
 export const RANK_TIERS = [
-  { name: 'Rookie',       minPts: 0,    icon: '🌱' },
-  { name: 'Bench Player', minPts: 75,   icon: '⚾' },
-  { name: 'Starter',      minPts: 200,  icon: '🏟️' },
-  { name: 'All-Star',     minPts: 400,  icon: '⭐' },
-  { name: 'MVP',          minPts: 700,  icon: '🏆' },
-  { name: 'Legend',       minPts: 1200, icon: '🌟' },
+  { name: 'Sandlot Kid',       minPts: 0,    icon: '⚾', description: 'Where every legend begins' },
+  { name: 'Minor Leaguer',     minPts: 75,   icon: '🚌', description: 'Working your way up' },
+  { name: 'September Call-Up', minPts: 200,  icon: '📈', description: 'The bigs are calling' },
+  { name: 'Rotation Ace',      minPts: 400,  icon: '🔥', description: "You're the real deal" },
+  { name: 'All-Star',          minPts: 700,  icon: '⭐', description: 'The fans voted you in' },
+  { name: 'Hall of Famer',     minPts: 1200, icon: '🏆', description: 'Your plaque is waiting' },
 ]
 
 export const MILESTONE_POINTS: Record<string, number> = {
@@ -114,27 +115,20 @@ export default async function MilestonesPage() {
           <div style={{ maxWidth: 560, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
 
             {/* Animated rank badge */}
-            <div className="rank-badge-glow" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', position: 'relative', width: 100, height: 112, marginBottom: 12 }}>
-              <svg width={100} height={112} viewBox="0 0 100 112" fill="none" style={{ position: 'absolute', inset: 0 }}>
-                <path d="M50 6L10 22V54C10 78 28 98 50 106C72 98 90 78 90 54V22L50 6Z"
-                  fill="url(#rankGrad)" stroke="#F5A623" strokeWidth={2} strokeLinejoin="round" />
-                <defs>
-                  <linearGradient id="rankGrad" x1="50" y1="6" x2="50" y2="106" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="rgba(245,166,35,0.25)" />
-                    <stop offset="1" stopColor="rgba(245,100,10,0.1)" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <span style={{ position: 'relative', zIndex: 1, fontSize: 42, lineHeight: 1 }}>{currentRank.icon}</span>
+            <div className="rank-badge-glow" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+              <RankBadge rankName={currentRank.name} size={100} />
             </div>
 
-            {/* Rank name */}
+            {/* Rank name + description */}
             <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.15em', color: '#F5A623', textTransform: 'uppercase', marginBottom: 6 }}>
               Current Rank
             </div>
             <h1 style={{ fontSize: 32, fontWeight: 900, color: '#E6EDF3', margin: '0 0 4px', letterSpacing: '-0.5px' }}>
               {currentRank.name}
             </h1>
+            <div style={{ fontSize: 14, color: '#8B949E', fontStyle: 'italic', marginBottom: 6 }}>
+              {currentRank.description}
+            </div>
             <div style={{ fontSize: 15, color: '#8B949E', marginBottom: 24 }}>
               {totalPoints.toLocaleString()} XP
             </div>

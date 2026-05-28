@@ -17,12 +17,12 @@ export const metadata: Metadata = {
 }
 
 const RANK_TIERS = [
-  { name: 'Rookie',       minPts: 0,    icon: '🌱' },
-  { name: 'Bench Player', minPts: 75,   icon: '⚾' },
-  { name: 'Starter',      minPts: 200,  icon: '🏟️' },
-  { name: 'All-Star',     minPts: 400,  icon: '⭐' },
-  { name: 'MVP',          minPts: 700,  icon: '🏆' },
-  { name: 'Legend',       minPts: 1200, icon: '🌟' },
+  { name: 'Sandlot Kid',       minPts: 0,    icon: '⚾', description: 'Where every legend begins' },
+  { name: 'Minor Leaguer',     minPts: 75,   icon: '🚌', description: 'Working your way up' },
+  { name: 'September Call-Up', minPts: 200,  icon: '📈', description: 'The bigs are calling' },
+  { name: 'Rotation Ace',      minPts: 400,  icon: '🔥', description: "You're the real deal" },
+  { name: 'All-Star',          minPts: 700,  icon: '⭐', description: 'The fans voted you in' },
+  { name: 'Hall of Famer',     minPts: 1200, icon: '🏆', description: 'Your plaque is waiting' },
 ]
 
 function daysUntil(dateStr: string): number {

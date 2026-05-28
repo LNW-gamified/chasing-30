@@ -242,6 +242,12 @@ select.input { cursor: pointer; }
 }
 .rank-badge-glow { animation: rank-pulse 2.5s ease-in-out infinite; }
 
+@keyframes hof-shimmer {
+  from { transform: translateX(0px) skewX(-12deg); }
+  to   { transform: translateX(160px) skewX(-12deg); }
+}
+.hof-shimmer-strip { animation: hof-shimmer 2.8s linear infinite; }
+
 @keyframes xp-bar-shine {
   0%   { left: -60%; }
   100% { left: 120%; }
