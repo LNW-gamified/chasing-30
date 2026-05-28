@@ -60,14 +60,15 @@ export default function StopChecklist({ stopId, items, onReload }: Props) {
         onClick={() => setExpanded(v => !v)}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+          padding: '13px 16px', background: expanded ? 'rgba(0,0,0,0.12)' : 'none',
+          border: 'none', cursor: 'pointer', textAlign: 'left',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#8B949E' }}>Don't Forget</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>Don't Forget</span>
           {totalItems > 0 ? (
             <span style={{
-              fontSize: 11, padding: '1px 7px', borderRadius: 999, fontWeight: 600,
+              fontSize: 11, padding: '2px 8px', borderRadius: 999, fontWeight: 600,
               backgroundColor: checkedCount === totalItems
                 ? 'rgba(63,185,80,0.12)' : 'rgba(139,148,158,0.1)',
               color: checkedCount === totalItems ? '#3FB950' : '#8B949E',
@@ -79,13 +80,13 @@ export default function StopChecklist({ stopId, items, onReload }: Props) {
               {CATEGORIES.map(cat => (
                 <cat.Icon key={cat.id} size={14} color={cat.color} strokeWidth={1.8} />
               ))}
-              <span style={{ fontSize: 11, color: '#484F58', marginLeft: 2 }}>Add items</span>
+              <span style={{ fontSize: 12, color: '#484F58', marginLeft: 2 }}>Add items</span>
             </div>
           )}
         </div>
         {expanded
-          ? <ChevronUp  size={13} color="#484F58" />
-          : <ChevronDown size={13} color="#484F58" />}
+          ? <ChevronUp  size={18} color="#8B949E" />
+          : <ChevronDown size={18} color="#8B949E" />}
       </button>
 
       {expanded && (

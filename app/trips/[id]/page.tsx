@@ -9,7 +9,7 @@ import { getTeamLogoUrlById, getTeamAbbrById } from '@/lib/team-logos'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip, TripStop, StopChecklistItem } from '@/types'
 import Link from 'next/link'
-import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink, MoreHorizontal } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink, MoreHorizontal, FileText, Ticket, Utensils, Car, Plane, BedDouble } from 'lucide-react'
 import StopChecklist from '@/components/StopChecklist'
 import { DESTINATION_BY_SLUG, destinationLocation, EXPERIENCE_TYPES } from '@/lib/destinations'
 
@@ -243,17 +243,8 @@ export default function TripDetailPage() {
             </Link>
           </div>
 
-          {/* Status badge + ellipsis menu — top right */}
+          {/* Ellipsis menu — top right only */}
           <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center',
-              padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700,
-              backgroundColor: sc.bg, color: sc.color,
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255,255,255,0.1)',
-            }}>
-              {sc.label}
-            </span>
             <div style={{ position: 'relative' }}>
               <button
                 onClick={() => setShowDeleteMenu(v => !v)}
@@ -294,11 +285,22 @@ export default function TripDetailPage() {
           {/* Trip info — bottom */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 22px', zIndex: 10 }}>
             <h1 style={{
-              margin: '0 0 6px', fontSize: 28, fontWeight: 900, color: '#ffffff',
+              margin: '0 0 8px', fontSize: 28, fontWeight: 900, color: '#ffffff',
               lineHeight: 1.15, textShadow: '0 2px 14px rgba(0,0,0,0.6)',
             }}>
               {trip.name}
             </h1>
+            {/* Status badge — directly below title */}
+            <span style={{
+              display: 'inline-flex', alignItems: 'center',
+              padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700,
+              backgroundColor: sc.bg, color: sc.color,
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              marginBottom: 8,
+            }}>
+              {sc.label}
+            </span>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
               {dr && (
                 <span style={{
@@ -334,8 +336,12 @@ export default function TripDetailPage() {
               border: `1px solid ${countdownDays === 0
                 ? 'rgba(63,185,80,0.35)' : 'rgba(245,166,35,0.3)'}`,
             }}>
-              <span style={{ fontSize: 32, flexShrink: 0, lineHeight: 1 }}>
-                {countdownDays === 0 ? '🎉' : countdownDays === 1 ? '🌟' : '📅'}
+              <span style={{ flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+                {countdownDays === 0
+                  ? <span style={{ fontSize: 32 }}>🎉</span>
+                  : countdownDays === 1
+                    ? <span style={{ fontSize: 32 }}>🌟</span>
+                    : <Calendar size={32} color="#F5A623" strokeWidth={1.8} />}
               </span>
               <div>
                 <div style={{
@@ -682,7 +688,7 @@ export default function TripDetailPage() {
                               textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5,
                               display: 'flex', alignItems: 'center', gap: 5,
                             }}>
-                              🎟 Your Tickets
+                              <Ticket size={12} /> Your Tickets
                             </div>
                             <div style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>
                               {ticketParts.join(' · ')}
@@ -699,16 +705,18 @@ export default function TripDetailPage() {
                       {/* Budget strip */}
                       {hasBudget ? (
                         <div style={{ display: 'flex', borderTop: '1px solid #30363D', backgroundColor: '#1C2430' }}>
-                          {[
-                            { label: '🎟 Tickets', est: stop.est_tickets, actual: stop.actual_tickets },
-                            { label: '🌭 Food',    est: stop.est_food,    actual: stop.actual_food    },
-                            { label: '🚗 Parking', est: stop.est_parking, actual: stop.actual_parking },
-                          ].map(({ label, est, actual }, ci) => (
+                          {([
+                            { label: 'Tickets', Icon: Ticket,   est: stop.est_tickets, actual: stop.actual_tickets },
+                            { label: 'Food',    Icon: Utensils, est: stop.est_food,    actual: stop.actual_food    },
+                            { label: 'Parking', Icon: Car,      est: stop.est_parking, actual: stop.actual_parking },
+                          ] as const).map(({ label, Icon, est, actual }, ci) => (
                             <div key={label} style={{
                               flex: 1, padding: '10px 12px',
                               borderRight: ci < 2 ? '1px solid #30363D' : 'none',
                             }}>
-                              <div style={{ fontSize: 10, color: '#8B949E', marginBottom: 3 }}>{label}</div>
+                              <div style={{ fontSize: 10, color: '#8B949E', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 3 }}>
+                                <Icon size={10} strokeWidth={2} /> {label}
+                              </div>
                               <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>
                                 {formatCurrency(est)}
                               </div>
@@ -858,7 +866,11 @@ export default function TripDetailPage() {
                       const diff = trip.actual_travel - trip.est_travel
                       return (
                         <tr style={{ borderTop: '1px solid #30363D' }}>
-                          <td style={{ padding: '11px 16px', color: '#8B949E' }}>✈️ Travel</td>
+                          <td style={{ padding: '11px 16px', color: '#8B949E' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                              <Plane size={13} strokeWidth={1.8} /> Travel
+                            </span>
+                          </td>
                           <td style={{ padding: '11px 16px', textAlign: 'right', color: '#E6EDF3', fontWeight: 600 }}>
                             {formatCurrency(trip.est_travel)}
                           </td>
@@ -876,7 +888,11 @@ export default function TripDetailPage() {
                       const diff = trip.actual_hotel - trip.est_hotel
                       return (
                         <tr style={{ borderTop: '1px solid #30363D' }}>
-                          <td style={{ padding: '11px 16px', color: '#8B949E' }}>🏨 Hotel</td>
+                          <td style={{ padding: '11px 16px', color: '#8B949E' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                              <BedDouble size={13} strokeWidth={1.8} /> Hotel
+                            </span>
+                          </td>
                           <td style={{ padding: '11px 16px', textAlign: 'right', color: '#E6EDF3', fontWeight: 600 }}>
                             {formatCurrency(trip.est_hotel)}
                           </td>
@@ -934,16 +950,20 @@ export default function TripDetailPage() {
             return cleanNotes ? (
               <div style={{
                 backgroundColor: '#161B22', borderRadius: 14,
-                border: '1px solid #30363D', padding: '16px 18px',
+                border: '1px solid #30363D', overflow: 'hidden',
               }}>
                 <div style={{
-                  fontSize: 11, fontWeight: 700, color: '#8B949E',
-                  textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10,
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '13px 18px', borderBottom: '1px solid #30363D',
+                  backgroundColor: '#1C2430',
                 }}>
-                  Notes
+                  <FileText size={15} color="#8B949E" strokeWidth={2} />
+                  <span style={{ fontWeight: 700, fontSize: 15, color: '#E6EDF3' }}>Notes</span>
                 </div>
-                <div style={{ fontSize: 14, color: '#E6EDF3', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>
-                  {cleanNotes}
+                <div style={{ padding: '16px 18px' }}>
+                  <div style={{ fontSize: 14, color: '#C9D1D9', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                    {cleanNotes}
+                  </div>
                 </div>
               </div>
             ) : null
