@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutDashboard, Building2, Map, Trophy, Plane, LogOut } from 'lucide-react'
+import { LayoutDashboard, Building2, Map, Trophy, Plane, LogOut, Stamp } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import TeamLogo from '@/components/TeamLogo'
 
@@ -23,11 +23,22 @@ interface Props {
   userInitial: string
 }
 
-const NAV = [
+// Desktop sidebar shows all items; Map excluded from mobile bottom nav
+const DESKTOP_NAV = [
   { href: '/dashboard',  label: 'Home',      icon: LayoutDashboard },
   { href: '/stadiums',   label: 'Ballparks', icon: Building2        },
   { href: '/map',        label: 'Map',       icon: Map              },
   { href: '/milestones', label: 'Records',   icon: Trophy           },
+  { href: '/passport',   label: 'Passport',  icon: Stamp            },
+  { href: '/trips',      label: 'Road Trips', icon: Plane           },
+]
+
+// Mobile: Map removed, Passport takes its slot
+const MOBILE_NAV = [
+  { href: '/dashboard',  label: 'Home',      icon: LayoutDashboard },
+  { href: '/stadiums',   label: 'Ballparks', icon: Building2        },
+  { href: '/milestones', label: 'Records',   icon: Trophy           },
+  { href: '/passport',   label: 'Passport',  icon: Stamp            },
   { href: '/trips',      label: 'Road Trips', icon: Plane           },
 ]
 
@@ -96,7 +107,7 @@ export default function AppShell({ children, nextTrip, visitedCount, rankName, r
 
         {/* Nav links */}
         <nav style={{ flex: 1, padding: '0.75rem' }}>
-          {NAV.map(({ href, label, icon: Icon }) => {
+          {DESKTOP_NAV.map(({ href, label, icon: Icon }) => {
             const active = isActive(href, pathname)
             return (
               <Link key={href} href={href} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0.875rem', borderRadius: 10, marginBottom: 2, backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent', color: active ? '#E6EDF3' : '#8B949E', fontWeight: active ? 600 : 400, fontSize: '0.9375rem', textDecoration: 'none', borderLeft: active ? '3px solid #1F6FEB' : '3px solid transparent' }}>
@@ -135,7 +146,7 @@ export default function AppShell({ children, nextTrip, visitedCount, rankName, r
 
         {/* Mobile bottom tab bar */}
         <nav className="flex md:hidden" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, height: 56, backgroundColor: 'rgba(11,17,23,0.75)', borderTop: '1px solid rgba(48,54,61,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-          {NAV.map(({ href, label, icon: Icon }) => {
+          {MOBILE_NAV.map(({ href, label, icon: Icon }) => {
             const active = isActive(href, pathname)
             return (
               <Link key={href} href={href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', padding: '8px 0', gap: 3, color: active ? '#1F6FEB' : 'rgba(230,237,243,0.6)' }}>
