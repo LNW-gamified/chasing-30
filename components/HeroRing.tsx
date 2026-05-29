@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import TeamLogo from './TeamLogo'
 
 export interface RingDot {
-  abbr: string
+  abbr: string | null  // null = not yet visited
   visited: boolean
+  visitDate?: string   // ISO date for tooltip
 }
 
 interface Props {
@@ -85,15 +86,20 @@ export default function HeroRing({ visited, total, dots }: Props) {
         )}
       </svg>
 
-      {/* Team logo / indicator dots around ring perimeter */}
-      {dots.map(({ abbr, visited: v }, i) => {
+      {/* Dots around ring — visited positions show team logo in visit order, rest are plain gray */}
+      {dots.map(({ abbr, visited: v, visitDate }, i) => {
         const angle = (i / dots.length) * 2 * Math.PI - Math.PI / 2
         const x = size / 2 + r * Math.cos(angle) - dotHalf
         const y = size / 2 + r * Math.sin(angle) - dotHalf
+
+        const tooltipText = v && abbr && visitDate
+          ? `${abbr} · ${new Date(visitDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+          : undefined
+
         return (
           <div
-            key={abbr}
-            title={abbr}
+            key={i}
+            title={tooltipText}
             style={{
               position: 'absolute',
               left: x, top: y,
@@ -105,9 +111,10 @@ export default function HeroRing({ visited, total, dots }: Props) {
               border: `1.5px solid ${v ? '#3FB950' : '#21262D'}`,
               boxShadow: v ? '0 0 7px rgba(63,185,80,0.6)' : 'none',
               zIndex: v ? 2 : 1,
+              cursor: v ? 'help' : 'default',
             }}
           >
-            {v && (
+            {v && abbr && (
               <TeamLogo
                 abbreviation={abbr}
                 size={dotPx}

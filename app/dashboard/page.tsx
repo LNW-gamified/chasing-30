@@ -153,11 +153,24 @@ export default async function DashboardPage() {
   const pct = Math.round((visitedCount / 30) * 100)
   const name = getFirstName(user)
 
-  // Ring dots — ordered same as allStadiums (league/division/name)
-  const ringDots: RingDot[] = allStadiums.map(s => ({
-    abbr: s.abbreviation,
-    visited: visitedIds.has(s.id),
-  }))
+  // Ring dots — visited stadiums in chronological visit order, then empty slots
+  const visitedInOrder: Array<{ abbr: string; visitDate: string }> = []
+  {
+    const seen = new Set<string>()
+    for (const v of [...allVisits].sort((a, b) => a.visit_date.localeCompare(b.visit_date))) {
+      if (!seen.has(v.stadium_id)) {
+        seen.add(v.stadium_id)
+        const abbr = allStadiums.find(s => s.id === v.stadium_id)?.abbreviation
+        if (abbr) visitedInOrder.push({ abbr, visitDate: v.visit_date })
+      }
+    }
+  }
+  const ringDots: RingDot[] = Array.from({ length: 30 }, (_, i) => {
+    if (i < visitedInOrder.length) {
+      return { abbr: visitedInOrder[i].abbr, visited: true, visitDate: visitedInOrder[i].visitDate }
+    }
+    return { abbr: null, visited: false }
+  })
 
   // Next planned trip
   const nextPlannedTrip = allTrips.find((t: any) =>
