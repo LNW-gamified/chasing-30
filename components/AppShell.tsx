@@ -32,10 +32,10 @@ const DESKTOP_NAV = [
   { href: '/trips',      label: 'Road Trips', icon: Plane           },
 ]
 
-// Mobile: Map removed
 const MOBILE_NAV = [
   { href: '/dashboard',  label: 'Home',      icon: LayoutDashboard },
   { href: '/stadiums',   label: 'Ballparks', icon: Building2        },
+  { href: '/map',        label: 'Map',       icon: Map              },
   { href: '/milestones', label: 'Records',   icon: Trophy           },
   { href: '/trips',      label: 'Road Trips', icon: Plane           },
 ]

@@ -69,7 +69,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     return (
       <html lang="en" className="h-full">
         <head>{sharedHead}</head>
-        <body className="h-full" style={{ backgroundColor: '#0B1117' }}>
+        <body className="h-full" style={{ backgroundColor: '#0a0e1a' }}>
           <ServiceWorkerRegistrar />
           {children}
         </body>
@@ -109,7 +109,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className="h-full">
       <head>{sharedHead}</head>
-      <body className="h-full" style={{ backgroundColor: '#0B1117' }}>
+      <body className="h-full" style={{ backgroundColor: '#0a0e1a' }}>
         <ServiceWorkerRegistrar />
         <AppShell
           nextTrip={nextTrip}

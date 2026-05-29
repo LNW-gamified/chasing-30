@@ -31,7 +31,8 @@
       "Bash(dir supabase\\\\migrations /b)",
       "Bash(Remove-Item \"C:\\\\Users\\\\later\\\\chasing-30\\\\app\\\\special-events\\\\page.tsx\" -Force)",
       "Bash(Remove-Item \"C:\\\\Users\\\\later\\\\chasing-30\\\\app\\\\special-events\" -Force -ErrorAction SilentlyContinue)",
-      "Bash(dir C:\\\\Users\\\\later\\\\chasing-30\\\\public *)"
+      "Bash(dir C:\\\\Users\\\\later\\\\chasing-30\\\\public *)",
+      "Bash(powershell -Command \"Get-ChildItem -Path 'C:\\\\Users\\\\later\\\\chasing-30\\\\app','C:\\\\Users\\\\later\\\\chasing-30\\\\components' -Filter '*.tsx' -Recurse | Select-String -Pattern '[^\\\\x00-\\\\x7F]' | Select-Object Filename, LineNumber, Line | Format-List\")"
     ]
   }
 }

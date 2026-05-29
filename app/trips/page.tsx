@@ -230,10 +230,10 @@ export default function TripsPage() {
           {/* ── Road Trip Optimizer card ────────────────────────────── */}
           <Link href="/trips/optimizer" style={{ textDecoration: 'none', display: 'block', marginBottom: 32 }}>
             <div style={{
-              background: 'linear-gradient(135deg, #1F6FEB 0%, #7c3aed 100%)',
+              background: '#111827',
               borderRadius: 16, padding: '20px 24px',
               display: 'flex', alignItems: 'center', gap: 16,
-              border: '1px solid #1F6FEB',
+              border: '1px solid #30363D',
             }}>
               <div style={{
                 width: 52, height: 52, borderRadius: 14, flexShrink: 0,
@@ -252,9 +252,8 @@ export default function TripsPage() {
               </div>
               <div style={{
                 flexShrink: 0, padding: '9px 20px', borderRadius: 20,
-                backgroundColor: 'rgba(255,255,255,0.2)',
+                backgroundColor: '#1F6FEB',
                 color: '#ffffff', fontSize: 14, fontWeight: 700,
-                border: '1px solid rgba(255,255,255,0.3)',
               }}>
                 Plan →
               </div>
@@ -334,6 +333,7 @@ export default function TripsPage() {
                           backgroundColor: '#161B22', borderRadius: 16,
                           border: isUndated ? '1.5px dashed rgba(139,148,158,0.35)' : '1px solid #30363D',
                           overflow: 'hidden',
+                          opacity: isUndated ? 0.75 : 1,
                         }}>
                           {/* Destination type header */}
                           {isDestination && (
@@ -444,10 +444,11 @@ export default function TripsPage() {
                                 display: 'inline-flex', alignItems: 'center', gap: 4,
                                 padding: '3px 10px', borderRadius: 20, marginBottom: 10,
                                 backgroundColor: 'rgba(139,148,158,0.1)',
-                                color: '#8B949E', fontSize: 11, fontWeight: 600,
+                                color: '#8B949E', fontSize: 10, fontWeight: 600,
+                                letterSpacing: '0.08em',
                                 border: '1px solid rgba(139,148,158,0.2)',
                               }}>
-                                📋 No date set
+                                UNPLANNED
                               </div>
                             )}
                             {/* Countdown */}

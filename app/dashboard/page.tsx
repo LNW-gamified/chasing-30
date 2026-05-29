@@ -93,7 +93,7 @@ function SectionHeader({ label, right }: { label: string; right?: React.ReactNod
       paddingLeft: 14,
       borderLeft: '3px solid #F5A623',
     }}>
-      <span style={{ fontSize: 20, fontWeight: 800, color: '#E6EDF3', letterSpacing: '-0.3px', lineHeight: 1 }}>
+      <span style={{ fontSize: 20, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.3px', lineHeight: 1 }}>
         {label}
       </span>
       {right}
@@ -238,6 +238,7 @@ export default async function DashboardPage() {
               style={{
                 ...card,
                 padding: '20px 20px 18px',
+                background: '#111827',
                 textAlign: 'center',
                 height: '100%',
                 display: 'flex',
@@ -342,7 +343,7 @@ export default async function DashboardPage() {
             </div>
 
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: 'rgba(245,166,35,0.55)', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 14 }}>
+              <div style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.72)', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 14 }}>
                 ◈ NEXT DEPARTURE
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
@@ -426,13 +427,13 @@ export default async function DashboardPage() {
               <div
                 key={label}
                 className="dash-card"
-                style={{ ...card, padding: '18px 20px' }}
+                style={{ ...card, padding: '18px 20px', background: '#1a2744' }}
               >
                 {/* Label + fraction */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>{label}</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: '#ffffff' }}>{label}</span>
                   <span style={{
-                    fontSize: 14, fontWeight: 800, color: '#1F6FEB',
+                    fontSize: 14, fontWeight: 800, color: '#F5A623',
                     fontVariantNumeric: 'tabular-nums',
                   }}>
                     {vis}<span style={{ color: '#484F58', fontWeight: 500 }}>/{total}</span>

@@ -973,7 +973,7 @@ export default function PassportGrid({ stamps, userName, passportNo, earnedCount
               </div>
 
               {/* 3 cols mobile, 5 cols desktop */}
-              <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {abbrs.map(abbr => {
                   const def = STAMP_DEFS.find(d => d.abbr === abbr)
                   if (!def) return null

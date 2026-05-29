@@ -95,8 +95,8 @@ export default function OnThisDay({ facts }: { facts: HistoryFact[] }) {
       position: 'relative',
       borderRadius: 16,
       overflow: 'hidden',
-      background: 'linear-gradient(150deg, #050E08 0%, #0B1A10 60%, #070F09 100%)',
-      border: '1px solid #1E3D26',
+      background: 'linear-gradient(150deg, #0d1f14 0%, #111f16 60%, #0d1f14 100%)',
+      border: '1px solid #2a4a34',
       marginBottom: '1.25rem',
       boxShadow: 'inset 0 1px 0 rgba(245,166,35,0.06)',
     }}>
@@ -184,7 +184,7 @@ export default function OnThisDay({ facts }: { facts: HistoryFact[] }) {
             <p style={{
               margin: '0 0 10px',
               fontSize: 14, lineHeight: 1.6,
-              color: '#C8DFC0',
+              color: 'rgba(255,255,255,0.92)',
             }}>
               {fact?.fact}
             </p>

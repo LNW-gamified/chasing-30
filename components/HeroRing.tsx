@@ -22,7 +22,7 @@ export default function HeroRing({ visited, total, dots }: Props) {
   }, [])
 
   const size = 140
-  const sw   = 8
+  const sw   = 10
   const r    = (size - sw * 2) / 2   // 62
   const circ = 2 * Math.PI * r
   const pct  = total > 0 ? visited / total : 0
@@ -47,7 +47,7 @@ export default function HeroRing({ visited, total, dots }: Props) {
           strokeDashoffset={mounted ? offset : circ}
           style={{
             transition: 'stroke-dashoffset 1.4s cubic-bezier(0.22,1,0.36,1)',
-            filter: 'drop-shadow(0 0 14px rgba(63,185,80,0.75)) drop-shadow(0 0 32px rgba(63,185,80,0.35))',
+            filter: 'drop-shadow(0 0 8px rgba(63,185,80,0.95)) drop-shadow(0 0 20px rgba(63,185,80,0.6)) drop-shadow(0 0 40px rgba(63,185,80,0.3))',
           }}
         />
       </svg>

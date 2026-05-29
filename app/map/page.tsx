@@ -37,7 +37,7 @@ export default async function MapPage() {
 
   return (
     <div style={{ position: 'relative', overflow: 'hidden', backgroundColor: '#0B1117' }}>
-      <div className="h-[calc(100svh-48px)] md:h-screen" style={{ position: 'relative' }}>
+      <div className="h-[calc(100svh-104px)] md:h-screen" style={{ position: 'relative' }}>
         <StadiumMap
           stadiums={stadiumsWithVisit}
           destinations={mappableDestinations}
