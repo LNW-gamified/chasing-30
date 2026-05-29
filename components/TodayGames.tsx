@@ -268,12 +268,12 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
       </div>
 
       {/* Scroll hint — desktop only, shown when > 4 games */}
-      {games.length > 4 && (
+      {games.length > 8 && (
         <div
           className="hidden md:block"
           style={{ textAlign: 'center', fontSize: 11, color: '#484F58', paddingTop: 6, flexShrink: 0 }}
         >
-          ↓ {games.length - 4} more game{games.length - 4 !== 1 ? 's' : ''}
+          ↓ {games.length - 8} more game{games.length - 8 !== 1 ? 's' : ''}
         </div>
       )}
     </div>

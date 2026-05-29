@@ -228,11 +228,11 @@ export default async function DashboardPage() {
 
         {/* ── Hero row: The Chase (left) + Today at the Ballpark (right) ── */}
         <div
-          className={todayGames.length > 0 ? 'md:grid md:grid-cols-5 md:gap-4 md:items-stretch' : ''}
+          className={todayGames.length > 0 ? 'md:grid md:grid-cols-5 md:gap-4' : ''}
           style={{ marginBottom: SECTION_GAP }}
         >
           {/* Left column: The Chase */}
-          <div className={todayGames.length > 0 ? 'md:col-span-2 mb-4 md:mb-0' : ''}>
+          <div className={todayGames.length > 0 ? 'md:col-span-2 mb-4 md:mb-0 md:h-[500px]' : ''}>
             <div
               className="dash-card"
               style={{
@@ -302,7 +302,7 @@ export default async function DashboardPage() {
 
           {/* Right column: Today at the Ballpark */}
           {todayGames.length > 0 && (
-            <div className="md:col-span-3">
+            <div className="md:col-span-3 md:h-[500px]">
               <div
                 className="dash-card"
                 style={{
