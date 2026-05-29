@@ -243,9 +243,9 @@ export default function StadiumDetailPage() {
   const teamColor  = TEAM_BTN_COLOR[stadium.abbreviation] ?? '#1F6FEB'
 
   const TABS: { key: ActiveTab; label: string }[] = [
-    { key: 'games-attended',  label: 'Your Games Here'  },
-    { key: 'upcoming-games',  label: 'Game Day Intel'   },
-    { key: 'stadium-info',    label: 'The Dossier'      },
+    { key: 'games-attended',  label: 'Games Attended'   },
+    { key: 'upcoming-games',  label: 'Upcoming Games'   },
+    { key: 'stadium-info',    label: 'Stadium Detail'   },
   ]
 
   return (
