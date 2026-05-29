@@ -378,8 +378,9 @@ export default function TripsPage() {
                               right: (isDestination || abbrs.length > 0) ? 80 : 16,
                             }}>
                               <div style={{
-                                fontSize: 23, fontWeight: 800, color: '#ffffff', lineHeight: 1.2,
+                                fontSize: 24, fontWeight: 800, color: '#ffffff', lineHeight: 1.2,
                                 textShadow: '0 1px 6px rgba(0,0,0,0.5)',
+                                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                               }}>
                                 {trip.name}
                               </div>

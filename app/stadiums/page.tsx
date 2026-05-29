@@ -213,18 +213,18 @@ function StadiumCard({
                 <>
                   <span style={{
                     flexShrink: 0,
-                    fontSize: 11, fontWeight: 700, color: '#58A6FF',
-                    backgroundColor: 'rgba(88,166,255,0.12)',
-                    border: '1.5px solid rgba(88,166,255,0.35)',
-                    padding: '3px 10px', borderRadius: 999,
+                    fontSize: 10, fontWeight: 600, color: '#8B949E',
+                    backgroundColor: 'rgba(139,148,158,0.1)',
+                    border: '1px solid rgba(139,148,158,0.25)',
+                    padding: '2px 8px', borderRadius: 999,
                   }}>On the List</span>
                   {nextGame && (
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', gap: 3,
-                      fontSize: 11, fontWeight: 600, color: '#C9D1D9',
+                      fontSize: 11, fontWeight: 600, color: '#E6EDF3',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0,
                     }}>
-                      <CalendarDays size={10} color="#8B949E" style={{ flexShrink: 0 }}/>
+                      <CalendarDays size={11} color="#C9D1D9" style={{ flexShrink: 0 }}/>
                       {nextGame.date} vs {TEAM_NICKNAME[nextGame.opponentAbbr] ?? nextGame.opponentAbbr}
                     </span>
                   )}

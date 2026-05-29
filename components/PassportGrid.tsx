@@ -777,7 +777,7 @@ function PassportStamp({ def, visitDate }: { def: StampDef; visitDate: string | 
       border: earned ? `1px solid ${def.primary}35` : '1px solid #21262D',
       borderTop: earned ? `3px solid ${def.primary}` : '3px solid #21262D',
       overflow: 'hidden',
-      opacity: earned ? 1 : 0.38,
+      opacity: earned ? 1 : 0.40,
       position: 'relative',
       boxShadow: earned ? `0 4px 20px ${def.primary}20` : 'none',
       transition: 'opacity 0.2s',
@@ -901,7 +901,7 @@ export default function PassportGrid({ stamps, userName, passportNo, earnedCount
         {/* Title block */}
         <div style={{ marginBottom: 0, paddingRight: 100 }}>
           <div style={{
-            fontSize: 26, fontWeight: 900, color: '#E6C99A',
+            fontSize: 36, fontWeight: 900, color: '#E6C99A',
             letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 4,
           }}>
             Stadium Passport
@@ -939,7 +939,7 @@ export default function PassportGrid({ stamps, userName, passportNo, earnedCount
               <span style={{ fontSize: 12, opacity: 0.7 }}> of 30</span>
             </span>
           </div>
-          <div style={{ height: 10, background: 'rgba(197,164,126,0.1)', borderRadius: 6, overflow: 'hidden', border: '1px solid rgba(197,164,126,0.2)' }}>
+          <div style={{ height: 8, background: 'rgba(197,164,126,0.1)', borderRadius: 6, overflow: 'hidden', border: '1px solid rgba(197,164,126,0.2)' }}>
             <div style={{
               width: `${pct}%`, height: '100%', borderRadius: 6,
               background: 'linear-gradient(90deg, #C5A47E, #E6C99A)',
@@ -969,7 +969,7 @@ export default function PassportGrid({ stamps, userName, passportNo, earnedCount
                 borderLeft: '3px solid #F5A623',
               }}>
                 <span style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3' }}>{label}</span>
-                <span style={{ fontSize: 12, color: '#8B949E' }}>{earnedInDiv}/5</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#F5A623' }}>{earnedInDiv}/5</span>
               </div>
 
               {/* 3 cols mobile, 5 cols desktop */}
@@ -992,9 +992,9 @@ export default function PassportGrid({ stamps, userName, passportNo, earnedCount
           onClick={handleShare}
           style={{
             width: '100%', padding: '18px 24px', borderRadius: 14,
-            background: 'linear-gradient(135deg, rgba(197,164,126,0.18) 0%, rgba(197,164,126,0.08) 100%)',
-            border: '1.5px solid rgba(197,164,126,0.45)',
-            color: '#E6C99A', fontFamily: 'monospace',
+            background: '#1F6FEB',
+            border: '1.5px solid #1F6FEB',
+            color: '#ffffff', fontFamily: 'monospace',
             fontSize: 14, fontWeight: 900, letterSpacing: '0.2em',
             cursor: 'pointer', textTransform: 'uppercase',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,

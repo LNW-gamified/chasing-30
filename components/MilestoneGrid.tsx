@@ -718,14 +718,14 @@ export default function MilestoneGrid({
                 onClick={() => setFilter(cat.key)}
                 style={{
                   flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                  padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${active ? 'rgba(31,111,235,0.5)' : '#30363D'}`,
-                  backgroundColor: active ? 'rgba(31,111,235,0.12)' : '#161B22',
+                  padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${active ? '#1F6FEB' : '#30363D'}`,
+                  backgroundColor: active ? '#1F6FEB' : '#161B22',
                   cursor: 'pointer', minWidth: 72, transition: 'all 0.15s',
                 }}
               >
                 <span style={{ fontSize: 20 }}>{cat.emoji}</span>
-                <span style={{ fontSize: 11, fontWeight: active ? 700 : 500, color: active ? '#58A6FF' : '#8B949E', whiteSpace: 'nowrap' }}>{cat.label}</span>
-                {count !== null && <span style={{ fontSize: 10, fontWeight: 700, color: active ? '#58A6FF' : '#484F58' }}>{count}</span>}
+                <span style={{ fontSize: 11, fontWeight: active ? 700 : 500, color: active ? '#ffffff' : '#8B949E', whiteSpace: 'nowrap' }}>{cat.label}</span>
+                {count !== null && <span style={{ fontSize: 10, fontWeight: 700, color: active ? '#ffffff' : '#484F58' }}>{count}</span>}
               </button>
             )
           })}

@@ -378,9 +378,11 @@ export default async function DashboardPage() {
         )}
 
         {/* ── On This Day ──────────────────────────────────────────────── */}
-        <div style={{ marginBottom: SECTION_GAP }}>
-          <OnThisDay facts={todayHistory} />
-        </div>
+        {todayHistory.length > 0 && (
+          <div style={{ marginBottom: SECTION_GAP }}>
+            <OnThisDay facts={todayHistory} />
+          </div>
+        )}
 
         {/* ── Your Scouting Report ─────────────────────────────────────── */}
         <div style={{ marginBottom: SECTION_GAP }}>
@@ -431,7 +433,7 @@ export default async function DashboardPage() {
               >
                 {/* Label + fraction */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: '#ffffff' }}>{label}</span>
+                  <span style={{ fontSize: 18, fontWeight: 700, color: '#ffffff' }}>{label}</span>
                   <span style={{
                     fontSize: 14, fontWeight: 800, color: '#F5A623',
                     fontVariantNumeric: 'tabular-nums',

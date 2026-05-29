@@ -285,7 +285,7 @@ export default function TripDetailPage() {
           {/* Trip info — bottom */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 22px', zIndex: 10 }}>
             <h1 style={{
-              margin: '0 0 8px', fontSize: 28, fontWeight: 900, color: '#ffffff',
+              margin: '0 0 8px', fontSize: 32, fontWeight: 900, color: '#ffffff',
               lineHeight: 1.15, textShadow: '0 2px 14px rgba(0,0,0,0.6)',
             }}>
               {trip.name}
@@ -332,7 +332,7 @@ export default function TripDetailPage() {
               display: 'flex', alignItems: 'center', gap: 14,
               padding: '16px 20px', borderRadius: 16, marginBottom: 16,
               backgroundColor: countdownDays === 0
-                ? 'rgba(63,185,80,0.12)' : 'rgba(245,166,35,0.08)',
+                ? 'rgba(63,185,80,0.12)' : 'rgba(245,166,35,0.12)',
               border: `1px solid ${countdownDays === 0
                 ? 'rgba(63,185,80,0.35)' : 'rgba(245,166,35,0.3)'}`,
             }}>
@@ -820,7 +820,7 @@ export default function TripDetailPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 320 }}>
                   <thead>
                     <tr>
-                      {['Category', 'Est', 'Actual', '±'].map((h, hi) => (
+                      {['Category', 'Est', 'Actual', 'Variance'].map((h, hi) => (
                         <th key={h} style={{
                           textAlign: hi === 0 ? 'left' : 'right',
                           padding: '10px 16px', fontSize: 11, fontWeight: 700,
@@ -953,6 +953,7 @@ export default function TripDetailPage() {
               <div style={{
                 backgroundColor: '#161B22', borderRadius: 14,
                 border: '1px solid #30363D', overflow: 'hidden',
+                borderLeft: '3px solid #F5A623',
               }}>
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 8,

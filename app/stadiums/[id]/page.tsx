@@ -243,9 +243,9 @@ export default function StadiumDetailPage() {
   const teamColor  = TEAM_BTN_COLOR[stadium.abbreviation] ?? '#1F6FEB'
 
   const TABS: { key: ActiveTab; label: string }[] = [
-    { key: 'games-attended',  label: 'Games Witnessed'  },
-    { key: 'upcoming-games',  label: 'Upcoming Games'  },
-    { key: 'stadium-info',    label: 'Stadium Info'    },
+    { key: 'games-attended',  label: 'Your Games Here'  },
+    { key: 'upcoming-games',  label: 'Game Day Intel'   },
+    { key: 'stadium-info',    label: 'The Dossier'      },
   ]
 
   return (
@@ -437,7 +437,7 @@ export default function StadiumDetailPage() {
                 {visits.length === 0 ? (
                   <div style={{
                     background: `linear-gradient(160deg, ${colors[0]}22 0%, ${colors[1]}18 100%), #161B22`,
-                    borderRadius: 14, padding: '48px 24px', textAlign: 'center',
+                    borderRadius: 14, padding: '28px 24px', textAlign: 'center',
                     border: `1px solid ${teamColor}22`,
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
@@ -453,9 +453,8 @@ export default function StadiumDetailPage() {
                       onClick={openAdd}
                       style={{
                         padding: '11px 24px', borderRadius: 10, fontSize: 14, fontWeight: 700,
-                        backgroundColor: teamColor, color: '#ffffff', border: 'none', cursor: 'pointer',
+                        backgroundColor: 'transparent', color: teamColor, border: `1.5px solid ${teamColor}`, cursor: 'pointer',
                         display: 'inline-flex', alignItems: 'center', gap: 6,
-                        boxShadow: `0 3px 12px ${teamColor}44`,
                       }}
                     >
                       <Plus size={14} /> Log Game
