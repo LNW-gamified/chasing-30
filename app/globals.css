@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* Thin scrollbar for game grid */
+.games-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #2a3a5c transparent;
+}
+.games-scroll::-webkit-scrollbar { width: 4px; }
+.games-scroll::-webkit-scrollbar-track { background: transparent; }
+.games-scroll::-webkit-scrollbar-thumb { background: #2a3a5c; border-radius: 4px; }
+
 :root {
   /* ── Backgrounds ── */
   --color-bg-primary:  #0B1117;
