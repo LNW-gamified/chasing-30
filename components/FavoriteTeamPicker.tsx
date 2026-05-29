@@ -68,6 +68,8 @@ export default function FavoriteTeamPicker({ userId, currentFavAbbr }: Props) {
       <div style={{
         display: 'flex', alignItems: 'center', gap: 10,
         marginBottom: 12,
+        backgroundColor: '#111827', border: '1px solid #1e2d4a',
+        borderRadius: 10, padding: '10px 14px',
       }}>
         <span style={{ fontSize: 12, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
           Favorite Team

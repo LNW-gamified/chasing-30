@@ -155,12 +155,10 @@ export default function Standings({ favAbbr }: Props) {
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           marginBottom: collapsed ? 0 : '0.75rem', cursor: 'pointer',
+          paddingLeft: 14, borderLeft: '3px solid #F5A623',
         }}
       >
-        <span style={{
-          fontSize: 13, fontWeight: 600, color: '#8B949E',
-          textTransform: 'uppercase', letterSpacing: '0.1em',
-        }}>
+        <span style={{ fontSize: 20, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.3px' }}>
           Standings
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

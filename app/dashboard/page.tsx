@@ -252,6 +252,7 @@ export default async function DashboardPage() {
                 ...card,
                 padding: '20px 20px 18px',
                 background: '#111827',
+                border: '1px solid #1e2d4a',
                 textAlign: 'center',
                 height: '100%',
                 display: 'flex',
@@ -267,7 +268,7 @@ export default async function DashboardPage() {
                 <HeroRing visited={visitedCount} total={30} dots={ringDots} />
               </div>
 
-              <div style={{ fontSize: 16, fontWeight: 800, color: '#E6EDF3', marginBottom: 3 }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: '#E6EDF3', marginBottom: 3, letterSpacing: '-0.3px' }}>
                 {visitedCount === 30 ? (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, justifyContent: 'center' }}>
                     <Trophy size={16} color="#F5A623" /> All 30 stadiums conquered

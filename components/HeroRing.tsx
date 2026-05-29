@@ -28,7 +28,7 @@ export default function HeroRing({ visited, total, dots }: Props) {
   const circ    = 2 * Math.PI * r
   const pct     = total > 0 ? visited / total : 0
   const offset  = circ - Math.max(pct, visited > 0 ? 0.025 : 0) * circ
-  const dotPx   = 12
+  const dotPx   = 22
   const dotHalf = dotPx / 2
 
   // Arc tip position in SVG-local coords (before the -90deg CSS rotation)
@@ -86,41 +86,29 @@ export default function HeroRing({ visited, total, dots }: Props) {
         )}
       </svg>
 
-      {/* Dots around ring — visited positions show team logo in visit order, rest are plain gray */}
+      {/* Visited stadium logo blobs — only rendered for visited positions */}
       {dots.map(({ abbr, visited: v, visitDate }, i) => {
+        if (!v || !abbr) return null  // unvisited = no dot; the SVG track is the ring
         const angle = (i / dots.length) * 2 * Math.PI - Math.PI / 2
         const x = size / 2 + r * Math.cos(angle) - dotHalf
         const y = size / 2 + r * Math.sin(angle) - dotHalf
-
-        const tooltipText = v && abbr && visitDate
+        const tooltipText = visitDate
           ? `${abbr} · ${new Date(visitDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
-          : undefined
-
+          : abbr
         return (
           <div
             key={i}
             title={tooltipText}
             style={{
-              position: 'absolute',
-              left: x, top: y,
+              position: 'absolute', left: x, top: y,
               width: dotPx, height: dotPx,
-              borderRadius: '50%',
-              overflow: 'hidden',
-              flexShrink: 0,
-              background: v ? undefined : '#0D1117',
-              border: `1.5px solid ${v ? '#3FB950' : '#21262D'}`,
-              boxShadow: v ? '0 0 7px rgba(63,185,80,0.6)' : 'none',
-              zIndex: v ? 2 : 1,
-              cursor: v ? 'help' : 'default',
+              borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
+              border: '2px solid #3FB950',
+              boxShadow: '0 0 8px rgba(63,185,80,0.7)',
+              zIndex: 2, cursor: 'help',
             }}
           >
-            {v && abbr && (
-              <TeamLogo
-                abbreviation={abbr}
-                size={dotPx}
-                style={{ borderRadius: '50%', width: dotPx, height: dotPx }}
-              />
-            )}
+            <TeamLogo abbreviation={abbr} size={dotPx} style={{ borderRadius: '50%', width: dotPx, height: dotPx }} />
           </div>
         )
       })}

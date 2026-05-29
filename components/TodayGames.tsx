@@ -236,7 +236,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
               {/* Teams + score */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                  <TeamLogo abbreviation={g.awayAbbr} size={30}/>
+                  <TeamLogo abbreviation={g.awayAbbr} size={36}/>
                   <span style={{ fontSize: 10, fontWeight: 700, color: awayWin ? '#E6EDF3' : '#8B949E' }}>{g.awayAbbr}</span>
                 </div>
 
@@ -253,7 +253,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                  <TeamLogo abbreviation={g.homeAbbr} size={30}/>
+                  <TeamLogo abbreviation={g.homeAbbr} size={36}/>
                   <span style={{ fontSize: 10, fontWeight: 700, color: homeWin ? '#E6EDF3' : '#8B949E' }}>{g.homeAbbr}</span>
                 </div>
               </div>
@@ -271,7 +271,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
       {games.length > 8 && (
         <div
           className="hidden md:block"
-          style={{ textAlign: 'center', fontSize: 11, color: '#484F58', paddingTop: 6, flexShrink: 0 }}
+          style={{ textAlign: 'center', fontSize: 13, color: '#F5A623', fontWeight: 600, paddingTop: 8, flexShrink: 0 }}
         >
           ↓ {games.length - 8} more game{games.length - 8 !== 1 ? 's' : ''}
         </div>
