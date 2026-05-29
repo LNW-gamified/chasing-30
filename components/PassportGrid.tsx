@@ -770,29 +770,85 @@ function PassportStamp({ def, visitDate }: { def: StampDef; visitDate: string | 
     ? new Date(visitDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null
 
+  if (earned) {
+    return (
+      // ── EARNED: rich gold gradient card ────────────────────────
+      <div style={{
+        background: 'linear-gradient(135deg, #C9A84C 0%, #8B6914 100%)',
+        borderRadius: 12,
+        border: '2px solid #C9A84C',
+        overflow: 'hidden',
+        position: 'relative',
+        boxShadow: '0 0 20px rgba(201,168,76,0.4), 0 4px 16px rgba(0,0,0,0.5)',
+      }}>
+        {/* VISITED corner badge */}
+        <div style={{
+          position: 'absolute', top: 7, right: 7, zIndex: 3,
+          backgroundColor: '#0a0e1a',
+          color: '#C9A84C',
+          fontFamily: 'monospace', fontSize: 7, fontWeight: 900,
+          letterSpacing: '0.1em', textTransform: 'uppercase',
+          padding: '2px 5px', borderRadius: 3,
+          border: '1px solid rgba(201,168,76,0.5)',
+          pointerEvents: 'none',
+        }}>✓ VISITED</div>
+
+        {/* Header row */}
+        <div style={{ padding: '8px 10px 2px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 900, color: '#ffffff', letterSpacing: '0.04em' }}>
+            {def.abbr}
+          </span>
+          <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.65)', letterSpacing: '0.18em' }}>MLB</span>
+        </div>
+
+        {/* Illustration — full color, full opacity */}
+        <div style={{ width: 120, height: 120, margin: '4px auto 2px', overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
+          <div style={{ transform: 'scale(1.5)', transformOrigin: 'top left', width: 80, height: 80 }}>
+            {def.art}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: '2px 10px 10px', textAlign: 'center' }}>
+          <div style={{
+            fontFamily: 'monospace', fontSize: 13, fontWeight: 700,
+            color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.04em',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>{def.stadium}</div>
+          <div style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.75)', marginTop: 2, letterSpacing: '0.04em' }}>
+            {def.city}, {def.state}
+          </div>
+          {fmtDate && (
+            <div style={{
+              fontFamily: 'monospace', fontSize: 13, fontWeight: 700,
+              color: '#F5E070', marginTop: 5, paddingTop: 5,
+              borderTop: '1px solid rgba(255,255,255,0.25)',
+            }}>{fmtDate}</div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
+    // ── UNEARNED: dark elevated card with ghost illustration ──────
     <div style={{
-      backgroundColor: '#161B22',
+      backgroundColor: '#1a2744',
       borderRadius: 12,
-      border: earned ? `1px solid ${def.primary}35` : '1px solid #21262D',
-      borderTop: earned ? `3px solid ${def.primary}` : '3px solid #21262D',
+      border: '1px solid #2a3a5c',
       overflow: 'hidden',
-      opacity: earned ? 1 : 0.40,
       position: 'relative',
-      boxShadow: earned ? `0 4px 20px ${def.primary}20` : 'none',
-      transition: 'opacity 0.2s',
     }}>
       {/* Header row */}
       <div style={{ padding: '8px 10px 2px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{
-          fontFamily: 'monospace', fontSize: 11, fontWeight: 900,
-          color: earned ? def.primary : '#484F58', letterSpacing: '0.04em',
-        }}>{def.abbr}</span>
-        <span style={{ fontFamily: 'monospace', fontSize: 7, color: '#484F58', letterSpacing: '0.18em', opacity: 0.6 }}>MLB</span>
+        <span style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 900, color: '#ffffff', letterSpacing: '0.04em' }}>
+          {def.abbr}
+        </span>
+        <span style={{ fontFamily: 'monospace', fontSize: 8, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.18em' }}>MLB</span>
       </div>
 
-      {/* Illustration — 120×120 container, art scaled 1.5× */}
-      <div style={{ width: 120, height: 120, margin: '4px auto 2px', overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
+      {/* Illustration — ghost at 45% */}
+      <div style={{ width: 120, height: 120, margin: '4px auto 2px', overflow: 'hidden', position: 'relative', flexShrink: 0, opacity: 0.45 }}>
         <div style={{ transform: 'scale(1.5)', transformOrigin: 'top left', width: 80, height: 80 }}>
           {def.art}
         </div>
@@ -801,35 +857,14 @@ function PassportStamp({ def, visitDate }: { def: StampDef; visitDate: string | 
       {/* Footer */}
       <div style={{ padding: '2px 10px 10px', textAlign: 'center' }}>
         <div style={{
-          fontFamily: 'monospace', fontSize: 9, fontWeight: 700,
-          color: earned ? '#C9D1D9' : '#484F58',
-          textTransform: 'uppercase', letterSpacing: '0.04em',
+          fontFamily: 'monospace', fontSize: 14, fontWeight: 700,
+          color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.04em',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>{def.stadium}</div>
-        <div style={{ fontFamily: 'monospace', fontSize: 8, color: '#484F58', marginTop: 2, letterSpacing: '0.04em' }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 12, color: 'rgba(255,255,255,0.70)', marginTop: 2, letterSpacing: '0.04em' }}>
           {def.city}, {def.state}
         </div>
-        {earned && fmtDate && (
-          <div style={{
-            fontFamily: 'monospace', fontSize: 9, fontWeight: 700,
-            color: def.primary, marginTop: 5, paddingTop: 5,
-            borderTop: `1px solid ${def.primary}30`,
-          }}>{fmtDate}</div>
-        )}
       </div>
-
-      {/* VISITED diagonal badge */}
-      {earned && (
-        <div style={{
-          position: 'absolute', top: 18, right: -5, zIndex: 2,
-          transform: 'rotate(28deg)',
-          fontFamily: 'monospace', fontSize: 9, fontWeight: 900,
-          color: def.primary, letterSpacing: '0.1em', opacity: 0.6,
-          border: `1px solid ${def.primary}`,
-          padding: '1px 5px', borderRadius: 2,
-          pointerEvents: 'none',
-        }}>VISITED</div>
-      )}
     </div>
   )
 }
