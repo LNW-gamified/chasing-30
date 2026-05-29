@@ -213,7 +213,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
       {/* ── Desktop: 2×6 grid (12 visible), fixed height, vertical scroll ── */}
       <div
         className="hidden md:grid md:grid-cols-2 md:gap-2 games-grid-cap"
-        style={{ alignContent: 'start', flexShrink: 0 }}
+        style={{ alignContent: 'start', flexShrink: 0, maxHeight: '568px', overflowY: 'auto' }}
       >
         {games.map(g => {
           const homeColor = TEAM_HEX[g.homeAbbr] ?? '#1C2430'
