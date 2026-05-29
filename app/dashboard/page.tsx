@@ -249,7 +249,7 @@ export default async function DashboardPage() {
           style={{ marginBottom: SECTION_GAP }}
         >
           {/* Left column: The Chase */}
-          <div className={todayGames.length > 0 ? 'md:col-span-2 mb-4 md:mb-0 md:h-[670px]' : ''}>
+          <div className={todayGames.length > 0 ? 'md:col-span-2 mb-4 md:mb-0 hero-col' : ''}>
             <div
               className="dash-card"
               style={{
@@ -320,7 +320,7 @@ export default async function DashboardPage() {
 
           {/* Right column: Today at the Ballpark */}
           {todayGames.length > 0 && (
-            <div className="md:col-span-3 md:h-[670px]">
+            <div className="md:col-span-3 hero-col">
               <div
                 className="dash-card"
                 style={{

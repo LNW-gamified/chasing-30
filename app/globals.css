@@ -1,13 +1,18 @@
 @import "tailwindcss";
 
-/* Thin scrollbar for game grid */
-.games-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: #2a3a5c transparent;
+/* Hero two-col: fixed equal-height columns on desktop */
+@media (min-width: 768px) {
+  .hero-col { height: 638px; }
+  .games-grid-cap {
+    max-height: 568px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #2a3a5c transparent;
+  }
+  .games-grid-cap::-webkit-scrollbar { width: 4px; }
+  .games-grid-cap::-webkit-scrollbar-track { background: transparent; }
+  .games-grid-cap::-webkit-scrollbar-thumb { background: #2a3a5c; border-radius: 4px; }
 }
-.games-scroll::-webkit-scrollbar { width: 4px; }
-.games-scroll::-webkit-scrollbar-track { background: transparent; }
-.games-scroll::-webkit-scrollbar-thumb { background: #2a3a5c; border-radius: 4px; }
 
 :root {
   /* ── Backgrounds ── */

@@ -130,7 +130,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
     : null
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
 
       {/* ── Section header ─────────────────────────────────────── */}
       <div style={{
@@ -212,8 +212,8 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
 
       {/* ── Desktop: 2×6 grid (12 visible), fixed height, vertical scroll ── */}
       <div
-        className="hidden md:grid md:grid-cols-2 md:gap-2 games-scroll"
-        style={{ maxHeight: '600px', overflowY: 'auto', alignContent: 'start', flexShrink: 0 }}
+        className="hidden md:grid md:grid-cols-2 md:gap-2 games-grid-cap"
+        style={{ alignContent: 'start', flexShrink: 0 }}
       >
         {games.map(g => {
           const homeColor = TEAM_HEX[g.homeAbbr] ?? '#1C2430'
