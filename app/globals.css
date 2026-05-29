@@ -1,18 +1,32 @@
 @import "tailwindcss";
 
-/* Hero two-col: fixed equal-height columns on desktop */
-@media (min-width: 768px) {
-  .hero-col { height: 638px; }
-  .games-grid-cap {
-    max-height: 568px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #2a3a5c transparent;
-  }
-  .games-grid-cap::-webkit-scrollbar { width: 4px; }
-  .games-grid-cap::-webkit-scrollbar-track { background: transparent; }
-  .games-grid-cap::-webkit-scrollbar-thumb { background: #2a3a5c; border-radius: 4px; }
+/* Hero two-col responsive height tokens */
+:root {
+  --hero-col-h: auto;
+  --games-grid-h: none;
 }
+@media (min-width: 768px) {
+  :root {
+    --hero-col-h: 638px;
+    --games-grid-h: 568px;
+  }
+}
+
+/* Hero columns — fixed height at md+ so both columns align */
+@media (min-width: 768px) {
+  .hero-col { height: var(--hero-col-h); }
+}
+
+/* Game grid — capped height with vertical scroll */
+.games-grid-cap {
+  max-height: var(--games-grid-h);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #2a3a5c transparent;
+}
+.games-grid-cap::-webkit-scrollbar { width: 4px; }
+.games-grid-cap::-webkit-scrollbar-track { background: transparent; }
+.games-grid-cap::-webkit-scrollbar-thumb { background: #2a3a5c; border-radius: 4px; }
 
 :root {
   /* ── Backgrounds ── */
