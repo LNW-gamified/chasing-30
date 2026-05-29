@@ -26,14 +26,17 @@ async function fetchTodayGames(favAbbr: string | null): Promise<TodayGame[]> {
   try {
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
     const res = await fetch(
-      `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&gameType=R`,
+      `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&gameType=R&hydrate=linescore`,
       { next: { revalidate: 300 } }
     )
     if (!res.ok) return []
     const data = await res.json()
     const games: TodayGame[] = (data.dates?.[0]?.games ?? []).map((g: any) => {
-      const awayAbbr = MLB_ID_TO_ABBR[g.teams?.away?.team?.id as number] ?? 'MLB'
-      const homeAbbr = MLB_ID_TO_ABBR[g.teams?.home?.team?.id as number] ?? 'MLB'
+      const awayAbbr  = MLB_ID_TO_ABBR[g.teams?.away?.team?.id as number] ?? 'MLB'
+      const homeAbbr  = MLB_ID_TO_ABBR[g.teams?.home?.team?.id as number] ?? 'MLB'
+      const ls        = g.linescore
+      const inningNum = ls?.currentInning ?? null
+      const inning    = inningNum ? `${ls?.isTopInning === false ? '▼' : '▲'} ${inningNum}` : null
       return {
         gamePk:    g.gamePk,
         gameDate:  g.gameDate,
@@ -44,6 +47,7 @@ async function fetchTodayGames(favAbbr: string | null): Promise<TodayGame[]> {
         isLive:    g.status?.abstractGameState === 'Live',
         isFinal:   g.status?.abstractGameState === 'Final',
         isFavorite: favAbbr !== null && (awayAbbr === favAbbr || homeAbbr === favAbbr),
+        inning,
       }
     })
     return games.sort((a, b) => (b.isFavorite ? 1 : 0) - (a.isFavorite ? 1 : 0))

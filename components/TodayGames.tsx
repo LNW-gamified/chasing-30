@@ -13,6 +13,7 @@ export interface TodayGame {
   isLive:     boolean
   isFinal:    boolean
   isFavorite: boolean
+  inning:     string | null
 }
 
 interface Props {
@@ -99,6 +100,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
       const raw = await res.json() as Omit<TodayGame, 'isFavorite'>[]
       const withFav = raw.map(g => ({
         ...g,
+        inning:     g.inning ?? null,
         isFavorite: favAbbr !== null && (g.awayAbbr === favAbbr || g.homeAbbr === favAbbr),
       }))
       setGames(sortGames(withFav))
@@ -208,10 +210,10 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
         })}
       </div>
 
-      {/* ── Desktop: 3×2 grid, fixed height, vertical scroll ─────── */}
+      {/* ── Desktop: 2×6 grid (12 visible), fixed height, vertical scroll ── */}
       <div
-        className="hidden md:grid md:grid-cols-3 md:gap-2"
-        style={{ height: '200px', overflowY: 'auto', alignContent: 'start', flexShrink: 0, paddingRight: 2 }}
+        className="hidden md:grid md:grid-cols-2 md:gap-2"
+        style={{ height: '576px', overflowY: 'auto', alignContent: 'start', flexShrink: 0 }}
       >
         {games.map(g => {
           const homeColor = TEAM_HEX[g.homeAbbr] ?? '#1C2430'
@@ -222,61 +224,80 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
             <div
               key={g.gamePk}
               style={{
-                borderRadius: 10, padding: '8px 10px',
+                borderRadius: 10, padding: '8px 10px 7px',
                 border: g.isFavorite ? '1.5px solid #1F6FEB' : '1px solid #21262D',
                 position: 'relative', overflow: 'hidden',
                 background: `linear-gradient(135deg, ${homeColor}22 0%, #1C2430 65%)`,
-                boxShadow: g.isFavorite ? '0 2px 12px rgba(31,111,235,0.2)' : 'none',
+                boxShadow: g.isFavorite ? '0 2px 10px rgba(31,111,235,0.2)' : 'none',
+                display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
               }}
             >
               {g.isFavorite && (
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: '#1F6FEB' }}/>
               )}
 
-              {/* Teams + score */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                  <TeamLogo abbreviation={g.awayAbbr} size={28}/>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: awayWin ? '#E6EDF3' : '#8B949E' }}>{g.awayAbbr}</span>
+              {/* Teams + score row */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                {/* Away */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 36 }}>
+                  <TeamLogo abbreviation={g.awayAbbr} size={40}/>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: awayWin ? '#E6EDF3' : '#8B949E', letterSpacing: '0.03em' }}>{g.awayAbbr}</span>
                 </div>
 
-                <div style={{ textAlign: 'center', flex: 1, padding: '0 4px' }}>
+                {/* Score or time */}
+                <div style={{ textAlign: 'center', flex: 1, padding: '0 6px' }}>
                   {hasScore ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
-                      <span style={{ fontSize: 18, fontWeight: 900, lineHeight: 1, color: awayWin ? '#E6EDF3' : '#8B949E', letterSpacing: '-1px' }}>{g.awayScore}</span>
-                      <span style={{ fontSize: 12, color: '#30363D', fontWeight: 300 }}>–</span>
-                      <span style={{ fontSize: 18, fontWeight: 900, lineHeight: 1, color: homeWin ? '#E6EDF3' : '#8B949E', letterSpacing: '-1px' }}>{g.homeScore}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                      <span style={{ fontSize: 20, fontWeight: 900, lineHeight: 1, color: awayWin ? '#E6EDF3' : '#8B949E', letterSpacing: '-1px' }}>{g.awayScore}</span>
+                      <span style={{ fontSize: 13, color: '#484F58', fontWeight: 300 }}>–</span>
+                      <span style={{ fontSize: 20, fontWeight: 900, lineHeight: 1, color: homeWin ? '#E6EDF3' : '#8B949E', letterSpacing: '-1px' }}>{g.homeScore}</span>
                     </div>
                   ) : (
-                    <div style={{ fontSize: 10, color: '#8B949E', fontWeight: 600, whiteSpace: 'nowrap' }}>{fmtTime(g.gameDate)}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#C9D1D9', whiteSpace: 'nowrap' }}>
+                      {fmtTime(g.gameDate)}
+                    </div>
                   )}
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                  <TeamLogo abbreviation={g.homeAbbr} size={28}/>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: homeWin ? '#E6EDF3' : '#8B949E' }}>{g.homeAbbr}</span>
+                {/* Home */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 36 }}>
+                  <TeamLogo abbreviation={g.homeAbbr} size={40}/>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: homeWin ? '#E6EDF3' : '#8B949E', letterSpacing: '0.03em' }}>{g.homeAbbr}</span>
                 </div>
               </div>
 
-              {/* Status badge */}
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <StatusBadge isLive={g.isLive} isFinal={g.isFinal}/>
+              {/* Status line */}
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 5, marginTop: 4 }}>
+                {g.isLive ? (
+                  <>
+                    <div className="animate-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: '#F85149', flexShrink: 0 }}/>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#3FB950', letterSpacing: '0.04em' }}>
+                      {g.inning ?? 'LIVE'}
+                    </span>
+                  </>
+                ) : g.isFinal ? (
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#484F58', letterSpacing: '0.08em' }}>FINAL</span>
+                ) : (
+                  <span style={{ fontSize: 11, fontWeight: 500, color: '#6E7681', letterSpacing: '0.02em' }}>
+                    First pitch {fmtTime(g.gameDate)}
+                  </span>
+                )}
               </div>
             </div>
           )
         })}
       </div>
 
-      {/* Flex spacer — pushes indicator to bottom of column */}
+      {/* Flex spacer */}
       <div className="hidden md:block" style={{ flex: 1 }} />
 
-      {/* Scroll hint — gold, at bottom of column, only when more than 6 games exist */}
-      {games.length > 6 && (
+      {/* Scroll hint — gold, only when more than 12 games */}
+      {games.length > 12 && (
         <div
           className="hidden md:block"
           style={{ textAlign: 'center', fontSize: 13, color: '#F5A623', fontWeight: 600, paddingTop: 6, flexShrink: 0 }}
         >
-          ↓ {games.length - 6} more game{games.length - 6 !== 1 ? 's' : ''}
+          ↓ {games.length - 12} more game{games.length - 12 !== 1 ? 's' : ''}
         </div>
       )}
     </div>

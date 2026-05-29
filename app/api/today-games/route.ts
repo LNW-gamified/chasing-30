@@ -13,23 +13,30 @@ export async function GET() {
   try {
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
     const res = await fetch(
-      `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&gameType=R`,
+      `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&gameType=R&hydrate=linescore`,
       { next: { revalidate: 60 } }
     )
     if (!res.ok) return NextResponse.json([])
     const data = await res.json()
     const games: unknown[] = data.dates?.[0]?.games ?? []
     return NextResponse.json(
-      games.map((g: any) => ({
-        gamePk:    g.gamePk,
-        gameDate:  g.gameDate,
-        awayAbbr:  MLB_ID_TO_ABBR[g.teams?.away?.team?.id as number] ?? 'MLB',
-        homeAbbr:  MLB_ID_TO_ABBR[g.teams?.home?.team?.id as number] ?? 'MLB',
-        awayScore: g.teams?.away?.score ?? null,
-        homeScore: g.teams?.home?.score ?? null,
-        isLive:    g.status?.abstractGameState === 'Live',
-        isFinal:   g.status?.abstractGameState === 'Final',
-      }))
+      games.map((g: any) => {
+        const ls = g.linescore
+        const inningNum  = ls?.currentInning ?? null
+        const inningHalf = ls?.isTopInning === false ? '▼' : '▲'
+        const inning = inningNum ? `${inningHalf} ${inningNum}` : null
+        return {
+          gamePk:    g.gamePk,
+          gameDate:  g.gameDate,
+          awayAbbr:  MLB_ID_TO_ABBR[g.teams?.away?.team?.id as number] ?? 'MLB',
+          homeAbbr:  MLB_ID_TO_ABBR[g.teams?.home?.team?.id as number] ?? 'MLB',
+          awayScore: g.teams?.away?.score ?? null,
+          homeScore: g.teams?.home?.score ?? null,
+          isLive:    g.status?.abstractGameState === 'Live',
+          isFinal:   g.status?.abstractGameState === 'Final',
+          inning,
+        }
+      })
     )
   } catch {
     return NextResponse.json([])
