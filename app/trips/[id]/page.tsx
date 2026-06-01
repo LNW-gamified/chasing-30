@@ -61,10 +61,11 @@ export default function TripDetailPage() {
   const [completeError,  setCompleteError]  = useState('')
   const [checklistItems, setChecklistItems] = useState<StopChecklistItem[]>([])
   const [showDeleteMenu,  setShowDeleteMenu]  = useState(false)
+  const [visitedStadiumIds, setVisitedStadiumIds] = useState<Set<string>>(new Set())
 
   async function load() {
     const supabase = createClient()
-    const [{ data: t }, { data: s }, { data: st }] = await Promise.all([
+    const [{ data: t }, { data: s }, { data: st }, { data: sv }] = await Promise.all([
       supabase.from('trips').select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, description, lat, lng, is_mlb_event, website_url)').eq('id', id).single(),
       supabase.from('stadiums').select('*').order('name'),
       supabase.from('trip_stops').select(
@@ -72,9 +73,11 @@ export default function TripDetailPage() {
         'est_tickets, est_food, est_parking, actual_tickets, actual_food, actual_parking, notes, ' +
         'ticket_section, ticket_row, ticket_seats, ticket_confirmation, created_at, stadium:stadiums(*)'
       ).eq('trip_id', id).order('sort_order'),
+      supabase.from('stadium_visits').select('stadium_id'),
     ])
     setTrip(t as TripWithStadium)
     setStadiums(s ?? [])
+    setVisitedStadiumIds(new Set((sv ?? []).map((r: any) => r.stadium_id)))
     const loadedStops = (st as unknown as TripStop[]) ?? []
     setStops(loadedStops)
     if (loadedStops.length > 0) {
@@ -149,9 +152,17 @@ export default function TripDetailPage() {
   if (loading) {
     return (
       <div>
-        <div style={{ height: 220, backgroundColor: '#1C2430' }} />
-        <div style={{ textAlign: 'center', padding: '48px 16px', color: '#8B949E', fontSize: 14 }}>
-          Loading…
+        {/* Hero skeleton */}
+        <div style={{ height: 220, backgroundColor: '#1C2430', position: 'relative', overflow: 'hidden' }}>
+          <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+        </div>
+        <div style={{ maxWidth: 800, margin: '0 auto', padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Stop cards skeleton */}
+          {[1,2,3].map(i => (
+            <div key={i} style={{ height: 90, borderRadius: 14, backgroundColor: '#161B22', border: '1px solid #30363D', overflow: 'hidden', position: 'relative' }}>
+              <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+            </div>
+          ))}
         </div>
       </div>
     )
@@ -392,6 +403,31 @@ export default function TripDetailPage() {
                   <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.5 }}>{destInfo.description}</div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* ── All stops visited prompt ───────────────────────────── */}
+          {trip.status === 'planned' && stops.length > 0 && stops.every(s => s.stadium_id && visitedStadiumIds.has(s.stadium_id)) && !showComplete && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '12px 16px', borderRadius: 12, marginBottom: 16,
+              background: 'rgba(63,185,80,0.1)', border: '1px solid rgba(63,185,80,0.35)',
+              gap: 12,
+            }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#3FB950' }}>🎉 All stops visited!</div>
+                <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>Ready to mark this trip complete?</div>
+              </div>
+              <button
+                onClick={() => { setCompleteDate(new Date().toISOString().split('T')[0]); setShowComplete(true) }}
+                style={{
+                  padding: '8px 14px', borderRadius: 8, border: 'none', flexShrink: 0,
+                  backgroundColor: '#3FB950', color: '#0B1117',
+                  fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                Mark Complete
+              </button>
             </div>
           )}
 

@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import GameDayForm from '@/components/GameDayForm'
 import BoxScore from '@/components/BoxScore'
 import { formatDate } from '@/lib/utils'
 import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber } from '@/types'
+import { MILESTONES } from '@/lib/milestones'
 import { fetchUpcomingHomeGames, type UpcomingGame } from '@/lib/mlb-api'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 import Link from 'next/link'
@@ -100,8 +101,10 @@ export default function StadiumDetailPage() {
   const [firstTimeMoments, setFirstTimeMoments] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<ActiveTab>('games-attended')
   const [retiredNumbers, setRetiredNumbers] = useState<RetiredNumber[]>([])
+  const [unlockedMilestones, setUnlockedMilestones] = useState<{ name: string; icon: string }[]>([])
+  const prevEarnedIdsRef = useRef<Set<string>>(new Set())
 
-  async function load() {
+  async function load(checkMilestones = false) {
     const supabase = createClient()
     const [
       { data: s }, { data: v }, { data: n },
@@ -120,11 +123,29 @@ export default function StadiumDetailPage() {
     setStadiumNote(note)
     setNoteInput(note)
     const avRows = (av ?? []) as { stadium_id: string; moments: string[] | null }[]
-    setAllVisitedIds(new Set(avRows.map(r => r.stadium_id)))
+    const newVisitedIds = new Set(avRows.map(r => r.stadium_id))
+    setAllVisitedIds(newVisitedIds)
     setAllGlobalMoments(new Set(avRows.flatMap(r => r.moments ?? [])))
-    setAllStadiums((as_ ?? []) as MiniStadium[])
+    const stadiumList = (as_ ?? []) as MiniStadium[]
+    setAllStadiums(stadiumList)
     setRetiredNumbers((rn ?? []) as RetiredNumber[])
     setLoading(false)
+
+    if (checkMilestones) {
+      const allVisitsFull = (v ?? []) as StadiumVisit[]
+      const newEarned = MILESTONES.filter(m => m.check(allVisitsFull, stadiumList as any, [], [], []))
+      const newEarnedIds = new Set(newEarned.map(m => m.id))
+      const newly = newEarned.filter(m => !prevEarnedIdsRef.current.has(m.id))
+      if (newly.length > 0) {
+        setUnlockedMilestones(newly.map(m => ({ name: m.name, icon: m.icon })))
+        setTimeout(() => setUnlockedMilestones([]), 8000)
+      }
+      prevEarnedIdsRef.current = newEarnedIds
+    } else {
+      const allVisitsFull = (v ?? []) as StadiumVisit[]
+      const earned = MILESTONES.filter(m => m.check(allVisitsFull, stadiumList as any, [], [], []))
+      prevEarnedIdsRef.current = new Set(earned.map(m => m.id))
+    }
   }
 
   useEffect(() => { load() }, [id])
@@ -225,9 +246,35 @@ export default function StadiumDetailPage() {
 
   if (loading) {
     return (
-      <div>
-        <div style={{ height: 260, backgroundColor: '#1C2430' }} />
-        <div style={{ textAlign: 'center', padding: '40px 16px', color: '#8B949E' }}>Loading...</div>
+      <div style={{ color: '#E6EDF3' }}>
+        {/* Hero skeleton */}
+        <div style={{ height: 260, backgroundColor: '#1C2430', position: 'relative', overflow: 'hidden' }}>
+          <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+        </div>
+        <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 16px' }}>
+          {/* Stats row skeleton */}
+          <div style={{ display: 'flex', gap: 8, padding: '14px 0', borderBottom: '1px solid #30363D' }}>
+            {[1,2,3].map(i => (
+              <div key={i} style={{ flex: 1, height: 72, borderRadius: 12, backgroundColor: '#1C2430', overflow: 'hidden', position: 'relative' }}>
+                <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+              </div>
+            ))}
+          </div>
+          {/* Action button skeleton */}
+          <div style={{ padding: '16px 0' }}>
+            <div style={{ height: 48, borderRadius: 12, backgroundColor: '#1C2430', overflow: 'hidden', position: 'relative' }}>
+              <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+            </div>
+          </div>
+          {/* Tab bar skeleton */}
+          <div style={{ display: 'flex', gap: 4, borderTop: '1px solid #30363D', borderBottom: '1px solid #30363D', padding: '4px 0' }}>
+            {[1,2,3].map(i => (
+              <div key={i} style={{ flex: 1, height: 40, borderRadius: 6, backgroundColor: '#1C2430', overflow: 'hidden', position: 'relative', margin: '4px' }}>
+                <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     )
   }
@@ -585,7 +632,15 @@ export default function StadiumDetailPage() {
                                   {g.awayTeam} @ {g.homeTeam}
                                 </div>
                               </div>
-                              <div style={{ fontSize: 13, color: '#8B949E' }}>{timeStr} PT</div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <div style={{ fontSize: 13, color: '#8B949E' }}>{timeStr} PT</div>
+                                <Link
+                                  href="/trips"
+                                  style={{ fontSize: 11, fontWeight: 700, color: '#1F6FEB', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                                >
+                                  Plan Trip →
+                                </Link>
+                              </div>
                             </div>
                           )
                         })}
@@ -786,6 +841,29 @@ export default function StadiumDetailPage() {
         </div>{/* /max-width */}
       </main>
 
+      {/* ── Milestone unlock toast ──────────────────────────────── */}
+      {unlockedMilestones.length > 0 && (
+        <div
+          className="fixed left-3 right-3 md:left-auto md:right-6 md:w-96 z-50"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 9rem)' }}
+        >
+          <div style={{
+            background: 'linear-gradient(135deg, #1A1500 0%, #2A2000 100%)',
+            border: '1px solid rgba(245,166,35,0.5)', borderRadius: 14,
+            padding: '14px 16px', boxShadow: '0 4px 24px rgba(0,0,0,0.6)',
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#F5A623', marginBottom: 6 }}>
+              🏆 Milestone{unlockedMilestones.length > 1 ? 's' : ''} Unlocked!
+            </div>
+            {unlockedMilestones.map(m => (
+              <div key={m.name} style={{ fontSize: 13, color: '#E6EDF3', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>{m.icon}</span> {m.name}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── Autofill toast ──────────────────────────────────────── */}
       {autofillState && (
         <div
@@ -856,7 +934,7 @@ export default function StadiumDetailPage() {
             }
             setShowForm(false)
             setEditingVisit(undefined)
-            load()
+            load(true)
             if (newVisitId) triggerAutofill(newVisitId)
           }}
         />

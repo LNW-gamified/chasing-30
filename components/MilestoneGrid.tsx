@@ -804,7 +804,12 @@ export default function MilestoneGrid({
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: isEarned ? '#E6EDF3' : '#C9D1D9', marginBottom: 3, lineHeight: 1.3 }}>{m.name}</div>
-                  <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.4, marginBottom: progress && !isEarned ? 8 : 24 }}>{m.description}</div>
+                  <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.4, marginBottom: isEarned && m.earnDate ? 4 : (progress && !isEarned ? 8 : 24) }}>{m.description}</div>
+                  {isEarned && m.earnDate && (
+                    <div style={{ fontSize: 10, color: 'rgba(245,166,35,0.7)', fontWeight: 600, marginBottom: 20 }}>
+                      Earned {new Date(m.earnDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Progress bar (in-progress, not earned) */}

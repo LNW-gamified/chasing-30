@@ -230,6 +230,7 @@ export interface SerializableMilestone {
   name: string
   description: string
   icon: string
+  earnDate?: string | null
 }
 
 export interface StadiumWithVisit extends Stadium {

@@ -10,6 +10,7 @@ import FavoriteTeamPicker from '@/components/FavoriteTeamPicker'
 import DashboardSpecialVisitButton from '@/components/DashboardSpecialVisitButton'
 import OnThisDay, { type HistoryFact } from '@/components/OnThisDay'
 import HeroRing, { type RingDot } from '@/components/HeroRing'
+import TeamLogo from '@/components/TeamLogo'
 
 // ─── MLB API ──────────────────────────────────────────────────────────────────
 
@@ -232,6 +233,19 @@ export default async function DashboardPage() {
 
   const todayGames = await fetchTodayGames(favAbbr)
 
+  // "Did you attend?" — final/live home games today at unvisited stadiums
+  const attendPromptStadiums = todayGames
+    .filter(g => (g.isFinal || g.isLive) && !visitedIds.has(
+      allStadiums.find(s => s.abbreviation === g.homeAbbr)?.id ?? ''
+    ))
+    .map(g => allStadiums.find(s => s.abbreviation === g.homeAbbr))
+    .filter((s): s is Stadium => Boolean(s))
+    .slice(0, 3)
+
+  // Fav team stadium
+  const favStadium = favAbbr ? allStadiums.find(s => s.abbreviation === favAbbr) ?? null : null
+  const favStadiumVisited = favStadium ? visitedIds.has(favStadium.id) : false
+
   // ─── Shared styles ──────────────────────────────────────────────────────────
 
   const card: React.CSSProperties = {
@@ -342,6 +356,40 @@ export default async function DashboardPage() {
           )}
         </div>
 
+        {/* ── Did you attend today? ────────────────────────────────── */}
+        {attendPromptStadiums.length > 0 && (
+          <div
+            className="dash-card"
+            style={{ ...card, marginBottom: SECTION_GAP, padding: '14px 16px', border: '1px solid rgba(245,166,35,0.25)', background: 'rgba(245,166,35,0.05)' }}
+          >
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#F5A623', marginBottom: 10, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              ⚾ Did you attend today?
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {attendPromptStadiums.map(s => (
+                <Link
+                  key={s.id}
+                  href={`/stadiums/${s.id}`}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 12px', borderRadius: 10, textDecoration: 'none',
+                    backgroundColor: '#161B22', border: '1px solid #30363D',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <TeamLogo abbreviation={s.abbreviation} size={28} />
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{s.name}</div>
+                      <div style={{ fontSize: 11, color: '#8B949E' }}>{s.city}, {s.state}</div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 12, color: '#F5A623', fontWeight: 600 }}>Log Game →</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── Next Game board ─────────────────────────────────────── */}
         {nextPlannedTrip && (
           <div
@@ -405,6 +453,38 @@ export default async function DashboardPage() {
           </div>
         )}
 
+        {/* ── Fav team visit suggestion ────────────────────────────────── */}
+        {favStadium && !favStadiumVisited && (
+          <div
+            className="dash-card"
+            style={{ ...card, marginBottom: SECTION_GAP, padding: '16px', border: '1px solid rgba(31,111,235,0.3)', background: 'rgba(31,111,235,0.05)' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <TeamLogo abbreviation={favStadium.abbreviation} size={36} />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>
+                    You haven&apos;t visited your team&apos;s home yet
+                  </div>
+                  <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>
+                    {favStadium.name} · {favStadium.city}, {favStadium.state}
+                  </div>
+                </div>
+              </div>
+              <Link
+                href="/trips"
+                style={{
+                  padding: '8px 14px', borderRadius: 8, flexShrink: 0,
+                  backgroundColor: '#1F6FEB', color: '#fff',
+                  fontSize: 12, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap',
+                }}
+              >
+                Plan Trip →
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* ── Your Scouting Report ─────────────────────────────────────── */}
         <div style={{ marginBottom: SECTION_GAP }}>
           <SectionHeader label="Your Scouting Report" />
@@ -431,6 +511,8 @@ export default async function DashboardPage() {
                   fontSize: valSize, fontWeight: 900, color: '#E6EDF3',
                   lineHeight: 1, marginBottom: 8,
                   letterSpacing: typeof value === 'number' ? '-1px' : '0',
+                  width: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap', textAlign: 'center',
                 }}>
                   {value.toString()}
                 </div>

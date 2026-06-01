@@ -183,7 +183,7 @@ export default async function StatsPage() {
       icon: <MapPin size={20} />,
       label: 'Farthest Trip',
       value: farthestStadium ? farthestStadium.name : visitedStadiums.length < 2 ? 'Visit more stadiums' : 'N/A',
-      sub: farthestStadium ? `~${Math.round(farthestMiles).toLocaleString()} miles from first` : '',
+      sub: farthestStadium ? `~${Math.round(farthestMiles).toLocaleString()} miles from first (as crow flies)` : '',
       color: '#06b6d4',
     },
   ]

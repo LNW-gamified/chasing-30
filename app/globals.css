@@ -240,6 +240,19 @@ select.input { cursor: pointer; }
   border-radius: 2px;
 }
 
+/* ── Skeleton shimmer ────────────────────────────────────────────────── */
+@keyframes skeleton-sweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
 /* ── Spinner ─────────────────────────────────────────────────────────── */
 @keyframes spin {
   from { transform: rotate(0deg); }

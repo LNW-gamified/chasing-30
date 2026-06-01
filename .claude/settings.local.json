@@ -32,7 +32,19 @@
       "Bash(Remove-Item \"C:\\\\Users\\\\later\\\\chasing-30\\\\app\\\\special-events\\\\page.tsx\" -Force)",
       "Bash(Remove-Item \"C:\\\\Users\\\\later\\\\chasing-30\\\\app\\\\special-events\" -Force -ErrorAction SilentlyContinue)",
       "Bash(dir C:\\\\Users\\\\later\\\\chasing-30\\\\public *)",
-      "Bash(powershell -Command \"Get-ChildItem -Path 'C:\\\\Users\\\\later\\\\chasing-30\\\\app','C:\\\\Users\\\\later\\\\chasing-30\\\\components' -Filter '*.tsx' -Recurse | Select-String -Pattern '[^\\\\x00-\\\\x7F]' | Select-Object Filename, LineNumber, Line | Format-List\")"
+      "Bash(powershell -Command \"Get-ChildItem -Path 'C:\\\\Users\\\\later\\\\chasing-30\\\\app','C:\\\\Users\\\\later\\\\chasing-30\\\\components' -Filter '*.tsx' -Recurse | Select-String -Pattern '[^\\\\x00-\\\\x7F]' | Select-Object Filename, LineNumber, Line | Format-List\")",
+      "Bash(Read \"C:\\\\Users\\\\later\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-later-chasing-30\\\\7f0167f6-7798-4e63-a9c9-c9f1799f9d0f\\\\tasks\\\\bbhg9pi6s.output\")",
+      "Bash(npx playwright *)",
+      "Bash(where playwright *)",
+      "Read(//c/Users/later/AppData/Roaming/npm/**)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(head *)",
+      "Bash(npx --yes playwright@1.60.0 node check_grid.mjs)",
+      "PowerShell(npm install *)",
+      "Bash(curl -s \"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=2026-05-29&gameType=R\")",
+      "PowerShell($r = Invoke-RestMethod \"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=2026-05-29&gameType=R\"; $games = $r.dates[0].games; Write-Output \"Game count: $\\($games.Count\\)\"; $games | ForEach-Object { \"$\\($_.teams.away.team.name\\) @ $\\($_.teams.home.team.name\\) — $\\($_.status.abstractGameState\\)\" })",
+      "Bash(Get-ChildItem *)"
     ]
   }
 }

@@ -66,8 +66,40 @@ function computeInProgress(
   return count
 }
 
-function toSerializable(ms: typeof MILESTONES): SerializableMilestone[] {
-  return ms.map(({ id, name, description, icon }) => ({ id, name, description, icon }))
+function computeEarnDate(
+  m: typeof MILESTONES[number],
+  allVisits: StadiumVisit[],
+  allStadiums: Stadium[],
+  allEvents: SpecialEvent[],
+  allSpecialVisits: SpecialVisit[],
+  allDestVisits: DestinationVisit[]
+): string | null {
+  const sorted = [...allVisits].sort((a, b) => a.visit_date.localeCompare(b.visit_date))
+  for (let i = 0; i < sorted.length; i++) {
+    if (m.check(sorted.slice(0, i + 1), allStadiums, allEvents, allSpecialVisits, allDestVisits)) {
+      return sorted[i].visit_date
+    }
+  }
+  // Fallback for event/special-visit-based milestones
+  const eventDate = [...allEvents].sort((a, b) => (a.event_date ?? '').localeCompare(b.event_date ?? ''))[0]?.event_date
+  const svDate = [...allSpecialVisits].sort((a, b) => a.visit_date.localeCompare(b.visit_date))[0]?.visit_date
+  const dvDate = [...allDestVisits].sort((a, b) => (a.visit_date ?? '').localeCompare(b.visit_date ?? ''))[0]?.visit_date
+  const fallback = [eventDate, svDate, dvDate].filter(Boolean).sort()[0]
+  return fallback ?? null
+}
+
+function toSerializable(
+  ms: typeof MILESTONES,
+  allVisits: StadiumVisit[],
+  allStadiums: Stadium[],
+  allEvents: SpecialEvent[],
+  allSpecialVisits: SpecialVisit[],
+  allDestVisits: DestinationVisit[]
+): SerializableMilestone[] {
+  return ms.map(({ id, name, description, icon, check }) => ({
+    id, name, description, icon,
+    earnDate: computeEarnDate({ id, name, description, icon, check }, allVisits, allStadiums, allEvents, allSpecialVisits, allDestVisits),
+  }))
 }
 
 export default async function MilestonesPage() {
@@ -88,7 +120,7 @@ export default async function MilestonesPage() {
   const allSpecialVisits: SpecialVisit[] = (specialVisits ?? []) as SpecialVisit[]
   const allDestVisits: DestinationVisit[] = (destVisits ?? []) as DestinationVisit[]
 
-  const earned = MILESTONES.filter(m => m.check(allVisits, allStadiums, allEvents, allSpecialVisits, allDestVisits))
+  const earned   = MILESTONES.filter(m =>  m.check(allVisits, allStadiums, allEvents, allSpecialVisits, allDestVisits))
   const unearned = MILESTONES.filter(m => !m.check(allVisits, allStadiums, allEvents, allSpecialVisits, allDestVisits))
   const totalPoints = earned.reduce((sum, m) => sum + (MILESTONE_POINTS[m.id] ?? 25), 0)
   const currentRank = getRank(totalPoints)
@@ -187,8 +219,8 @@ export default async function MilestonesPage() {
 
         {/* MilestoneGrid (client, handles everything interactive) */}
         <MilestoneGrid
-          earned={toSerializable(earned)}
-          unearned={toSerializable(unearned)}
+          earned={toSerializable(earned, allVisits, allStadiums, allEvents, allSpecialVisits, allDestVisits)}
+          unearned={toSerializable(unearned, allVisits, allStadiums, allEvents, allSpecialVisits, allDestVisits)}
           allVisits={allVisits}
           allStadiums={allStadiums}
           allEvents={allEvents}

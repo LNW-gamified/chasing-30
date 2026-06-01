@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import TeamLogo from '@/components/TeamLogo'
 import { formatDate } from '@/lib/utils'
@@ -75,6 +76,7 @@ function formatDriveTime(minutes: number): string {
 }
 
 export default function OptimizerPage() {
+  const router = useRouter()
   const [stadiums, setStadiums] = useState<Stadium[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [startingAbbr, setStartingAbbr] = useState<string | null>(null)
@@ -207,7 +209,7 @@ export default function OptimizerPage() {
     )
 
     setCreating(null)
-    setCreated(idx)
+    router.push(`/trips/${trip.id}`)
   }
 
   const divisions = [
