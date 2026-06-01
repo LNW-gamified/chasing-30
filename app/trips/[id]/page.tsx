@@ -105,11 +105,17 @@ export default function TripDetailPage() {
   useEffect(() => { load() }, [id])
 
   useEffect(() => {
-    if (sortedStops.length < 2) return
+    if (stops.length < 2) return
+    const sorted = [...stops].sort((a, b) => {
+      if (!a.game_date && !b.game_date) return 0
+      if (!a.game_date) return 1
+      if (!b.game_date) return -1
+      return a.game_date.localeCompare(b.game_date)
+    })
     const pairs: [Stadium, Stadium][] = []
-    for (let i = 0; i < sortedStops.length - 1; i++) {
-      const a = sortedStops[i].stadium as Stadium | null
-      const b = sortedStops[i + 1].stadium as Stadium | null
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const a = sorted[i].stadium as Stadium | null
+      const b = sorted[i + 1].stadium as Stadium | null
       if (a && b) pairs.push([a, b])
     }
     if (pairs.length === 0) return
@@ -123,7 +129,6 @@ export default function TripDetailPage() {
         setTotalDrivingMiles(results.reduce((sum, m) => sum! + m!, 0))
       }
     })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stops.length])
 
   useEffect(() => {
