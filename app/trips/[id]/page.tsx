@@ -65,6 +65,7 @@ export default function TripDetailPage() {
   const [visitedStadiumIds, setVisitedStadiumIds] = useState<Set<string>>(new Set())
   const [stopWeather, setStopWeather]             = useState<Record<string, WeatherData>>({})
   const [totalDrivingMiles, setTotalDrivingMiles] = useState<number | null>(null)
+  const [segmentMiles, setSegmentMiles]           = useState<number[]>([])
   const [loadingMiles, setLoadingMiles]           = useState(false)
 
   async function load() {
@@ -109,6 +110,7 @@ export default function TripDetailPage() {
             .then(r => r.json()).then(d => d.miles as number | null).catch(() => null)
         )
       ).then(results => {
+        setSegmentMiles(results.map(r => r ?? 0))
         const valid = results.filter((r): r is number => r !== null)
         if (valid.length > 0) setTotalDrivingMiles(valid.reduce((s, m) => s + m, 0))
         setLoadingMiles(false)
@@ -645,7 +647,7 @@ export default function TripDetailPage() {
                     ticketParts.push(`Seat${stop.ticket_seats.length > 1 ? 's' : ''} ${stop.ticket_seats.join(', ')}`)
                   }
 
-                  return (
+                  const card = (
                     <div key={stop.id} style={{
                       backgroundColor: '#161B22', borderRadius: 16,
                       overflow: 'hidden',
@@ -880,6 +882,38 @@ export default function TripDetailPage() {
                         items={checklistItems.filter(c => c.stop_id === stop.id)}
                         onReload={reloadChecklist}
                       />
+                    </div>
+                  )
+
+                  // Connector to next stop
+                  const nextStop = sortedStops[i + 1]
+                  const nextStadium = nextStop?.stadium as Stadium | undefined
+                  if (!nextStop || !stadium || !nextStadium) return card
+
+                  const stopsWithStadium = sortedStops.filter(s => (s.stadium as Stadium | null)?.lat)
+                  const segIdx = stopsWithStadium.findIndex(s => s.id === stop.id)
+                  const miles = segIdx >= 0 ? segmentMiles[segIdx] : undefined
+
+                  return (
+                    <div key={stop.id}>
+                      {card}
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '6px 16px',
+                        color: '#8B949E',
+                      }}>
+                        <div style={{ width: 2, height: 20, backgroundColor: '#30363D', marginLeft: 14, flexShrink: 0 }} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600 }}>
+                          {loadingMiles ? (
+                            <span style={{ color: '#484F58' }}>Calculating drive…</span>
+                          ) : miles ? (
+                            <>
+                              <span style={{ color: '#F5A623' }}>🚗 {miles.toLocaleString()} mi</span>
+                              <span style={{ color: '#484F58' }}>to {nextStadium.name}</span>
+                            </>
+                          ) : null}
+                        </div>
+                      </div>
                     </div>
                   )
                 })}
