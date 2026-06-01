@@ -210,10 +210,10 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
         })}
       </div>
 
-      {/* ── Desktop: 2×6 grid (12 visible), fixed height, vertical scroll ── */}
+      {/* ── Desktop: 2×5 grid (10 visible), fixed height, vertical scroll ── */}
       <div
         className="hidden md:grid md:grid-cols-2 md:gap-2 games-grid-cap"
-        style={{ alignContent: 'start', flexShrink: 0, maxHeight: '568px', overflowY: 'auto' }}
+        style={{ alignContent: 'start', flexShrink: 0, maxHeight: '472px', overflowY: 'auto' }}
       >
         {games.map(g => {
           const homeColor = TEAM_HEX[g.homeAbbr] ?? '#1C2430'
@@ -291,13 +291,13 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
       {/* Flex spacer */}
       <div className="hidden md:block" style={{ flex: 1 }} />
 
-      {/* Scroll hint — gold, only when more than 12 games */}
-      {games.length > 12 && (
+      {/* Scroll hint — gold, only when more than 10 games */}
+      {games.length > 10 && (
         <div
           className="hidden md:block"
           style={{ textAlign: 'center', fontSize: 13, color: '#F5A623', fontWeight: 600, paddingTop: 6, flexShrink: 0 }}
         >
-          ↓ {games.length - 12} more game{games.length - 12 !== 1 ? 's' : ''}
+          ↓ {games.length - 10} more game{games.length - 10 !== 1 ? 's' : ''}
         </div>
       )}
     </div>
