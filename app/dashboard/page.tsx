@@ -218,12 +218,17 @@ export default async function DashboardPage() {
 
   const teamCounts: Record<string, number> = {}
   for (const v of allVisits) {
-    if (v.home_team)     teamCounts[v.home_team]     = (teamCounts[v.home_team] ?? 0) + 1
-    if (v.visiting_team) teamCounts[v.visiting_team] = (teamCounts[v.visiting_team] ?? 0) + 1
+    const away = v.visiting_team?.replace(/^vs\.?\s+/i, '').trim()
+    if (v.home_team) teamCounts[v.home_team] = (teamCounts[v.home_team] ?? 0) + 1
+    if (away)        teamCounts[away]         = (teamCounts[away] ?? 0) + 1
   }
   const teamEntries  = Object.entries(teamCounts).sort((a, b) => b[1] - a[1])
   const mostSeenFull = teamEntries.length > 0 ? teamEntries[0][0] : '—'
-  const mostSeenTeam = mostSeenFull === '—' ? '—' : (mostSeenFull.split(' ').pop() ?? mostSeenFull)
+  const mostSeenTeam = mostSeenFull === '—' ? '—' : (() => {
+    const words = mostSeenFull.split(' ')
+    const last = words[words.length - 1]
+    return last === 'Sox' ? `${words[words.length - 2]} Sox` : last
+  })()
 
   const todayGames = await fetchTodayGames(favAbbr)
 

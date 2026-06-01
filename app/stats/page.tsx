@@ -56,7 +56,8 @@ export default async function StatsPage() {
   // Most seen team (home + away appearances)
   const teamSeenCounts: Record<string, number> = {}
   for (const v of allVisits) {
-    if (v.visiting_team) teamSeenCounts[v.visiting_team] = (teamSeenCounts[v.visiting_team] ?? 0) + 1
+    const away = v.visiting_team?.replace(/^vs\.?\s+/i, '').trim()
+    if (away) teamSeenCounts[away] = (teamSeenCounts[away] ?? 0) + 1
     if (v.home_team) teamSeenCounts[v.home_team] = (teamSeenCounts[v.home_team] ?? 0) + 1
   }
   const topTeamSeen =

@@ -97,9 +97,9 @@ export async function fetchSeasonHomeGames(teamAbbr: string): Promise<SeasonGame
   const teamId = MLB_TEAM_IDS[teamAbbr]
   if (!teamId) return []
 
-  // Full 2026 regular season window
-  const startDate = '2026-03-19'
-  const endDate   = '2026-09-30'
+  const year = new Date().getFullYear()
+  const startDate = `${year}-03-01`
+  const endDate   = `${year}-10-31`
   const url = `https://statsapi.mlb.com/api/v1/schedule?teamId=${teamId}&startDate=${startDate}&endDate=${endDate}&sportId=1&gameType=R`
 
   try {
