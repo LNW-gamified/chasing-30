@@ -61,7 +61,7 @@ const TEAM_GRADIENTS: Record<string, [string, string]> = {
 }
 
 type MiniStadium = { id: string; league: string; division: string }
-type ActiveTab = 'games-attended' | 'upcoming-games' | 'stadium-info'
+type ActiveTab = 'games-attended' | 'upcoming-games' | 'stadium-info' | 'roster'
 
 function SectionTitle({ Icon, children }: { Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; children: React.ReactNode }) {
   return (
@@ -309,6 +309,7 @@ export default function StadiumDetailPage() {
     { key: 'games-attended',  label: 'Games Attended'   },
     { key: 'upcoming-games',  label: 'Upcoming Games'   },
     { key: 'stadium-info',    label: 'Stadium Detail'   },
+    { key: 'roster',          label: 'Roster'           },
   ]
 
   return (
@@ -966,49 +967,6 @@ export default function StadiumDetailPage() {
                   </div>
                 </section>
 
-                {/* Current Roster */}
-                {roster.length > 0 && (
-                  <section style={{ marginBottom: 32 }}>
-                    <SectionTitle Icon={Users}>Current Roster</SectionTitle>
-                    {(() => {
-                      const pitchers  = roster.filter(p => p.positionType === 'Pitcher')
-                      const catchers  = roster.filter(p => p.position === 'C')
-                      const infield   = roster.filter(p => ['1B','2B','3B','SS'].includes(p.position))
-                      const outfield  = roster.filter(p => ['LF','CF','RF','OF'].includes(p.position))
-                      const dh        = roster.filter(p => p.position === 'DH')
-                      const groups = [
-                        { label: 'Pitchers',  players: pitchers },
-                        { label: 'Catchers',  players: catchers },
-                        { label: 'Infield',   players: infield  },
-                        { label: 'Outfield',  players: outfield  },
-                        { label: 'DH',        players: dh       },
-                      ].filter(g => g.players.length > 0)
-                      return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                          {groups.map(group => (
-                            <div key={group.label}>
-                              <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{group.label}</div>
-                              <div style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden' }}>
-                                {group.players.map((p, i) => (
-                                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', borderBottom: i < group.players.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                      {p.jerseyNumber && (
-                                        <span style={{ fontSize: 11, fontWeight: 800, color: '#484F58', width: 24, textAlign: 'right', flexShrink: 0 }}>#{p.jerseyNumber}</span>
-                                      )}
-                                      <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{p.name}</span>
-                                    </div>
-                                    <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 8px', borderRadius: 10 }}>{p.position}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )
-                    })()}
-                  </section>
-                )}
-
                 {/* Virtual Tour */}
                 {tourVideoId && (
                   <section style={{ marginBottom: 32 }}>
@@ -1052,6 +1010,62 @@ export default function StadiumDetailPage() {
                   </section>
                 )}
               </>
+            )}
+
+            {/* ── ROSTER TAB ───────────────────────────────────────── */}
+            {activeTab === 'roster' && (
+              <section>
+                {roster.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '48px 16px', color: '#8B949E', fontSize: 14 }}>
+                    Loading roster…
+                  </div>
+                ) : (() => {
+                  const pitchers = roster.filter(p => p.positionType === 'Pitcher')
+                  const catchers = roster.filter(p => p.position === 'C')
+                  const infield  = roster.filter(p => ['1B','2B','3B','SS'].includes(p.position))
+                  const outfield = roster.filter(p => ['LF','CF','RF','OF'].includes(p.position))
+                  const dh       = roster.filter(p => p.position === 'DH')
+                  const groups   = [
+                    { label: 'Pitchers', players: pitchers },
+                    { label: 'Catchers', players: catchers },
+                    { label: 'Infield',  players: infield  },
+                    { label: 'Outfield', players: outfield },
+                    { label: 'DH',       players: dh       },
+                  ].filter(g => g.players.length > 0)
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                      {groups.map(group => (
+                        <div key={group.label}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                            {group.label}
+                          </div>
+                          <div style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden' }}>
+                            {group.players.map((p, i) => (
+                              <div key={p.id} style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                padding: '10px 14px',
+                                borderBottom: i < group.players.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                              }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                  {p.jerseyNumber && (
+                                    <span style={{ fontSize: 11, fontWeight: 800, color: '#484F58', width: 24, textAlign: 'right', flexShrink: 0 }}>
+                                      #{p.jerseyNumber}
+                                    </span>
+                                  )}
+                                  <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{p.name}</span>
+                                </div>
+                                <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 8px', borderRadius: 10 }}>
+                                  {p.position}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
+              </section>
             )}
 
           </div>{/* /tab content */}
