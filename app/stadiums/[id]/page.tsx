@@ -791,6 +791,36 @@ export default function StadiumDetailPage() {
             {/* ── STADIUM INFO TAB ─────────────────────────────────── */}
             {activeTab === 'stadium-info' && (
               <>
+                {/* About */}
+                <section style={{ marginBottom: 32 }}>
+                  <SectionTitle Icon={Building2}>About</SectionTitle>
+                  <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
+                    {[
+                      { label: 'Full Name', value: stadium.name },
+                      { label: 'Team', value: stadium.team },
+                      { label: 'City', value: `${stadium.city}, ${stadium.state}` },
+                      { label: 'League / Division', value: `${stadium.league} ${stadium.division}` },
+                      stadium.capacity ? { label: 'Capacity', value: stadium.capacity.toLocaleString() } : null,
+                      stadium.opened ? { label: 'Opened', value: String(stadium.opened) } : null,
+                      stadium.surface ? { label: 'Surface', value: stadium.surface } : null,
+                    ].filter(Boolean).map((row, i, arr) => (
+                      <div key={row!.label} style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '12px 16px',
+                        borderBottom: i < arr.length - 1 ? '1px solid #30363D' : 'none',
+                      }}>
+                        <span style={{ fontSize: 13, color: '#8B949E' }}>{row!.label}</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{row!.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {stadiumSummary && (
+                    <div style={{ padding: '14px 16px', borderTop: '1px solid #30363D', fontSize: 13, color: '#8B949E', lineHeight: 1.7 }}>
+                      {stadiumSummary.length > 400 ? stadiumSummary.slice(0, 400) + '…' : stadiumSummary}
+                    </div>
+                  )}
+                </section>
+
                 {/* Virtual Tour */}
                 {tourVideoId && (
                   <section style={{ marginBottom: 32 }}>
@@ -825,36 +855,6 @@ export default function StadiumDetailPage() {
                     </div>
                   </section>
                 )}
-
-                {/* About */}
-                <section style={{ marginBottom: 32 }}>
-                  <SectionTitle Icon={Building2}>About</SectionTitle>
-                  <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
-                    {[
-                      { label: 'Full Name', value: stadium.name },
-                      { label: 'Team', value: stadium.team },
-                      { label: 'City', value: `${stadium.city}, ${stadium.state}` },
-                      { label: 'League / Division', value: `${stadium.league} ${stadium.division}` },
-                      stadium.capacity ? { label: 'Capacity', value: stadium.capacity.toLocaleString() } : null,
-                      stadium.opened ? { label: 'Opened', value: String(stadium.opened) } : null,
-                      stadium.surface ? { label: 'Surface', value: stadium.surface } : null,
-                    ].filter(Boolean).map((row, i, arr) => (
-                      <div key={row!.label} style={{
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        padding: '12px 16px',
-                        borderBottom: i < arr.length - 1 ? '1px solid #30363D' : 'none',
-                      }}>
-                        <span style={{ fontSize: 13, color: '#8B949E' }}>{row!.label}</span>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{row!.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {stadiumSummary && (
-                    <div style={{ padding: '14px 16px', borderTop: '1px solid #30363D', fontSize: 13, color: '#8B949E', lineHeight: 1.7 }}>
-                      {stadiumSummary.length > 400 ? stadiumSummary.slice(0, 400) + '…' : stadiumSummary}
-                    </div>
-                  )}
-                </section>
 
                 {/* Field Dimensions */}
                 {venueDimensions && (venueDimensions.leftLine || venueDimensions.center) && (
