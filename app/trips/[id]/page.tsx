@@ -65,6 +65,7 @@ export default function TripDetailPage() {
   const [visitedStadiumIds, setVisitedStadiumIds] = useState<Set<string>>(new Set())
   const [stopWeather, setStopWeather]             = useState<Record<string, WeatherData>>({})
   const [totalDrivingMiles, setTotalDrivingMiles] = useState<number | null>(null)
+  const [loadingMiles, setLoadingMiles]           = useState(false)
 
   async function load() {
     const supabase = createClient()
@@ -95,6 +96,7 @@ export default function TripDetailPage() {
     // Driving distance between consecutive stops
     const withStadium = loadedStops.filter(s => (s.stadium as Stadium | null)?.lat)
     if (withStadium.length >= 2) {
+      setLoadingMiles(true)
       const pairs: [Stadium, Stadium][] = []
       for (let i = 0; i < withStadium.length - 1; i++) {
         const a = withStadium[i].stadium as Stadium
@@ -109,6 +111,7 @@ export default function TripDetailPage() {
       ).then(results => {
         const valid = results.filter((r): r is number => r !== null)
         if (valid.length > 0) setTotalDrivingMiles(valid.reduce((s, m) => s + m, 0))
+        setLoadingMiles(false)
       })
     }
   }
@@ -598,13 +601,14 @@ export default function TripDetailPage() {
                   </div>
                 </div>
               )}
-              {totalDrivingMiles !== null && (
+              {(loadingMiles || totalDrivingMiles !== null) && (
                 <div style={{ flexShrink: 0 }}>
                   <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
                     Drive
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>
-                    {totalDrivingMiles.toLocaleString()}<span style={{ fontSize: 12, color: '#8B949E', fontWeight: 600 }}> mi</span>
+                    {loadingMiles ? '…' : `${totalDrivingMiles!.toLocaleString()}`}
+                    {!loadingMiles && <span style={{ fontSize: 12, color: '#8B949E', fontWeight: 600 }}> mi</span>}
                   </div>
                 </div>
               )}
