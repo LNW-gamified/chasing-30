@@ -471,7 +471,7 @@ export default function StadiumDetailPage() {
                         const borderColor = hasScore
                           ? (homeWon ? '#3FB950' : '#F85149')
                           : '#30363D'
-                        const opponent = visit.visiting_team ?? '—'
+                        const opponent = (visit.visiting_team ?? '—').replace(/^vs\.?\s+/i, '')
                         const scoreStr = hasScore
                           ? ` · ${visit.away_runs}–${visit.home_runs}`
                           : ''
