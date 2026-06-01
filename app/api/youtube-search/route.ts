@@ -9,8 +9,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const res = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${encodeURIComponent(query)}&key=${apiKey}`,
-      { next: { revalidate: 86400 } }
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${encodeURIComponent(query)}&key=${apiKey}`
     )
     if (!res.ok) return NextResponse.json({ videoId: null })
     const data = await res.json()

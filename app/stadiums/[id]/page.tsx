@@ -791,6 +791,22 @@ export default function StadiumDetailPage() {
             {/* ── STADIUM INFO TAB ─────────────────────────────────── */}
             {activeTab === 'stadium-info' && (
               <>
+                {/* Virtual Tour */}
+                {tourVideoId && (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle Icon={Map}>Virtual Tour</SectionTitle>
+                    <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid #30363D', aspectRatio: '16/9', position: 'relative', backgroundColor: '#161B22' }}>
+                      <iframe
+                        src={`https://www.youtube.com/embed/${tourVideoId}?rel=0&modestbranding=1`}
+                        title={`${stadium.name} tour`}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
+                      />
+                    </div>
+                  </section>
+                )}
+
                 {/* Retired Numbers */}
                 {retiredNumbers.length > 0 && (
                   <section style={{ marginBottom: 32 }}>
@@ -966,22 +982,6 @@ export default function StadiumDetailPage() {
                     </a>
                   </div>
                 </section>
-
-                {/* Virtual Tour */}
-                {tourVideoId && (
-                  <section style={{ marginBottom: 32 }}>
-                    <SectionTitle Icon={Map}>Virtual Tour</SectionTitle>
-                    <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid #30363D', aspectRatio: '16/9', position: 'relative', backgroundColor: '#161B22' }}>
-                      <iframe
-                        src={`https://www.youtube.com/embed/${tourVideoId}?rel=0&modestbranding=1`}
-                        title={`${stadium.name} tour`}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
-                      />
-                    </div>
-                  </section>
-                )}
 
                 {/* Recent Moves */}
                 {transactions.length > 0 && (
