@@ -288,8 +288,6 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
         })}
       </div>
 
-      {/* Flex spacer */}
-      <div className="hidden md:block" style={{ flex: 1 }} />
 
       {/* Scroll hint — gold, only when more than 10 games */}
       {games.length > 10 && (
