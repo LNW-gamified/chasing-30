@@ -566,23 +566,25 @@ export default function TripDetailPage() {
             </>
           )}
 
-          {/* ── Cost summary bar ───────────────────────────────────── */}
-          {!allBudgetZero && (
+          {/* ── Cost / stats summary bar ───────────────────────────── */}
+          {(!allBudgetZero || totalDrivingMiles !== null || stops.length > 1) && (
             <div style={{
               backgroundColor: '#161B22', borderRadius: 14,
               border: '1px solid #30363D', padding: '14px 20px',
               marginBottom: 28, display: 'flex', gap: 28,
               overflowX: 'auto', scrollbarWidth: 'none',
             }}>
-              <div style={{ flexShrink: 0 }}>
-                <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
-                  Est. Total
+              {!allBudgetZero && (
+                <div style={{ flexShrink: 0 }}>
+                  <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
+                    Est. Total
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 900, color: '#F5A623' }}>
+                    {formatCurrency(estTotal)}
+                  </div>
                 </div>
-                <div style={{ fontSize: 22, fontWeight: 900, color: '#F5A623' }}>
-                  {formatCurrency(estTotal)}
-                </div>
-              </div>
-              {actualTotal > 0 && (
+              )}
+              {!allBudgetZero && actualTotal > 0 && (
                 <div style={{ flexShrink: 0 }}>
                   <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
                     Actual
