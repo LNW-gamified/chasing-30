@@ -56,7 +56,15 @@
       "Bash(curl -sv \"https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/2/news?limit=3\")",
       "Bash(curl -s \"https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/news?team=2&limit=3\" -o espn_news2.json)",
       "Bash(curl -s \"https://api.sunrise-sunset.org/json?lat=42.3467&lng=-71.0972&date=2025-08-15&formatted=0\")",
-      "Bash(Remove-Item *)"
+      "Bash(Remove-Item *)",
+      "Bash(curl -s \"https://api.openrouteservice.org/v2/directions/driving-car?start=-122.3321,47.5911&end=-87.6553,41.8299\" -H \"Authorization: eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjQxNTA4YjhjNjc5NTQxMWNhMTNmYzZiMWU1MzIwMGE0IiwiaCI6Im11cm11cjY0In0=\")",
+      "Bash(curl -s \"https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=Fenway+Park+ballpark+tour&key=AIzaSyAZ3BEAAvh9VvlGwo8A-aOV4H7ypdR4XDc\")",
+      "Bash(curl -s \"http://localhost:3000/api/driving-distance?fromLat=38.873&fromLng=-77.0074&toLat=39.2838&toLng=-76.6218\")",
+      "Bash(curl -s \"https://api.openrouteservice.org/v2/directions/driving-car?start=-77.0074,38.873&end=-76.6218,39.2838\" -H \"Authorization: eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjQxNTA4YjhjNjc5NTQxMWNhMTNmYzZiMWU1MzIwMGE0IiwiaCI6Im11cm11cjY0In0=\")",
+      "Bash(curl -s \"https://api.openrouteservice.org/v2/directions/driving-car?start=-77.0074,38.873&end=-76.6218,39.2838\" -H \"Authorization: eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjQxNTA4YjhjNjc5NTQxMWNhMTNmYzZiMWU1MzIwMGE0IiwiaCI6Im11cm11cjY0In0=\" -o ors_test.json)",
+      "Bash(curl -s \"https://statsapi.mlb.com/api/v1/teams/136/affiliates?season=2026\")",
+      "Bash(curl -s \"https://statsapi.mlb.com/api/v1/teams/136/affiliates?season=2026\" -o affiliates_test.json)",
+      "Bash(curl -s \"https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=2026&standingsType=regularSeason\" -o standings_test.json)"
     ]
   }
 }

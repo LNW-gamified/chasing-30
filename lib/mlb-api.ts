@@ -360,3 +360,90 @@ export async function fetchScoringPlays(gamePk: number): Promise<ScoringPlay[]> 
     return []
   }
 }
+
+// ── Playoff picture ───────────────────────────────────────────────────────────
+
+export interface PlayoffPicture {
+  wins:              number
+  losses:            number
+  pct:               string
+  divisionRank:      number
+  divisionName:      string
+  gamesBack:         string
+  wildCardRank:      number | null
+  wildCardGamesBack: string
+  magicNumber:       string | null
+  eliminationNumber: string | null
+  clinched:          boolean
+}
+
+export async function fetchPlayoffPicture(teamAbbr: string): Promise<PlayoffPicture | null> {
+  const teamId = MLB_TEAM_IDS[teamAbbr]
+  if (!teamId) return null
+  const year = new Date().getFullYear()
+  try {
+    const res = await fetch(
+      `https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=${year}&standingsType=regularSeason&hydrate=division`,
+      { next: { revalidate: 300 } }
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    for (const record of data.records ?? []) {
+      const tr = (record.teamRecords ?? []).find((t: any) => t.team.id === teamId)
+      if (!tr) continue
+      return {
+        wins:              tr.wins,
+        losses:            tr.losses,
+        pct:               tr.winningPercentage ?? '.000',
+        divisionRank:      parseInt(tr.divisionRank ?? '0'),
+        divisionName:      record.division?.nameShort ?? record.division?.name ?? '',
+        gamesBack:         tr.gamesBack === '-'         ? '—' : tr.gamesBack ?? '—',
+        wildCardRank:      tr.wildCardRank ? parseInt(tr.wildCardRank) : null,
+        wildCardGamesBack: tr.wildCardGamesBack === '-' ? '—' : tr.wildCardGamesBack ?? '—',
+        magicNumber:       tr.magicNumber && tr.magicNumber !== '-'         ? tr.magicNumber : null,
+        eliminationNumber: tr.eliminationNumber && tr.eliminationNumber !== '-' ? tr.eliminationNumber : null,
+        clinched:          tr.clinched ?? false,
+      }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+// ── Minor league affiliates ───────────────────────────────────────────────────
+
+export interface MiLBAffiliate {
+  name:       string
+  level:      string
+  leagueName: string
+}
+
+export async function fetchMinorLeagueAffiliates(teamAbbr: string): Promise<MiLBAffiliate[]> {
+  const teamId = MLB_TEAM_IDS[teamAbbr]
+  if (!teamId) return []
+  const year = new Date().getFullYear()
+  try {
+    const res = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}/affiliates?season=${year}`)
+    if (!res.ok) return []
+    const data = await res.json()
+    const LEVELS: Record<string, string> = {
+      'Triple-A': 'AAA', 'Double-A': 'AA', 'High-A': 'A+', 'Single-A': 'A',
+    }
+    const seen = new Set<string>()
+    return (data.teams ?? [])
+      .map((t: any) => {
+        const sport = t.sport?.name ?? ''
+        const level = Object.keys(LEVELS).find(l => sport.includes(l))
+        if (!level || seen.has(level)) return null
+        seen.add(level)
+        return { name: t.name, level: LEVELS[level], leagueName: t.league?.name ?? '' }
+      })
+      .filter(Boolean)
+      .sort((a: MiLBAffiliate, b: MiLBAffiliate) =>
+        ['AAA','AA','A+','A'].indexOf(a.level) - ['AAA','AA','A+','A'].indexOf(b.level)
+      )
+  } catch {
+    return []
+  }
+}

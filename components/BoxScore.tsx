@@ -233,6 +233,16 @@ export default function BoxScore({
   const awayTotals = awayBoxTeam?.teamStats?.batting
   const homeTotals = homeBoxTeam?.teamStats?.batting
 
+  // Player of the Game — computed from boxscore_data
+  const allBatters  = [...awayBatters, ...homeBatters]
+  const allPitchers = [...awayPitchers, ...homePitchers]
+  const topHitter = allBatters
+    .filter(b => (b.rbi ?? 0) > 0 || (b.h ?? 0) >= 2)
+    .sort((a, b) => ((b.rbi ?? 0) - (a.rbi ?? 0)) || ((b.h ?? 0) - (a.h ?? 0)))[0] ?? null
+  const topPitcher = allPitchers
+    .filter(p => p.ip && parseFloat(p.ip) >= 4)
+    .sort((a, b) => ((b.k ?? 0) - (a.k ?? 0)) || ((a.er ?? 99) - (b.er ?? 99)))[0] ?? null
+
   const homeScore = visit.home_runs
   const awayScore = visit.away_runs
   const hasScore = homeScore != null && awayScore != null
@@ -502,6 +512,47 @@ export default function BoxScore({
         {/* GAME OVERVIEW TAB */}
         {tab === 'overview' && (
           <>
+            {/* Players of the Game */}
+            {(topHitter || topPitcher) && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={LABEL}>Players of the Game</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {topHitter && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 10, backgroundColor: '#1C2430', border: '1px solid #30363D' }}>
+                      <span style={{ fontSize: 18 }}>🏏</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{topHitter.name}</div>
+                        <div style={{ fontSize: 11, color: '#8B949E' }}>
+                          {[
+                            topHitter.h != null && topHitter.ab != null ? `${topHitter.h}-for-${topHitter.ab}` : null,
+                            topHitter.rbi ? `${topHitter.rbi} RBI` : null,
+                            topHitter.r   ? `${topHitter.r} R`   : null,
+                          ].filter(Boolean).join(' · ')}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)', padding: '2px 7px', borderRadius: 10 }}>Offense</span>
+                    </div>
+                  )}
+                  {topPitcher && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 10, backgroundColor: '#1C2430', border: '1px solid #30363D' }}>
+                      <span style={{ fontSize: 18 }}>⚾</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{topPitcher.name}</div>
+                        <div style={{ fontSize: 11, color: '#8B949E' }}>
+                          {[
+                            topPitcher.ip  ? `${topPitcher.ip} IP` : null,
+                            topPitcher.k   ? `${topPitcher.k} K`   : null,
+                            topPitcher.er != null ? `${topPitcher.er} ER` : null,
+                          ].filter(Boolean).join(' · ')}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: '#58A6FF', backgroundColor: 'rgba(88,166,255,0.12)', padding: '2px 7px', borderRadius: 10 }}>Pitching</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {(visit.weather || visit.game_duration || visit.temperature || weather) && (
               <div style={{ marginBottom: 14 }}>
                 <div style={LABEL}>Game Info</div>

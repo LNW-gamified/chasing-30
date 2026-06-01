@@ -8,7 +8,7 @@ import BoxScore from '@/components/BoxScore'
 import { formatDate } from '@/lib/utils'
 import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber } from '@/types'
 import { MILESTONES } from '@/lib/milestones'
-import { fetchUpcomingHomeGames, fetchVenueDimensions, fetchTeamSeasonStats, fetchTeamRoster, fetchRecentTransactions, type UpcomingGame, type VenueDimensions, type TeamSeasonStats, type RosterPlayer, type Transaction } from '@/lib/mlb-api'
+import { fetchUpcomingHomeGames, fetchVenueDimensions, fetchTeamSeasonStats, fetchTeamRoster, fetchRecentTransactions, fetchMinorLeagueAffiliates, type UpcomingGame, type VenueDimensions, type TeamSeasonStats, type RosterPlayer, type Transaction, type MiLBAffiliate } from '@/lib/mlb-api'
 import { fetchStadiumPhoto, fetchStadiumSummary } from '@/lib/stadium-wikipedia'
 import { fetchTeamNews, type ESPNNewsItem } from '@/lib/espn-api'
 import Link from 'next/link'
@@ -109,6 +109,7 @@ export default function StadiumDetailPage() {
   const [stadiumSummary, setStadiumSummary]     = useState<string | null>(null)
   const [teamNews, setTeamNews]                 = useState<ESPNNewsItem[]>([])
   const [tourVideoId, setTourVideoId]           = useState<string | null | undefined>(undefined)
+  const [affiliates, setAffiliates]             = useState<MiLBAffiliate[]>([])
   const [unlockedMilestones, setUnlockedMilestones] = useState<{ name: string; icon: string }[]>([])
   const prevEarnedIdsRef = useRef<Set<string>>(new Set())
 
@@ -168,6 +169,7 @@ export default function StadiumDetailPage() {
     fetchRecentTransactions(stadium.abbreviation).then(setTransactions)
     fetchStadiumSummary(stadium.abbreviation).then(setStadiumSummary)
     fetchTeamNews(stadium.abbreviation).then(setTeamNews)
+    fetchMinorLeagueAffiliates(stadium.abbreviation).then(setAffiliates)
     fetch(`/api/youtube-search?q=${encodeURIComponent(stadium.name + ' ballpark tour')}`)
       .then(r => r.json()).then(d => setTourVideoId(d.videoId ?? null))
   }, [stadium])
@@ -933,6 +935,32 @@ export default function StadiumDetailPage() {
                           <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Strikeouts</div>
                         </div>
                       )}
+                    </div>
+                  </section>
+                )}
+
+                {/* Minor League Affiliates */}
+                {affiliates.length > 0 && (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle Icon={Trophy}>Minor League Affiliates</SectionTitle>
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
+                      {affiliates.map((a, i) => (
+                        <div key={a.level} style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '12px 16px',
+                          borderBottom: i < affiliates.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                        }}>
+                          <div>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{a.name}</span>
+                            {a.leagueName && (
+                              <div style={{ fontSize: 11, color: '#8B949E', marginTop: 2 }}>{a.leagueName}</div>
+                            )}
+                          </div>
+                          <span style={{ fontSize: 12, fontWeight: 800, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)', padding: '3px 10px', borderRadius: 10, flexShrink: 0 }}>
+                            {a.level}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </section>
                 )}

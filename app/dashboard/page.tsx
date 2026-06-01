@@ -11,6 +11,7 @@ import DashboardSpecialVisitButton from '@/components/DashboardSpecialVisitButto
 import OnThisDay, { type HistoryFact } from '@/components/OnThisDay'
 import HeroRing, { type RingDot } from '@/components/HeroRing'
 import TeamLogo from '@/components/TeamLogo'
+import { fetchPlayoffPicture, type PlayoffPicture } from '@/lib/mlb-api'
 
 // ─── MLB API ──────────────────────────────────────────────────────────────────
 
@@ -231,7 +232,8 @@ export default async function DashboardPage() {
     return last === 'Sox' ? `${words[words.length - 2]} Sox` : last
   })()
 
-  const todayGames = await fetchTodayGames(favAbbr)
+  const todayGames   = await fetchTodayGames(favAbbr)
+  const playoffPic: PlayoffPicture | null = favAbbr ? await fetchPlayoffPicture(favAbbr) : null
 
   // "Did you attend?" — final/live home games today at unvisited stadiums
   const attendPromptStadiums = todayGames
@@ -442,6 +444,44 @@ export default async function DashboardPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Playoff Picture ─────────────────────────────────────────── */}
+        {playoffPic && favStadium && (
+          <div className="dash-card" style={{ ...card, marginBottom: SECTION_GAP, padding: '16px 20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <TeamLogo abbreviation={favStadium.abbreviation} size={28} />
+              <span style={{ fontSize: 14, fontWeight: 800, color: '#E6EDF3' }}>{favStadium.team}</span>
+              <span style={{ fontSize: 12, color: '#8B949E', marginLeft: 2 }}>· Playoff Picture</span>
+              {playoffPic.clinched && (
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', padding: '2px 8px', borderRadius: 10 }}>✓ CLINCHED</span>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              {[
+                { label: 'Record',   value: `${playoffPic.wins}–${playoffPic.losses}` },
+                { label: 'Win %',    value: playoffPic.pct },
+                { label: `${playoffPic.divisionName} Rank`, value: `#${playoffPic.divisionRank}` },
+                playoffPic.gamesBack !== '—'
+                  ? { label: 'GB',   value: playoffPic.gamesBack }
+                  : { label: 'Division', value: 'Leader' },
+                playoffPic.wildCardRank
+                  ? { label: 'Wild Card', value: `#${playoffPic.wildCardRank}` }
+                  : null,
+                playoffPic.magicNumber
+                  ? { label: 'Magic #', value: playoffPic.magicNumber }
+                  : null,
+                playoffPic.eliminationNumber
+                  ? { label: 'Elim #', value: playoffPic.eliminationNumber }
+                  : null,
+              ].filter(Boolean).map(stat => (
+                <div key={stat!.label}>
+                  <div style={{ fontSize: 10, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{stat!.label}</div>
+                  <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3' }}>{stat!.value}</div>
+                </div>
+              ))}
             </div>
           </div>
         )}
