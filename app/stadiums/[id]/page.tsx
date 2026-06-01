@@ -1048,7 +1048,7 @@ export default function StadiumDetailPage() {
                               }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                   {p.jerseyNumber && (
-                                    <span style={{ fontSize: 11, fontWeight: 800, color: '#484F58', width: 24, textAlign: 'right', flexShrink: 0 }}>
+                                    <span style={{ fontSize: 11, fontWeight: 800, color: '#F5A623', width: 24, textAlign: 'right', flexShrink: 0 }}>
                                       #{p.jerseyNumber}
                                     </span>
                                   )}
