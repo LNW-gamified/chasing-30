@@ -91,6 +91,26 @@ export default function TripDetailPage() {
       setChecklistItems((cl as StopChecklistItem[]) ?? [])
     }
     setLoading(false)
+
+    // Driving distance between consecutive stops
+    const withStadium = loadedStops.filter(s => (s.stadium as Stadium | null)?.lat)
+    if (withStadium.length >= 2) {
+      const pairs: [Stadium, Stadium][] = []
+      for (let i = 0; i < withStadium.length - 1; i++) {
+        const a = withStadium[i].stadium as Stadium
+        const b = withStadium[i + 1].stadium as Stadium
+        pairs.push([a, b])
+      }
+      Promise.all(
+        pairs.map(([a, b]) =>
+          fetch(`/api/driving-distance?fromLat=${a.lat}&fromLng=${a.lng}&toLat=${b.lat}&toLng=${b.lng}`)
+            .then(r => r.json()).then(d => d.miles as number | null).catch(() => null)
+        )
+      ).then(results => {
+        const valid = results.filter((r): r is number => r !== null)
+        if (valid.length > 0) setTotalDrivingMiles(valid.reduce((s, m) => s + m, 0))
+      })
+    }
   }
 
   async function reloadChecklist() {
@@ -104,32 +124,6 @@ export default function TripDetailPage() {
 
   useEffect(() => { load() }, [id])
 
-  useEffect(() => {
-    if (stops.length < 2) return
-    const sorted = [...stops].sort((a, b) => {
-      if (!a.game_date && !b.game_date) return 0
-      if (!a.game_date) return 1
-      if (!b.game_date) return -1
-      return a.game_date.localeCompare(b.game_date)
-    })
-    const pairs: [Stadium, Stadium][] = []
-    for (let i = 0; i < sorted.length - 1; i++) {
-      const a = sorted[i].stadium as Stadium | null
-      const b = sorted[i + 1].stadium as Stadium | null
-      if (a && b) pairs.push([a, b])
-    }
-    if (pairs.length === 0) return
-    Promise.all(
-      pairs.map(([a, b]) =>
-        fetch(`/api/driving-distance?fromLat=${a.lat}&fromLng=${a.lng}&toLat=${b.lat}&toLng=${b.lng}`)
-          .then(r => r.json()).then(d => d.miles as number | null).catch(() => null)
-      )
-    ).then(results => {
-      if (results.every(r => r !== null)) {
-        setTotalDrivingMiles(results.reduce((sum, m) => sum! + m!, 0))
-      }
-    })
-  }, [stops.length])
 
   useEffect(() => {
     if (stops.length === 0) return

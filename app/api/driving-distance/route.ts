@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   try {
     const res = await fetch(
       `https://api.openrouteservice.org/v2/directions/driving-car?start=${fromLng},${fromLat}&end=${toLng},${toLat}`,
-      { headers: { Authorization: apiKey }, next: { revalidate: 86400 } }
+      { headers: { Authorization: apiKey } }
     )
     if (!res.ok) return NextResponse.json({ miles: null })
     const data = await res.json()
