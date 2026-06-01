@@ -258,7 +258,6 @@ export default async function DashboardPage() {
                 background: '#111827',
                 border: '1px solid #1e2d4a',
                 textAlign: 'center',
-                height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
                 boxSizing: 'border-box',
