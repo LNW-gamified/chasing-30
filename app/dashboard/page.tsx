@@ -302,8 +302,7 @@ export default async function DashboardPage() {
                 </Link>
               </div>
 
-              {/* CTAs — pushed to bottom when column is taller than content */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%', maxWidth: 300, margin: 'auto auto 0' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%', maxWidth: 300, margin: '0 auto' }}>
                 <Link href="/trips" style={{
                   display: 'block', width: '100%', textAlign: 'center',
                   padding: '9px 0', borderRadius: 999,
