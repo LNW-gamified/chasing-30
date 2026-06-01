@@ -335,7 +335,7 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* ── Next Departure board ─────────────────────────────────────── */}
+        {/* ── Next Game board ─────────────────────────────────────── */}
         {nextPlannedTrip && (
           <div
             className="dash-card"
@@ -358,7 +358,7 @@ export default async function DashboardPage() {
 
             <div style={{ position: 'relative', zIndex: 1 }}>
               <div style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.72)', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 14 }}>
-                ◈ NEXT DEPARTURE
+                ◈ NEXT GAME
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
                 <div style={{ flex: 1 }}>
