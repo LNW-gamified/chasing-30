@@ -10,6 +10,7 @@ import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber } from '@/types'
 import { MILESTONES } from '@/lib/milestones'
 import { fetchUpcomingHomeGames, fetchVenueDimensions, fetchTeamSeasonStats, fetchTeamRoster, fetchRecentTransactions, type UpcomingGame, type VenueDimensions, type TeamSeasonStats, type RosterPlayer, type Transaction } from '@/lib/mlb-api'
 import { fetchStadiumPhoto, fetchStadiumSummary } from '@/lib/stadium-wikipedia'
+import { fetchTeamNews, type ESPNNewsItem } from '@/lib/espn-api'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy, Share2, MessageSquare, Hash, Building2, Map, ChevronRight } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
@@ -106,6 +107,8 @@ export default function StadiumDetailPage() {
   const [roster, setRoster]                     = useState<RosterPlayer[]>([])
   const [transactions, setTransactions]         = useState<Transaction[]>([])
   const [stadiumSummary, setStadiumSummary]     = useState<string | null>(null)
+  const [teamNews, setTeamNews]                 = useState<ESPNNewsItem[]>([])
+  const [tourVideoId, setTourVideoId]           = useState<string | null | undefined>(undefined)
   const [unlockedMilestones, setUnlockedMilestones] = useState<{ name: string; icon: string }[]>([])
   const prevEarnedIdsRef = useRef<Set<string>>(new Set())
 
@@ -164,6 +167,9 @@ export default function StadiumDetailPage() {
     fetchTeamRoster(stadium.abbreviation).then(setRoster)
     fetchRecentTransactions(stadium.abbreviation).then(setTransactions)
     fetchStadiumSummary(stadium.abbreviation).then(setStadiumSummary)
+    fetchTeamNews(stadium.abbreviation).then(setTeamNews)
+    fetch(`/api/youtube-search?q=${encodeURIComponent(stadium.name + ' ballpark tour')}`)
+      .then(r => r.json()).then(d => setTourVideoId(d.videoId ?? null))
   }, [stadium])
 
   useEffect(() => {
@@ -749,6 +755,35 @@ export default function StadiumDetailPage() {
                     </div>
                   )}
                 </section>
+
+                {/* Team News */}
+                {teamNews.length > 0 && (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle Icon={Trophy}>Team News</SectionTitle>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {teamNews.map((item, i) => (
+                        <a
+                          key={i}
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ display: 'flex', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D', textDecoration: 'none' }}
+                        >
+                          {item.imageUrl && (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img src={item.imageUrl} alt="" style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.4, marginBottom: 4 }}>{item.headline}</div>
+                            <div style={{ fontSize: 11, color: '#8B949E' }}>
+                              {new Date(item.published).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · ESPN
+                            </div>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </section>
+                )}
               </>
             )}
 
@@ -971,6 +1006,22 @@ export default function StadiumDetailPage() {
                         </div>
                       )
                     })()}
+                  </section>
+                )}
+
+                {/* Virtual Tour */}
+                {tourVideoId && (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle Icon={Map}>Virtual Tour</SectionTitle>
+                    <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid #30363D', aspectRatio: '16/9', position: 'relative', backgroundColor: '#161B22' }}>
+                      <iframe
+                        src={`https://www.youtube.com/embed/${tourVideoId}?rel=0&modestbranding=1`}
+                        title={`${stadium.name} tour`}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
+                      />
+                    </div>
                   </section>
                 )}
 

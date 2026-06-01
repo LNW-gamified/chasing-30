@@ -63,7 +63,8 @@ export default function TripDetailPage() {
   const [checklistItems, setChecklistItems] = useState<StopChecklistItem[]>([])
   const [showDeleteMenu,  setShowDeleteMenu]  = useState(false)
   const [visitedStadiumIds, setVisitedStadiumIds] = useState<Set<string>>(new Set())
-  const [stopWeather, setStopWeather] = useState<Record<string, WeatherData>>({})
+  const [stopWeather, setStopWeather]             = useState<Record<string, WeatherData>>({})
+  const [totalDrivingMiles, setTotalDrivingMiles] = useState<number | null>(null)
 
   async function load() {
     const supabase = createClient()
@@ -102,6 +103,28 @@ export default function TripDetailPage() {
   }
 
   useEffect(() => { load() }, [id])
+
+  useEffect(() => {
+    if (sortedStops.length < 2) return
+    const pairs: [Stadium, Stadium][] = []
+    for (let i = 0; i < sortedStops.length - 1; i++) {
+      const a = sortedStops[i].stadium as Stadium | null
+      const b = sortedStops[i + 1].stadium as Stadium | null
+      if (a && b) pairs.push([a, b])
+    }
+    if (pairs.length === 0) return
+    Promise.all(
+      pairs.map(([a, b]) =>
+        fetch(`/api/driving-distance?fromLat=${a.lat}&fromLng=${a.lng}&toLat=${b.lat}&toLng=${b.lng}`)
+          .then(r => r.json()).then(d => d.miles as number | null).catch(() => null)
+      )
+    ).then(results => {
+      if (results.every(r => r !== null)) {
+        setTotalDrivingMiles(results.reduce((sum, m) => sum! + m!, 0))
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stops.length])
 
   useEffect(() => {
     if (stops.length === 0) return
@@ -571,6 +594,16 @@ export default function TripDetailPage() {
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>
                     {stops.length}
+                  </div>
+                </div>
+              )}
+              {totalDrivingMiles !== null && (
+                <div style={{ flexShrink: 0 }}>
+                  <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
+                    Drive
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>
+                    {totalDrivingMiles.toLocaleString()}<span style={{ fontSize: 12, color: '#8B949E', fontWeight: 600 }}> mi</span>
                   </div>
                 </div>
               )}

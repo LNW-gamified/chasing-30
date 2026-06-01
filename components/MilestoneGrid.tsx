@@ -6,6 +6,7 @@ import type { SerializableMilestone, StadiumVisit, Stadium, SpecialEvent } from 
 import { createClient } from '@/lib/supabase'
 import TeamLogo from '@/components/TeamLogo'
 import { STATIC_EXPERIENCES, type StaticExperience } from '@/lib/static-experiences'
+import { classifyDayNightHeuristic } from '@/lib/sunrise-sunset'
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -622,6 +623,15 @@ export default function MilestoneGrid({
     const byYear = Object.entries(yearCounts).sort((a, b) => a[0].localeCompare(b[0]))
     const maxYearCount = Math.max(...byYear.map(([, c]) => c), 1)
 
+    // Day / night breakdown
+    let dayGames = 0, nightGames = 0, twilightGames = 0
+    for (const v of allVisits) {
+      const dn = classifyDayNightHeuristic(v.first_pitch_time)
+      if (dn === 'day') dayGames++
+      else if (dn === 'night') nightGames++
+      else if (dn === 'twilight') twilightGames++
+    }
+
     const fmtDate = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     const fmtScore = (v: StadiumVisit) => `${v.away_runs}–${v.home_runs}`
     const stadiumFor = (v: StadiumVisit) => allStadiums.find(s => s.id === v.stadium_id)
@@ -633,6 +643,7 @@ export default function MilestoneGrid({
       biggestWin, biggestLoss, highestScore, lowestScore,
       topStadium, topStadiumCount, topOpponentName, topOpponentCount,
       byYear, maxYearCount,
+      dayGames, nightGames, twilightGames,
       fmtDate, fmtScore, stadiumFor,
     }
   }, [showRecords, allVisits, allStadiums])
@@ -880,6 +891,26 @@ export default function MilestoneGrid({
                             <div style={{ height: '100%', borderRadius: 4, width: `${(count / personalRecords.maxYearCount) * 100}%`, background: 'linear-gradient(90deg, #1F6FEB, #58A6FF)', transition: 'width 0.4s ease' }} />
                           </div>
                           <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3', width: 24, textAlign: 'right', flexShrink: 0 }}>{count}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Day / Night ── */}
+                {(personalRecords.dayGames + personalRecords.nightGames + personalRecords.twilightGames) > 0 && (
+                  <div style={{ marginTop: 24 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>🌙 Day vs Night</div>
+                    <div className="grid grid-cols-3" style={{ gap: 10 }}>
+                      {[
+                        { label: 'Day Games',    value: personalRecords.dayGames,      emoji: '🌅', color: '#F5A623' },
+                        { label: 'Night Games',  value: personalRecords.nightGames,    emoji: '🌙', color: '#58A6FF' },
+                        { label: 'Twilight',     value: personalRecords.twilightGames, emoji: '🌇', color: '#8B949E' },
+                      ].map(({ label, value, emoji, color }) => (
+                        <div key={label} style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 14, padding: '14px 8px', textAlign: 'center' }}>
+                          <div style={{ fontSize: 22, marginBottom: 6 }}>{emoji}</div>
+                          <div style={{ fontSize: 22, fontWeight: 900, color, lineHeight: 1 }}>{value}</div>
+                          <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 600 }}>{label}</div>
                         </div>
                       ))}
                     </div>

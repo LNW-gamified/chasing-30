@@ -44,7 +44,19 @@
       "PowerShell(npm install *)",
       "Bash(curl -s \"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=2026-05-29&gameType=R\")",
       "PowerShell($r = Invoke-RestMethod \"https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=2026-05-29&gameType=R\"; $games = $r.dates[0].games; Write-Output \"Game count: $\\($games.Count\\)\"; $games | ForEach-Object { \"$\\($_.teams.away.team.name\\) @ $\\($_.teams.home.team.name\\) — $\\($_.status.abstractGameState\\)\" })",
-      "Bash(Get-ChildItem *)"
+      "Bash(Get-ChildItem *)",
+      "Bash(curl -s \"https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams\")",
+      "Bash(python -c \"import sys,json; data=json.load\\(sys.stdin\\); [print\\(t['abbreviation'], t['id']\\) for t in data.get\\('sports',[{}]\\)[0].get\\('leagues',[{}]\\)[0].get\\('teams',[{}]\\)[:5]]\")",
+      "Bash(curl -s \"https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/10/news?limit=3\")",
+      "Bash(python -c \"import sys,json; data=json.load\\(sys.stdin\\); [print\\(a.get\\('headline',''\\),a.get\\('published',''\\)\\) for a in data.get\\('articles',[]\\)[:3]]\")",
+      "Bash(curl -s \"https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/news?limit=3\")",
+      "Bash(curl -s \"https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams\" -o C:\\\\Temp\\\\espn_teams.json)",
+      "Bash(curl -s \"https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams\" -o espn_teams.json)",
+      "Bash(curl -s \"https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/2/news?limit=3\" -o espn_news.json)",
+      "Bash(curl -sv \"https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/2/news?limit=3\")",
+      "Bash(curl -s \"https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/news?team=2&limit=3\" -o espn_news2.json)",
+      "Bash(curl -s \"https://api.sunrise-sunset.org/json?lat=42.3467&lng=-71.0972&date=2025-08-15&formatted=0\")",
+      "Bash(Remove-Item *)"
     ]
   }
 }

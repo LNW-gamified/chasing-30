@@ -7,6 +7,7 @@ import { Pencil, Trash2, RefreshCw } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { fetchGameContent, fetchScoringPlays, type GameContent, type ScoringPlay } from '@/lib/mlb-api'
 import { fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
+import { classifyDayNight, type DayNight } from '@/lib/sunrise-sunset'
 
 interface BoxScoreProps {
   visit: StadiumVisit
@@ -200,6 +201,7 @@ export default function BoxScore({
   const [gameContent, setGameContent]   = useState<GameContent | null>(null)
   const [scoringPlays, setScoringPlays] = useState<ScoringPlay[]>([])
   const [weather, setWeather]           = useState<WeatherData | null>(null)
+  const [dayNight, setDayNight]         = useState<DayNight>(null)
 
   useEffect(() => {
     if (visit.mlb_game_pk) {
@@ -214,6 +216,11 @@ export default function BoxScore({
     if (visit.visit_date >= today) return
     fetchHistoricalWeather(stadium.lat, stadium.lng, visit.visit_date).then(setWeather)
   }, [visit.id, visit.temperature, visit.visit_date, stadium.lat, stadium.lng])
+
+  useEffect(() => {
+    classifyDayNight(visit.first_pitch_time, visit.visit_date, stadium.abbreviation, stadium.lat, stadium.lng)
+      .then(setDayNight)
+  }, [visit.id, visit.first_pitch_time, visit.visit_date, stadium.abbreviation, stadium.lat, stadium.lng])
 
   const boxData = visit.boxscore_data as any
   const awayBoxTeam = boxData?.teams?.away
@@ -322,11 +329,20 @@ export default function BoxScore({
           </div>
         )}
 
-        {/* First pitch + attendance */}
-        {(visit.first_pitch_time || visit.attendance) && (
-          <div style={{ fontSize: 11, color: '#8B949E', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        {/* First pitch + attendance + day/night */}
+        {(visit.first_pitch_time || visit.attendance || dayNight) && (
+          <div style={{ fontSize: 11, color: '#8B949E', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
             {visit.first_pitch_time && <span>First pitch: {visit.first_pitch_time}</span>}
             {visit.attendance && <span>{visit.attendance.toLocaleString()} fans</span>}
+            {dayNight && (
+              <span style={{
+                padding: '2px 8px', borderRadius: 10, fontSize: 10, fontWeight: 700,
+                backgroundColor: dayNight === 'day' ? 'rgba(245,166,35,0.15)' : 'rgba(31,111,235,0.15)',
+                color: dayNight === 'day' ? '#F5A623' : '#58A6FF',
+              }}>
+                {dayNight === 'day' ? '🌅 Day Game' : dayNight === 'twilight' ? '🌇 Twilight' : '🌙 Night Game'}
+              </span>
+            )}
           </div>
         )}
       </div>
