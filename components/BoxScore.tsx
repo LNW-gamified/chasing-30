@@ -5,7 +5,7 @@ import type { StadiumVisit, Stadium } from '@/types'
 import { GAME_MOMENTS } from '@/lib/moments'
 import { Pencil, Trash2, RefreshCw } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
-import { fetchGameContent, type GameContent } from '@/lib/mlb-api'
+import { fetchGameContent, fetchScoringPlays, type GameContent, type ScoringPlay } from '@/lib/mlb-api'
 import { fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
 
 interface BoxScoreProps {
@@ -197,12 +197,14 @@ export default function BoxScore({
   statsError = null, onEdit, onDelete,
 }: BoxScoreProps) {
   const [tab, setTab]           = useState<'overview' | 'box'>('overview')
-  const [gameContent, setGameContent] = useState<GameContent | null>(null)
-  const [weather, setWeather]         = useState<WeatherData | null>(null)
+  const [gameContent, setGameContent]   = useState<GameContent | null>(null)
+  const [scoringPlays, setScoringPlays] = useState<ScoringPlay[]>([])
+  const [weather, setWeather]           = useState<WeatherData | null>(null)
 
   useEffect(() => {
     if (visit.mlb_game_pk) {
       fetchGameContent(visit.mlb_game_pk).then(setGameContent)
+      fetchScoringPlays(visit.mlb_game_pk).then(setScoringPlays)
     }
   }, [visit.mlb_game_pk])
 
@@ -565,6 +567,28 @@ export default function BoxScore({
             {!visit.moments?.length && !visit.hp_umpire && !visit.photo_url && !visit.notes && !visit.weather && (
               <div style={{ fontSize: 13, color: '#8B949E', textAlign: 'center', padding: '12px 0' }}>
                 Edit this game to add notes, photos, and more.
+              </div>
+            )}
+
+            {/* Scoring plays */}
+            {scoringPlays.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <div style={LABEL}>Scoring Plays</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {scoringPlays.map((play, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 10px', borderRadius: 8, backgroundColor: '#1C2430', border: '1px solid #30363D' }}>
+                      <div style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, color: '#484F58', width: 44, paddingTop: 1 }}>
+                        {play.halfInning === 'top' ? '▲' : '▼'}{play.inning}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, color: '#C9D1D9', lineHeight: 1.5 }}>{play.description}</div>
+                      </div>
+                      <div style={{ flexShrink: 0, fontSize: 11, fontWeight: 800, color: '#8B949E', paddingTop: 1 }}>
+                        {play.awayScore}–{play.homeScore}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

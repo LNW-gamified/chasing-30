@@ -8,8 +8,8 @@ import BoxScore from '@/components/BoxScore'
 import { formatDate } from '@/lib/utils'
 import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber } from '@/types'
 import { MILESTONES } from '@/lib/milestones'
-import { fetchUpcomingHomeGames, fetchVenueDimensions, fetchTeamSeasonStats, type UpcomingGame, type VenueDimensions, type TeamSeasonStats } from '@/lib/mlb-api'
-import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
+import { fetchUpcomingHomeGames, fetchVenueDimensions, fetchTeamSeasonStats, fetchTeamRoster, fetchRecentTransactions, type UpcomingGame, type VenueDimensions, type TeamSeasonStats, type RosterPlayer, type Transaction } from '@/lib/mlb-api'
+import { fetchStadiumPhoto, fetchStadiumSummary } from '@/lib/stadium-wikipedia'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy, Share2, MessageSquare, Hash, Building2, Map, ChevronRight } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
@@ -101,8 +101,11 @@ export default function StadiumDetailPage() {
   const [firstTimeMoments, setFirstTimeMoments] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<ActiveTab>('games-attended')
   const [retiredNumbers, setRetiredNumbers] = useState<RetiredNumber[]>([])
-  const [venueDimensions, setVenueDimensions] = useState<VenueDimensions | null>(null)
-  const [teamStats, setTeamStats] = useState<TeamSeasonStats | null>(null)
+  const [venueDimensions, setVenueDimensions]   = useState<VenueDimensions | null>(null)
+  const [teamStats, setTeamStats]               = useState<TeamSeasonStats | null>(null)
+  const [roster, setRoster]                     = useState<RosterPlayer[]>([])
+  const [transactions, setTransactions]         = useState<Transaction[]>([])
+  const [stadiumSummary, setStadiumSummary]     = useState<string | null>(null)
   const [unlockedMilestones, setUnlockedMilestones] = useState<{ name: string; icon: string }[]>([])
   const prevEarnedIdsRef = useRef<Set<string>>(new Set())
 
@@ -158,6 +161,9 @@ export default function StadiumDetailPage() {
     fetchStadiumPhoto(stadium.abbreviation).then(setStadiumPhoto)
     fetchVenueDimensions(stadium.abbreviation).then(setVenueDimensions)
     fetchTeamSeasonStats(stadium.abbreviation).then(setTeamStats)
+    fetchTeamRoster(stadium.abbreviation).then(setRoster)
+    fetchRecentTransactions(stadium.abbreviation).then(setTransactions)
+    fetchStadiumSummary(stadium.abbreviation).then(setStadiumSummary)
   }, [stadium])
 
   useEffect(() => {
@@ -791,6 +797,11 @@ export default function StadiumDetailPage() {
                       </div>
                     ))}
                   </div>
+                  {stadiumSummary && (
+                    <div style={{ padding: '14px 16px', borderTop: '1px solid #30363D', fontSize: 13, color: '#8B949E', lineHeight: 1.7 }}>
+                      {stadiumSummary.length > 400 ? stadiumSummary.slice(0, 400) + '…' : stadiumSummary}
+                    </div>
+                  )}
                 </section>
 
                 {/* Field Dimensions */}
@@ -919,6 +930,76 @@ export default function StadiumDetailPage() {
                     </a>
                   </div>
                 </section>
+
+                {/* Current Roster */}
+                {roster.length > 0 && (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle Icon={Users}>Current Roster</SectionTitle>
+                    {(() => {
+                      const pitchers  = roster.filter(p => p.positionType === 'Pitcher')
+                      const catchers  = roster.filter(p => p.position === 'C')
+                      const infield   = roster.filter(p => ['1B','2B','3B','SS'].includes(p.position))
+                      const outfield  = roster.filter(p => ['LF','CF','RF','OF'].includes(p.position))
+                      const dh        = roster.filter(p => p.position === 'DH')
+                      const groups = [
+                        { label: 'Pitchers',  players: pitchers },
+                        { label: 'Catchers',  players: catchers },
+                        { label: 'Infield',   players: infield  },
+                        { label: 'Outfield',  players: outfield  },
+                        { label: 'DH',        players: dh       },
+                      ].filter(g => g.players.length > 0)
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          {groups.map(group => (
+                            <div key={group.label}>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{group.label}</div>
+                              <div style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden' }}>
+                                {group.players.map((p, i) => (
+                                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', borderBottom: i < group.players.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                      {p.jerseyNumber && (
+                                        <span style={{ fontSize: 11, fontWeight: 800, color: '#484F58', width: 24, textAlign: 'right', flexShrink: 0 }}>#{p.jerseyNumber}</span>
+                                      )}
+                                      <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{p.name}</span>
+                                    </div>
+                                    <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 8px', borderRadius: 10 }}>{p.position}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })()}
+                  </section>
+                )}
+
+                {/* Recent Moves */}
+                {transactions.length > 0 && (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle Icon={ChevronRight}>Recent Moves</SectionTitle>
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
+                      {transactions.map((t, i) => {
+                        const typeEmoji: Record<string, string> = {
+                          DFA: '📤', OU: '📤', DL: '🤕', IL: '🤕', AA: '📥',
+                          RM: '🔄', TR: '🔄', SG: '✍️', RE: '✍️', DES: '❌',
+                          SE: '🌐', OUT: '📤',
+                        }
+                        const emoji = typeEmoji[t.typeCode] ?? '📋'
+                        const date  = t.date ? new Date(t.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+                        return (
+                          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', borderBottom: i < transactions.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                            <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{emoji}</span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 13, color: '#E6EDF3', lineHeight: 1.4 }}>{t.description}</div>
+                              {date && <div style={{ fontSize: 11, color: '#8B949E', marginTop: 2 }}>{date}</div>}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </section>
+                )}
               </>
             )}
 

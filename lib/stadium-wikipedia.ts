@@ -33,6 +33,22 @@ export const STADIUM_WIKI_ARTICLES: Record<string, string> = {
   SF:  'Oracle_Park',
 }
 
+export async function fetchStadiumSummary(abbreviation: string): Promise<string | null> {
+  const article = STADIUM_WIKI_ARTICLES[abbreviation]
+  if (!article) return null
+  try {
+    const res = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(article)}`,
+      { headers: { 'Accept': 'application/json' } }
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    return data?.extract ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function fetchStadiumPhoto(abbreviation: string): Promise<string | null> {
   const article = STADIUM_WIKI_ARTICLES[abbreviation]
   if (!article) return null

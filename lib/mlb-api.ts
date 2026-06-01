@@ -262,3 +262,101 @@ export async function fetchGameContent(gamePk: number): Promise<GameContent | nu
     return null
   }
 }
+
+// ── Current roster ────────────────────────────────────────────────────────────
+
+export interface RosterPlayer {
+  id:           number
+  name:         string
+  position:     string
+  positionType: string
+  jerseyNumber: string | null
+}
+
+export async function fetchTeamRoster(teamAbbr: string): Promise<RosterPlayer[]> {
+  const teamId = MLB_TEAM_IDS[teamAbbr]
+  if (!teamId) return []
+  try {
+    const res = await fetch(
+      `https://statsapi.mlb.com/api/v1/teams/${teamId}/roster?rosterType=active`
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    return (data.roster ?? []).map((p: any) => ({
+      id:           p.person.id,
+      name:         p.person.fullName,
+      position:     p.position.abbreviation,
+      positionType: p.position.type,
+      jerseyNumber: p.jerseyNumber ?? null,
+    }))
+  } catch {
+    return []
+  }
+}
+
+// ── Recent transactions ───────────────────────────────────────────────────────
+
+export interface Transaction {
+  date:         string
+  description:  string
+  typeCode:     string
+}
+
+export async function fetchRecentTransactions(teamAbbr: string): Promise<Transaction[]> {
+  const teamId = MLB_TEAM_IDS[teamAbbr]
+  if (!teamId) return []
+  const endDate   = new Date().toISOString().split('T')[0]
+  const startDate = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]
+  try {
+    const res = await fetch(
+      `https://statsapi.mlb.com/api/v1/transactions?teamId=${teamId}&startDate=${startDate}&endDate=${endDate}`
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    return (data.transactions ?? [])
+      .filter((t: any) => t.typeCode && t.description)
+      .slice(0, 8)
+      .map((t: any) => ({
+        date:        t.date ?? t.effectiveDate ?? '',
+        description: t.description,
+        typeCode:    t.typeCode,
+      }))
+  } catch {
+    return []
+  }
+}
+
+// ── Scoring plays ─────────────────────────────────────────────────────────────
+
+export interface ScoringPlay {
+  inning:      number
+  halfInning:  'top' | 'bottom'
+  description: string
+  awayScore:   number
+  homeScore:   number
+}
+
+export async function fetchScoringPlays(gamePk: number): Promise<ScoringPlay[]> {
+  try {
+    const res = await fetch(
+      `https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live` +
+      `?fields=liveData,plays,scoringPlays,allPlays,about,result,inning,halfInning,awayScore,homeScore,description,event`
+    )
+    if (!res.ok) return []
+    const data  = await res.json()
+    const all: any[]     = data.liveData?.plays?.allPlays ?? []
+    const indices: number[] = data.liveData?.plays?.scoringPlays ?? []
+    return indices
+      .map(i => all[i])
+      .filter(Boolean)
+      .map(p => ({
+        inning:      p.about?.inning     ?? 0,
+        halfInning:  p.about?.halfInning ?? 'top',
+        description: p.result?.description ?? '',
+        awayScore:   p.result?.awayScore  ?? 0,
+        homeScore:   p.result?.homeScore  ?? 0,
+      }))
+  } catch {
+    return []
+  }
+}
