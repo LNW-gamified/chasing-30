@@ -258,6 +258,7 @@ export default async function DashboardPage() {
                 background: '#111827',
                 border: '1px solid #1e2d4a',
                 textAlign: 'center',
+                height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
                 boxSizing: 'border-box',
@@ -324,6 +325,7 @@ export default async function DashboardPage() {
                 style={{
                   ...card,
                   padding: '20px 20px 16px',
+                  height: '100%',
                   boxSizing: 'border-box',
                   display: 'flex',
                   flexDirection: 'column',
