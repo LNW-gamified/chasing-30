@@ -131,3 +131,134 @@ export async function fetchSeasonHomeGames(teamAbbr: string): Promise<SeasonGame
     return []
   }
 }
+
+// ── Venue dimensions ─────────────────────────────────────────────────────────
+
+export interface VenueDimensions {
+  leftLine:    number | null
+  leftCenter:  number | null
+  center:      number | null
+  rightCenter: number | null
+  rightLine:   number | null
+  roofType:    string | null
+  turfType:    string | null
+  capacity:    number | null
+}
+
+export async function fetchVenueDimensions(teamAbbr: string): Promise<VenueDimensions | null> {
+  const teamId = MLB_TEAM_IDS[teamAbbr]
+  if (!teamId) return null
+  try {
+    const teamRes = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}`)
+    if (!teamRes.ok) return null
+    const teamData = await teamRes.json()
+    const venueId: number | undefined = teamData.teams?.[0]?.venue?.id
+    if (!venueId) return null
+
+    const venueRes = await fetch(`https://statsapi.mlb.com/api/v1/venues/${venueId}?hydrate=fieldInfo`)
+    if (!venueRes.ok) return null
+    const venueData = await venueRes.json()
+    const fi = venueData.venues?.[0]?.fieldInfo
+    if (!fi) return null
+
+    return {
+      leftLine:    fi.leftLine    ?? null,
+      leftCenter:  fi.leftCenter  ?? null,
+      center:      fi.center      ?? null,
+      rightCenter: fi.rightCenter ?? null,
+      rightLine:   fi.rightLine   ?? null,
+      roofType:    fi.roofType    ?? null,
+      turfType:    fi.turfType    ?? null,
+      capacity:    fi.capacity    ?? null,
+    }
+  } catch {
+    return null
+  }
+}
+
+// ── Team season stats ─────────────────────────────────────────────────────────
+
+export interface TeamSeasonStats {
+  wins:       number | null
+  losses:     number | null
+  era:        string | null
+  avg:        string | null
+  homeRuns:   number | null
+  strikeouts: number | null
+  runsScored: number | null
+}
+
+export async function fetchTeamSeasonStats(teamAbbr: string): Promise<TeamSeasonStats | null> {
+  const teamId = MLB_TEAM_IDS[teamAbbr]
+  if (!teamId) return null
+  const year = new Date().getFullYear()
+  try {
+    const [hitRes, pitchRes, standRes] = await Promise.all([
+      fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}/stats?stats=season&group=hitting&season=${year}`),
+      fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}/stats?stats=season&group=pitching&season=${year}`),
+      fetch(`https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=${year}&standingsType=regularSeason`),
+    ])
+    const hitData   = hitRes.ok   ? await hitRes.json()   : null
+    const pitchData = pitchRes.ok ? await pitchRes.json() : null
+    const standData = standRes.ok ? await standRes.json() : null
+
+    const hitStat   = hitData?.stats?.[0]?.splits?.[0]?.stat
+    const pitchStat = pitchData?.stats?.[0]?.splits?.[0]?.stat
+
+    let wins = null, losses = null
+    if (standData?.records) {
+      for (const league of standData.records) {
+        for (const team of (league.teamRecords ?? [])) {
+          if (team.team?.id === teamId) { wins = team.wins ?? null; losses = team.losses ?? null }
+        }
+      }
+    }
+
+    return {
+      wins, losses,
+      era:        pitchStat?.era        ?? null,
+      avg:        hitStat?.avg          ?? null,
+      homeRuns:   hitStat?.homeRuns     ?? null,
+      strikeouts: pitchStat?.strikeouts ?? null,
+      runsScored: hitStat?.runs         ?? null,
+    }
+  } catch {
+    return null
+  }
+}
+
+// ── Game highlights ───────────────────────────────────────────────────────────
+
+export interface GameHighlight {
+  title:       string
+  description: string
+  url:         string
+}
+
+export interface GameContent {
+  recap:      string | null
+  highlights: GameHighlight[]
+}
+
+export async function fetchGameContent(gamePk: number): Promise<GameContent | null> {
+  try {
+    const res = await fetch(`https://statsapi.mlb.com/api/v1/game/${gamePk}/content`)
+    if (!res.ok) return null
+    const data = await res.json()
+    const recap = data.editorial?.recap?.mlb?.blurb ?? data.editorial?.recap?.mlb?.seoTitle ?? null
+    const items: any[] = data.highlights?.highlights?.items ?? []
+    const highlights: GameHighlight[] = items
+      .filter((h: any) => h.type === 'video' && h.playbacks?.length > 0)
+      .slice(0, 3)
+      .map((h: any) => ({
+        title:       h.headline ?? h.title ?? 'Highlight',
+        description: h.blurb   ?? '',
+        url:         h.playbacks?.find((p: any) => p.name === 'mp4Avc') ?.url
+                  ?? h.playbacks?.[0]?.url ?? '',
+      }))
+      .filter(h => h.url)
+    return { recap, highlights }
+  } catch {
+    return null
+  }
+}

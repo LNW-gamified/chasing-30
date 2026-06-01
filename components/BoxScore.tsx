@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { StadiumVisit, Stadium } from '@/types'
 import { GAME_MOMENTS } from '@/lib/moments'
 import { Pencil, Trash2, RefreshCw } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import { fetchGameContent, type GameContent } from '@/lib/mlb-api'
+import { fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
 
 interface BoxScoreProps {
   visit: StadiumVisit
@@ -194,7 +196,22 @@ export default function BoxScore({
   visit, stadium, firstTimeMoments = [], fetchingStats = false,
   statsError = null, onEdit, onDelete,
 }: BoxScoreProps) {
-  const [tab, setTab] = useState<'overview' | 'box'>('overview')
+  const [tab, setTab]           = useState<'overview' | 'box'>('overview')
+  const [gameContent, setGameContent] = useState<GameContent | null>(null)
+  const [weather, setWeather]         = useState<WeatherData | null>(null)
+
+  useEffect(() => {
+    if (visit.mlb_game_pk) {
+      fetchGameContent(visit.mlb_game_pk).then(setGameContent)
+    }
+  }, [visit.mlb_game_pk])
+
+  useEffect(() => {
+    if (visit.temperature != null) return
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+    if (visit.visit_date >= today) return
+    fetchHistoricalWeather(stadium.lat, stadium.lng, visit.visit_date).then(setWeather)
+  }, [visit.id, visit.temperature, visit.visit_date, stadium.lat, stadium.lng])
 
   const boxData = visit.boxscore_data as any
   const awayBoxTeam = boxData?.teams?.away
@@ -467,14 +484,20 @@ export default function BoxScore({
         {/* GAME OVERVIEW TAB */}
         {tab === 'overview' && (
           <>
-            {(visit.weather || visit.game_duration || visit.temperature) && (
+            {(visit.weather || visit.game_duration || visit.temperature || weather) && (
               <div style={{ marginBottom: 14 }}>
                 <div style={LABEL}>Game Info</div>
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                  {visit.weather && (
+                  {(visit.weather || visit.temperature || weather) && (
                     <div>
                       <div style={{ fontSize: 11, color: '#8B949E' }}>Weather</div>
-                      <div style={{ fontSize: 13, color: '#E6EDF3', marginTop: 1 }}>{visit.weather}{visit.temperature ? ` · ${visit.temperature}°F` : ''}</div>
+                      <div style={{ fontSize: 13, color: '#E6EDF3', marginTop: 1 }}>
+                        {visit.weather
+                          ? `${visit.weather}${visit.temperature ? ` · ${visit.temperature}°F` : ''}`
+                          : weather
+                            ? `${weather.emoji} ${weather.condition} · ${weather.tempF}°F`
+                            : null}
+                      </div>
                     </div>
                   )}
                   {visit.game_duration && (
@@ -542,6 +565,38 @@ export default function BoxScore({
             {!visit.moments?.length && !visit.hp_umpire && !visit.photo_url && !visit.notes && !visit.weather && (
               <div style={{ fontSize: 13, color: '#8B949E', textAlign: 'center', padding: '12px 0' }}>
                 Edit this game to add notes, photos, and more.
+              </div>
+            )}
+
+            {/* Game recap + highlights */}
+            {gameContent && (gameContent.recap || gameContent.highlights.length > 0) && (
+              <div style={{ marginTop: 14 }}>
+                <div style={LABEL}>Game Recap</div>
+                {gameContent.recap && (
+                  <div style={{ fontSize: 13, color: '#C9D1D9', lineHeight: 1.6, marginBottom: gameContent.highlights.length > 0 ? 12 : 0, fontStyle: 'italic' }}>
+                    {gameContent.recap.length > 220 ? gameContent.recap.slice(0, 220) + '…' : gameContent.recap}
+                  </div>
+                )}
+                {gameContent.highlights.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {gameContent.highlights.map((h, i) => (
+                      <a
+                        key={i}
+                        href={h.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          padding: '8px 10px', borderRadius: 8, textDecoration: 'none',
+                          backgroundColor: '#1C2430', border: '1px solid #30363D',
+                        }}
+                      >
+                        <span style={{ fontSize: 16, flexShrink: 0 }}>▶</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#58A6FF', lineHeight: 1.3 }}>{h.title}</span>
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </>

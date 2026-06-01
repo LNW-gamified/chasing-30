@@ -12,6 +12,7 @@ import Link from 'next/link'
 import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink, MoreHorizontal, FileText, Ticket, Utensils, Car, Plane, BedDouble } from 'lucide-react'
 import StopChecklist from '@/components/StopChecklist'
 import { DESTINATION_BY_SLUG, destinationLocation, EXPERIENCE_TYPES } from '@/lib/destinations'
+import { fetchForecastWeather, fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
 
 type TripWithStadium = Trip & { stadium: Stadium | null }
 
@@ -62,6 +63,7 @@ export default function TripDetailPage() {
   const [checklistItems, setChecklistItems] = useState<StopChecklistItem[]>([])
   const [showDeleteMenu,  setShowDeleteMenu]  = useState(false)
   const [visitedStadiumIds, setVisitedStadiumIds] = useState<Set<string>>(new Set())
+  const [stopWeather, setStopWeather] = useState<Record<string, WeatherData>>({})
 
   async function load() {
     const supabase = createClient()
@@ -100,6 +102,26 @@ export default function TripDetailPage() {
   }
 
   useEffect(() => { load() }, [id])
+
+  useEffect(() => {
+    if (stops.length === 0) return
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+    const maxForecastDate = new Date(Date.now() + 16 * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+    stops.forEach(stop => {
+      const date = stop.game_date
+      const stadium = stop.stadium as Stadium | null
+      if (!date || !stadium?.lat || !stadium?.lng) return
+      const fetcher = date >= today && date <= maxForecastDate
+        ? fetchForecastWeather
+        : date < today
+          ? fetchHistoricalWeather
+          : null
+      if (!fetcher) return
+      fetcher(stadium.lat, stadium.lng, date).then(w => {
+        if (w) setStopWeather(prev => ({ ...prev, [stop.id]: w }))
+      })
+    })
+  }, [stops])
 
   async function handleDelete() {
     if (!confirm('Delete this trip?')) return
@@ -642,7 +664,7 @@ export default function TripDetailPage() {
                           </div>
                         )}
 
-                        {/* Game date + time */}
+                        {/* Game date + time + weather */}
                         {stop.game_date && (
                           <div style={{ marginBottom: 16 }}>
                             <div style={{ fontSize: 17, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2 }}>
@@ -655,6 +677,22 @@ export default function TripDetailPage() {
                                 {stop.game_time}
                               </div>
                             )}
+                            {stopWeather[stop.id] && (() => {
+                              const w = stopWeather[stop.id]
+                              const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+                              const isFuture = stop.game_date >= today
+                              return (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6, padding: '4px 10px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                  <span style={{ fontSize: 14 }}>{w.emoji}</span>
+                                  <span style={{ fontSize: 12, fontWeight: 600, color: '#C9D1D9' }}>
+                                    {w.tempF}°F · {w.condition}
+                                    {isFuture && w.rainChance != null && w.rainChance > 20
+                                      ? ` · ${w.rainChance}% rain`
+                                      : ''}
+                                  </span>
+                                </div>
+                              )
+                            })()}
                           </div>
                         )}
 

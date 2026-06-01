@@ -8,7 +8,7 @@ import BoxScore from '@/components/BoxScore'
 import { formatDate } from '@/lib/utils'
 import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber } from '@/types'
 import { MILESTONES } from '@/lib/milestones'
-import { fetchUpcomingHomeGames, type UpcomingGame } from '@/lib/mlb-api'
+import { fetchUpcomingHomeGames, fetchVenueDimensions, fetchTeamSeasonStats, type UpcomingGame, type VenueDimensions, type TeamSeasonStats } from '@/lib/mlb-api'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy, Share2, MessageSquare, Hash, Building2, Map, ChevronRight } from 'lucide-react'
@@ -101,6 +101,8 @@ export default function StadiumDetailPage() {
   const [firstTimeMoments, setFirstTimeMoments] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<ActiveTab>('games-attended')
   const [retiredNumbers, setRetiredNumbers] = useState<RetiredNumber[]>([])
+  const [venueDimensions, setVenueDimensions] = useState<VenueDimensions | null>(null)
+  const [teamStats, setTeamStats] = useState<TeamSeasonStats | null>(null)
   const [unlockedMilestones, setUnlockedMilestones] = useState<{ name: string; icon: string }[]>([])
   const prevEarnedIdsRef = useRef<Set<string>>(new Set())
 
@@ -154,6 +156,8 @@ export default function StadiumDetailPage() {
     if (!stadium) return
     fetchUpcomingHomeGames(stadium.abbreviation).then(setUpcomingGames)
     fetchStadiumPhoto(stadium.abbreviation).then(setStadiumPhoto)
+    fetchVenueDimensions(stadium.abbreviation).then(setVenueDimensions)
+    fetchTeamSeasonStats(stadium.abbreviation).then(setTeamStats)
   }, [stadium])
 
   useEffect(() => {
@@ -788,6 +792,87 @@ export default function StadiumDetailPage() {
                     ))}
                   </div>
                 </section>
+
+                {/* Field Dimensions */}
+                {venueDimensions && (venueDimensions.leftLine || venueDimensions.center) && (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle Icon={Map}>Field Dimensions</SectionTitle>
+                    {/* Diamond diagram */}
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '20px 16px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16, textAlign: 'center' }}>
+                        {[
+                          { label: 'Left Line',    value: venueDimensions.leftLine },
+                          { label: 'Center',       value: venueDimensions.center },
+                          { label: 'Right Line',   value: venueDimensions.rightLine },
+                          { label: 'Left-Center',  value: venueDimensions.leftCenter },
+                          { label: 'Right-Center', value: venueDimensions.rightCenter },
+                        ].filter(r => r.value).map(({ label, value }) => (
+                          <div key={label} style={{ backgroundColor: '#1C2430', borderRadius: 10, padding: '10px 6px' }}>
+                            <div style={{ fontSize: 20, fontWeight: 900, color: '#3FB950', lineHeight: 1 }}>{value}<span style={{ fontSize: 11, fontWeight: 600, color: '#8B949E' }}>ft</span></div>
+                            <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 600 }}>{label}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {venueDimensions.roofType && (
+                          <span style={{ fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid #30363D', borderRadius: 20, padding: '4px 10px' }}>
+                            🏟️ {venueDimensions.roofType} roof
+                          </span>
+                        )}
+                        {venueDimensions.turfType && (
+                          <span style={{ fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid #30363D', borderRadius: 20, padding: '4px 10px' }}>
+                            🌿 {venueDimensions.turfType}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+                )}
+
+                {/* This Season */}
+                {teamStats && (teamStats.wins !== null || teamStats.era) && (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle Icon={Trophy}>This Season</SectionTitle>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                      {teamStats.wins !== null && teamStats.losses !== null && (
+                        <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+                          <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.wins}–{teamStats.losses}</div>
+                          <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Record</div>
+                        </div>
+                      )}
+                      {teamStats.era && (
+                        <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+                          <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.era}</div>
+                          <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Team ERA</div>
+                        </div>
+                      )}
+                      {teamStats.avg && (
+                        <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+                          <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.avg}</div>
+                          <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Team AVG</div>
+                        </div>
+                      )}
+                      {teamStats.homeRuns != null && (
+                        <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+                          <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.homeRuns}</div>
+                          <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Home Runs</div>
+                        </div>
+                      )}
+                      {teamStats.runsScored != null && (
+                        <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+                          <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.runsScored}</div>
+                          <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Runs Scored</div>
+                        </div>
+                      )}
+                      {teamStats.strikeouts != null && (
+                        <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+                          <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.strikeouts}</div>
+                          <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Strikeouts</div>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                )}
 
                 {/* Directions & Links */}
                 <section style={{ marginBottom: 32 }}>
