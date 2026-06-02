@@ -112,6 +112,7 @@ export default function StadiumDetailPage() {
   const [affiliates, setAffiliates]             = useState<MiLBAffiliate[]>([])
   const [trendingFood, setTrendingFood]         = useState<StadiumTrendingFood[]>([])
   const [souvenirs, setSouvenirs]               = useState<StadiumSouvenir[]>([])
+  const [intelSubTab, setIntelSubTab]           = useState<'food' | 'souvenirs'>('food')
   const [unlockedMilestones, setUnlockedMilestones] = useState<{ name: string; icon: string }[]>([])
   const prevEarnedIdsRef = useRef<Set<string>>(new Set())
 
@@ -165,6 +166,10 @@ export default function StadiumDetailPage() {
   }
 
   useEffect(() => { load() }, [id])
+
+  useEffect(() => {
+    if (activeTab === 'stadium-info') setIntelSubTab('food')
+  }, [activeTab])
 
   useEffect(() => {
     if (!stadium) return
@@ -836,113 +841,148 @@ export default function StadiumDetailPage() {
                   )}
                 </section>
 
-                {/* Food & Drinks */}
-                {trendingFood.length > 0 && (() => {
-                  const classics  = trendingFood.filter(f => f.is_classic)
-                  const seasonal  = trendingFood.filter(f => !f.is_classic && f.active && f.season_year === 2026)
-                  if (classics.length === 0 && seasonal.length === 0) return null
-                  return (
-                    <section style={{ marginBottom: 32 }}>
-                      <SectionTitle Icon={Trophy}>Food &amp; Drinks</SectionTitle>
-                      <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
-                        {classics.length > 0 && (
-                          <>
-                            <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                              Classics
-                            </div>
-                            {classics.map((f, i) => (
-                              <div key={f.id} style={{
-                                display: 'flex', alignItems: 'flex-start', gap: 10,
-                                padding: '10px 16px',
-                                borderBottom: (i < classics.length - 1 || seasonal.length > 0) ? '1px solid rgba(48,54,61,0.6)' : 'none',
-                              }}>
-                                <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🏆</span>
-                                <div>
-                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{f.item_name}</div>
-                                  {f.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{f.description}</div>}
-                                </div>
-                              </div>
-                            ))}
-                          </>
-                        )}
-                        {seasonal.length > 0 && (
-                          <>
-                            <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                              This Season
-                            </div>
-                            {seasonal.map((f, i) => (
-                              <div key={f.id} style={{
-                                display: 'flex', alignItems: 'flex-start', gap: 10,
-                                padding: '10px 16px',
-                                borderBottom: i < seasonal.length - 1 ? '1px solid rgba(48,54,61,0.6)' : 'none',
-                              }}>
-                                <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🔥</span>
-                                <div>
-                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{f.item_name}</div>
-                                  {f.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{f.description}</div>}
-                                </div>
-                              </div>
-                            ))}
-                          </>
-                        )}
-                      </div>
-                    </section>
-                  )
-                })()}
+                {/* Food & Souvenirs sub-tabs */}
+                {(trendingFood.length > 0 || souvenirs.length > 0) && (
+                  <section style={{ marginBottom: 32 }}>
+                    {/* Sub-tab pill bar */}
+                    <div style={{
+                      display: 'flex', gap: 3, marginBottom: 16,
+                      backgroundColor: '#1C2430', borderRadius: 11,
+                      border: '1px solid #30363D', padding: 3,
+                    }}>
+                      {([
+                        { key: 'food',      emoji: '🍟', label: 'Food'      },
+                        { key: 'souvenirs', emoji: '🛍️', label: 'Souvenirs' },
+                      ] as const).map(({ key, emoji, label }) => (
+                        <button
+                          key={key}
+                          onClick={() => setIntelSubTab(key)}
+                          style={{
+                            flex: 1, padding: '7px 10px', borderRadius: 8,
+                            fontSize: 13, fontWeight: intelSubTab === key ? 700 : 500,
+                            border: 'none', cursor: 'pointer',
+                            backgroundColor: intelSubTab === key ? '#161B22' : 'transparent',
+                            color: intelSubTab === key ? '#E6EDF3' : '#8B949E',
+                            boxShadow: intelSubTab === key ? '0 1px 3px rgba(0,0,0,0.35)' : 'none',
+                            transition: 'background-color 0.15s, color 0.15s',
+                          }}
+                        >
+                          {emoji} {label}
+                        </button>
+                      ))}
+                    </div>
 
-                {/* Souvenirs */}
-                {souvenirs.length > 0 && (() => {
-                  const classics = souvenirs.filter(s => s.is_classic)
-                  const seasonal = souvenirs.filter(s => !s.is_classic && s.active && s.season_year === 2026)
-                  if (classics.length === 0 && seasonal.length === 0) return null
-                  return (
-                    <section style={{ marginBottom: 32 }}>
-                      <SectionTitle Icon={Trophy}>Souvenirs</SectionTitle>
-                      <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
-                        {classics.length > 0 && (
-                          <>
-                            <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                              Classics
-                            </div>
-                            {classics.map((s, i) => (
-                              <div key={s.id} style={{
-                                display: 'flex', alignItems: 'flex-start', gap: 10,
-                                padding: '10px 16px',
-                                borderBottom: (i < classics.length - 1 || seasonal.length > 0) ? '1px solid rgba(48,54,61,0.6)' : 'none',
-                              }}>
-                                <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🏆</span>
-                                <div>
-                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{s.item_name}</div>
-                                  {s.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{s.description}</div>}
-                                </div>
+                    {/* Food content */}
+                    {intelSubTab === 'food' && (() => {
+                      const classics = trendingFood.filter(f => f.is_classic)
+                      const seasonal = trendingFood.filter(f => !f.is_classic && f.active && f.season_year === 2026)
+                      if (classics.length === 0 && seasonal.length === 0) return (
+                        <div style={{ textAlign: 'center', padding: '32px 16px', color: '#484F58', fontSize: 13 }}>
+                          No food intel yet for this stadium.
+                        </div>
+                      )
+                      return (
+                        <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
+                          {classics.length > 0 && (
+                            <>
+                              <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                                Classics
                               </div>
-                            ))}
-                          </>
-                        )}
-                        {seasonal.length > 0 && (
-                          <>
-                            <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                              This Season
-                            </div>
-                            {seasonal.map((s, i) => (
-                              <div key={s.id} style={{
-                                display: 'flex', alignItems: 'flex-start', gap: 10,
-                                padding: '10px 16px',
-                                borderBottom: i < seasonal.length - 1 ? '1px solid rgba(48,54,61,0.6)' : 'none',
-                              }}>
-                                <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>⭐</span>
-                                <div>
-                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{s.item_name}</div>
-                                  {s.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{s.description}</div>}
+                              {classics.map((f, i) => (
+                                <div key={f.id} style={{
+                                  display: 'flex', alignItems: 'flex-start', gap: 10,
+                                  padding: '10px 16px',
+                                  borderBottom: (i < classics.length - 1 || seasonal.length > 0) ? '1px solid rgba(48,54,61,0.6)' : 'none',
+                                }}>
+                                  <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🏆</span>
+                                  <div>
+                                    <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{f.item_name}</div>
+                                    {f.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{f.description}</div>}
+                                  </div>
                                 </div>
+                              ))}
+                            </>
+                          )}
+                          {seasonal.length > 0 && (
+                            <>
+                              <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                                This Season
                               </div>
-                            ))}
-                          </>
-                        )}
-                      </div>
-                    </section>
-                  )
-                })()}
+                              {seasonal.map((f, i) => (
+                                <div key={f.id} style={{
+                                  display: 'flex', alignItems: 'flex-start', gap: 10,
+                                  padding: '10px 16px',
+                                  borderBottom: i < seasonal.length - 1 ? '1px solid rgba(48,54,61,0.6)' : 'none',
+                                }}>
+                                  <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🔥</span>
+                                  <div>
+                                    <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{f.item_name}</div>
+                                    {f.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{f.description}</div>}
+                                  </div>
+                                </div>
+                              ))}
+                            </>
+                          )}
+                        </div>
+                      )
+                    })()}
+
+                    {/* Souvenirs content */}
+                    {intelSubTab === 'souvenirs' && (() => {
+                      const classics = souvenirs.filter(s => s.is_classic)
+                      const seasonal = souvenirs.filter(s => !s.is_classic && s.active && s.season_year === 2026)
+                      if (classics.length === 0 && seasonal.length === 0) return (
+                        <div style={{ textAlign: 'center', padding: '32px 16px', color: '#484F58', fontSize: 13 }}>
+                          No souvenir intel yet for this stadium.
+                        </div>
+                      )
+                      return (
+                        <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
+                          {classics.length > 0 && (
+                            <>
+                              <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                                Classics
+                              </div>
+                              {classics.map((s, i) => (
+                                <div key={s.id} style={{
+                                  display: 'flex', alignItems: 'flex-start', gap: 10,
+                                  padding: '10px 16px',
+                                  borderBottom: (i < classics.length - 1 || seasonal.length > 0) ? '1px solid rgba(48,54,61,0.6)' : 'none',
+                                }}>
+                                  <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🏆</span>
+                                  <div>
+                                    <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{s.item_name}</div>
+                                    {s.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{s.description}</div>}
+                                  </div>
+                                </div>
+                              ))}
+                            </>
+                          )}
+                          {seasonal.length > 0 && (
+                            <>
+                              <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                                This Season
+                              </div>
+                              {seasonal.map((s, i) => (
+                                <div key={s.id} style={{
+                                  display: 'flex', alignItems: 'flex-start', gap: 10,
+                                  padding: '10px 16px',
+                                  borderBottom: i < seasonal.length - 1 ? '1px solid rgba(48,54,61,0.6)' : 'none',
+                                }}>
+                                  <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>⭐</span>
+                                  <div>
+                                    <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{s.item_name}</div>
+                                    {s.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{s.description}</div>}
+                                  </div>
+                                </div>
+                              ))}
+                            </>
+                          )}
+                        </div>
+                      )
+                    })()}
+                  </section>
+                )}
 
                 {/* Virtual Tour */}
                 {tourVideoId && (
