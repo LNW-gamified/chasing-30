@@ -283,3 +283,14 @@ export interface StopChecklistItem {
   suggested: boolean
   created_at: string
 }
+
+export interface StadiumTrendingFood {
+  id: string
+  stadium_id: string
+  name: string
+  description: string | null
+  is_classic: boolean
+  active: boolean
+  season_year: number | null
+  created_at: string
+}

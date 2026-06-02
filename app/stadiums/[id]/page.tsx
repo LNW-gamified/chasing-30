@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase'
 import GameDayForm from '@/components/GameDayForm'
 import BoxScore from '@/components/BoxScore'
 import { formatDate } from '@/lib/utils'
-import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber } from '@/types'
+import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber, StadiumTrendingFood } from '@/types'
 import { MILESTONES } from '@/lib/milestones'
 import { fetchUpcomingHomeGames, fetchVenueDimensions, fetchTeamSeasonStats, fetchTeamRoster, fetchRecentTransactions, fetchMinorLeagueAffiliates, type UpcomingGame, type VenueDimensions, type TeamSeasonStats, type RosterPlayer, type Transaction, type MiLBAffiliate } from '@/lib/mlb-api'
 import { fetchStadiumPhoto, fetchStadiumSummary } from '@/lib/stadium-wikipedia'
@@ -110,6 +110,7 @@ export default function StadiumDetailPage() {
   const [teamNews, setTeamNews]                 = useState<ESPNNewsItem[]>([])
   const [tourVideoId, setTourVideoId]           = useState<string | null | undefined>(undefined)
   const [affiliates, setAffiliates]             = useState<MiLBAffiliate[]>([])
+  const [trendingFood, setTrendingFood]         = useState<StadiumTrendingFood[]>([])
   const [unlockedMilestones, setUnlockedMilestones] = useState<{ name: string; icon: string }[]>([])
   const prevEarnedIdsRef = useRef<Set<string>>(new Set())
 
@@ -118,6 +119,7 @@ export default function StadiumDetailPage() {
     const [
       { data: s }, { data: v }, { data: n },
       { data: av }, { data: as_ }, { data: rn },
+      { data: tf },
     ] = await Promise.all([
       supabase.from('stadiums').select('*').eq('id', id).single(),
       supabase.from('stadium_visits').select('*').eq('stadium_id', id).order('visit_date', { ascending: false }),
@@ -125,6 +127,7 @@ export default function StadiumDetailPage() {
       supabase.from('stadium_visits').select('stadium_id, moments'),
       supabase.from('stadiums').select('id, league, division'),
       supabase.from('retired_numbers').select('*').eq('team_id', id).order('year_retired'),
+      supabase.from('stadium_trending_food').select('*').eq('stadium_id', id),
     ])
     setStadium(s)
     setVisits(v ?? [])
@@ -138,6 +141,7 @@ export default function StadiumDetailPage() {
     const stadiumList = (as_ ?? []) as MiniStadium[]
     setAllStadiums(stadiumList)
     setRetiredNumbers((rn ?? []) as RetiredNumber[])
+    setTrendingFood((tf ?? []) as StadiumTrendingFood[])
     setLoading(false)
 
     if (checkMilestones) {
@@ -422,7 +426,13 @@ export default function StadiumDetailPage() {
                         ⚾ You&apos;ve been here!
                       </div>
                       <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.82)', marginTop: 3 }}>
-                        {visits.length} game{visits.length !== 1 ? 's' : ''} · Last visited {formatDate(visits[0].visit_date)}
+                        {(() => {
+                          const scored = visits.filter(v => v.home_runs != null && v.away_runs != null)
+                          const w = scored.filter(v => v.home_runs! > v.away_runs!).length
+                          const l = scored.filter(v => v.home_runs! < v.away_runs!).length
+                          const record = scored.length > 0 ? ` · ${w}–${l}` : ''
+                          return `${visits.length} game${visits.length !== 1 ? 's' : ''}${record} · Last visited ${formatDate(visits[0].visit_date)}`
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -822,6 +832,60 @@ export default function StadiumDetailPage() {
                     </div>
                   )}
                 </section>
+
+                {/* Food & Drinks */}
+                {trendingFood.length > 0 && (() => {
+                  const classics  = trendingFood.filter(f => f.is_classic)
+                  const seasonal  = trendingFood.filter(f => !f.is_classic && f.active && f.season_year === 2026)
+                  if (classics.length === 0 && seasonal.length === 0) return null
+                  return (
+                    <section style={{ marginBottom: 32 }}>
+                      <SectionTitle Icon={Trophy}>Food &amp; Drinks</SectionTitle>
+                      <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
+                        {classics.length > 0 && (
+                          <>
+                            <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                              Classics
+                            </div>
+                            {classics.map((f, i) => (
+                              <div key={f.id} style={{
+                                display: 'flex', alignItems: 'flex-start', gap: 10,
+                                padding: '10px 16px',
+                                borderBottom: (i < classics.length - 1 || seasonal.length > 0) ? '1px solid rgba(48,54,61,0.6)' : 'none',
+                              }}>
+                                <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🏆</span>
+                                <div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{f.name}</div>
+                                  {f.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{f.description}</div>}
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                        {seasonal.length > 0 && (
+                          <>
+                            <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                              This Season
+                            </div>
+                            {seasonal.map((f, i) => (
+                              <div key={f.id} style={{
+                                display: 'flex', alignItems: 'flex-start', gap: 10,
+                                padding: '10px 16px',
+                                borderBottom: i < seasonal.length - 1 ? '1px solid rgba(48,54,61,0.6)' : 'none',
+                              }}>
+                                <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🔥</span>
+                                <div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{f.name}</div>
+                                  {f.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{f.description}</div>}
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    </section>
+                  )
+                })()}
 
                 {/* Virtual Tour */}
                 {tourVideoId && (

@@ -397,8 +397,25 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
         const { error: updErr } = await supabase.from('trip_stops').update(payload).eq('id', stop.id)
         if (updErr) { setSaving(false); setError(updErr.message); return }
       } else {
-        const { error: insErr } = await supabase.from('trip_stops').insert({ trip_id: tripId, ...payload })
-        if (insErr) { setSaving(false); setError(insErr.message); return }
+        const { data: newStop, error: insErr } = await supabase
+          .from('trip_stops').insert({ trip_id: tripId, ...payload }).select('id').single()
+        if (insErr || !newStop) { setSaving(false); setError(insErr?.message ?? 'Failed to insert stop'); return }
+
+        // Auto-populate food & drinks checklist with trending items
+        const [{ data: classics }, { data: seasonal }] = await Promise.all([
+          supabase.from('stadium_trending_food')
+            .select('name').eq('stadium_id', stop.stadium_id).eq('is_classic', true).limit(3),
+          supabase.from('stadium_trending_food')
+            .select('name').eq('stadium_id', stop.stadium_id).eq('is_classic', false)
+            .eq('active', true).eq('season_year', 2026).limit(2),
+        ])
+        const suggestions = [
+          ...(classics ?? []).map(f => ({ stop_id: newStop.id, category: 'food_drinks' as const, item: f.name, suggested: true })),
+          ...(seasonal ?? []).map(f => ({ stop_id: newStop.id, category: 'food_drinks' as const, item: f.name, suggested: true })),
+        ]
+        if (suggestions.length > 0) {
+          await supabase.from('stop_checklist').insert(suggestions)
+        }
       }
     }
 
