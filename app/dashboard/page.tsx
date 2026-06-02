@@ -12,6 +12,7 @@ import OnThisDay, { type HistoryFact } from '@/components/OnThisDay'
 import HeroRing, { type RingDot } from '@/components/HeroRing'
 import TeamLogo from '@/components/TeamLogo'
 import { fetchPlayoffPicture, type PlayoffPicture } from '@/lib/mlb-api'
+import PennantRace from '@/components/PennantRace'
 
 // ─── MLB API ──────────────────────────────────────────────────────────────────
 
@@ -483,6 +484,13 @@ export default async function DashboardPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ── Pennant Race (Aug 1 – end of regular season) ─────────────── */}
+        {todayMonth >= 8 && todayMonth <= 10 && favAbbr && (
+          <div className="dash-card" style={{ ...card, marginBottom: SECTION_GAP, padding: '16px 20px' }}>
+            <PennantRace favAbbr={favAbbr} />
           </div>
         )}
 
