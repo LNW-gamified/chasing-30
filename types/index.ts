@@ -287,7 +287,7 @@ export interface StopChecklistItem {
 export interface StadiumTrendingFood {
   id: string
   stadium_id: string
-  name: string
+  item_name: string
   description: string | null
   is_classic: boolean
   active: boolean
@@ -298,7 +298,7 @@ export interface StadiumTrendingFood {
 export interface StadiumSouvenir {
   id: string
   stadium_id: string
-  name: string
+  item_name: string
   description: string | null
   is_classic: boolean
   active: boolean

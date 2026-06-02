@@ -407,21 +407,21 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
           { data: souvenirClassics }, { data: souvenirSeasonal },
         ] = await Promise.all([
           supabase.from('stadium_trending_food')
-            .select('name').eq('stadium_id', stop.stadium_id).eq('is_classic', true).limit(3),
+            .select('item_name').eq('stadium_id', stop.stadium_id).eq('is_classic', true).limit(3),
           supabase.from('stadium_trending_food')
-            .select('name').eq('stadium_id', stop.stadium_id).eq('is_classic', false)
+            .select('item_name').eq('stadium_id', stop.stadium_id).eq('is_classic', false)
             .eq('active', true).eq('season_year', 2026).limit(2),
           supabase.from('stadium_souvenirs')
-            .select('name').eq('stadium_id', stop.stadium_id).eq('is_classic', true).limit(2),
+            .select('item_name').eq('stadium_id', stop.stadium_id).eq('is_classic', true).limit(2),
           supabase.from('stadium_souvenirs')
-            .select('name').eq('stadium_id', stop.stadium_id).eq('is_classic', false)
+            .select('item_name').eq('stadium_id', stop.stadium_id).eq('is_classic', false)
             .eq('active', true).eq('season_year', 2026).limit(2),
         ])
         const suggestions = [
-          ...(foodClassics    ?? []).map(f => ({ stop_id: newStop.id, category: 'food_drinks' as const, item: f.name, suggested: true })),
-          ...(foodSeasonal    ?? []).map(f => ({ stop_id: newStop.id, category: 'food_drinks' as const, item: f.name, suggested: true })),
-          ...(souvenirClassics ?? []).map(s => ({ stop_id: newStop.id, category: 'souvenirs'  as const, item: s.name, suggested: true })),
-          ...(souvenirSeasonal ?? []).map(s => ({ stop_id: newStop.id, category: 'souvenirs'  as const, item: s.name, suggested: true })),
+          ...(foodClassics    ?? []).map(f => ({ stop_id: newStop.id, category: 'food_drinks' as const, item: f.item_name, suggested: true })),
+          ...(foodSeasonal    ?? []).map(f => ({ stop_id: newStop.id, category: 'food_drinks' as const, item: f.item_name, suggested: true })),
+          ...(souvenirClassics ?? []).map(s => ({ stop_id: newStop.id, category: 'souvenirs'  as const, item: s.item_name, suggested: true })),
+          ...(souvenirSeasonal ?? []).map(s => ({ stop_id: newStop.id, category: 'souvenirs'  as const, item: s.item_name, suggested: true })),
         ]
         if (suggestions.length > 0) {
           await supabase.from('stop_checklist').insert(suggestions)

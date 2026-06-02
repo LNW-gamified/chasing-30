@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS stadium_trending_food (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stadium_id  UUID REFERENCES stadiums(id) ON DELETE CASCADE NOT NULL,
-  name        TEXT NOT NULL,
+  item_name   TEXT NOT NULL,
   description TEXT,
   is_classic  BOOLEAN NOT NULL DEFAULT FALSE,
   active      BOOLEAN NOT NULL DEFAULT TRUE,

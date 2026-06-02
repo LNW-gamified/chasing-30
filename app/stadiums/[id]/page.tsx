@@ -858,7 +858,7 @@ export default function StadiumDetailPage() {
                               }}>
                                 <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🏆</span>
                                 <div>
-                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{f.name}</div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{f.item_name}</div>
                                   {f.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{f.description}</div>}
                                 </div>
                               </div>
@@ -878,7 +878,7 @@ export default function StadiumDetailPage() {
                               }}>
                                 <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🔥</span>
                                 <div>
-                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{f.name}</div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{f.item_name}</div>
                                   {f.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{f.description}</div>}
                                 </div>
                               </div>
@@ -912,7 +912,7 @@ export default function StadiumDetailPage() {
                               }}>
                                 <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🏆</span>
                                 <div>
-                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{s.name}</div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{s.item_name}</div>
                                   {s.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{s.description}</div>}
                                 </div>
                               </div>
@@ -932,7 +932,7 @@ export default function StadiumDetailPage() {
                               }}>
                                 <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>⭐</span>
                                 <div>
-                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{s.name}</div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{s.item_name}</div>
                                   {s.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{s.description}</div>}
                                 </div>
                               </div>
