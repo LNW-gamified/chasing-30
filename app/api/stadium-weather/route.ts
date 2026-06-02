@@ -41,7 +41,14 @@ export async function GET(req: NextRequest) {
     .order('month')
 
   if (cached && cached.length === 12) {
-    return NextResponse.json({ data: cached })
+    // Supabase returns DECIMAL columns as strings — coerce before sending to client
+    const normalized = cached.map(row => ({
+      ...row,
+      avg_high_temp:   Number(row.avg_high_temp),
+      avg_precip_days: Number(row.avg_precip_days),
+      avg_wind_speed:  Number(row.avg_wind_speed),
+    }))
+    return NextResponse.json({ data: normalized })
   }
 
   // Fetch stadium coordinates
