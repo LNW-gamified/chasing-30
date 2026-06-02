@@ -12,7 +12,7 @@ import { fetchUpcomingHomeGames, fetchVenueDimensions, fetchTeamSeasonStats, fet
 import { fetchStadiumPhoto, fetchStadiumSummary } from '@/lib/stadium-wikipedia'
 import { fetchTeamNews, type ESPNNewsItem } from '@/lib/espn-api'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy, Share2, MessageSquare, Hash, Building2, Map, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy, Share2, MessageSquare, Hash, Building2, Map, ChevronRight, CloudRain, Wind } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 
 const GAME_EVENT_LABELS: Record<string, string> = {
@@ -133,6 +133,7 @@ export default function StadiumDetailPage() {
   const [intelSubTab, setIntelSubTab]           = useState<'food' | 'souvenirs'>('food')
   const [weather, setWeather]                   = useState<StadiumWeather[] | null>(null)
   const [weatherLoading, setWeatherLoading]     = useState(false)
+  const [tripMonths, setTripMonths]             = useState<Set<number>>(new Set())
   const [unlockedMilestones, setUnlockedMilestones] = useState<{ name: string; icon: string }[]>([])
   const prevEarnedIdsRef = useRef<Set<string>>(new Set())
 
@@ -141,7 +142,7 @@ export default function StadiumDetailPage() {
     const [
       { data: s }, { data: v }, { data: n },
       { data: av }, { data: as_ }, { data: rn },
-      { data: tf }, { data: sv },
+      { data: tf }, { data: sv }, { data: ts },
     ] = await Promise.all([
       supabase.from('stadiums').select('*').eq('id', id).single(),
       supabase.from('stadium_visits').select('*').eq('stadium_id', id).order('visit_date', { ascending: false }),
@@ -151,6 +152,8 @@ export default function StadiumDetailPage() {
       supabase.from('retired_numbers').select('*').eq('team_id', id).order('year_retired'),
       supabase.from('stadium_trending_food').select('*').eq('stadium_id', id),
       supabase.from('stadium_souvenirs').select('*').eq('stadium_id', id),
+      supabase.from('trip_stops').select('game_date').eq('stadium_id', id).not('game_date', 'is', null)
+        .gte('game_date', new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })),
     ])
     setStadium(s)
     setVisits(v ?? [])
@@ -166,6 +169,8 @@ export default function StadiumDetailPage() {
     setRetiredNumbers((rn ?? []) as RetiredNumber[])
     setTrendingFood((tf ?? []) as StadiumTrendingFood[])
     setSouvenirs((sv ?? []) as StadiumSouvenir[])
+    const stops = (ts ?? []) as { game_date: string }[]
+    setTripMonths(new Set(stops.map(s => new Date(s.game_date + 'T12:00:00').getMonth() + 1)))
     setLoading(false)
 
     if (checkMilestones) {
@@ -1060,12 +1065,12 @@ export default function StadiumDetailPage() {
                         .map(m => m.month)
                     )
 
-                    // Summary line
+                    // Summary line — rain description based on actual best-month data
                     const bestList = [...bestMonthNums].sort((a, b) => a - b)
                     const bestData = bbMonths.filter(m => bestMonthNums.has(m.month))
                     const avgTemp  = bestData.length ? Math.round(bestData.reduce((s, m) => s + m.avg_high_temp, 0) / bestData.length) : null
                     const avgRain  = bestData.length ? bestData.reduce((s, m) => s + m.avg_precip_days, 0) / bestData.length : null
-                    const rainDesc = avgRain == null ? '' : avgRain < 4 ? 'low rain' : avgRain < 8 ? 'some rain' : 'frequent rain'
+                    const rainDesc = avgRain == null ? '' : avgRain < 5 ? 'lower rain chance' : avgRain < 8 ? 'some rain expected' : 'frequent rain'
 
                     let rangeStr = ''
                     if (bestList.length === 1) {
@@ -1090,52 +1095,62 @@ export default function StadiumDetailPage() {
                               Best time to visit:{' '}
                               <span style={{ color: '#E6EDF3', fontWeight: 700 }}>{rangeStr}</span>
                               {avgTemp && <> · Avg {avgTemp}°F</>}
-                              {rainDesc && <>, {rainDesc}</>}
+                              {rainDesc && <> · {rainDesc}</>}
                             </span>
                           </div>
                         )}
 
-                        {/* Month cards — 7-across on desktop, horizontal scroll on mobile */}
-                        <div style={{ overflowX: 'auto', marginLeft: -2, marginRight: -2, paddingBottom: 4 }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(46px, 1fr))', gap: 6, minWidth: 340 }}>
+                        {/* Month cards — 7-across, no horizontal scroll */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 5 }}>
                           {bbMonths.map(w => {
-                            const isBest = bestMonthNums.has(w.month)
-                            const color  = RATING_COLOR[w.rating]
+                            const isBest     = bestMonthNums.has(w.month)
+                            const isTripMonth = tripMonths.has(w.month)
+                            const color      = RATING_COLOR[w.rating]
+                            const borderColor = isTripMonth ? '#F5A623' : isBest ? color + '66' : '#30363D'
+                            const shadow      = isTripMonth ? '0 0 10px rgba(245,166,35,0.25)' : isBest ? `0 0 8px ${color}22` : 'none'
                             return (
                               <div key={w.month} style={{
                                 backgroundColor: '#161B22',
-                                borderRadius: 12,
-                                border: `1px solid ${isBest ? color + '55' : '#30363D'}`,
-                                padding: '10px 6px',
+                                borderRadius: 10,
+                                border: `1px solid ${borderColor}`,
+                                padding: '6px 3px 7px',
                                 textAlign: 'center',
-                                position: 'relative',
-                                boxShadow: isBest ? `0 0 10px ${color}22` : 'none',
+                                boxShadow: shadow,
                               }}>
-                                {isBest && (
-                                  <div style={{
-                                    position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)',
-                                    fontSize: 9, fontWeight: 800, whiteSpace: 'nowrap',
-                                    color: '#fff', backgroundColor: color,
-                                    borderRadius: 20, padding: '2px 6px',
-                                  }}>Best</div>
-                                )}
-                                <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', marginBottom: 6 }}>
+                                {/* Badge row — fixed height keeps all cards aligned */}
+                                <div style={{ height: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
+                                  {(isTripMonth || isBest) && (
+                                    <div style={{
+                                      fontSize: 8, fontWeight: 800, whiteSpace: 'nowrap',
+                                      color: '#fff',
+                                      backgroundColor: isTripMonth ? '#F5A623' : color,
+                                      borderRadius: 20, padding: '1px 5px',
+                                    }}>
+                                      {isTripMonth ? 'Your Trip' : 'Best'}
+                                    </div>
+                                  )}
+                                </div>
+                                <div style={{ fontSize: 10, fontWeight: 700, color: isTripMonth ? '#F5A623' : '#8B949E', marginBottom: 4 }}>
                                   {MONTH_NAMES[w.month]}
                                 </div>
-                                <div style={{ fontSize: 16, marginBottom: 4 }}>
+                                <div style={{ fontSize: 14, marginBottom: 3 }}>
                                   {RATING_LABEL[w.rating].split(' ')[0]}
                                 </div>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3', marginBottom: 2 }}>
+                                <div style={{ fontSize: 11, fontWeight: 700, color: '#E6EDF3', marginBottom: 4 }}>
                                   {Math.round(w.avg_high_temp)}°
                                 </div>
-                                <div style={{ fontSize: 10, color: '#484F58' }}>
-                                  ☂ {w.avg_precip_days.toFixed(0)}d
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, marginBottom: 2 }}>
+                                  <CloudRain size={9} color="#484F58" strokeWidth={2} />
+                                  <span style={{ fontSize: 9, color: '#484F58' }}>{w.avg_precip_days.toFixed(0)}d</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+                                  <Wind size={9} color="#484F58" strokeWidth={2} />
+                                  <span style={{ fontSize: 9, color: '#484F58' }}>{Math.round(w.avg_wind_speed)}mph</span>
                                 </div>
                               </div>
                             )
                           })}
                         </div>
-                        </div>{/* /scroll wrapper */}
 
                         {/* Legend */}
                         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 10, paddingLeft: 2 }}>
