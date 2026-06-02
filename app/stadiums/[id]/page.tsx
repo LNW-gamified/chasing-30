@@ -69,10 +69,10 @@ const MONTH_NAMES = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug',
 const BASEBALL_MONTHS = [4, 5, 6, 7, 8, 9, 10]
 
 const RATING_COLOR: Record<string, string> = {
-  great: '#3FB950', good: '#F5A623', fair: '#E36209', avoid: '#F85149',
+  great: '#3FB950', good: '#58A6FF', fair: '#F5A623', avoid: '#F85149',
 }
 const RATING_LABEL: Record<string, string> = {
-  great: '🟢 Great', good: '🟡 Good', fair: '🟠 Fair', avoid: '🔴 Avoid',
+  great: '🟢 Great', good: '🔵 Good', fair: '🟡 Fair', avoid: '🔴 Avoid',
 }
 const RATING_PRIORITY: Record<string, number> = {
   great: 4, good: 3, fair: 2, avoid: 1,
@@ -1130,7 +1130,7 @@ export default function StadiumDetailPage() {
                                     </div>
                                   )}
                                 </div>
-                                <div style={{ fontSize: 10, fontWeight: 700, color: isTripMonth ? '#F5A623' : '#8B949E', marginBottom: 4 }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: isTripMonth ? '#F5A623' : '#8B949E', marginBottom: 4 }}>
                                   {MONTH_NAMES[w.month]}
                                 </div>
                                 <div style={{ fontSize: 14, marginBottom: 3 }}>
