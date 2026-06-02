@@ -1121,7 +1121,7 @@ export default function StadiumDetailPage() {
                                 <div style={{ height: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
                                   {(isTripMonth || isBest) && (
                                     <div style={{
-                                      fontSize: 8, fontWeight: 800, whiteSpace: 'nowrap',
+                                      fontSize: 10, fontWeight: 800, whiteSpace: 'nowrap',
                                       color: '#fff',
                                       backgroundColor: isTripMonth ? '#F5A623' : '#1F6FEB',
                                       borderRadius: 20, padding: '1px 5px',
@@ -1136,16 +1136,16 @@ export default function StadiumDetailPage() {
                                 <div style={{ fontSize: 14, marginBottom: 3 }}>
                                   {RATING_LABEL[w.rating].split(' ')[0]}
                                 </div>
-                                <div style={{ fontSize: 11, fontWeight: 700, color: '#E6EDF3', marginBottom: 4 }}>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', marginBottom: 4 }}>
                                   {Math.round(w.avg_high_temp)}°
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, marginBottom: 2 }}>
-                                  <CloudRain size={9} color="#484F58" strokeWidth={2} />
-                                  <span style={{ fontSize: 9, color: '#484F58' }}>{w.avg_precip_days.toFixed(0)}d</span>
+                                  <CloudRain size={11} color="#8B949E" strokeWidth={2} />
+                                  <span style={{ fontSize: 11, color: '#8B949E' }}>{w.avg_precip_days.toFixed(0)}d</span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-                                  <Wind size={9} color="#484F58" strokeWidth={2} />
-                                  <span style={{ fontSize: 9, color: '#484F58' }}>{Math.round(w.avg_wind_speed)}mph</span>
+                                  <Wind size={11} color="#8B949E" strokeWidth={2} />
+                                  <span style={{ fontSize: 11, color: '#8B949E' }}>{Math.round(w.avg_wind_speed)}mph</span>
                                 </div>
                               </div>
                             )
