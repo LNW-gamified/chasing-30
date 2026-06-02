@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase'
 import GameDayForm from '@/components/GameDayForm'
 import BoxScore from '@/components/BoxScore'
 import { formatDate } from '@/lib/utils'
-import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber, StadiumTrendingFood, StadiumSouvenir } from '@/types'
+import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber, StadiumTrendingFood, StadiumSouvenir, StadiumWeather } from '@/types'
 import { MILESTONES } from '@/lib/milestones'
 import { fetchUpcomingHomeGames, fetchVenueDimensions, fetchTeamSeasonStats, fetchTeamRoster, fetchRecentTransactions, fetchMinorLeagueAffiliates, type UpcomingGame, type VenueDimensions, type TeamSeasonStats, type RosterPlayer, type Transaction, type MiLBAffiliate } from '@/lib/mlb-api'
 import { fetchStadiumPhoto, fetchStadiumSummary } from '@/lib/stadium-wikipedia'
@@ -58,6 +58,24 @@ const TEAM_GRADIENTS: Record<string, [string, string]> = {
   STL: ['#0C2340', '#C41E3A'], TB:  ['#092C5C', '#8FBCE6'],
   TEX: ['#003278', '#C0111F'], TOR: ['#134A8E', '#1D2D5C'],
   WSH: ['#14225A', '#AB0003'], ATL: ['#13274F', '#CE1141'],
+}
+
+// Stadiums with climate control — weather ratings don't apply
+const DOME_STADIUMS    = new Set(['ARI', 'SEA', 'HOU', 'TEX', 'MIL', 'TOR', 'TB', 'MIA'])
+// Subset whose roofs open when weather permits
+const RETRACTABLE_ROOF = new Set(['ARI', 'SEA', 'HOU', 'TEX', 'MIL', 'TOR', 'MIA'])
+
+const MONTH_NAMES = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const BASEBALL_MONTHS = [4, 5, 6, 7, 8, 9, 10]
+
+const RATING_COLOR: Record<string, string> = {
+  great: '#3FB950', good: '#F5A623', fair: '#E36209', avoid: '#F85149',
+}
+const RATING_LABEL: Record<string, string> = {
+  great: '🟢 Great', good: '🟡 Good', fair: '🟠 Fair', avoid: '🔴 Avoid',
+}
+const RATING_PRIORITY: Record<string, number> = {
+  great: 4, good: 3, fair: 2, avoid: 1,
 }
 
 type MiniStadium = { id: string; league: string; division: string }
@@ -113,6 +131,8 @@ export default function StadiumDetailPage() {
   const [trendingFood, setTrendingFood]         = useState<StadiumTrendingFood[]>([])
   const [souvenirs, setSouvenirs]               = useState<StadiumSouvenir[]>([])
   const [intelSubTab, setIntelSubTab]           = useState<'food' | 'souvenirs'>('food')
+  const [weather, setWeather]                   = useState<StadiumWeather[] | null>(null)
+  const [weatherLoading, setWeatherLoading]     = useState(false)
   const [unlockedMilestones, setUnlockedMilestones] = useState<{ name: string; icon: string }[]>([])
   const prevEarnedIdsRef = useRef<Set<string>>(new Set())
 
@@ -170,6 +190,18 @@ export default function StadiumDetailPage() {
   useEffect(() => {
     if (activeTab === 'stadium-info') setIntelSubTab('food')
   }, [activeTab])
+
+  // Lazy-load weather when the stadium-info tab is first opened
+  useEffect(() => {
+    if (activeTab !== 'stadium-info' || !stadium || weather !== null) return
+    setWeatherLoading(true)
+    fetch(`/api/stadium-weather?stadiumId=${stadium.id}`)
+      .then(r => r.json())
+      .then(d => setWeather(d.data ?? []))
+      .catch(() => setWeather([]))
+      .finally(() => setWeatherLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, stadium])
 
   useEffect(() => {
     if (!stadium) return
@@ -983,6 +1015,144 @@ export default function StadiumDetailPage() {
                     })()}
                   </section>
                 )}
+
+                {/* Best Time to Visit */}
+                <section style={{ marginBottom: 32 }}>
+                  <SectionTitle Icon={CalendarDays}>Best Time to Visit</SectionTitle>
+                  {DOME_STADIUMS.has(stadium.abbreviation) ? (
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '20px 16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: RETRACTABLE_ROOF.has(stadium.abbreviation) ? 10 : 0 }}>
+                        <span style={{ fontSize: 22 }}>🏟️</span>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3' }}>Climate Controlled</div>
+                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>Great any time of year</div>
+                        </div>
+                        <span style={{
+                          marginLeft: 'auto', fontSize: 11, fontWeight: 700,
+                          color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)',
+                          border: '1px solid rgba(63,185,80,0.3)', borderRadius: 20, padding: '3px 10px',
+                        }}>🟢 Any Month</span>
+                      </div>
+                      {RETRACTABLE_ROOF.has(stadium.abbreviation) && (
+                        <div style={{ fontSize: 12, color: '#8B949E', borderTop: '1px solid #30363D', paddingTop: 10, marginTop: 4 }}>
+                          ☀️ Roof opens when weather permits
+                        </div>
+                      )}
+                    </div>
+                  ) : weatherLoading ? (
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '28px 16px', textAlign: 'center', color: '#8B949E', fontSize: 13 }}>
+                      Loading weather data…
+                    </div>
+                  ) : weather && weather.length > 0 ? (() => {
+                    const bbMonths = BASEBALL_MONTHS
+                      .map(m => weather.find(w => w.month === m))
+                      .filter((w): w is StadiumWeather => !!w)
+
+                    // Best window: top months rated good or above, by rating then proximity to 74°F
+                    const ranked = [...bbMonths].sort((a, b) => {
+                      const rd = RATING_PRIORITY[b.rating] - RATING_PRIORITY[a.rating]
+                      return rd !== 0 ? rd : Math.abs(a.avg_high_temp - 74) - Math.abs(b.avg_high_temp - 74)
+                    })
+                    const bestMonthNums = new Set(
+                      ranked
+                        .filter(m => m.rating === 'great' || m.rating === 'good')
+                        .slice(0, 3)
+                        .map(m => m.month)
+                    )
+
+                    // Summary line
+                    const bestList = [...bestMonthNums].sort((a, b) => a - b)
+                    const bestData = bbMonths.filter(m => bestMonthNums.has(m.month))
+                    const avgTemp  = bestData.length ? Math.round(bestData.reduce((s, m) => s + m.avg_high_temp, 0) / bestData.length) : null
+                    const avgRain  = bestData.length ? bestData.reduce((s, m) => s + m.avg_precip_days, 0) / bestData.length : null
+                    const rainDesc = avgRain == null ? '' : avgRain < 4 ? 'low rain' : avgRain < 8 ? 'some rain' : 'frequent rain'
+
+                    let rangeStr = ''
+                    if (bestList.length === 1) {
+                      rangeStr = MONTH_NAMES[bestList[0]]
+                    } else if (bestList.length >= 2) {
+                      const isConsec = bestList.every((m, i) => i === 0 || m - bestList[i - 1] === 1)
+                      rangeStr = isConsec
+                        ? `${MONTH_NAMES[bestList[0]]}–${MONTH_NAMES[bestList[bestList.length - 1]]}`
+                        : bestList.map(m => MONTH_NAMES[m]).join(', ')
+                    }
+
+                    return (
+                      <>
+                        {/* Summary banner */}
+                        {rangeStr && (
+                          <div style={{
+                            backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D',
+                            padding: '12px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10,
+                          }}>
+                            <span style={{ fontSize: 18 }}>🗓️</span>
+                            <span style={{ fontSize: 13, color: '#8B949E' }}>
+                              Best time to visit:{' '}
+                              <span style={{ color: '#E6EDF3', fontWeight: 700 }}>{rangeStr}</span>
+                              {avgTemp && <> · Avg {avgTemp}°F</>}
+                              {rainDesc && <>, {rainDesc}</>}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Month cards — 7-across on desktop, horizontal scroll on mobile */}
+                        <div style={{ overflowX: 'auto', marginLeft: -2, marginRight: -2, paddingBottom: 4 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(46px, 1fr))', gap: 6, minWidth: 340 }}>
+                          {bbMonths.map(w => {
+                            const isBest = bestMonthNums.has(w.month)
+                            const color  = RATING_COLOR[w.rating]
+                            return (
+                              <div key={w.month} style={{
+                                backgroundColor: '#161B22',
+                                borderRadius: 12,
+                                border: `1px solid ${isBest ? color + '55' : '#30363D'}`,
+                                padding: '10px 6px',
+                                textAlign: 'center',
+                                position: 'relative',
+                                boxShadow: isBest ? `0 0 10px ${color}22` : 'none',
+                              }}>
+                                {isBest && (
+                                  <div style={{
+                                    position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)',
+                                    fontSize: 9, fontWeight: 800, whiteSpace: 'nowrap',
+                                    color: '#fff', backgroundColor: color,
+                                    borderRadius: 20, padding: '2px 6px',
+                                  }}>Best</div>
+                                )}
+                                <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', marginBottom: 6 }}>
+                                  {MONTH_NAMES[w.month]}
+                                </div>
+                                <div style={{ fontSize: 16, marginBottom: 4 }}>
+                                  {RATING_LABEL[w.rating].split(' ')[0]}
+                                </div>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3', marginBottom: 2 }}>
+                                  {Math.round(w.avg_high_temp)}°
+                                </div>
+                                <div style={{ fontSize: 10, color: '#484F58' }}>
+                                  ☂ {w.avg_precip_days.toFixed(0)}d
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        </div>{/* /scroll wrapper */}
+
+                        {/* Legend */}
+                        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 10, paddingLeft: 2 }}>
+                          {(['great', 'good', 'fair', 'avoid'] as const).map(r => (
+                            <span key={r} style={{ fontSize: 11, color: '#8B949E' }}>
+                              {RATING_LABEL[r]}
+                            </span>
+                          ))}
+                        </div>
+                      </>
+                    )
+                  })() : (
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '28px 16px', textAlign: 'center', color: '#484F58', fontSize: 13 }}>
+                      Weather data unavailable.
+                    </div>
+                  )}
+                </section>
 
                 {/* Virtual Tour */}
                 {tourVideoId && (

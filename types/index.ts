@@ -295,6 +295,17 @@ export interface StadiumTrendingFood {
   created_at: string
 }
 
+export interface StadiumWeather {
+  id: string
+  stadium_id: string
+  month: number
+  avg_high_temp: number
+  avg_precip_days: number
+  avg_wind_speed: number
+  rating: 'great' | 'good' | 'fair' | 'avoid'
+  last_updated: string
+}
+
 export interface StadiumSouvenir {
   id: string
   stadium_id: string
