@@ -1123,7 +1123,7 @@ export default function StadiumDetailPage() {
                                     <div style={{
                                       fontSize: 8, fontWeight: 800, whiteSpace: 'nowrap',
                                       color: '#fff',
-                                      backgroundColor: isTripMonth ? '#F5A623' : color,
+                                      backgroundColor: isTripMonth ? '#F5A623' : '#1F6FEB',
                                       borderRadius: 20, padding: '1px 5px',
                                     }}>
                                       {isTripMonth ? 'Your Trip' : 'Best'}
