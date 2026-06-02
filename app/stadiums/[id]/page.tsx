@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase'
 import GameDayForm from '@/components/GameDayForm'
 import BoxScore from '@/components/BoxScore'
 import { formatDate } from '@/lib/utils'
-import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber, StadiumTrendingFood } from '@/types'
+import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber, StadiumTrendingFood, StadiumSouvenir } from '@/types'
 import { MILESTONES } from '@/lib/milestones'
 import { fetchUpcomingHomeGames, fetchVenueDimensions, fetchTeamSeasonStats, fetchTeamRoster, fetchRecentTransactions, fetchMinorLeagueAffiliates, type UpcomingGame, type VenueDimensions, type TeamSeasonStats, type RosterPlayer, type Transaction, type MiLBAffiliate } from '@/lib/mlb-api'
 import { fetchStadiumPhoto, fetchStadiumSummary } from '@/lib/stadium-wikipedia'
@@ -111,6 +111,7 @@ export default function StadiumDetailPage() {
   const [tourVideoId, setTourVideoId]           = useState<string | null | undefined>(undefined)
   const [affiliates, setAffiliates]             = useState<MiLBAffiliate[]>([])
   const [trendingFood, setTrendingFood]         = useState<StadiumTrendingFood[]>([])
+  const [souvenirs, setSouvenirs]               = useState<StadiumSouvenir[]>([])
   const [unlockedMilestones, setUnlockedMilestones] = useState<{ name: string; icon: string }[]>([])
   const prevEarnedIdsRef = useRef<Set<string>>(new Set())
 
@@ -119,7 +120,7 @@ export default function StadiumDetailPage() {
     const [
       { data: s }, { data: v }, { data: n },
       { data: av }, { data: as_ }, { data: rn },
-      { data: tf },
+      { data: tf }, { data: sv },
     ] = await Promise.all([
       supabase.from('stadiums').select('*').eq('id', id).single(),
       supabase.from('stadium_visits').select('*').eq('stadium_id', id).order('visit_date', { ascending: false }),
@@ -128,6 +129,7 @@ export default function StadiumDetailPage() {
       supabase.from('stadiums').select('id, league, division'),
       supabase.from('retired_numbers').select('*').eq('team_id', id).order('year_retired'),
       supabase.from('stadium_trending_food').select('*').eq('stadium_id', id),
+      supabase.from('stadium_souvenirs').select('*').eq('stadium_id', id),
     ])
     setStadium(s)
     setVisits(v ?? [])
@@ -142,6 +144,7 @@ export default function StadiumDetailPage() {
     setAllStadiums(stadiumList)
     setRetiredNumbers((rn ?? []) as RetiredNumber[])
     setTrendingFood((tf ?? []) as StadiumTrendingFood[])
+    setSouvenirs((sv ?? []) as StadiumSouvenir[])
     setLoading(false)
 
     if (checkMilestones) {
@@ -877,6 +880,60 @@ export default function StadiumDetailPage() {
                                 <div>
                                   <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{f.name}</div>
                                   {f.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{f.description}</div>}
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    </section>
+                  )
+                })()}
+
+                {/* Souvenirs */}
+                {souvenirs.length > 0 && (() => {
+                  const classics = souvenirs.filter(s => s.is_classic)
+                  const seasonal = souvenirs.filter(s => !s.is_classic && s.active && s.season_year === 2026)
+                  if (classics.length === 0 && seasonal.length === 0) return null
+                  return (
+                    <section style={{ marginBottom: 32 }}>
+                      <SectionTitle Icon={Trophy}>Souvenirs</SectionTitle>
+                      <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
+                        {classics.length > 0 && (
+                          <>
+                            <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                              Classics
+                            </div>
+                            {classics.map((s, i) => (
+                              <div key={s.id} style={{
+                                display: 'flex', alignItems: 'flex-start', gap: 10,
+                                padding: '10px 16px',
+                                borderBottom: (i < classics.length - 1 || seasonal.length > 0) ? '1px solid rgba(48,54,61,0.6)' : 'none',
+                              }}>
+                                <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🏆</span>
+                                <div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{s.name}</div>
+                                  {s.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{s.description}</div>}
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                        {seasonal.length > 0 && (
+                          <>
+                            <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                              This Season
+                            </div>
+                            {seasonal.map((s, i) => (
+                              <div key={s.id} style={{
+                                display: 'flex', alignItems: 'flex-start', gap: 10,
+                                padding: '10px 16px',
+                                borderBottom: i < seasonal.length - 1 ? '1px solid rgba(48,54,61,0.6)' : 'none',
+                              }}>
+                                <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>⭐</span>
+                                <div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{s.name}</div>
+                                  {s.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{s.description}</div>}
                                 </div>
                               </div>
                             ))}
