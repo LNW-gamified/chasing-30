@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import type { Stadium, Trip, TripStop } from '@/types'
-import { X, Plus, Trash2, Loader2, MapPin, Ticket, DollarSign, FileText, CalendarDays, Car } from 'lucide-react'
+import { X, Plus, Trash2, Loader2, MapPin, Ticket, DollarSign, FileText, CalendarDays } from 'lucide-react'
 
 const ABBR_TO_MLB_ID: Record<string, number> = {
   ARI: 109, ATL: 144, BAL: 110, BOS: 111, CHC: 112,
@@ -177,11 +177,8 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     const n = (existingStops && existingStops.length > 0) ? existingStops.length : 1
     return Array.from({ length: n }, () => '')
   })
-  const [saving, setSaving]           = useState(false)
-  const [error,  setError]            = useState('')
-  // Drive time between consecutive stops (index i = from stop[i] to stop[i+1])
-  const [formDriveSegs, setFormDriveSegs] = useState<(string | null)[]>([])
-  const fetchedPairsRef = useRef(new Set<string>())
+  const [saving, setSaving] = useState(false)
+  const [error,  setError]  = useState('')
 
   async function fetchGamesForStop(
     stopIdx: number,
@@ -264,48 +261,6 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  // Fetch drive time between consecutive stops whenever stadiums/dates change
-  useEffect(() => {
-    if (stops.length < 2) return
-    const updated = [...formDriveSegs]
-    let anyNew = false
-    for (let i = 0; i < stops.length - 1; i++) {
-      const from = stops[i]
-      const to   = stops[i + 1]
-      const fromStadium = stadiums.find(s => s.id === from.stadium_id)
-      const toStadium   = stadiums.find(s => s.id === to.stadium_id)
-      if (!fromStadium || !toStadium || !to.game_date) continue
-      const key = `${from.stadium_id}-${to.stadium_id}-${to.game_date}`
-      if (fetchedPairsRef.current.has(key)) continue
-      fetchedPairsRef.current.add(key)
-      updated[i] = 'loading'
-      anyNew = true
-      const params = new URLSearchParams({
-        fromLat: String(fromStadium.lat), fromLng: String(fromStadium.lng),
-        toLat:   String(toStadium.lat),   toLng:   String(toStadium.lng),
-        gameDate: to.game_date,
-        ...(to.game_time ? { gameTime: to.game_time } : {}),
-      })
-      fetch(`/api/drive-time?${params}`)
-        .then(r => r.json())
-        .then(d => {
-          if (d.minutes != null) {
-            const h = Math.floor(d.minutes / 60)
-            const m = d.minutes % 60
-            const text = h === 0 ? `${m}m` : m === 0 ? `${h}h` : `${h}h ${m}m`
-            setFormDriveSegs(prev => {
-              const next = [...prev]; next[i] = `${text}${d.dayName ? ` · typical ${d.dayName} traffic` : ''}`; return next
-            })
-          } else {
-            setFormDriveSegs(prev => { const next = [...prev]; next[i] = null; return next })
-          }
-        })
-        .catch(() => setFormDriveSegs(prev => { const next = [...prev]; next[i] = null; return next }))
-    }
-    if (anyNew) setFormDriveSegs([...updated])
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stops.map(s => `${s.stadium_id}-${s.game_date}`).join('|')])
 
   function setField(field: string, value: string) {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -597,10 +552,8 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                 const ss           = stopSchedules[i] ?? emptySchedule()
                 const selectedGame = ss.games.find(g => g.gamePk.toString() === ss.selectedPk)
 
-                const driveSeg = formDriveSegs[i]
                 return (
-                  <div key={i}>
-                  <div style={{
+                  <div key={i} style={{
                     borderRadius: 14,
                     border: '1px solid #30363D',
                     backgroundColor: '#0d1117',
@@ -857,21 +810,6 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                         </div>
                       </div>
                     </div>
-                  </div>
-                  {/* Drive time connector between stops */}
-                  {i < stops.length - 1 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 4px' }}>
-                      <div style={{ width: 2, height: 16, backgroundColor: '#30363D', marginLeft: 14, flexShrink: 0 }} />
-                      {driveSeg === 'loading' ? (
-                        <span style={{ fontSize: 12, color: '#484F58' }}>Calculating drive time…</span>
-                      ) : driveSeg ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600 }}>
-                          <Car size={12} color="#F5A623" strokeWidth={2} />
-                          <span style={{ color: '#F5A623' }}>{driveSeg}</span>
-                        </div>
-                      ) : null}
-                    </div>
-                  )}
                   </div>
                 )
               })}

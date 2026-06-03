@@ -101,8 +101,6 @@ export interface TripStop {
   ticket_row: string | null
   ticket_seats: string[] | null
   ticket_confirmation: string | null
-  drive_time_minutes: number | null
-  drive_distance_miles: number | null
   created_at: string
   stadium?: Stadium
 }

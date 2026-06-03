@@ -9,7 +9,7 @@ import { getTeamLogoUrlById, getTeamAbbrById } from '@/lib/team-logos'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip, TripStop, StopChecklistItem } from '@/types'
 import Link from 'next/link'
-import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink, MoreHorizontal, FileText, Ticket, Utensils, Car, Plane, BedDouble, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink, MoreHorizontal, FileText, Ticket, Utensils, Car, Plane, BedDouble } from 'lucide-react'
 import StopChecklist from '@/components/StopChecklist'
 import { DESTINATION_BY_SLUG, destinationLocation, EXPERIENCE_TYPES } from '@/lib/destinations'
 import { fetchForecastWeather, fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
@@ -63,11 +63,10 @@ export default function TripDetailPage() {
   const [checklistItems, setChecklistItems] = useState<StopChecklistItem[]>([])
   const [showDeleteMenu,  setShowDeleteMenu]  = useState(false)
   const [visitedStadiumIds, setVisitedStadiumIds] = useState<Set<string>>(new Set())
-  const [stopWeather, setStopWeather]       = useState<Record<string, WeatherData>>({})
-  type DriveSeg = { minutes: number; miles: number | null; dayName: string }
-  const [driveSegs, setDriveSegs]           = useState<(DriveSeg | null)[]>([])
-  const [driveLoading, setDriveLoading]     = useState(false)
-  const [totalDriveMin, setTotalDriveMin]   = useState<number | null>(null)
+  const [stopWeather, setStopWeather]             = useState<Record<string, WeatherData>>({})
+  const [totalDrivingMiles, setTotalDrivingMiles] = useState<number | null>(null)
+  const [segmentMiles, setSegmentMiles]           = useState<number[]>([])
+  const [loadingMiles, setLoadingMiles]           = useState(false)
 
   async function load() {
     const supabase = createClient()
@@ -77,8 +76,7 @@ export default function TripDetailPage() {
       supabase.from('trip_stops').select(
         'id, trip_id, stadium_id, sort_order, game_date, game_time, opponent, opponent_team_id, ' +
         'est_tickets, est_food, est_parking, actual_tickets, actual_food, actual_parking, notes, ' +
-        'ticket_section, ticket_row, ticket_seats, ticket_confirmation, ' +
-        'drive_time_minutes, drive_distance_miles, created_at, stadium:stadiums(*)'
+        'ticket_section, ticket_row, ticket_seats, ticket_confirmation, created_at, stadium:stadiums(*)'
       ).eq('trip_id', id).order('sort_order'),
       supabase.from('stadium_visits').select('stadium_id'),
     ])
@@ -96,76 +94,28 @@ export default function TripDetailPage() {
     }
     setLoading(false)
 
-    // Drive-time between consecutive stops (traffic-aware via Google Maps)
-    const orderedStops = [...loadedStops].sort((a, b) => a.sort_order - b.sort_order)
-    const pairs = orderedStops
-      .map((stop, i) => ({ stop, prev: orderedStops[i - 1] }))
-      .filter(({ stop, prev }) => prev &&
-        (prev.stadium as Stadium | null)?.lat && (stop.stadium as Stadium | null)?.lat
-      )
-
-    if (pairs.length === 0) return
-
-    // Build initial segments from cached DB values
-    const initialSegs: (DriveSeg | null)[] = orderedStops.slice(1).map((stop) => {
-      if (stop.drive_time_minutes != null) {
-        return {
-          minutes: stop.drive_time_minutes,
-          miles:   stop.drive_distance_miles ? Number(stop.drive_distance_miles) : null,
-          dayName: stop.game_date
-            ? new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' })
-            : '',
-        }
+    // Driving distance between consecutive stops
+    const withStadium = loadedStops.filter(s => (s.stadium as Stadium | null)?.lat)
+    if (withStadium.length >= 2) {
+      setLoadingMiles(true)
+      const pairs: [Stadium, Stadium][] = []
+      for (let i = 0; i < withStadium.length - 1; i++) {
+        const a = withStadium[i].stadium as Stadium
+        const b = withStadium[i + 1].stadium as Stadium
+        pairs.push([a, b])
       }
-      return null
-    })
-    setDriveSegs(initialSegs)
-    const allCached = initialSegs.every(s => s !== null)
-    if (allCached) {
-      const total = initialSegs.reduce((s, seg) => s + (seg?.minutes ?? 0), 0)
-      setTotalDriveMin(total > 0 ? total : null)
-      return
-    }
-
-    // Fetch missing segments from Google Maps
-    setDriveLoading(true)
-    const supabase2 = createClient()
-    const fetched = [...initialSegs]
-    await Promise.all(
-      orderedStops.slice(1).map(async (stop, segIdx) => {
-        if (fetched[segIdx] !== null) return
-        const prev = orderedStops[segIdx]
-        const fromStadium = prev.stadium as Stadium | null
-        const toStadium   = stop.stadium  as Stadium | null
-        if (!fromStadium?.lat || !toStadium?.lat) return
-
-        try {
-          const params = new URLSearchParams({
-            fromLat:  String(fromStadium.lat),
-            fromLng:  String(fromStadium.lng),
-            toLat:    String(toStadium.lat),
-            toLng:    String(toStadium.lng),
-            gameDate: stop.game_date ?? prev.game_date ?? new Date().toLocaleDateString('en-CA'),
-            ...(stop.game_time ? { gameTime: stop.game_time } : {}),
-          })
-          const res  = await fetch(`/api/drive-time?${params}`)
-          const data = await res.json()
-          if (data.minutes != null) {
-            const seg: DriveSeg = { minutes: data.minutes, miles: data.miles ?? null, dayName: data.dayName ?? '' }
-            fetched[segIdx] = seg
-            // Cache to DB
-            await supabase2.from('trip_stops').update({
-              drive_time_minutes:   data.minutes,
-              drive_distance_miles: data.miles ?? null,
-            }).eq('id', stop.id)
-          }
-        } catch { /* non-fatal */ }
+      Promise.all(
+        pairs.map(([a, b]) =>
+          fetch(`/api/driving-distance?fromLat=${a.lat}&fromLng=${a.lng}&toLat=${b.lat}&toLng=${b.lng}`)
+            .then(r => r.json()).then(d => d.miles as number | null).catch(() => null)
+        )
+      ).then(results => {
+        setSegmentMiles(results.map(r => r ?? 0))
+        const valid = results.filter((r): r is number => r !== null)
+        if (valid.length > 0) setTotalDrivingMiles(valid.reduce((s, m) => s + m, 0))
+        setLoadingMiles(false)
       })
-    )
-    setDriveSegs([...fetched])
-    const total = fetched.reduce((s, seg) => s + (seg?.minutes ?? 0), 0)
-    setTotalDriveMin(total > 0 ? total : null)
-    setDriveLoading(false)
+    }
   }
 
   async function reloadChecklist() {
@@ -308,13 +258,6 @@ export default function TripDetailPage() {
     return Math.ceil(
       (new Date(dateStr + 'T12:00:00').getTime() - new Date(today + 'T12:00:00').getTime()) / 86400000
     )
-  }
-
-  function fmtDrive(min: number): string {
-    if (min < 60) return `${min}m`
-    const h = Math.floor(min / 60)
-    const m = min % 60
-    return m === 0 ? `${h}h` : `${h}h ${m}m`
   }
 
   const sc = statusConfig(trip.status)
@@ -623,7 +566,7 @@ export default function TripDetailPage() {
           )}
 
           {/* ── Cost / stats summary bar ───────────────────────────── */}
-          {(!allBudgetZero || totalDriveMin !== null || driveLoading || stops.length > 1) && (
+          {(!allBudgetZero || totalDrivingMiles !== null || stops.length > 1) && (
             <div style={{
               backgroundColor: '#161B22', borderRadius: 14,
               border: '1px solid #30363D', padding: '14px 20px',
@@ -660,13 +603,14 @@ export default function TripDetailPage() {
                   </div>
                 </div>
               )}
-              {(driveLoading || totalDriveMin !== null) && (
+              {(loadingMiles || totalDrivingMiles !== null) && (
                 <div style={{ flexShrink: 0 }}>
                   <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
                     Drive
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>
-                    {driveLoading && totalDriveMin === null ? '…' : fmtDrive(totalDriveMin!)}
+                    {loadingMiles ? '…' : `${totalDrivingMiles!.toLocaleString()}`}
+                    {!loadingMiles && <span style={{ fontSize: 12, color: '#8B949E', fontWeight: 600 }}> mi</span>}
                   </div>
                 </div>
               )}
@@ -946,47 +890,29 @@ export default function TripDetailPage() {
                   const nextStadium = nextStop?.stadium as Stadium | undefined
                   if (!nextStop || !stadium || !nextStadium) return card
 
-                  // driveSegs is indexed to sortedStops[1..n] — segment i is the drive arriving at sortedStops[i+1]
-                  const seg     = driveSegs[i] ?? null
-                  const isLong  = seg && seg.minutes > 240
+                  const stopsWithStadium = sortedStops.filter(s => (s.stadium as Stadium | null)?.lat)
+                  const segIdx = stopsWithStadium.findIndex(s => s.id === stop.id)
+                  const miles = segIdx >= 0 ? segmentMiles[segIdx] : undefined
 
                   return (
                     <div key={stop.id}>
                       {card}
-                      <div style={{ padding: '4px 16px 4px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
-                          <div style={{ width: 2, height: 20, backgroundColor: '#30363D', marginLeft: 14, flexShrink: 0 }} />
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600 }}>
-                            {driveLoading && !seg ? (
-                              <span style={{ color: '#484F58' }}>Calculating drive time…</span>
-                            ) : seg ? (
-                              <>
-                                <Car size={13} color="#F5A623" strokeWidth={2} />
-                                <span style={{ color: '#F5A623' }}>{fmtDrive(seg.minutes)}</span>
-                                {seg.miles && (
-                                  <span style={{ color: '#484F58' }}>· {seg.miles.toLocaleString()} mi</span>
-                                )}
-                                {seg.dayName && (
-                                  <span style={{ color: '#484F58' }}>
-                                    · typical {seg.dayName} traffic
-                                  </span>
-                                )}
-                              </>
-                            ) : null}
-                          </div>
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '6px 16px',
+                        color: '#8B949E',
+                      }}>
+                        <div style={{ width: 2, height: 20, backgroundColor: '#30363D', marginLeft: 14, flexShrink: 0 }} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600 }}>
+                          {loadingMiles ? (
+                            <span style={{ color: '#484F58' }}>Calculating drive…</span>
+                          ) : miles ? (
+                            <>
+                              <span style={{ color: '#F5A623' }}>🚗 {miles.toLocaleString()} mi</span>
+                              <span style={{ color: '#484F58' }}>to {nextStadium.name}</span>
+                            </>
+                          ) : null}
                         </div>
-                        {isLong && (
-                          <div style={{
-                            display: 'flex', alignItems: 'center', gap: 6,
-                            padding: '7px 12px', borderRadius: 8, marginBottom: 4,
-                            backgroundColor: 'rgba(245,166,35,0.08)',
-                            border: '1px solid rgba(245,166,35,0.25)',
-                            fontSize: 12, color: '#F5A623', fontWeight: 600,
-                          }}>
-                            <AlertTriangle size={13} strokeWidth={2} />
-                            Long drive — consider leaving earlier or booking a hotel
-                          </div>
-                        )}
                       </div>
                     </div>
                   )
