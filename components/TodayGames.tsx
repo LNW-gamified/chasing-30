@@ -111,6 +111,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
 
   useEffect(() => {
     if (!inPollWindow()) return
+    poll()                              // refresh immediately on mount
     const id = setInterval(poll, 60_000)
     return () => clearInterval(id)
   }, [poll])
