@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import type { Stadium, Trip, TripStop } from '@/types'
 import { X, Plus, Trash2, Loader2, MapPin, Ticket, DollarSign, FileText, CalendarDays } from 'lucide-react'
+import TeamLogo from '@/components/TeamLogo'
 
 const ABBR_TO_MLB_ID: Record<string, number> = {
   ARI: 109, ATL: 144, BAL: 110, BOS: 111, CHC: 112,
@@ -581,13 +582,26 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                     <div style={{ padding: '16px' }}>
                       {/* Stadium selector */}
                       <div style={{ marginBottom: 14 }}>
-                        <label style={labelStyle}>Stadium</label>
-                        <select style={inputStyle} value={stop.stadium_id}
-                          onChange={e => setStop(i, 'stadium_id', e.target.value)}>
-                          {stadiums.map(s => (
-                            <option key={s.id} value={s.id}>{s.name}</option>
-                          ))}
-                        </select>
+                        <label style={labelStyle}>Team</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          {(() => {
+                            const abbr = stadiums.find(s => s.id === stop.stadium_id)?.abbreviation
+                            return abbr ? <TeamLogo abbreviation={abbr} size={32} style={{ flexShrink: 0 }} /> : null
+                          })()}
+                          <select
+                            style={{ ...inputStyle, flex: 1 }}
+                            value={stop.stadium_id}
+                            onChange={e => setStop(i, 'stadium_id', e.target.value)}
+                          >
+                            {[...stadiums]
+                              .sort((a, b) => a.team.localeCompare(b.team))
+                              .map(s => (
+                                <option key={s.id} value={s.id}>
+                                  {s.team} — {s.name} · {s.city}, {s.state}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
                       </div>
 
                       {/* Game picker */}
