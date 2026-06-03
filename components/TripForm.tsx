@@ -377,6 +377,18 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (stops.length === 0) { setError('Add at least one stop.'); return }
+
+    // Validate: MLB event destination stops require a hosting stadium
+    for (const [i, stop] of stops.entries()) {
+      if (stop.stop_type === 'destination' && stop.destination_id) {
+        const dest = destinations.find(d => d.id === stop.destination_id)
+        if (dest?.is_mlb_event && !stop.stadium_id) {
+          setError(`Stop ${i + 1}: select the hosting stadium for this MLB event.`)
+          return
+        }
+      }
+    }
+
     setSaving(true)
     setError('')
 
@@ -428,7 +440,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       const isStadium = stop.stop_type === 'stadium'
       const payload = {
         stop_type:           stop.stop_type,
-        stadium_id:          isStadium ? (stop.stadium_id || null) : null,
+        stadium_id:          stop.stadium_id || null,
         destination_id:      isStadium ? null : (stop.destination_id || null),
         experience_type:     isStadium ? null : (stop.experience_type || null),
         game_date:           stop.game_date || null,
@@ -696,7 +708,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                           </div>
 
                           {/* Experience type */}
-                          <div style={{ marginBottom: 20 }}>
+                          <div style={{ marginBottom: 14 }}>
                             <label style={labelStyle}>Experience Type</label>
                             <select style={inputStyle} value={stop.experience_type}
                               onChange={e => setStop(i, 'experience_type', e.target.value)}>
@@ -708,6 +720,46 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                               ))}
                             </select>
                           </div>
+
+                          {/* Hosting stadium — required for MLB special events */}
+                          {(() => {
+                            const selDest = destinations.find(d => d.id === stop.destination_id)
+                            if (!selDest?.is_mlb_event) return null
+                            const hostAbbr = stadiums.find(s => s.id === stop.stadium_id)?.abbreviation
+                            return (
+                              <div style={{ marginBottom: 20 }}>
+                                <label style={labelStyle}>
+                                  Hosting Stadium
+                                  <span style={{ color: '#F85149', marginLeft: 4 }}>*</span>
+                                </label>
+                                <div style={{
+                                  padding: '8px 10px', borderRadius: 8, marginBottom: 8,
+                                  backgroundColor: 'rgba(245,166,35,0.07)',
+                                  border: '1px solid rgba(245,166,35,0.25)',
+                                  fontSize: 11, color: '#F5A623',
+                                }}>
+                                  ⭐ MLB event — this stadium will count as a visit toward your Chase progress
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                  {hostAbbr && <TeamLogo abbreviation={hostAbbr} size={32} style={{ flexShrink: 0 }} />}
+                                  <select
+                                    style={{ ...inputStyle, flex: 1 }}
+                                    value={stop.stadium_id}
+                                    onChange={e => setStop(i, 'stadium_id', e.target.value)}
+                                  >
+                                    <option value="">— Select hosting stadium —</option>
+                                    {[...stadiums]
+                                      .sort((a, b) => a.team.localeCompare(b.team))
+                                      .map(s => (
+                                        <option key={s.id} value={s.id}>
+                                          {s.team} — {s.name} · {s.city}, {s.state}
+                                        </option>
+                                      ))}
+                                  </select>
+                                </div>
+                              </div>
+                            )
+                          })()}
                         </>
                       ) : (
                         <>

@@ -45,27 +45,29 @@ export async function POST(req: NextRequest) {
     for (const stop of stops) {
       if (!stop.game_date) continue
 
-      // Destination stop → create destination_visit
-      if (stop.stop_type === 'destination' || (!stop.stadium_id && stop.destination_id)) {
-        if (!stop.destination_id) continue
-        const { data: existing } = await supabase
+      // Destination stop → always create destination_visit
+      if (stop.destination_id) {
+        const { data: existingDV } = await supabase
           .from('destination_visits')
           .select('id')
           .eq('trip_id', tripId)
           .eq('destination_id', stop.destination_id)
           .maybeSingle()
-        if (existing) continue
-        await supabase.from('destination_visits').insert({
-          destination_id: stop.destination_id,
-          trip_id:        tripId,
-          visit_date:     stop.game_date,
-          experience_type: stop.experience_type ?? null,
-          created_by:     user?.id ?? null,
-        })
-        continue
+        if (!existingDV) {
+          await supabase.from('destination_visits').insert({
+            destination_id:  stop.destination_id,
+            trip_id:         tripId,
+            visit_date:      stop.game_date,
+            experience_type: stop.experience_type ?? null,
+            created_by:      user?.id ?? null,
+          })
+        }
+        // Non-MLB destination (no stadium_id): done for this stop
+        if (!stop.stadium_id) continue
+        // MLB event with a hosting stadium: fall through to create stadium_visit too
       }
 
-      // Stadium stop → create stadium_visit (existing logic)
+      // Stadium visit: runs for regular stadium stops AND MLB event destination stops
       const stadium = stop.stadium
       if (!stadium) continue
 
