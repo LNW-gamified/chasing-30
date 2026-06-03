@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
-import type { Stadium, Trip, TripStop } from '@/types'
+import type { Stadium, Trip, TripStop, Destination } from '@/types'
 import { X, Plus, Trash2, Loader2, MapPin, Ticket, DollarSign, FileText, CalendarDays } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
+import { DESTINATION_BY_SLUG, EXPERIENCE_TYPES } from '@/lib/destinations'
 
 const ABBR_TO_MLB_ID: Record<string, number> = {
   ARI: 109, ATL: 144, BAL: 110, BOS: 111, CHC: 112,
@@ -50,11 +51,21 @@ const ABBR_TO_TZ: Record<string, { tz: string; label: string }> = {
 
 interface StopDraft {
   id?: string
+  stop_type: 'stadium' | 'destination'
+  // Stadium stop fields
   stadium_id: string
   game_date: string
   game_time: string
   opponent: string
   opponent_team_id: string
+  ticket_section: string
+  ticket_row: string
+  ticket_seats: string[]
+  ticket_confirmation: string
+  // Destination stop fields
+  destination_id: string
+  experience_type: string
+  // Shared
   est_tickets: string
   est_food: string
   est_parking: string
@@ -62,10 +73,6 @@ interface StopDraft {
   actual_food: string
   actual_parking: string
   notes: string
-  ticket_section: string
-  ticket_row: string
-  ticket_seats: string[]
-  ticket_confirmation: string
 }
 
 interface GameOption {
@@ -102,12 +109,27 @@ const STOP_CATS = [
 
 function defaultStop(stadiums: Stadium[]): StopDraft {
   return {
+    stop_type: 'stadium',
     stadium_id: stadiums[0]?.id ?? '',
     game_date: '', game_time: '', opponent: '', opponent_team_id: '',
     est_tickets: '0', est_food: '0', est_parking: '0',
     actual_tickets: '0', actual_food: '0', actual_parking: '0',
     notes: '',
     ticket_section: '', ticket_row: '', ticket_seats: [], ticket_confirmation: '',
+    destination_id: '', experience_type: '',
+  }
+}
+
+function defaultDestStop(): StopDraft {
+  return {
+    stop_type: 'destination',
+    stadium_id: '',
+    game_date: '', game_time: '', opponent: '', opponent_team_id: '',
+    est_tickets: '0', est_food: '0', est_parking: '0',
+    actual_tickets: '0', actual_food: '0', actual_parking: '0',
+    notes: '',
+    ticket_section: '', ticket_row: '', ticket_seats: [], ticket_confirmation: '',
+    destination_id: '', experience_type: '',
   }
 }
 
@@ -150,7 +172,10 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     if (existingStops && existingStops.length > 0) {
       return existingStops.map(s => ({
         id:               s.id,
-        stadium_id:       s.stadium_id,
+        stop_type:        s.stop_type        ?? 'stadium',
+        stadium_id:       s.stadium_id       ?? '',
+        destination_id:   s.destination_id   ?? '',
+        experience_type:  s.experience_type  ?? '',
         game_date:        s.game_date                    ?? '',
         game_time:        s.game_time                    ?? '',
         opponent:         s.opponent                     ?? '',
@@ -178,8 +203,15 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     const n = (existingStops && existingStops.length > 0) ? existingStops.length : 1
     return Array.from({ length: n }, () => '')
   })
-  const [saving, setSaving] = useState(false)
-  const [error,  setError]  = useState('')
+  const [saving, setSaving]           = useState(false)
+  const [error,  setError]            = useState('')
+  const [destinations, setDestinations] = useState<Destination[]>([])
+
+  useEffect(() => {
+    createClient().from('destinations').select('id, slug, name, city, state, type, is_mlb_event')
+      .order('name')
+      .then(({ data }) => setDestinations((data ?? []) as Destination[]))
+  }, [])
 
   async function fetchGamesForStop(
     stopIdx: number,
@@ -299,13 +331,32 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     ))
   }
 
-  function addStop() {
-    const newIdx       = stops.length
-    const newStadiumId = stadiums[0]?.id ?? ''
-    setStops(prev => [...prev, defaultStop(stadiums)])
-    setStopSchedules(prev => [...prev, emptySchedule()])
-    setSeatInputs(prev => [...prev, ''])
-    if (newStadiumId) setTimeout(() => fetchGamesForStop(newIdx, newStadiumId), 0)
+  function addStop(type: 'stadium' | 'destination' = 'stadium') {
+    const newIdx = stops.length
+    if (type === 'stadium') {
+      const newStadiumId = stadiums[0]?.id ?? ''
+      setStops(prev => [...prev, defaultStop(stadiums)])
+      setStopSchedules(prev => [...prev, emptySchedule()])
+      setSeatInputs(prev => [...prev, ''])
+      if (newStadiumId) setTimeout(() => fetchGamesForStop(newIdx, newStadiumId), 0)
+    } else {
+      setStops(prev => [...prev, defaultDestStop()])
+      setStopSchedules(prev => [...prev, emptySchedule()])
+      setSeatInputs(prev => [...prev, ''])
+    }
+  }
+
+  function changeStopType(i: number, type: 'stadium' | 'destination') {
+    setStops(prev => prev.map((s, idx) => {
+      if (idx !== i) return s
+      return type === 'stadium'
+        ? { ...defaultStop(stadiums), id: s.id, sort_order: i, est_tickets: s.est_tickets, est_food: s.est_food, est_parking: s.est_parking }
+        : { ...defaultDestStop(),     id: s.id, sort_order: i, est_tickets: s.est_tickets, est_food: s.est_food, est_parking: s.est_parking }
+    }))
+    if (type === 'stadium') {
+      const newStadiumId = stadiums[0]?.id ?? ''
+      if (newStadiumId) setTimeout(() => fetchGamesForStop(i, newStadiumId), 0)
+    }
   }
 
   function removeStop(i: number) {
@@ -325,7 +376,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (stops.length === 0) { setError('Add at least one stadium stop.'); return }
+    if (stops.length === 0) { setError('Add at least one stop.'); return }
     setSaving(true)
     setError('')
 
@@ -337,7 +388,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       start_date:     form.start_date || null,
       end_date:       form.end_date   || null,
       status:         form.status,
-      stadium_id:     stops[0]?.stadium_id ?? null,
+      stadium_id:     stops.find(s => s.stop_type === 'stadium')?.stadium_id ?? null,
       trip_date:      trip?.trip_date ?? null,
       est_tickets:    0,
       est_travel:     parseFloat(form.est_travel)    || 0,
@@ -374,12 +425,16 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
 
     // Update existing stops in place, insert new ones
     for (const [i, stop] of stops.entries()) {
+      const isStadium = stop.stop_type === 'stadium'
       const payload = {
-        stadium_id:          stop.stadium_id,
+        stop_type:           stop.stop_type,
+        stadium_id:          isStadium ? (stop.stadium_id || null) : null,
+        destination_id:      isStadium ? null : (stop.destination_id || null),
+        experience_type:     isStadium ? null : (stop.experience_type || null),
         game_date:           stop.game_date || null,
-        game_time:           stop.game_time || null,
-        opponent:            stop.opponent  || null,
-        opponent_team_id:    parseInt(stop.opponent_team_id) || null,
+        game_time:           isStadium ? (stop.game_time || null) : null,
+        opponent:            isStadium ? (stop.opponent  || null) : null,
+        opponent_team_id:    isStadium ? (parseInt(stop.opponent_team_id) || null) : null,
         sort_order:          i,
         est_tickets:         parseFloat(stop.est_tickets)    || 0,
         est_food:            parseFloat(stop.est_food)       || 0,
@@ -388,10 +443,10 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
         actual_food:         parseFloat(stop.actual_food)    || 0,
         actual_parking:      parseFloat(stop.actual_parking) || 0,
         notes:               stop.notes || null,
-        ticket_section:      stop.ticket_section     || null,
-        ticket_row:          stop.ticket_row         || null,
-        ticket_seats:        stop.ticket_seats.length > 0 ? stop.ticket_seats : null,
-        ticket_confirmation: stop.ticket_confirmation || null,
+        ticket_section:      isStadium ? (stop.ticket_section     || null) : null,
+        ticket_row:          isStadium ? (stop.ticket_row         || null) : null,
+        ticket_seats:        isStadium && stop.ticket_seats.length > 0 ? stop.ticket_seats : null,
+        ticket_confirmation: isStadium ? (stop.ticket_confirmation || null) : null,
       }
 
       if (stop.id) {
@@ -402,30 +457,32 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
           .from('trip_stops').insert({ trip_id: tripId, ...payload }).select('id').single()
         if (insErr || !newStop) { setSaving(false); setError(insErr?.message ?? 'Failed to insert stop'); return }
 
-        // Auto-populate food & souvenirs checklists with suggested items
-        const [
-          { data: foodClassics }, { data: foodSeasonal },
-          { data: souvenirClassics }, { data: souvenirSeasonal },
-        ] = await Promise.all([
-          supabase.from('stadium_trending_food')
-            .select('item_name').eq('stadium_id', stop.stadium_id).eq('is_classic', true).limit(3),
-          supabase.from('stadium_trending_food')
-            .select('item_name').eq('stadium_id', stop.stadium_id).eq('is_classic', false)
-            .eq('active', true).eq('season_year', 2026).limit(2),
-          supabase.from('stadium_souvenirs')
-            .select('item_name').eq('stadium_id', stop.stadium_id).eq('is_classic', true).limit(2),
-          supabase.from('stadium_souvenirs')
-            .select('item_name').eq('stadium_id', stop.stadium_id).eq('is_classic', false)
-            .eq('active', true).eq('season_year', 2026).limit(2),
-        ])
-        const suggestions = [
-          ...(foodClassics    ?? []).map(f => ({ stop_id: newStop.id, category: 'food_drinks' as const, item: f.item_name, suggested: true })),
-          ...(foodSeasonal    ?? []).map(f => ({ stop_id: newStop.id, category: 'food_drinks' as const, item: f.item_name, suggested: true })),
-          ...(souvenirClassics ?? []).map(s => ({ stop_id: newStop.id, category: 'souvenirs'  as const, item: s.item_name, suggested: true })),
-          ...(souvenirSeasonal ?? []).map(s => ({ stop_id: newStop.id, category: 'souvenirs'  as const, item: s.item_name, suggested: true })),
-        ]
-        if (suggestions.length > 0) {
-          await supabase.from('stop_checklist').insert(suggestions)
+        // Auto-populate food & souvenirs checklists — stadium stops only
+        if (isStadium && stop.stadium_id) {
+          const [
+            { data: foodClassics }, { data: foodSeasonal },
+            { data: souvenirClassics }, { data: souvenirSeasonal },
+          ] = await Promise.all([
+            supabase.from('stadium_trending_food')
+              .select('item_name').eq('stadium_id', stop.stadium_id).eq('is_classic', true).limit(3),
+            supabase.from('stadium_trending_food')
+              .select('item_name').eq('stadium_id', stop.stadium_id).eq('is_classic', false)
+              .eq('active', true).eq('season_year', 2026).limit(2),
+            supabase.from('stadium_souvenirs')
+              .select('item_name').eq('stadium_id', stop.stadium_id).eq('is_classic', true).limit(2),
+            supabase.from('stadium_souvenirs')
+              .select('item_name').eq('stadium_id', stop.stadium_id).eq('is_classic', false)
+              .eq('active', true).eq('season_year', 2026).limit(2),
+          ])
+          const suggestions = [
+            ...(foodClassics    ?? []).map(f => ({ stop_id: newStop.id, category: 'food_drinks' as const, item: f.item_name, suggested: true })),
+            ...(foodSeasonal    ?? []).map(f => ({ stop_id: newStop.id, category: 'food_drinks' as const, item: f.item_name, suggested: true })),
+            ...(souvenirClassics ?? []).map(s => ({ stop_id: newStop.id, category: 'souvenirs'  as const, item: s.item_name, suggested: true })),
+            ...(souvenirSeasonal ?? []).map(s => ({ stop_id: newStop.id, category: 'souvenirs'  as const, item: s.item_name, suggested: true })),
+          ]
+          if (suggestions.length > 0) {
+            await supabase.from('stop_checklist').insert(suggestions)
+          }
         }
       }
     }
@@ -538,14 +595,24 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                   Stadiums &amp; Games
                 </span>
               </div>
-              <button type="button" onClick={addStop} style={{
-                display: 'inline-flex', alignItems: 'center', gap: 5,
-                padding: '6px 12px', borderRadius: 8,
-                border: '1px solid #30363D', backgroundColor: '#1C2430',
-                color: '#8B949E', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              }}>
-                <Plus size={12} /> Add Stop
-              </button>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button type="button" onClick={() => addStop('stadium')} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '6px 12px', borderRadius: 8,
+                  border: '1px solid #30363D', backgroundColor: '#1C2430',
+                  color: '#8B949E', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                }}>
+                  <Plus size={12} /> Stadium Stop
+                </button>
+                <button type="button" onClick={() => addStop('destination')} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '6px 12px', borderRadius: 8,
+                  border: '1px solid #30363D', backgroundColor: '#1C2430',
+                  color: '#8B949E', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                }}>
+                  <Plus size={12} /> Destination Stop
+                </button>
+              </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -580,6 +647,70 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                     </div>
 
                     <div style={{ padding: '16px' }}>
+                      {/* Stop type toggle */}
+                      <div style={{
+                        display: 'flex', gap: 3, marginBottom: 16,
+                        backgroundColor: '#161B22', borderRadius: 11,
+                        border: '1px solid #30363D', padding: 3,
+                      }}>
+                        {([
+                          { key: 'stadium'     as const, label: '🏟️ Stadium Game' },
+                          { key: 'destination' as const, label: '📍 Destination'  },
+                        ]).map(({ key, label }) => (
+                          <button key={key} type="button" onClick={() => changeStopType(i, key)} style={{
+                            flex: 1, padding: '6px 8px', borderRadius: 8,
+                            fontSize: 12, fontWeight: stop.stop_type === key ? 700 : 500,
+                            border: 'none', cursor: 'pointer',
+                            backgroundColor: stop.stop_type === key ? '#0d1424' : 'transparent',
+                            color: stop.stop_type === key ? '#E6EDF3' : '#8B949E',
+                          }}>
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {stop.stop_type === 'destination' ? (
+                        <>
+                          {/* Destination selector */}
+                          <div style={{ marginBottom: 14 }}>
+                            <label style={labelStyle}>Destination</label>
+                            <select style={inputStyle} value={stop.destination_id}
+                              onChange={e => setStop(i, 'destination_id', e.target.value)}>
+                              <option value="">— Select a destination —</option>
+                              {destinations.map(d => {
+                                const info = DESTINATION_BY_SLUG[d.slug]
+                                return (
+                                  <option key={d.id} value={d.id}>
+                                    {info?.icon ?? '📍'} {d.name} — {d.city}{d.state ? `, ${d.state}` : ''}
+                                  </option>
+                                )
+                              })}
+                            </select>
+                          </div>
+
+                          {/* Visit date */}
+                          <div style={{ marginBottom: 14 }}>
+                            <label style={labelStyle}>Visit Date</label>
+                            <input type="date" style={inputStyle} value={stop.game_date}
+                              onChange={e => setStop(i, 'game_date', e.target.value)} />
+                          </div>
+
+                          {/* Experience type */}
+                          <div style={{ marginBottom: 20 }}>
+                            <label style={labelStyle}>Experience Type</label>
+                            <select style={inputStyle} value={stop.experience_type}
+                              onChange={e => setStop(i, 'experience_type', e.target.value)}>
+                              <option value="">— Select type —</option>
+                              {EXPERIENCE_TYPES.map(et => (
+                                <option key={et.value} value={et.value}>
+                                  {et.icon} {et.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </>
+                      ) : (
+                        <>
                       {/* Stadium selector */}
                       <div style={{ marginBottom: 14 }}>
                         <label style={labelStyle}>Team</label>
@@ -785,6 +916,8 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                             onChange={e => setStop(i, 'ticket_confirmation', e.target.value)} />
                         </div>
                       </div>
+                      </>
+                      )}
 
                       {/* ── Budget subsection ─────────────────────────── */}
                       <div style={{ borderTop: '1px solid #30363D', paddingTop: 16 }}>

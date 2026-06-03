@@ -46,9 +46,10 @@ export default function TripDetailPage() {
       supabase.from('trips').select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, description, lat, lng, is_mlb_event, website_url)').eq('id', id).single(),
       supabase.from('stadiums').select('*').order('name'),
       supabase.from('trip_stops').select(
-        'id, trip_id, stadium_id, sort_order, game_date, game_time, opponent, opponent_team_id, ' +
-        'est_tickets, est_food, est_parking, actual_tickets, actual_food, actual_parking, notes, ' +
-        'ticket_section, ticket_row, ticket_seats, ticket_confirmation, created_at, stadium:stadiums(*)'
+        'id, trip_id, stop_type, stadium_id, destination_id, sort_order, game_date, game_time, opponent, opponent_team_id, ' +
+        'experience_type, est_tickets, est_food, est_parking, actual_tickets, actual_food, actual_parking, notes, ' +
+        'ticket_section, ticket_row, ticket_seats, ticket_confirmation, created_at, ' +
+        'stadium:stadiums(*), destination:destinations(*)'
       ).eq('trip_id', id).order('sort_order'),
       supabase.from('stadium_visits').select('stadium_id'),
     ])
@@ -603,11 +604,130 @@ export default function TripDetailPage() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {sortedStops.map((stop, i) => {
+                  const isDestinationStop = stop.stop_type === 'destination' || (!stop.stadium_id && !!stop.destination_id)
                   const stadium     = stop.stadium as Stadium | undefined
                   const stopEst     = stop.est_tickets + stop.est_food + stop.est_parking
                   const stopAct     = stop.actual_tickets + stop.actual_food + stop.actual_parking
-                  const accentColor = TEAM_PRIMARY[stadium?.abbreviation ?? ''] ?? '#1F6FEB'
                   const hasBudget   = stopEst > 0 || stopAct > 0
+
+                  // ── Destination stop card ────────────────────────────
+                  if (isDestinationStop) {
+                    const dest     = (stop as any).destination as { id: string; slug: string; name: string; city: string; state: string | null; is_mlb_event: boolean } | undefined
+                    const destInfo = dest?.slug ? DESTINATION_BY_SLUG[dest.slug] : null
+                    const expType  = EXPERIENCE_TYPES.find(e => e.value === stop.experience_type)
+                    const heroColor = destInfo?.heroColor ?? ['#1A2030', '#0B1117']
+                    const accentColor = heroColor[1] ?? '#1F6FEB'
+
+                    const destCard = (
+                      <div key={stop.id} style={{
+                        backgroundColor: '#161B22', borderRadius: 16, overflow: 'hidden',
+                        borderTop: '1px solid #30363D', borderRight: '1px solid #30363D',
+                        borderBottom: '1px solid #30363D',
+                        borderLeft: `4px solid ${accentColor}`,
+                      }}>
+                        <div style={{ padding: '20px 20px 16px' }}>
+                          {/* Header row */}
+                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                              <div style={{
+                                width: 28, height: 28, borderRadius: '50%',
+                                backgroundColor: 'rgba(31,111,235,0.15)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: 12, fontWeight: 800, color: '#1F6FEB', flexShrink: 0,
+                              }}>
+                                {i + 1}
+                              </div>
+                              <span style={{ fontSize: 36, lineHeight: 1 }}>{destInfo?.icon ?? '📍'}</span>
+                            </div>
+                            {(dest as any)?.is_mlb_event && (
+                              <span style={{
+                                fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 20,
+                                color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)',
+                                border: '1px solid rgba(245,166,35,0.35)',
+                              }}>⭐ MLB Event</span>
+                            )}
+                          </div>
+
+                          <div style={{ fontWeight: 800, fontSize: 20, color: '#E6EDF3', lineHeight: 1.2, marginBottom: 2 }}>
+                            {dest?.name ?? destInfo?.name ?? 'Destination'}
+                          </div>
+                          {destInfo && (
+                            <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 12 }}>
+                              {destInfo.city}{destInfo.state ? `, ${destInfo.state}` : ''}
+                            </div>
+                          )}
+
+                          {stop.game_date && (
+                            <div style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3', marginBottom: 8 }}>
+                              {new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', {
+                                weekday: 'long', month: 'long', day: 'numeric',
+                              })}
+                            </div>
+                          )}
+
+                          {expType && (
+                            <span style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 5,
+                              fontSize: 12, fontWeight: 600,
+                              padding: '4px 12px', borderRadius: 20,
+                              backgroundColor: 'rgba(245,166,35,0.1)',
+                              color: '#F5A623', border: '1px solid rgba(245,166,35,0.25)',
+                            }}>
+                              {expType.icon} {expType.label}
+                            </span>
+                          )}
+                        </div>
+
+                        {hasBudget && (
+                          <div style={{ display: 'flex', borderTop: '1px solid #30363D', backgroundColor: '#1C2430' }}>
+                            {([
+                              { label: 'Tickets', Icon: Ticket,   est: stop.est_tickets, actual: stop.actual_tickets },
+                              { label: 'Food',    Icon: Utensils, est: stop.est_food,    actual: stop.actual_food    },
+                              { label: 'Parking', Icon: Car,      est: stop.est_parking, actual: stop.actual_parking },
+                            ] as const).map(({ label, Icon, est, actual }, ci) => (
+                              <div key={label} style={{ flex: 1, padding: '10px 12px', borderRight: ci < 2 ? '1px solid #30363D' : 'none' }}>
+                                <div style={{ fontSize: 10, color: '#8B949E', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 3 }}>
+                                  <Icon size={10} strokeWidth={2} /> {label}
+                                </div>
+                                <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{formatCurrency(est)}</div>
+                                {actual > 0 && (
+                                  <div style={{ fontSize: 11, color: actual > est ? '#F85149' : '#3FB950', marginTop: 1 }}>
+                                    {formatCurrency(actual)}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <StopChecklist
+                          stopId={stop.id}
+                          items={checklistItems.filter(c => c.stop_id === stop.id)}
+                          onReload={reloadChecklist}
+                        />
+                      </div>
+                    )
+
+                    const nextStop = sortedStops[i + 1]
+                    if (!nextStop) return destCard
+                    const stopsWithStadium = sortedStops.filter(s => (s.stadium as Stadium | null)?.lat)
+                    const segIdx = stopsWithStadium.findIndex(s => s.id === stop.id)
+                    const miles = segIdx >= 0 ? segmentMiles[segIdx] : undefined
+                    return (
+                      <div key={stop.id}>
+                        {destCard}
+                        {miles ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 16px', color: '#8B949E' }}>
+                            <div style={{ width: 2, height: 20, backgroundColor: '#30363D', marginLeft: 14, flexShrink: 0 }} />
+                            <span style={{ fontSize: 12, fontWeight: 600, color: '#F5A623' }}>🚗 {miles.toLocaleString()} mi</span>
+                          </div>
+                        ) : null}
+                      </div>
+                    )
+                  }
+
+                  // ── Stadium stop card ────────────────────────────────
+                  const accentColor = TEAM_PRIMARY[stadium?.abbreviation ?? ''] ?? '#1F6FEB'
                   const seatGeekUrl = `https://seatgeek.com/mlb-tickets?q=${encodeURIComponent(stadium?.team ?? '')}`
 
                   // Ticket display string

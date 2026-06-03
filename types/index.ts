@@ -84,11 +84,14 @@ export interface StadiumVisit {
 export interface TripStop {
   id: string
   trip_id: string
-  stadium_id: string
+  stop_type: 'stadium' | 'destination'
+  stadium_id: string | null
+  destination_id: string | null
   game_date: string | null
   game_time: string | null
   opponent: string | null
   opponent_team_id: number | null
+  experience_type: 'tour' | 'game' | 'festival' | 'pilgrimage' | 'other' | null
   sort_order: number
   est_tickets: number
   est_food: number
@@ -103,6 +106,7 @@ export interface TripStop {
   ticket_confirmation: string | null
   created_at: string
   stadium?: Stadium
+  destination?: Destination
 }
 
 export interface Trip {

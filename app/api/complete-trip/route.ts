@@ -39,11 +39,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Failed to mark trip complete: ${tripUpdateError.message}` }, { status: 500 })
     }
 
-    // 2. Create a visit record for every stop that has a game date
+    // 2. Create visit records for all stops that have a date
     const createdVisits: { id: string; visitDate: string; stadiumAbbr: string }[] = []
 
     for (const stop of stops) {
       if (!stop.game_date) continue
+
+      // Destination stop → create destination_visit
+      if (stop.stop_type === 'destination' || (!stop.stadium_id && stop.destination_id)) {
+        if (!stop.destination_id) continue
+        const { data: existing } = await supabase
+          .from('destination_visits')
+          .select('id')
+          .eq('trip_id', tripId)
+          .eq('destination_id', stop.destination_id)
+          .maybeSingle()
+        if (existing) continue
+        await supabase.from('destination_visits').insert({
+          destination_id: stop.destination_id,
+          trip_id:        tripId,
+          visit_date:     stop.game_date,
+          experience_type: stop.experience_type ?? null,
+          created_by:     user?.id ?? null,
+        })
+        continue
+      }
+
+      // Stadium stop → create stadium_visit (existing logic)
       const stadium = stop.stadium
       if (!stadium) continue
 
