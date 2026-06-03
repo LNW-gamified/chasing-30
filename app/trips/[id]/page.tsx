@@ -663,11 +663,13 @@ export default function TripDetailPage() {
                           <div style={{ fontWeight: 800, fontSize: 20, color: '#E6EDF3', lineHeight: 1.2, marginBottom: 2 }}>
                             {dest?.name ?? destInfo?.name ?? 'Destination'}
                           </div>
-                          {destInfo && (
-                            <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 12 }}>
-                              {destInfo.city}{destInfo.state ? `, ${destInfo.state}` : ''}
-                            </div>
-                          )}
+                          <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 12 }}>
+                            {stop.stadium_id && stadium
+                              ? `${stadium.name} · ${stadium.city}, ${stadium.state}`
+                              : destInfo
+                                ? `${destInfo.city}${destInfo.state ? `, ${destInfo.state}` : ''}`
+                                : null}
+                          </div>
 
                           {stop.game_date && (
                             <div style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3', marginBottom: 8 }}>
