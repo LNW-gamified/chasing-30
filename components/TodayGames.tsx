@@ -286,15 +286,6 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
       </div>
 
 
-      {/* Scroll hint — gold, only when more than 10 games */}
-      {games.length > 10 && (
-        <div
-          className="hidden md:block"
-          style={{ textAlign: 'center', fontSize: 13, color: '#F5A623', fontWeight: 600, paddingTop: 6, flexShrink: 0 }}
-        >
-          ↓ {games.length - 10} more game{games.length - 10 !== 1 ? 's' : ''}
-        </div>
-      )}
     </div>
   )
 }
