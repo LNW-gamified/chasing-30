@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
+import { TEAM_PRIMARY } from '@/lib/team-colors'
 
 const DIVISION_META: Record<number, { league: 'AL' | 'NL' }> = {
   200: { league: 'AL' },
@@ -22,16 +23,6 @@ const ID_TO_ABBR: Record<number, string> = {
   144: 'ATL', 145: 'CWS', 146: 'MIA', 147: 'NYY', 158: 'MIL',
 }
 
-const TEAM_PRIMARY: Record<string, string> = {
-  ARI: '#A71930', ATL: '#CE1141', BAL: '#DF4601', BOS: '#BD3039',
-  CHC: '#0E3386', CWS: '#888D8D', CIN: '#C6011F', CLE: '#E31937',
-  COL: '#33006F', DET: '#0C2C56', HOU: '#EB6E1F', KC:  '#004687',
-  LAA: '#BA0021', LAD: '#005A9C', MIA: '#00A3E0', MIL: '#12284B',
-  MIN: '#D31145', NYM: '#003087', NYY: '#003087', OAK: '#003831',
-  PHI: '#E81828', PIT: '#27251F', SD:  '#2F241D', SF:  '#FD5A1E',
-  SEA: '#005C5C', STL: '#C41E3A', TB:  '#092C5C', TEX: '#003278',
-  TOR: '#134A8E', WSH: '#AB0003',
-}
 
 interface TeamRow {
   rank: number

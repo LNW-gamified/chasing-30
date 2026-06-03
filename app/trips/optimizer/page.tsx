@@ -8,6 +8,7 @@ import { formatDate } from '@/lib/utils'
 import type { Stadium } from '@/types'
 import Link from 'next/link'
 import { ArrowLeft, MapPin, Calendar, Zap, Clock, Plus, Loader2, AlertCircle, CheckCircle2, ChevronRight, Search, Car } from 'lucide-react'
+import { TEAM_PRIMARY } from '@/lib/team-colors'
 
 const MONTHS = [
   'January','February','March','April','May','June',
@@ -31,16 +32,6 @@ const ABBR_TO_NICKNAME: Record<string, string> = {
   TOR: 'Blue Jays', WSH: 'Nationals',
 }
 
-const TEAM_PRIMARY: Record<string, string> = {
-  ARI: '#A71930', ATL: '#CE1141', BAL: '#DF4601', BOS: '#BD3039',
-  CHC: '#0E3386', CWS: '#C4CED4', CIN: '#C6011F', CLE: '#E31937',
-  COL: '#33006F', DET: '#0C2C56', HOU: '#EB6E1F', KC:  '#004687',
-  LAA: '#BA0021', LAD: '#005A9C', MIA: '#00A3E0', MIL: '#FFC52F',
-  MIN: '#D31145', NYM: '#FF5910', NYY: '#003087', OAK: '#EFB21E',
-  PHI: '#E81828', PIT: '#FDB827', SD:  '#FFC425', SF:  '#FD5A1E',
-  SEA: '#005C5C', STL: '#C41E3A', TB:  '#8FBCE6', TEX: '#C0111F',
-  TOR: '#134A8E', WSH: '#AB0003',
-}
 
 interface TripStop {
   stadiumId: string

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import TeamLogo from '@/components/TeamLogo'
 import { TrendingUp, TrendingDown, Minus, RefreshCw } from 'lucide-react'
+import { TEAM_PRIMARY } from '@/lib/team-colors'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -17,16 +18,6 @@ const ID_TO_ABBR: Record<number, string> = {
 
 const ABBR_TO_ID = Object.fromEntries(Object.entries(ID_TO_ABBR).map(([id, abbr]) => [abbr, parseInt(id)]))
 
-const TEAM_PRIMARY: Record<string, string> = {
-  ARI: '#A71930', ATL: '#CE1141', BAL: '#DF4601', BOS: '#BD3039',
-  CHC: '#0E3386', CWS: '#888D8D', CIN: '#C6011F', CLE: '#E31937',
-  COL: '#33006F', DET: '#0C2C56', HOU: '#EB6E1F', KC:  '#004687',
-  LAA: '#BA0021', LAD: '#005A9C', MIA: '#00A3E0', MIL: '#12284B',
-  MIN: '#D31145', NYM: '#003087', NYY: '#1c2841', OAK: '#003831',
-  PHI: '#E81828', PIT: '#27251F', SD:  '#2F241D', SF:  '#FD5A1E',
-  SEA: '#005C5C', STL: '#C41E3A', TB:  '#092C5C', TEX: '#003278',
-  TOR: '#134A8E', WSH: '#AB0003',
-}
 
 // division id → { league, name }
 const DIV: Record<number, { league: 'AL' | 'NL'; name: string }> = {

@@ -14,6 +14,7 @@ import { fetchTeamNews, type ESPNNewsItem } from '@/lib/espn-api'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy, Share2, MessageSquare, Hash, Building2, Map, ChevronRight, CloudRain, Wind } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
+import { TEAM_BTN_COLOR, TEAM_GRADIENTS } from '@/lib/team-colors'
 
 const GAME_EVENT_LABELS: Record<string, string> = {
   walk_off:            '🏠 Walk-off',
@@ -30,35 +31,6 @@ const GAME_EVENT_LABELS: Record<string, string> = {
   milestone_hr:        '🏆 Milestone HR',
 }
 
-// Primary button color per team — recognizable brand color that reads with white text
-const TEAM_BTN_COLOR: Record<string, string> = {
-  ARI: '#A71930', ATL: '#CE1141', BAL: '#DF4601', BOS: '#BD3039',
-  CHC: '#0E3386', CWS: '#27251F', CIN: '#C6011F', CLE: '#00385D',
-  COL: '#33006F', DET: '#0C2C56', HOU: '#EB6E1F', KC:  '#004687',
-  LAA: '#BA0021', LAD: '#005A9C', MIA: '#00A3E0', MIL: '#12284B',
-  MIN: '#002B5C', NYM: '#002D72', NYY: '#003087', OAK: '#003831',
-  PHI: '#E81828', PIT: '#27251F', SD:  '#2F241D', SF:  '#FD5A1E',
-  SEA: '#005C5C', STL: '#C41E3A', TB:  '#092C5C', TEX: '#003278',
-  TOR: '#134A8E', WSH: '#AB0003',
-}
-
-const TEAM_GRADIENTS: Record<string, [string, string]> = {
-  LAA: ['#003263', '#BA0021'], ARI: ['#A71930', '#1A1A1A'],
-  BAL: ['#1A1A1A', '#DF4601'], BOS: ['#0C2340', '#BD3039'],
-  CHC: ['#0E3386', '#CC3433'], CWS: ['#27251F', '#C4CED4'],
-  CIN: ['#C6011F', '#1A1A1A'], CLE: ['#00385D', '#E31937'],
-  COL: ['#33006F', '#C4CED4'], DET: ['#0C2C56', '#FA4616'],
-  HOU: ['#002D62', '#EB6E1F'], KC:  ['#004687', '#BD9B60'],
-  LAD: ['#005A9C', '#EF3E42'], MIA: ['#00A3E0', '#EF3340'],
-  MIL: ['#12284B', '#FFC52F'], MIN: ['#002B5C', '#D31145'],
-  NYM: ['#002D72', '#FF5910'], NYY: ['#003087', '#C4CED4'],
-  OAK: ['#003831', '#EFB21E'], PHI: ['#002D72', '#E81828'],
-  PIT: ['#27251F', '#FDB827'], SD:  ['#2F241D', '#FFC425'],
-  SF:  ['#27251F', '#FD5A1E'], SEA: ['#0C2C56', '#005C5C'],
-  STL: ['#0C2340', '#C41E3A'], TB:  ['#092C5C', '#8FBCE6'],
-  TEX: ['#003278', '#C0111F'], TOR: ['#134A8E', '#1D2D5C'],
-  WSH: ['#14225A', '#AB0003'], ATL: ['#13274F', '#CE1141'],
-}
 
 // Stadiums with climate control — weather ratings don't apply
 const DOME_STADIUMS    = new Set(['ARI', 'SEA', 'HOU', 'TEX', 'MIL', 'TOR', 'TB', 'MIA'])

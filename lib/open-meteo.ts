@@ -63,11 +63,14 @@ export async function fetchHistoricalWeather(lat: number, lng: number, date: str
     )
     if (!res.ok) return null
     const data = await res.json()
-    const tempC = data.daily?.temperature_2m_max?.[0]
-    const code  = data.daily?.weathercode?.[0]
+    const tempC  = data.daily?.temperature_2m_max?.[0]
+    const code   = data.daily?.weathercode?.[0]
+    const precip = data.daily?.precipitation_sum?.[0] ?? 0
     if (tempC == null || code == null) return null
     const { condition, emoji } = WMO[code] ?? { condition: 'Unknown', emoji: '🌡️' }
-    return { tempF: cToF(tempC), condition, emoji }
+    // Derive a rain indicator from actual precipitation (mm): >0.1mm = it rained
+    const rainChance = precip > 0.1 ? 80 : 5
+    return { tempF: cToF(tempC), condition, emoji, rainChance }
   } catch {
     return null
   }

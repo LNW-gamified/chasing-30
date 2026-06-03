@@ -13,37 +13,9 @@ import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar
 import StopChecklist from '@/components/StopChecklist'
 import { DESTINATION_BY_SLUG, destinationLocation, EXPERIENCE_TYPES } from '@/lib/destinations'
 import { fetchForecastWeather, fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
+import { TEAM_PRIMARY, TEAM_GRADIENTS as TEAM_COLORS } from '@/lib/team-colors'
 
 type TripWithStadium = Trip & { stadium: Stadium | null }
-
-const TEAM_COLORS: Record<string, [string, string]> = {
-  LAA: ['#003263', '#BA0021'], ARI: ['#A71930', '#1A1A1A'],
-  BAL: ['#1A1A1A', '#DF4601'], BOS: ['#0C2340', '#BD3039'],
-  CHC: ['#0E3386', '#CC3433'], CWS: ['#27251F', '#C4CED4'],
-  CIN: ['#C6011F', '#1A1A1A'], CLE: ['#00385D', '#E31937'],
-  COL: ['#33006F', '#C4CED4'], DET: ['#0C2C56', '#FA4616'],
-  HOU: ['#002D62', '#EB6E1F'], KC:  ['#004687', '#BD9B60'],
-  LAD: ['#005A9C', '#EF3E42'], MIA: ['#00A3E0', '#EF3340'],
-  MIL: ['#12284B', '#FFC52F'], MIN: ['#002B5C', '#D31145'],
-  NYM: ['#002D72', '#FF5910'], NYY: ['#003087', '#C4CED4'],
-  OAK: ['#003831', '#EFB21E'], PHI: ['#002D72', '#E81828'],
-  PIT: ['#27251F', '#FDB827'], SD:  ['#2F241D', '#FFC425'],
-  SF:  ['#27251F', '#FD5A1E'], SEA: ['#0C2C56', '#005C5C'],
-  STL: ['#0C2340', '#C41E3A'], TB:  ['#092C5C', '#8FBCE6'],
-  TEX: ['#003278', '#C0111F'], TOR: ['#134A8E', '#1D2D5C'],
-  WSH: ['#14225A', '#AB0003'], ATL: ['#13274F', '#CE1141'],
-}
-
-const TEAM_PRIMARY: Record<string, string> = {
-  ARI: '#A71930', ATL: '#CE1141', BAL: '#DF4601', BOS: '#BD3039',
-  CHC: '#0E3386', CWS: '#C4CED4', CIN: '#C6011F', CLE: '#E31937',
-  COL: '#33006F', DET: '#0C2C56', HOU: '#EB6E1F', KC:  '#004687',
-  LAA: '#BA0021', LAD: '#005A9C', MIA: '#00A3E0', MIL: '#FFC52F',
-  MIN: '#D31145', NYM: '#FF5910', NYY: '#003087', OAK: '#EFB21E',
-  PHI: '#E81828', PIT: '#FDB827', SD:  '#FFC425', SF:  '#FD5A1E',
-  SEA: '#005C5C', STL: '#C41E3A', TB:  '#8FBCE6', TEX: '#C0111F',
-  TOR: '#134A8E', WSH: '#AB0003',
-}
 
 export default function TripDetailPage() {
   const params = useParams()
@@ -262,7 +234,7 @@ export default function TripDetailPage() {
 
   const sc = statusConfig(trip.status)
   const dr = dateRange()
-  const countdownDays = trip.status === 'planned' ? daysUntil(trip.start_date) : null
+  const countdownDays = trip.status === 'planned' ? daysUntil(trip.start_date ?? trip.trip_date) : null
 
   const isDestinationTrip = (trip as any).trip_type === 'destination'
   const destSlug = (trip as any).destination?.slug ?? null
