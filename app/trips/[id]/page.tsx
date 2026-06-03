@@ -637,7 +637,19 @@ export default function TripDetailPage() {
                               }}>
                                 {i + 1}
                               </div>
-                              <span style={{ fontSize: 36, lineHeight: 1 }}>{destInfo?.icon ?? '📍'}</span>
+                              {/* MLB event: show hosting team logo + small star overlay */}
+                              {stop.stadium_id && stadium ? (
+                                <div style={{ position: 'relative', flexShrink: 0 }}>
+                                  <TeamLogo abbreviation={stadium.abbreviation} size={44}
+                                    style={{ borderRadius: '50%', border: '2px solid rgba(245,166,35,0.4)', display: 'block' }} />
+                                  <span style={{
+                                    position: 'absolute', bottom: -2, right: -4,
+                                    fontSize: 14, lineHeight: 1,
+                                  }}>⭐</span>
+                                </div>
+                              ) : (
+                                <span style={{ fontSize: 36, lineHeight: 1 }}>{destInfo?.icon ?? '📍'}</span>
+                              )}
                             </div>
                             {(dest as any)?.is_mlb_event && (
                               <span style={{
