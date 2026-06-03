@@ -267,19 +267,16 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
               </div>
 
               {/* Status line */}
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 5, marginTop: 4 }}>
-                {g.isLive ? (
-                  <>
-                    <div className="animate-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: '#F85149', flexShrink: 0 }}/>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#3FB950', letterSpacing: '0.04em' }}>
-                      {g.inning ?? 'LIVE'}
-                    </span>
-                  </>
-                ) : g.isFinal ? (
-                  <span style={{ fontSize: 11, fontWeight: 600, color: '#484F58', letterSpacing: '0.08em' }}>FINAL</span>
-                ) : (
-                  <span style={{ fontSize: 11, fontWeight: 500, color: '#6E7681', letterSpacing: '0.02em' }}>
-                    First pitch {fmtTime(g.gameDate)}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, marginTop: 4 }}>
+                <StatusBadge isLive={g.isLive} isFinal={g.isFinal} />
+                {g.isLive && g.inning && (
+                  <span style={{ fontSize: 10, fontWeight: 600, color: '#3FB950', letterSpacing: '0.04em' }}>
+                    {g.inning}
+                  </span>
+                )}
+                {!g.isLive && !g.isFinal && (
+                  <span style={{ fontSize: 10, fontWeight: 500, color: '#6E7681' }}>
+                    {fmtTime(g.gameDate)}
                   </span>
                 )}
               </div>
