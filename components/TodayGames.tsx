@@ -277,11 +277,6 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
                     {g.inning}
                   </span>
                 )}
-                {!g.isLive && !g.isFinal && (
-                  <span style={{ fontSize: 10, fontWeight: 500, color: '#6E7681' }}>
-                    {fmtTime(g.gameDate)}
-                  </span>
-                )}
               </div>
             </div>
           )
