@@ -237,10 +237,11 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     ))
 
     try {
-      const now   = new Date()
-      const today = now.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
-      const year  = now.getFullYear()
-      const url   = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=${teamId}&gameType=R&startDate=${year}-03-01&endDate=${year}-09-30&hydrate=game(promotions)`
+      const now     = new Date()
+      const today   = now.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+      const year    = now.getFullYear()
+      const endDate = `${year + 2}-12-31`
+      const url     = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=${teamId}&gameType=R&startDate=${year}-03-01&endDate=${endDate}&hydrate=game(promotions)`
       const res   = await fetch(url)
       const json  = await res.json()
 
