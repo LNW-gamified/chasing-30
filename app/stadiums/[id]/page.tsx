@@ -16,6 +16,17 @@ import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy, Sh
 import TeamLogo from '@/components/TeamLogo'
 import { TEAM_BTN_COLOR, TEAM_GRADIENTS } from '@/lib/team-colors'
 
+const MLB_SCHEDULE_SLUG: Record<string, string> = {
+  ARI: 'diamondbacks', ATL: 'braves',      BAL: 'orioles',    BOS: 'red-sox',
+  CHC: 'cubs',         CWS: 'white-sox',   CIN: 'reds',       CLE: 'guardians',
+  COL: 'rockies',      DET: 'tigers',      HOU: 'astros',     KC:  'royals',
+  LAA: 'angels',       LAD: 'dodgers',     MIA: 'marlins',    MIL: 'brewers',
+  MIN: 'twins',        NYM: 'mets',        NYY: 'yankees',    OAK: 'athletics',
+  PHI: 'phillies',     PIT: 'pirates',     SD:  'padres',     SEA: 'mariners',
+  SF:  'giants',       STL: 'cardinals',   TB:  'rays',       TEX: 'rangers',
+  TOR: 'blue-jays',    WSH: 'nationals',
+}
+
 const GAME_EVENT_LABELS: Record<string, string> = {
   walk_off:            '🏠 Walk-off',
   extra_innings:       '⏰ Extra innings',
@@ -746,7 +757,7 @@ export default function StadiumDetailPage() {
                           )
                         })}
                         <a
-                          href={`https://www.mlb.com/schedule/${stadium.abbreviation.toLowerCase()}`}
+                          href={`https://www.mlb.com/${MLB_SCHEDULE_SLUG[stadium.abbreviation] ?? stadium.abbreviation.toLowerCase()}/schedule`}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
@@ -765,7 +776,7 @@ export default function StadiumDetailPage() {
                     <SectionTitle Icon={CalendarDays}>Upcoming Home Games</SectionTitle>
                     <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '24px 16px', textAlign: 'center', color: '#8B949E', fontSize: 14 }}>
                       No upcoming games found.{' '}
-                      <a href={`https://www.mlb.com/schedule/${stadium.abbreviation.toLowerCase()}`} target="_blank" rel="noopener noreferrer" style={{ color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
+                      <a href={`https://www.mlb.com/${MLB_SCHEDULE_SLUG[stadium.abbreviation] ?? stadium.abbreviation.toLowerCase()}/schedule`} target="_blank" rel="noopener noreferrer" style={{ color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
                         Check MLB.com →
                       </a>
                     </div>
@@ -1369,7 +1380,7 @@ export default function StadiumDetailPage() {
                       <span style={{ fontSize: 13, color: '#1F6FEB' }}>Open ↗</span>
                     </a>
                     <a
-                      href={`https://www.mlb.com/schedule/${stadium.abbreviation.toLowerCase()}`}
+                      href={`https://www.mlb.com/${MLB_SCHEDULE_SLUG[stadium.abbreviation] ?? stadium.abbreviation.toLowerCase()}/schedule`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{
