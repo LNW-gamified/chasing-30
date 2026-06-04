@@ -85,6 +85,7 @@ interface GameOption {
   opponentTeamId: number
   firstPitch: string
   promotions: string[]
+  apiPromoPhotos: Record<string, string>
   isPast: boolean
 }
 
@@ -239,7 +240,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       const now   = new Date()
       const today = now.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
       const year  = now.getFullYear()
-      const url   = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=${teamId}&gameType=R&startDate=${year}-03-01&endDate=${year}-09-30&hydrate=promotions`
+      const url   = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=${teamId}&gameType=R&startDate=${year}-03-01&endDate=${year}-09-30&hydrate=game(promotions)`
       const res   = await fetch(url)
       const json  = await res.json()
 
@@ -265,19 +266,23 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
             }) + ' ' + tzInfo.label
           }
 
-          const promotions: string[] = (game.promotions ?? [])
-            .map((p: { name: string }) => p.name)
-
-          if (game.promotions !== undefined) {
-            console.log('[Promos] raw game.promotions for', gameDate, opponent, '→', game.promotions)
+          const rawPromos: { name: string; thumbnailUrl?: string; imageUrl?: string }[] = game.promotions ?? []
+          const promotions: string[] = rawPromos.map(p => p.name)
+          // Pre-fill photos from the API's own thumbnail when available
+          const apiPromoPhotos: Record<string, string> = {}
+          for (const p of rawPromos) {
+            const img = p.thumbnailUrl && p.thumbnailUrl !== 'undefined' ? p.thumbnailUrl
+                      : p.imageUrl    && p.imageUrl    !== 'undefined' ? p.imageUrl
+                      : null
+            if (img) apiPromoPhotos[p.name] = img
           }
 
-          games.push({ gamePk: game.gamePk, gameDate, displayDate, opponent, opponentTeamId, firstPitch, promotions, isPast: gameDate < today })
+          games.push({ gamePk: game.gamePk, gameDate, displayDate, opponent, opponentTeamId, firstPitch, promotions, apiPromoPhotos, isPast: gameDate < today })
         }
       }
 
       const gamesWithPromos = games.filter(g => g.promotions.length > 0)
-      console.log(`[Promos] ${stadium.abbreviation}: ${gamesWithPromos.length}/${games.length} games have promotions`, gamesWithPromos.map(g => `${g.gameDate}: ${g.promotions.join(', ')}`))
+      console.log(`[Promos] ${stadium.abbreviation}: ${gamesWithPromos.length}/${games.length} games have promotions:`, gamesWithPromos.map(g => `${g.gameDate}: ${g.promotions.join(', ')}`))
 
       // Restore selectedPk when editing an existing stop
       let restoredPk = ''
@@ -298,7 +303,8 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
           setStops(prev => prev.map((s, i) => i !== stopIdx ? s : {
             ...s,
             promotions: matchedGame.promotions,
-            // promotion_photos preserved from DB — already loaded during initialization
+            // Merge: API thumbnails as baseline, any user-uploaded DB photos override
+            promotion_photos: { ...matchedGame.apiPromoPhotos, ...s.promotion_photos },
           }))
         }
       }
@@ -358,7 +364,8 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       opponent:         game?.opponent                   ?? '',
       opponent_team_id: game?.opponentTeamId?.toString() ?? '',
       promotions:       game?.promotions                 ?? [],
-      promotion_photos: {},
+      // Seed from API thumbnails; user-uploaded photos take precedence once added
+      promotion_photos: game?.apiPromoPhotos              ?? {},
     } : s))
   }
 
