@@ -268,9 +268,16 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
           const promotions: string[] = (game.promotions ?? [])
             .map((p: { name: string }) => p.name)
 
+          if (game.promotions !== undefined) {
+            console.log('[Promos] raw game.promotions for', gameDate, opponent, '→', game.promotions)
+          }
+
           games.push({ gamePk: game.gamePk, gameDate, displayDate, opponent, opponentTeamId, firstPitch, promotions, isPast: gameDate < today })
         }
       }
+
+      const gamesWithPromos = games.filter(g => g.promotions.length > 0)
+      console.log(`[Promos] ${stadium.abbreviation}: ${gamesWithPromos.length}/${games.length} games have promotions`, gamesWithPromos.map(g => `${g.gameDate}: ${g.promotions.join(', ')}`))
 
       // Restore selectedPk when editing an existing stop
       let restoredPk = ''
@@ -282,6 +289,19 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       setStopSchedules(prev => prev.map((ss, i) =>
         i === stopIdx ? { ...ss, loading: false, games, noGames: games.length === 0, selectedPk: restoredPk } : ss
       ))
+
+      // Fix: when restoring an existing game selection, sync promotions from live API data
+      // into stop state so the promo UI shows even if the DB value is stale/empty
+      if (restoredPk) {
+        const matchedGame = games.find(g => g.gamePk.toString() === restoredPk)
+        if (matchedGame) {
+          setStops(prev => prev.map((s, i) => i !== stopIdx ? s : {
+            ...s,
+            promotions: matchedGame.promotions,
+            // promotion_photos preserved from DB — already loaded during initialization
+          }))
+        }
+      }
     } catch {
       setStopSchedules(prev => prev.map((ss, i) =>
         i === stopIdx ? { ...ss, loading: false, noGames: true } : ss
