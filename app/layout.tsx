@@ -26,9 +26,9 @@ const RANK_TIERS = [
 ]
 
 function daysUntil(dateStr: string): number {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const target = new Date(dateStr + 'T00:00:00')
+  const todayLA = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+  const today   = new Date(todayLA + 'T00:00:00')
+  const target  = new Date(dateStr  + 'T00:00:00')
   return Math.max(0, Math.round((target.getTime() - today.getTime()) / 86400000))
 }
 
@@ -77,7 +77,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     )
   }
 
-  const today = new Date().toLocaleDateString('en-CA')
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
 
   const [{ data: trips }, { data: visits }] = await Promise.all([
     supabase.from('trips')
