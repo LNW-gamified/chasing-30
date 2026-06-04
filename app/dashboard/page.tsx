@@ -184,21 +184,6 @@ export default async function DashboardPage() {
     t.status === 'planned' && t.start_date && t.start_date >= todayISO
   ) as any | undefined
 
-  // Division progress — now includes team dots
-  const divProgress = [
-    { label: 'AL East',    league: 'AL', division: 'East'    },
-    { label: 'AL Central', league: 'AL', division: 'Central' },
-    { label: 'AL West',    league: 'AL', division: 'West'    },
-    { label: 'NL East',    league: 'NL', division: 'East'    },
-    { label: 'NL Central', league: 'NL', division: 'Central' },
-    { label: 'NL West',    league: 'NL', division: 'West'    },
-  ].map(({ label, league, division }) => {
-    const group = allStadiums.filter(s => s.league === league && s.division === division)
-    const teams = group.map(s => ({ abbr: s.abbreviation, visited: visitedIds.has(s.id) }))
-    const vis   = teams.filter(t => t.visited).length
-    return { label, total: group.length, vis, teams }
-  })
-
   // Stats
   const favAbbr            = (userSettings as any)?.favorite_team_abbr ?? null
   const gamesAttended      = allVisits.length
@@ -524,46 +509,6 @@ export default async function DashboardPage() {
                 </div>
                 <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 'auto' }}>
                   {label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── The Circuit — division progress ──────────────────────────── */}
-        <div style={{ marginBottom: SECTION_GAP }}>
-          <SectionHeader label="The Circuit" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {divProgress.map(({ label, vis, total }) => (
-              <div
-                key={label}
-                className="dash-card"
-                style={{ ...card, padding: '18px 20px', background: '#1a2744' }}
-              >
-                {/* Label + fraction */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <span style={{ fontSize: 18, fontWeight: 700, color: '#ffffff' }}>{label}</span>
-                  <span style={{
-                    fontSize: 14, fontWeight: 800, color: '#F5A623',
-                    fontVariantNumeric: 'tabular-nums',
-                  }}>
-                    {vis}<span style={{ color: '#484F58', fontWeight: 500 }}>/{total}</span>
-                  </span>
-                </div>
-
-                {/* Progress bar */}
-                <div style={{ height: 8, background: '#1C2430', borderRadius: 6, overflow: 'hidden', border: '1px solid #21262D' }}>
-                  <div style={{
-                    width: `${(vis / total) * 100}%`,
-                    height: '100%',
-                    background: vis === total
-                      ? 'linear-gradient(90deg, #3FB950, #58D68D)'
-                      : 'linear-gradient(90deg, #1F6FEB, #3A8EFF)',
-                    borderRadius: 6,
-                    transition: 'width 0.6s ease',
-                    minWidth: vis > 0 ? 8 : 0,
-                    boxShadow: vis > 0 ? '0 0 8px rgba(31,111,235,0.35)' : 'none',
-                  }}/>
                 </div>
               </div>
             ))}

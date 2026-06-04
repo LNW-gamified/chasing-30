@@ -42,6 +42,7 @@ export default function Navigation() {
           backdropFilter: 'blur(12px)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           display: 'flex',
+          minHeight: 68,
         }}
       >
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
@@ -53,12 +54,13 @@ export default function Navigation() {
               style={{
                 flex: 1, display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
-                padding: '12px 0', gap: 4, textDecoration: 'none',
-                color: active ? '#1F6FEB' : '#8B949E',
+                minHeight: 68, paddingTop: 8, paddingBottom: 4, gap: 4,
+                textDecoration: 'none',
+                color: active ? '#1F6FEB' : 'rgba(255,255,255,0.65)',
               }}
             >
-              <Icon size={27} strokeWidth={active ? 2.5 : 1.8} />
-              <span style={{ fontSize: '0.6rem', fontWeight: active ? 700 : 400, lineHeight: 1 }}>{label}</span>
+              <Icon size={active ? 30 : 26} strokeWidth={active ? 2.5 : 1.8} />
+              <span style={{ fontSize: 11, fontWeight: active ? 700 : 400, lineHeight: 1 }}>{label}</span>
             </Link>
           )
         })}
