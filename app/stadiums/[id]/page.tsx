@@ -1223,7 +1223,7 @@ export default function StadiumDetailPage() {
                           padding: '10px 14px', textAlign: 'center', minWidth: 72,
                         }}>
                           <div style={{ fontSize: 24, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{rn.number}</div>
-                          <div style={{ fontSize: 11, color: '#8B949E', marginTop: 4, lineHeight: 1.3 }}>{rn.player_name}</div>
+                          <div style={{ fontSize: 11, color: '#F5A623', marginTop: 4, lineHeight: 1.3 }}>{rn.player_name}</div>
                           <div style={{ fontSize: 10, color: '#6E7681', marginTop: 2 }}>{rn.year_retired}</div>
                         </div>
                       ))}
