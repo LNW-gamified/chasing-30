@@ -172,7 +172,8 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
               key={g.gamePk}
               style={{
                 minWidth: 210, flexShrink: 0, scrollSnapAlign: 'start',
-                borderRadius: 14, padding: '16px 18px 14px',
+                borderRadius: 14, padding: '16px 18px 18px',
+                minHeight: 140,
                 border: g.isFavorite ? '2px solid #1F6FEB' : '1px solid #21262D',
                 boxShadow: g.isFavorite ? '0 4px 20px rgba(31,111,235,0.25)' : '0 4px 16px rgba(0,0,0,0.4)',
                 position: 'relative', overflow: 'hidden',
@@ -225,7 +226,8 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
             <div
               key={g.gamePk}
               style={{
-                borderRadius: 10, padding: '8px 10px 7px',
+                borderRadius: 10, padding: '8px 10px 14px',
+                minHeight: 110,
                 border: g.isFavorite ? '1.5px solid #1F6FEB' : '1px solid #21262D',
                 position: 'relative', overflow: 'hidden',
                 background: `linear-gradient(135deg, ${homeColor}22 0%, #1C2430 65%)`,
