@@ -1014,6 +1014,26 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
               })}
             </div>
 
+            {/* Bottom add-stop buttons — mirrors the top controls */}
+            <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+              <button type="button" onClick={() => addStop('stadium')} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '6px 12px', borderRadius: 8,
+                border: '1px solid #30363D', backgroundColor: '#1C2430',
+                color: '#8B949E', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              }}>
+                <Plus size={12} /> Stadium Stop
+              </button>
+              <button type="button" onClick={() => addStop('destination')} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '6px 12px', borderRadius: 8,
+                border: '1px solid #30363D', backgroundColor: '#1C2430',
+                color: '#8B949E', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              }}>
+                <Plus size={12} /> Destination Stop
+              </button>
+            </div>
+
             {/* ═══ TRIP COSTS ══════════════════════════════════════ */}
             <SectionHeader icon={<DollarSign size={15} />} label="Trip Costs" />
 
