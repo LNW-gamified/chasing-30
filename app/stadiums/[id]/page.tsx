@@ -746,7 +746,7 @@ export default function StadiumDetailPage() {
                           )
                         })}
                         <a
-                          href="https://www.mlb.com/schedule"
+                          href={`https://www.mlb.com/schedule/${stadium.abbreviation.toLowerCase()}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
@@ -765,7 +765,7 @@ export default function StadiumDetailPage() {
                     <SectionTitle Icon={CalendarDays}>Upcoming Home Games</SectionTitle>
                     <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '24px 16px', textAlign: 'center', color: '#8B949E', fontSize: 14 }}>
                       No upcoming games found.{' '}
-                      <a href="https://www.mlb.com/schedule" target="_blank" rel="noopener noreferrer" style={{ color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
+                      <a href={`https://www.mlb.com/schedule/${stadium.abbreviation.toLowerCase()}`} target="_blank" rel="noopener noreferrer" style={{ color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
                         Check MLB.com →
                       </a>
                     </div>
