@@ -483,7 +483,7 @@ export default function StadiumDetailPage() {
                   onClick={openAdd}
                   style={{
                     width: '100%', padding: '11px', borderRadius: 12, fontSize: 14, fontWeight: 700,
-                    backgroundColor: 'transparent', color: teamColor,
+                    backgroundColor: 'transparent', color: '#F5A623',
                     border: `1.5px solid ${teamColor}`,
                     cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
@@ -570,7 +570,7 @@ export default function StadiumDetailPage() {
                       onClick={openAdd}
                       style={{
                         padding: '11px 24px', borderRadius: 10, fontSize: 14, fontWeight: 700,
-                        backgroundColor: 'transparent', color: teamColor, border: `1.5px solid ${teamColor}`, cursor: 'pointer',
+                        backgroundColor: 'transparent', color: '#F5A623', border: `1.5px solid ${teamColor}`, cursor: 'pointer',
                         display: 'inline-flex', alignItems: 'center', gap: 6,
                       }}
                     >
