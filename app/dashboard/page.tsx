@@ -84,9 +84,9 @@ function fmtDate(d: string | null | undefined): string {
 }
 
 function daysUntil(dateStr: string): number {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const target = new Date(dateStr + 'T00:00:00')
+  const todayLA  = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+  const today    = new Date(todayLA + 'T00:00:00')
+  const target   = new Date(dateStr  + 'T00:00:00')
   return Math.max(0, Math.round((target.getTime() - today.getTime()) / 86400000))
 }
 
@@ -113,10 +113,10 @@ function SectionHeader({ label, right }: { label: string; right?: React.ReactNod
 export default async function DashboardPage() {
   const supabase = await createClient()
 
-  const todayDate  = new Date()
-  const todayMonth = todayDate.getMonth() + 1
-  const todayDay   = todayDate.getDate()
-  const todayISO   = todayDate.toLocaleDateString('en-CA')
+  const todayISO   = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+  const [, todayMonthStr, todayDayStr] = todayISO.split('-')
+  const todayMonth = parseInt(todayMonthStr, 10)
+  const todayDay   = parseInt(todayDayStr,   10)
 
   const [
     { data: stadiums },
