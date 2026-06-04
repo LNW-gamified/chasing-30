@@ -106,6 +106,8 @@ export default function StadiumDetailPage() {
   const [weather, setWeather]                   = useState<StadiumWeather[] | null>(null)
   const [weatherLoading, setWeatherLoading]     = useState(false)
   const [tripMonths, setTripMonths]             = useState<Set<number>>(new Set())
+  const [visitPromos, setVisitPromos]           = useState<Record<string, { promotions: string[]; promotion_photos: Record<string, string> }>>({})
+
   const [unlockedMilestones, setUnlockedMilestones] = useState<{ name: string; icon: string }[]>([])
   const prevEarnedIdsRef = useRef<Set<string>>(new Set())
 
@@ -129,6 +131,28 @@ export default function StadiumDetailPage() {
     ])
     setStadium(s)
     setVisits(v ?? [])
+
+    // Fetch promo data for visits that came from a trip stop
+    const tripIds = (v ?? []).map((vis: any) => vis.trip_id).filter(Boolean) as string[]
+    if (tripIds.length > 0) {
+      const { data: promoStops } = await supabase
+        .from('trip_stops')
+        .select('trip_id, promotions, promotion_photos')
+        .in('trip_id', tripIds)
+        .eq('stadium_id', id)
+        .not('promotions', 'is', null)
+      if (promoStops && promoStops.length > 0) {
+        const map: Record<string, { promotions: string[]; promotion_photos: Record<string, string> }> = {}
+        for (const ps of promoStops) {
+          const visit = (v ?? []).find((vis: any) => vis.trip_id === ps.trip_id)
+          if (visit) map[(visit as any).id] = {
+            promotions: ps.promotions ?? [],
+            promotion_photos: (ps.promotion_photos ?? {}) as Record<string, string>,
+          }
+        }
+        setVisitPromos(map)
+      }
+    }
     const note = (n as StadiumNote | null)?.notes ?? ''
     setStadiumNote(note)
     setNoteInput(note)
@@ -632,16 +656,47 @@ export default function StadiumDetailPage() {
                     {expandedVisit && (() => {
                       const visit = visits.find(v => v.id === expandedVisit)
                       if (!visit) return null
+                      const promos = visitPromos[visit.id]
                       return (
-                        <BoxScore
-                          visit={visit}
-                          stadium={stadium}
-                          firstTimeMoments={firstTimeMoments}
-                          fetchingStats={fetchingStats === visit.id}
-                          statsError={statsError[visit.id] ?? null}
-                          onEdit={() => openEdit(visit)}
-                          onDelete={() => { deleteVisit(visit.id) }}
-                        />
+                        <>
+                          <BoxScore
+                            visit={visit}
+                            stadium={stadium}
+                            firstTimeMoments={firstTimeMoments}
+                            fetchingStats={fetchingStats === visit.id}
+                            statsError={statsError[visit.id] ?? null}
+                            onEdit={() => openEdit(visit)}
+                            onDelete={() => { deleteVisit(visit.id) }}
+                          />
+                          {promos && promos.promotions.length > 0 && (
+                            <div style={{
+                              margin: '8px 0 0', padding: '14px 16px',
+                              backgroundColor: 'rgba(245,166,35,0.05)',
+                              border: '1px solid rgba(245,166,35,0.2)',
+                              borderRadius: 12,
+                            }}>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                                Promotions
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                {promos.promotions.map(name => {
+                                  const photoUrl = promos.promotion_photos[name] ?? null
+                                  return (
+                                    <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                      <span style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, flex: 1, minWidth: 0 }}>🎁 {name}</span>
+                                      {photoUrl && (
+                                        /* eslint-disable-next-line @next/next/no-img-element */
+                                        <img src={photoUrl} alt={name}
+                                          style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', display: 'block', cursor: 'pointer', flexShrink: 0 }}
+                                          onClick={() => window.open(photoUrl, '_blank')} />
+                                      )}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </>
                       )
                     })()}
                   </>

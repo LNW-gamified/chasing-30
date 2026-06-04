@@ -104,6 +104,8 @@ export interface TripStop {
   ticket_row: string | null
   ticket_seats: string[] | null
   ticket_confirmation: string | null
+  promotions: string[] | null
+  promotion_photos: Record<string, string> | null
   created_at: string
   stadium?: Stadium
   destination?: Destination

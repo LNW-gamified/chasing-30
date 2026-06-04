@@ -9,7 +9,7 @@ import { getTeamLogoUrlById, getTeamAbbrById } from '@/lib/team-logos'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip, TripStop, StopChecklistItem } from '@/types'
 import Link from 'next/link'
-import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink, MoreHorizontal, FileText, Ticket, Utensils, Car, Plane, BedDouble } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink, MoreHorizontal, FileText, Ticket, Utensils, Car, Plane, BedDouble, Camera, Loader2 } from 'lucide-react'
 import StopChecklist from '@/components/StopChecklist'
 import { DESTINATION_BY_SLUG, destinationLocation, EXPERIENCE_TYPES } from '@/lib/destinations'
 import { fetchForecastWeather, fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
@@ -39,6 +39,7 @@ export default function TripDetailPage() {
   const [totalDrivingMiles, setTotalDrivingMiles] = useState<number | null>(null)
   const [segmentMiles, setSegmentMiles]           = useState<number[]>([])
   const [loadingMiles, setLoadingMiles]           = useState(false)
+  const [promoUploading, setPromoUploading]       = useState<Record<string, boolean>>({})
 
   async function load() {
     const supabase = createClient()
@@ -48,7 +49,7 @@ export default function TripDetailPage() {
       supabase.from('trip_stops').select(
         'id, trip_id, stop_type, stadium_id, destination_id, sort_order, game_date, game_time, opponent, opponent_team_id, ' +
         'experience_type, est_tickets, est_food, est_parking, actual_tickets, actual_food, actual_parking, notes, ' +
-        'ticket_section, ticket_row, ticket_seats, ticket_confirmation, created_at, ' +
+        'ticket_section, ticket_row, ticket_seats, ticket_confirmation, promotions, promotion_photos, created_at, ' +
         'stadium:stadiums(*), destination:destinations(*)'
       ).eq('trip_id', id).order('sort_order'),
       supabase.from('stadium_visits').select('stadium_id'),
@@ -98,6 +99,38 @@ export default function TripDetailPage() {
       .from('stop_checklist').select('*')
       .in('stop_id', stops.map(s => s.id)).order('created_at')
     setChecklistItems((cl as StopChecklistItem[]) ?? [])
+  }
+
+  async function uploadPromoPhotoForStop(stopId: string, promoName: string, file: File) {
+    const key = `${stopId}:${promoName}`
+    setPromoUploading(prev => ({ ...prev, [key]: true }))
+    try {
+      const supabase = createClient()
+      const ext  = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { error } = await supabase.storage.from('promo-photos').upload(path, file)
+      if (error) return
+      const { data: { publicUrl } } = supabase.storage.from('promo-photos').getPublicUrl(path)
+      const stop = stops.find(s => s.id === stopId)
+      const newPhotos = { ...(stop?.promotion_photos ?? {}), [promoName]: publicUrl }
+      await supabase.from('trip_stops').update({ promotion_photos: newPhotos }).eq('id', stopId)
+      setStops(prev => prev.map(s => s.id !== stopId ? s : { ...s, promotion_photos: newPhotos }))
+    } finally {
+      setPromoUploading(prev => { const n = { ...prev }; delete n[key]; return n })
+    }
+  }
+
+  async function removePromoPhotoForStop(stopId: string, promoName: string) {
+    const stop = stops.find(s => s.id === stopId)
+    const url  = stop?.promotion_photos?.[promoName]
+    if (url) {
+      const match = url.match(/\/promo-photos\/(.+)$/)
+      if (match?.[1]) createClient().storage.from('promo-photos').remove([match[1]])
+    }
+    const newPhotos = { ...(stop?.promotion_photos ?? {}) }
+    delete newPhotos[promoName]
+    await createClient().from('trip_stops').update({ promotion_photos: Object.keys(newPhotos).length > 0 ? newPhotos : null }).eq('id', stopId)
+    setStops(prev => prev.map(s => s.id !== stopId ? s : { ...s, promotion_photos: Object.keys(newPhotos).length > 0 ? newPhotos : null }))
   }
 
   useEffect(() => { load() }, [id])
@@ -917,10 +950,55 @@ export default function TripDetailPage() {
                               <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4 }}>
                                 Conf: {stop.ticket_confirmation}
                               </div>
+
                             )}
                           </div>
                         )}
                       </div>
+
+                      {/* Promotions */}
+                      {stop.promotions && stop.promotions.length > 0 && (
+                        <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(245,166,35,0.15)', backgroundColor: 'rgba(245,166,35,0.04)' }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                            Promotions
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {stop.promotions.map(promoName => {
+                              const photoUrl = stop.promotion_photos?.[promoName] ?? null
+                              const uploading = promoUploading[`${stop.id}:${promoName}`]
+                              return (
+                                <div key={promoName} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                                  <span style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, flex: 1, minWidth: 0 }}>🎁 {promoName}</span>
+                                  {photoUrl ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img src={photoUrl} alt={promoName} style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', display: 'block', cursor: 'pointer' }}
+                                        onClick={() => window.open(photoUrl, '_blank')} />
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                        <button onClick={() => removePromoPhotoForStop(stop.id, promoName)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#F85149', padding: 0, display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600 }}>
+                                          <X size={12} /> Remove
+                                        </button>
+                                        <label style={{ cursor: 'pointer', fontSize: 11, color: '#8B949E', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
+                                          <Camera size={11} /> Replace
+                                          <input type="file" accept="image/*" style={{ display: 'none' }}
+                                            onChange={e => { const f = e.target.files?.[0]; if (f) uploadPromoPhotoForStop(stop.id, promoName, f) }} />
+                                        </label>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#8B949E', padding: '5px 10px', borderRadius: 6, border: '1px dashed rgba(245,166,35,0.35)', backgroundColor: 'rgba(245,166,35,0.04)', flexShrink: 0 }}>
+                                      {uploading ? <Loader2 size={11} className="animate-spin" /> : <Camera size={11} />}
+                                      {uploading ? 'Uploading…' : 'Add Photo →'}
+                                      <input type="file" accept="image/*" style={{ display: 'none' }}
+                                        onChange={e => { const f = e.target.files?.[0]; if (f) uploadPromoPhotoForStop(stop.id, promoName, f) }} />
+                                    </label>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Budget strip */}
                       {hasBudget ? (
