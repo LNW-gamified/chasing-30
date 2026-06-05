@@ -22,16 +22,19 @@ interface NextGameInfo { date: string; opponentAbbr: string }
 interface BaseballEvent {
   id: string; name: string; slug: string; category: string
   description: string | null; is_annual: boolean; sort_order: number
+  image_url: string | null
 }
 interface BaseballExperience {
   id: string; name: string; slug: string; city: string; state: string | null
   country: string; description: string | null; highlights: string[] | null
   admission: string | null; website_url: string | null; sort_order: number
+  image_url: string | null
 }
 interface MinorLeagueStadium {
   id: string; name: string; team: string; abbreviation: string
   city: string; state: string; level: string; affiliate: string
   affiliate_full: string; description: string | null; milb_team_id: number | null
+  image_url: string | null
 }
 interface BleEntry { id: string; category: string; event_type: string | null; venue: string | null; minor_league_stadium_id: string | null }
 
@@ -68,6 +71,16 @@ const EVENT_META: Record<string, { emoji: string; color: string; label: string }
   world_series:   { emoji: '🏆', color: '#C41E3A', label: 'World Series'   },
   field_of_dreams:{ emoji: '🌽', color: '#3FB950', label: 'Field of Dreams'},
   spring_training:{ emoji: '🌞', color: '#1F6FEB', label: 'Spring Training'},
+}
+
+// Gradient base colors for event card backgrounds (distinct from badge accent colors)
+const EVENT_GRADIENT: Record<string, string> = {
+  world_series:    '#B8960C',  // gold
+  all_star:        '#1A5FA8',  // blue
+  home_run_derby:  '#C46A00',  // amber
+  playoffs:        '#CC1122',  // red
+  field_of_dreams: '#2A7A2A',  // green
+  spring_training: '#1A8FE3',  // blue
 }
 
 // ─── "Attended" matching: event slug → keywords in ble.event_type ─────────────
@@ -168,11 +181,19 @@ function EventCard({ event, attendedCount, onLog }: {
 }) {
   const meta = EVENT_META[event.category] ?? { emoji: '🏆', color: '#F5A623', label: event.category }
   const attended = attendedCount > 0
+  const gradColor = EVENT_GRADIENT[event.category] ?? meta.color
   return (
     <div className="stadium-card" style={{ backgroundColor: '#111827', border: attended ? '1px solid rgba(63,185,80,0.4)' : '1px solid #21262D', borderTop: `3px solid ${meta.color}`, borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s' }}>
-      <div style={{ height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${hexToRgba(meta.color, 0.25)} 0%, ${hexToRgba(meta.color, 0.08)} 100%)`, position: 'relative' }}>
-        <span style={{ fontSize: 48 }}>{meta.emoji}</span>
-        {attended && <div style={{ position: 'absolute', top: 8, right: 8, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
+      <div style={{ height: 100, position: 'relative', overflow: 'hidden' }}>
+        {event.image_url
+          ? <img src={event.image_url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} />
+          : <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${hexToRgba(gradColor, 0.35)} 0%, ${hexToRgba(gradColor, 0.12)} 100%)` }} />
+        }
+        {event.image_url && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)' }} />}
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+          <span style={{ fontSize: 48 }}>{meta.emoji}</span>
+        </div>
+        {attended && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
       </div>
       <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 4 }}>
         <span style={{ fontSize: 10, fontWeight: 700, color: meta.color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{meta.label}</span>
@@ -207,9 +228,23 @@ function ExperienceCard({ exp, visited, onLog }: {
   const loc = [exp.city, exp.state ?? exp.country].filter(Boolean).join(', ')
   return (
     <div className="stadium-card" style={{ backgroundColor: '#111827', border: visited ? '1px solid rgba(63,185,80,0.4)' : '1px solid #21262D', borderTop: '3px solid #8B949E', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s' }}>
-      <div style={{ height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(139,148,158,0.15) 0%, rgba(139,148,158,0.05) 100%)', position: 'relative' }}>
-        <span style={{ fontSize: 44 }}>🏛️</span>
-        {visited && <div style={{ position: 'absolute', top: 8, right: 8, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
+      <div style={{ height: 100, position: 'relative', overflow: 'hidden' }}>
+        {exp.image_url
+          ? <>
+              <img src={exp.image_url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55 }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)' }} />
+            </>
+          : <>
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #0A1628 0%, #1B2F4E 100%)' }} />
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 60, height: 60, border: '2px solid rgba(255,255,255,0.15)', transform: 'rotate(45deg)', borderRadius: 2 }} />
+              </div>
+            </>
+        }
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+          <span style={{ fontSize: 44 }}>🏛️</span>
+        </div>
+        {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
       </div>
       <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 4 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -247,9 +282,16 @@ function MinorLeagueCard({ stadium, visitCount }: {
   return (
     <Link href={`/minor-league/${stadium.id}`} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
       <div className="stadium-card" style={{ backgroundColor: '#111827', border: visited ? '1px solid rgba(63,185,80,0.4)' : '1px solid #21262D', borderTop: `3px solid ${affiliateAccent}`, borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer', opacity: visited ? 1 : 0.82, transition: 'transform 0.15s, box-shadow 0.15s' }}>
-        <div style={{ height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${hexToRgba(affiliateAccent, 0.2)} 0%, ${hexToRgba(affiliateAccent, 0.06)} 100%)`, position: 'relative', flexDirection: 'column', gap: 6 }}>
-          <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={48} />
-          {visited && <div style={{ position: 'absolute', top: 8, right: 8, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
+        <div style={{ height: 100, position: 'relative', overflow: 'hidden' }}>
+          {stadium.image_url
+            ? <img src={stadium.image_url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55 }} />
+            : <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${hexToRgba(affiliateAccent, 0.2)} 0%, ${hexToRgba(affiliateAccent, 0.06)} 100%)` }} />
+          }
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)' }} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+            <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={48} />
+          </div>
+          {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
         </div>
         <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 3 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2 }}>{stadium.team}</div>
@@ -341,7 +383,7 @@ export default function StadiumsPage() {
       fetch('/api/next-games').then(r => r.ok ? r.json() : {}),
       supabase.from('baseball_events').select('*').order('sort_order'),
       supabase.from('baseball_experiences').select('*').order('sort_order'),
-      supabase.from('minor_league_stadiums').select('id,name,team,abbreviation,city,state,level,affiliate,affiliate_full,description,milb_team_id').order('name'),
+      supabase.from('minor_league_stadiums').select('id,name,team,abbreviation,city,state,level,affiliate,affiliate_full,description,milb_team_id,image_url').order('name'),
       supabase.from('baseball_life_entries').select('id,category,event_type,venue,minor_league_stadium_id'),
     ]).then(([{ data: s }, { data: v }, games, { data: ev }, { data: ex }, { data: mls }, { data: ble }]) => {
       setStadiums(s ?? [])

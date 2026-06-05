@@ -83,6 +83,7 @@ interface Props {
   onSaved: () => void
   defaultCategory?: BaseballLifeCategory
   defaultEventType?: string
+  defaultMinorLeagueStadiumId?: string
 }
 
 // ── Input style ───────────────────────────────────────────────────────────────
@@ -115,7 +116,7 @@ function SelectWrap({ children }: { children: React.ReactNode }) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, defaultEventType }: Props) {
+export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, defaultEventType, defaultMinorLeagueStadiumId }: Props) {
   type Step = 'category' | 'location' | 'game_details' | 'notes' | 'success'
   const [step, setStep] = useState<Step>(defaultCategory ? 'location' : 'category')
   const [category, setCategory] = useState<BaseballLifeCategory | null>(defaultCategory ?? null)
@@ -125,7 +126,7 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
   // Location step state
   const [minorLeagueStadiums, setMinorLeagueStadiums] = useState<MinorLeagueStadium[]>([])
   const [mlbStadiums, setMlbStadiums] = useState<MlbStadium[]>([])
-  const [selectedMlsId, setSelectedMlsId] = useState<string>('')   // minor_league_stadium_id
+  const [selectedMlsId, setSelectedMlsId] = useState<string>(defaultMinorLeagueStadiumId ?? '')   // minor_league_stadium_id
   const [useCustomVenue, setUseCustomVenue] = useState(false)
   const [venue, setVenue] = useState('')
   const [city, setCity] = useState('')

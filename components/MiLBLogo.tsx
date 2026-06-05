@@ -20,7 +20,7 @@ export default function MiLBLogo({ milbTeamId, fallbackAbbr, size = 48, style }:
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={`https://www.milb.com/assets/images/teams/primary/light/${milbTeamId}.svg`}
+      src={`https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/teams/logos/${milbTeamId}/team/${milbTeamId}_primary_logo.svg`}
       alt=""
       width={size}
       height={size}
