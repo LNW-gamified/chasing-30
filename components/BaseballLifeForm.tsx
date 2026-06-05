@@ -81,6 +81,8 @@ interface MlbStadium {
 interface Props {
   onClose: () => void
   onSaved: () => void
+  defaultCategory?: BaseballLifeCategory
+  defaultEventType?: string
 }
 
 // ── Input style ───────────────────────────────────────────────────────────────
@@ -113,10 +115,10 @@ function SelectWrap({ children }: { children: React.ReactNode }) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function BaseballLifeForm({ onClose, onSaved }: Props) {
+export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, defaultEventType }: Props) {
   type Step = 'category' | 'location' | 'game_details' | 'notes' | 'success'
-  const [step, setStep] = useState<Step>('category')
-  const [category, setCategory] = useState<BaseballLifeCategory | null>(null)
+  const [step, setStep] = useState<Step>(defaultCategory ? 'location' : 'category')
+  const [category, setCategory] = useState<BaseballLifeCategory | null>(defaultCategory ?? null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -129,10 +131,11 @@ export default function BaseballLifeForm({ onClose, onSaved }: Props) {
   const [city, setCity] = useState('')
   const [state, setState] = useState('')
   const [visitDate, setVisitDate] = useState('')
-  const [eventType, setEventType] = useState('')
+  const [eventType, setEventType] = useState(defaultEventType ?? '')
   const [selectedMlbStadiumId, setSelectedMlbStadiumId] = useState<string>('')
   const [countAsChase30, setCountAsChase30] = useState(false)
   const [springTeam, setSpringTeam] = useState('')
+  // Pre-fill event type from prop
   const [pilgrimageVenue, setPilgrimageVenue] = useState('')
   const [customPilgrimageVenue, setCustomPilgrimageVenue] = useState('')
 
@@ -309,7 +312,7 @@ export default function BaseballLifeForm({ onClose, onSaved }: Props) {
     if (step === 'location') {
       return (
         <>
-          <button onClick={() => setStep('category')} style={{ fontSize: 13, color: '#8B949E', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 20 }}>← Back</button>
+          {!defaultCategory && <button onClick={() => setStep('category')} style={{ fontSize: 13, color: '#8B949E', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 20 }}>← Back</button>}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
