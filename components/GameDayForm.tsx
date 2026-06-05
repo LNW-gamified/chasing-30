@@ -117,6 +117,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
   const [gamesLoading, setGamesLoading] = useState(!visit)
   const [selectedGame, setSelectedGame] = useState<SeasonGame | null>(null)
   const [enterManually, setEnterManually] = useState(!!visit)
+  const [duplicateWarning, setDuplicateWarning] = useState(false)
 
   const tz      = STADIUM_TZ[stadium.abbreviation] ?? 'America/Los_Angeles'
   const tzLabel = TZ_LABEL[tz] ?? 'PT'
@@ -196,6 +197,19 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
     if (form.visit_date) fetchWeather(form.visit_date)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.visit_date])
+
+  useEffect(() => {
+    if (!form.visit_date) { setDuplicateWarning(false); return }
+    const supabase = createClient()
+    supabase.from('stadium_visits')
+      .select('id')
+      .eq('stadium_id', stadium.id)
+      .eq('visit_date', form.visit_date)
+      .then(({ data }) => {
+        const others = (data ?? []).filter(r => r.id !== visit?.id)
+        setDuplicateWarning(others.length > 0)
+      })
+  }, [form.visit_date, stadium.id, visit?.id])
 
   function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -483,6 +497,12 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
           )}
 
           {sectionHead('Game Info')}
+          {duplicateWarning && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, backgroundColor: 'rgba(245,166,35,0.1)', border: '1px solid rgba(245,166,35,0.4)', marginBottom: 12 }}>
+              <span style={{ fontSize: 16 }}>⚠️</span>
+              <span style={{ fontSize: 13, color: '#F5A623', fontWeight: 600 }}>You already have a game logged at this stadium on this date.</span>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             {field(
               'Date',

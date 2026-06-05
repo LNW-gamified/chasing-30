@@ -1,4 +1,4 @@
-import type { Milestone, StadiumVisit, Stadium, SpecialEvent, SpecialVisit, DestinationVisit } from '@/types'
+import type { Milestone, StadiumVisit, Stadium, SpecialEvent, BaseballLifeEntry, DestinationVisit } from '@/types'
 
 function visitedIds(visits: StadiumVisit[]): Set<string> {
   return new Set(visits.map((v) => v.stadium_id))
@@ -196,17 +196,19 @@ export const MILESTONES: Milestone[] = [
     name: 'Beyond the Diamond',
     description: 'Log your first special baseball experience',
     icon: '🌟',
-    check: (_v, _s, events, specialVisits) =>
-      (events ?? []).length >= 1 || (specialVisits ?? []).length >= 1,
+    check: (_v, _s, events, ble) =>
+      (events ?? []).length >= 1 || (ble ?? []).length >= 1,
   },
   {
     id: 'world_series_attendance',
     name: 'World Series Witness',
     description: 'Attend a World Series game',
     icon: '🏆',
-    check: (_v, _s, events, specialVisits, destinationVisits) =>
+    check: (_v, _s, events, ble, destinationVisits) =>
       (events ?? []).some((e: SpecialEvent) => e.event_type === 'world_series') ||
-      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'world_series') ||
+      (ble ?? []).some((e: BaseballLifeEntry) =>
+        e.category === 'mlb_special_event' && e.event_type?.toLowerCase().includes('world series')
+      ) ||
       (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'world_series'),
   },
   {
@@ -214,9 +216,14 @@ export const MILESTONES: Milestone[] = [
     name: 'Midsummer Classic',
     description: 'Attend the MLB All-Star Game',
     icon: '⭐',
-    check: (_v, _s, events, specialVisits, destinationVisits) =>
+    check: (_v, _s, events, ble, destinationVisits) =>
       (events ?? []).some((e: SpecialEvent) => e.event_type === 'all_star_game') ||
-      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'all_star') ||
+      (ble ?? []).some((e: BaseballLifeEntry) =>
+        e.category === 'mlb_special_event' && (
+          e.event_type?.toLowerCase().includes('all-star') ||
+          e.event_type?.toLowerCase().includes('all star')
+        )
+      ) ||
       (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'all_star_game'),
   },
   {
@@ -224,9 +231,13 @@ export const MILESTONES: Milestone[] = [
     name: 'October Baseball',
     description: 'Attend any MLB postseason game',
     icon: '🍂',
-    check: (_v, _s, events, specialVisits, destinationVisits) =>
+    check: (_v, _s, events, ble, destinationVisits) =>
       (events ?? []).some((e: SpecialEvent) => e.event_type === 'postseason') ||
-      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'playoff') ||
+      (ble ?? []).some((e: BaseballLifeEntry) =>
+        e.category === 'mlb_special_event' && ['Wild Card', 'ALDS', 'NLDS', 'ALCS', 'NLCS', 'Playoff', 'World Series'].some(
+          t => e.event_type?.includes(t)
+        )
+      ) ||
       (destinationVisits ?? []).some((dv: DestinationVisit) =>
         ['wild_card_game', 'division_series', 'championship_series', 'world_series'].includes((dv.destination as any)?.slug)
       ),
@@ -236,27 +247,30 @@ export const MILESTONES: Milestone[] = [
     name: 'Spring Awakening',
     description: 'Attend a spring training game',
     icon: '🌸',
-    check: (_v, _s, events, specialVisits) =>
+    check: (_v, _s, events, ble) =>
       (events ?? []).some((e: SpecialEvent) => e.event_type === 'spring_training') ||
-      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'spring_training'),
+      (ble ?? []).some((e: BaseballLifeEntry) => e.category === 'spring_training'),
   },
   {
     id: 'minor_league_attendance',
     name: 'Minor League Maven',
     description: 'Attend a minor league game',
     icon: '🌱',
-    check: (_v, _s, events, specialVisits) =>
+    check: (_v, _s, events, ble) =>
       (events ?? []).some((e: SpecialEvent) => e.event_type === 'minor_league') ||
-      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'minor_league'),
+      (ble ?? []).some((e: BaseballLifeEntry) => e.category === 'minor_league'),
   },
   {
     id: 'hall_of_fame_visit',
     name: 'Cooperstown Pilgrim',
     description: 'Visit the National Baseball Hall of Fame',
     icon: '🏛️',
-    check: (_v, _s, events, _sv, destinationVisits) =>
+    check: (_v, _s, events, ble, destinationVisits) =>
       (events ?? []).some((e: SpecialEvent) =>
         e.event_type === 'historic_ballpark' && e.venue_name === 'National Baseball Hall of Fame'
+      ) ||
+      (ble ?? []).some((e: BaseballLifeEntry) =>
+        e.category === 'pilgrimage' && e.venue?.toLowerCase().includes('hall of fame')
       ) ||
       (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'hall_of_fame'),
   },
@@ -265,9 +279,15 @@ export const MILESTONES: Milestone[] = [
     name: 'Build It, They Come',
     description: 'Visit Field of Dreams in Iowa',
     icon: '🌽',
-    check: (_v, _s, events, _sv, destinationVisits) =>
+    check: (_v, _s, events, ble, destinationVisits) =>
       (events ?? []).some((e: SpecialEvent) =>
         e.event_type === 'historic_ballpark' && e.venue_name === 'Field of Dreams'
+      ) ||
+      (ble ?? []).some((e: BaseballLifeEntry) =>
+        e.category === 'pilgrimage' && (
+          e.venue?.toLowerCase().includes('field of dreams') ||
+          e.event_type?.toLowerCase().includes('field of dreams')
+        )
       ) ||
       (destinationVisits ?? []).some((dv: DestinationVisit) =>
         ['field_of_dreams', 'dreams_game'].includes((dv.destination as any)?.slug)
@@ -278,9 +298,8 @@ export const MILESTONES: Milestone[] = [
     name: 'Global Ambassador',
     description: 'Attend an international MLB game',
     icon: '🌍',
-    check: (_v, _s, events, specialVisits) =>
-      (events ?? []).some((e: SpecialEvent) => e.event_type === 'international') ||
-      (specialVisits ?? []).some((sv: SpecialVisit) => sv.visit_type === 'international'),
+    check: (_v, _s, events) =>
+      (events ?? []).some((e: SpecialEvent) => e.event_type === 'international'),
   },
   {
     id: 'historic_ballparks_all',

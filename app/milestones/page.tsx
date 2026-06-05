@@ -3,8 +3,9 @@ import MilestoneGrid from '@/components/MilestoneGrid'
 import { MILESTONES } from '@/lib/milestones'
 import { STATIC_EXPERIENCES } from '@/lib/static-experiences'
 import Link from 'next/link'
-import type { Stadium, StadiumVisit, SpecialEvent, SpecialVisit, DestinationVisit, SerializableMilestone } from '@/types'
+import type { Stadium, StadiumVisit, SpecialEvent, BaseballLifeEntry, DestinationVisit, SerializableMilestone } from '@/types'
 import SpecialVisitButton from '@/components/SpecialVisitButton'
+import { BASEBALL_LIFE_ACHIEVEMENTS, BASEBALL_LIFE_CATEGORY_GROUPS } from '@/lib/baseball-life-achievements'
 import { DESTINATIONS, DESTINATION_GROUPS, destinationLocation } from '@/lib/destinations'
 import { RankBadge } from '@/components/RankBadge'
 import { Map, ClipboardList, Trophy } from 'lucide-react'
@@ -71,20 +72,19 @@ function computeEarnDate(
   allVisits: StadiumVisit[],
   allStadiums: Stadium[],
   allEvents: SpecialEvent[],
-  allSpecialVisits: SpecialVisit[],
+  allBle: BaseballLifeEntry[],
   allDestVisits: DestinationVisit[]
 ): string | null {
   const sorted = [...allVisits].sort((a, b) => a.visit_date.localeCompare(b.visit_date))
   for (let i = 0; i < sorted.length; i++) {
-    if (m.check(sorted.slice(0, i + 1), allStadiums, allEvents, allSpecialVisits, allDestVisits)) {
+    if (m.check(sorted.slice(0, i + 1), allStadiums, allEvents, allBle, allDestVisits)) {
       return sorted[i].visit_date
     }
   }
-  // Fallback for event/special-visit-based milestones
   const eventDate = [...allEvents].sort((a, b) => (a.event_date ?? '').localeCompare(b.event_date ?? ''))[0]?.event_date
-  const svDate = [...allSpecialVisits].sort((a, b) => a.visit_date.localeCompare(b.visit_date))[0]?.visit_date
+  const bleDate = [...allBle].sort((a, b) => a.visit_date.localeCompare(b.visit_date))[0]?.visit_date
   const dvDate = [...allDestVisits].sort((a, b) => (a.visit_date ?? '').localeCompare(b.visit_date ?? ''))[0]?.visit_date
-  const fallback = [eventDate, svDate, dvDate].filter(Boolean).sort()[0]
+  const fallback = [eventDate, bleDate, dvDate].filter(Boolean).sort()[0]
   return fallback ?? null
 }
 
@@ -93,35 +93,35 @@ function toSerializable(
   allVisits: StadiumVisit[],
   allStadiums: Stadium[],
   allEvents: SpecialEvent[],
-  allSpecialVisits: SpecialVisit[],
+  allBle: BaseballLifeEntry[],
   allDestVisits: DestinationVisit[]
 ): SerializableMilestone[] {
   return ms.map(({ id, name, description, icon, check }) => ({
     id, name, description, icon,
-    earnDate: computeEarnDate({ id, name, description, icon, check }, allVisits, allStadiums, allEvents, allSpecialVisits, allDestVisits),
+    earnDate: computeEarnDate({ id, name, description, icon, check }, allVisits, allStadiums, allEvents, allBle, allDestVisits),
   }))
 }
 
 export default async function MilestonesPage() {
   const supabase = await createClient()
 
-  const [{ data: stadiums }, { data: visits }, { data: events }, { data: claims }, { data: specialVisits }, { data: destVisits }] = await Promise.all([
+  const [{ data: stadiums }, { data: visits }, { data: events }, { data: claims }, { data: bleRows }, { data: destVisits }] = await Promise.all([
     supabase.from('stadiums').select('*'),
     supabase.from('stadium_visits').select('*'),
     supabase.from('special_events').select('*'),
     supabase.from('achievement_claims').select('achievement_id'),
-    supabase.from('special_visits').select('*').order('visit_date', { ascending: false }),
+    supabase.from('baseball_life_entries').select('*').order('visit_date', { ascending: false }),
     supabase.from('destination_visits').select('*, destination:destinations(*)').order('visit_date', { ascending: false }),
   ])
 
   const allStadiums: Stadium[] = stadiums ?? []
   const allVisits: StadiumVisit[] = visits ?? []
   const allEvents: SpecialEvent[] = events ?? []
-  const allSpecialVisits: SpecialVisit[] = (specialVisits ?? []) as SpecialVisit[]
+  const allBle: BaseballLifeEntry[] = (bleRows ?? []) as BaseballLifeEntry[]
   const allDestVisits: DestinationVisit[] = (destVisits ?? []) as DestinationVisit[]
 
-  const earned   = MILESTONES.filter(m =>  m.check(allVisits, allStadiums, allEvents, allSpecialVisits, allDestVisits))
-  const unearned = MILESTONES.filter(m => !m.check(allVisits, allStadiums, allEvents, allSpecialVisits, allDestVisits))
+  const earned   = MILESTONES.filter(m =>  m.check(allVisits, allStadiums, allEvents, allBle, allDestVisits))
+  const unearned = MILESTONES.filter(m => !m.check(allVisits, allStadiums, allEvents, allBle, allDestVisits))
   const totalPoints = earned.reduce((sum, m) => sum + (MILESTONE_POINTS[m.id] ?? 25), 0)
   const currentRank = getRank(totalPoints)
   const nextRank = getNextRank(totalPoints)
@@ -219,8 +219,8 @@ export default async function MilestonesPage() {
 
         {/* MilestoneGrid (client, handles everything interactive) */}
         <MilestoneGrid
-          earned={toSerializable(earned, allVisits, allStadiums, allEvents, allSpecialVisits, allDestVisits)}
-          unearned={toSerializable(unearned, allVisits, allStadiums, allEvents, allSpecialVisits, allDestVisits)}
+          earned={toSerializable(earned, allVisits, allStadiums, allEvents, allBle, allDestVisits)}
+          unearned={toSerializable(unearned, allVisits, allStadiums, allEvents, allBle, allDestVisits)}
           allVisits={allVisits}
           allStadiums={allStadiums}
           allEvents={allEvents}
@@ -296,59 +296,108 @@ export default async function MilestonesPage() {
           )
         })()}
 
-        {/* ── Special Visits section ────────────────────────────────── */}
-        <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 16px 40px' }}>
-          <div style={{ borderTop: '1px solid #30363D', paddingTop: 28 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#E6EDF3', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <ClipboardList size={18} color="#8B949E" /> Special Visits
+        {/* ── The Baseball Life section ─────────────────────────────── */}
+        {(() => {
+          const CAT_EMOJI: Record<string, string> = {
+            minor_league: '⚾', mlb_special_event: '🌟', spring_training: '🌞', pilgrimage: '🏛️',
+          }
+          const CAT_LABEL: Record<string, string> = {
+            minor_league: 'Minor League', mlb_special_event: 'MLB Special Event',
+            spring_training: 'Spring Training', pilgrimage: 'Pilgrimage',
+          }
+          const earnedAchievements = new Set(BASEBALL_LIFE_ACHIEVEMENTS.filter(a => a.check(allBle)).map(a => a.id))
+          return (
+            <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 16px 40px' }}>
+              <div style={{ borderTop: '1px solid #30363D', paddingTop: 28 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                  <div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#E6EDF3', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <ClipboardList size={18} color="#8B949E" /> The Baseball Life
+                    </div>
+                    <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
+                      {allBle.length > 0 ? `${allBle.length} entr${allBle.length === 1 ? 'y' : 'ies'} logged` : 'Minor league, spring training, special events & pilgrimages'}
+                    </div>
+                  </div>
+                  <SpecialVisitButton label="Log Entry" variant="primary" />
                 </div>
-                <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
-                  {(specialVisits ?? []).length > 0
-                    ? `${(specialVisits ?? []).length} logged`
-                    : 'Minor league, spring training, tours & more'}
-                </div>
-              </div>
-              <SpecialVisitButton label="Log Visit" variant="primary" />
-            </div>
 
-            {(specialVisits ?? []).length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {(specialVisits ?? []).slice(0, 5).map((sv: any) => {
-                  const TYPE_EMOJI: Record<string, string> = {
-                    minor_league: '⚾', spring_training: '🌞', international: '🌍',
-                    all_star: '🏆', world_series: '🎯', playoff: '🥇',
-                    stadium_tour: '🏭', college: '🎓', independent: '🏟️', other: '📺',
-                  }
-                  const emoji = TYPE_EMOJI[sv.visit_type] ?? '📋'
-                  const label = sv.visit_type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
-                  const dt = new Date(sv.visit_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                {/* Achievement groups */}
+                {BASEBALL_LIFE_CATEGORY_GROUPS.map(group => {
+                  const groupAchievements = BASEBALL_LIFE_ACHIEVEMENTS.filter(a => a.category === group.key)
+                  const groupEarned = groupAchievements.filter(a => earnedAchievements.has(a.id)).length
                   return (
-                    <div key={sv.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D' }}>
-                      <span style={{ fontSize: 22, flexShrink: 0 }}>{emoji}</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sv.venue}</div>
-                        <div style={{ fontSize: 12, color: '#8B949E' }}>{label} · {dt}</div>
+                    <div key={group.key} style={{ marginBottom: 22 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {group.icon} {group.label}
+                        <span style={{ fontSize: 12, color: '#484F58' }}>({groupEarned}/{groupAchievements.length})</span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8 }}>
+                        {groupAchievements.map(ach => {
+                          const isEarned = earnedAchievements.has(ach.id)
+                          return (
+                            <div
+                              key={ach.id}
+                              style={{
+                                padding: '12px 14px', borderRadius: 12,
+                                backgroundColor: isEarned ? 'rgba(63,185,80,0.06)' : '#0D1117',
+                                border: `1px solid ${isEarned ? 'rgba(63,185,80,0.3)' : '#21262D'}`,
+                                opacity: isEarned ? 1 : 0.6,
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                                <span style={{ fontSize: 20 }}>{ach.icon}</span>
+                                {isEarned && (
+                                  <span style={{ fontSize: 10, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', padding: '2px 6px', borderRadius: 8, marginLeft: 'auto' }}>✓ Earned</span>
+                                )}
+                              </div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{ach.name}</div>
+                              <div style={{ fontSize: 11, color: '#8B949E', marginTop: 2, lineHeight: 1.4 }}>{ach.description}</div>
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
                   )
                 })}
-                {(specialVisits ?? []).length > 5 && (
-                  <div style={{ textAlign: 'center', fontSize: 13, color: '#8B949E', paddingTop: 4 }}>
-                    +{(specialVisits ?? []).length - 5} more
+
+                {/* Recent entries */}
+                {allBle.length > 0 && (
+                  <div style={{ marginTop: 24 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', marginBottom: 10 }}>Recent Entries</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {allBle.slice(0, 5).map((entry: any) => {
+                        const emoji = CAT_EMOJI[entry.category] ?? '📋'
+                        const label = CAT_LABEL[entry.category] ?? entry.category
+                        const dt = new Date(entry.visit_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                        const displayName = entry.event_type || entry.venue || label
+                        return (
+                          <div key={entry.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D' }}>
+                            <span style={{ fontSize: 22, flexShrink: 0 }}>{emoji}</span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</div>
+                              <div style={{ fontSize: 12, color: '#8B949E' }}>{label} · {dt}</div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {allBle.length > 5 && (
+                        <div style={{ textAlign: 'center', fontSize: 13, color: '#8B949E', paddingTop: 4 }}>
+                          +{allBle.length - 5} more
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {allBle.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '32px 0', color: '#484F58', fontSize: 13 }}>
+                    No Baseball Life entries yet. Tap Log Entry to add your first!
                   </div>
                 )}
               </div>
-            )}
-
-            {(specialVisits ?? []).length === 0 && (
-              <div style={{ textAlign: 'center', padding: '32px 0', color: '#484F58', fontSize: 13 }}>
-                No special visits yet. Tap Log Visit to add your first!
-              </div>
-            )}
-          </div>
-        </div>
+            </div>
+          )
+        })()}
       </main>
     </div>
   )

@@ -8,6 +8,7 @@ import { Search, X, ChevronRight, Plus, Pencil, Trash2, CalendarDays } from 'luc
 import type { Stadium, SpecialEvent, SpecialEventType } from '@/types'
 import TeamLogo from '@/components/TeamLogo'
 import SpecialEventForm from '@/components/SpecialEventForm'
+import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -108,13 +109,14 @@ function scrollToSection(id: string) {
 // ─── Stadium card ─────────────────────────────────────────────────────────────
 
 function StadiumCard({
-  stadium, visited, visitDate, visitCount, nextGame,
+  stadium, visited, visitDate, visitCount, nextGame, photo,
 }: {
   stadium: Stadium
   visited: boolean
   visitDate?: string
   visitCount?: number
   nextGame?: NextGameInfo
+  photo?: string
 }) {
   const accent = TEAM_ACCENT[stadium.abbreviation] ?? '#1F6FEB'
 
@@ -136,26 +138,28 @@ function StadiumCard({
           transition: 'transform 0.15s, box-shadow 0.15s, border-color 0.15s, opacity 0.15s',
         }}
       >
-        {/* Gradient hero — fixed height so visited and unvisited cards are always the same */}
+        {/* Hero — photo if available, else gradient */}
         <div style={{
-          background: `linear-gradient(to bottom, ${hexToRgba(accent, 0.45)} 0%, transparent 100%)`,
-          height: 136,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-          flexShrink: 0,
+          height: 136, position: 'relative', flexShrink: 0, overflow: 'hidden',
+          background: `linear-gradient(to bottom, ${hexToRgba(accent, 0.55)} 0%, ${hexToRgba(accent, 0.2)} 100%)`,
         }}>
+          {photo && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={photo} alt={stadium.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55 }} />
+          )}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)' }} />
           {visited && (
             <div style={{
-              position: 'absolute', top: 8, right: 8,
+              position: 'absolute', top: 8, right: 8, zIndex: 2,
               width: 18, height: 18, borderRadius: '50%',
-              backgroundColor: '#3FB950', border: '2px solid #161B22',
+              backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 9, color: '#0B1117', fontWeight: 900,
             }}>✓</div>
           )}
-          <TeamLogo abbreviation={stadium.abbreviation} size={80} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+            <TeamLogo abbreviation={stadium.abbreviation} size={80} />
+          </div>
         </div>
 
         {/* Content */}
@@ -346,6 +350,7 @@ export default function StadiumsPage() {
   const [filterLeague, setFilterLeague] = useState<'all' | 'AL' | 'NL'>('all')
   const [activeCategory, setActiveCategory] = useState<Category>('mlb')
   const [nextGames, setNextGames]   = useState<Record<string, NextGameInfo>>({})
+  const [photos, setPhotos]         = useState<Record<string, string>>({})
 
   const [showForm, setShowForm]           = useState(false)
   const [editingEvent, setEditingEvent]   = useState<SpecialEvent | undefined>()
@@ -372,6 +377,13 @@ export default function StadiumsPage() {
       setNextGames(games ?? {})
       setEvents((ev as SpecialEvent[]) ?? [])
       setLoading(false)
+      // Fetch stadium photos in background
+      const stadiumList = s ?? []
+      stadiumList.forEach(stadium => {
+        fetchStadiumPhoto(stadium.abbreviation).then(url => {
+          if (url) setPhotos(prev => ({ ...prev, [stadium.abbreviation]: url }))
+        })
+      })
     })
   }, [])
 
@@ -876,6 +888,7 @@ export default function StadiumsPage() {
                         visitDate={latestVisit[stadium.id]}
                         visitCount={visitCountMap[stadium.id]}
                         nextGame={nextGames[stadium.abbreviation]}
+                        photo={photos[stadium.abbreviation]}
                       />
                     ))}
                   </div>
@@ -903,6 +916,7 @@ export default function StadiumsPage() {
                         stadium={stadium}
                         visited={false}
                         nextGame={nextGames[stadium.abbreviation]}
+                        photo={photos[stadium.abbreviation]}
                       />
                     ))}
                   </div>

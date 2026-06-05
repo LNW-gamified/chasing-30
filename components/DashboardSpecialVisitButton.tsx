@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import SpecialVisitForm from '@/components/SpecialVisitForm'
+import BaseballLifeForm from '@/components/BaseballLifeForm'
 import { useRouter } from 'next/navigation'
 import { ClipboardList } from 'lucide-react'
 
@@ -19,13 +19,12 @@ export default function DashboardSpecialVisitButton() {
           background: 'transparent',
           border: '1.5px solid rgba(201,209,217,0.2)',
           color: '#8B949E', fontWeight: 600, fontSize: 13, cursor: 'pointer',
-          transition: 'border-color 0.2s, color 0.2s',
         }}
       >
-        <ClipboardList size={14} /> Log Special Visit
+        <ClipboardList size={14} /> Log Baseball Life Entry
       </button>
       {open && (
-        <SpecialVisitForm
+        <BaseballLifeForm
           onClose={() => setOpen(false)}
           onSaved={() => { setOpen(false); router.refresh() }}
         />

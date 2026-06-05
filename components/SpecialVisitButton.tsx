@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import SpecialVisitForm from '@/components/SpecialVisitForm'
+import BaseballLifeForm from '@/components/BaseballLifeForm'
 import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
 
-export default function SpecialVisitButton({ label = 'Log Special Visit', variant = 'primary' }: { label?: string; variant?: 'primary' | 'secondary' }) {
+export default function SpecialVisitButton({ label = 'Log Baseball Life Entry', variant = 'primary' }: { label?: string; variant?: 'primary' | 'secondary' }) {
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
@@ -22,12 +22,12 @@ export default function SpecialVisitButton({ label = 'Log Special Visit', varian
 
   return (
     <>
-      <button onClick={() => setOpen(true)} style={style as React.CSSProperties}>
+      <button onClick={() => setOpen(true)} style={style}>
         <Plus size={14} />
         {label}
       </button>
       {open && (
-        <SpecialVisitForm
+        <BaseballLifeForm
           onClose={() => setOpen(false)}
           onSaved={() => { setOpen(false); router.refresh() }}
         />

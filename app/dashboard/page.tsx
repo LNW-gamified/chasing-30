@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import { MILESTONES } from '@/lib/milestones'
-import type { Stadium, StadiumVisit, SpecialEvent, SpecialVisit, Trip } from '@/types'
+import type { Stadium, StadiumVisit, SpecialEvent, BaseballLifeEntry, Trip } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
 import { CalendarDays, ClipboardList, MapPin, DollarSign, Trophy, Eye } from 'lucide-react'
@@ -124,7 +124,7 @@ export default async function DashboardPage() {
     { data: events },
     { data: trips },
     { data: { user } },
-    { data: specialVisits },
+    { data: baseballLifeEntries },
     { data: destVisits },
     { data: historyFacts },
   ] = await Promise.all([
@@ -133,7 +133,7 @@ export default async function DashboardPage() {
     supabase.from('special_events').select('*'),
     supabase.from('trips').select('*, stadium:stadiums(*)').order('start_date', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false }),
     supabase.auth.getUser(),
-    supabase.from('special_visits').select('*'),
+    supabase.from('baseball_life_entries').select('id, category'),
     supabase.from('destination_visits').select('destination_id'),
     supabase.from('baseball_history')
       .select('id,year,fact,category,player_name,team')
@@ -151,12 +151,12 @@ export default async function DashboardPage() {
   const allVisits:       StadiumVisit[] = visits ?? []
   const allEvents:       SpecialEvent[] = events ?? []
   const allTrips:        Trip[]         = trips ?? []
-  const allSpecialVisits: SpecialVisit[] = (specialVisits ?? []) as SpecialVisit[]
+  const allBaseballLife: BaseballLifeEntry[] = (baseballLifeEntries ?? []) as BaseballLifeEntry[]
   const todayHistory:    HistoryFact[]  = (historyFacts ?? []) as HistoryFact[]
 
   const visitedIds   = new Set(allVisits.map(v => v.stadium_id))
   const visitedCount = visitedIds.size
-  const earnedMilestones = MILESTONES.filter(m => m.check(allVisits, allStadiums, allEvents, allSpecialVisits))
+  const earnedMilestones = MILESTONES.filter(m => m.check(allVisits, allStadiums, allEvents, allBaseballLife))
   const pct = Math.round((visitedCount / 30) * 100)
   const name = getFirstName(user)
 
@@ -187,7 +187,10 @@ export default async function DashboardPage() {
   // Stats
   const favAbbr            = (userSettings as any)?.favorite_team_abbr ?? null
   const gamesAttended      = allVisits.length
-  const specialVisitCount  = allSpecialVisits.length
+  const baseballLifeCount   = allBaseballLife.length
+  const mlCount = allBaseballLife.filter(e => e.category === 'minor_league').length
+  const speCount = allBaseballLife.filter(e => e.category === 'mlb_special_event').length
+  const pilgCount = allBaseballLife.filter(e => e.category === 'pilgrimage').length
   const destinationsVisited = new Set((destVisits ?? []).map((dv: any) => dv.destination_id)).size
   const totalSpent = allTrips
     .filter((t: any) => t.status === 'completed')
@@ -482,7 +485,7 @@ export default async function DashboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {([
               { Icon: CalendarDays, value: gamesAttended,        label: 'Games Witnessed',      valSize: 48, color: '#1F6FEB' },
-              { Icon: ClipboardList, value: specialVisitCount,   label: 'Special Visits',        valSize: 48, color: '#1F6FEB' },
+              { Icon: ClipboardList, value: baseballLifeCount,   label: 'Baseball Life',          valSize: 48, color: '#1F6FEB' },
               { Icon: MapPin,        value: destinationsVisited,  label: 'Destinations',          valSize: 48, color: '#1F6FEB' },
               { Icon: DollarSign,    value: formatCurrency(totalSpent), label: 'Total Spent',    valSize: 44, color: '#3FB950' },
               { Icon: Trophy,        value: favDivision,          label: 'Fav Division',          valSize: favDivision.length > 7 ? 22 : 30, color: '#F5A623' },
@@ -514,6 +517,24 @@ export default async function DashboardPage() {
             ))}
           </div>
         </div>
+
+        {/* ── The Baseball Life compact row ────────────────────────────── */}
+        {baseballLifeCount > 0 && (
+          <div className="dash-card" style={{ ...card, padding: '14px 18px', marginBottom: SECTION_GAP, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginRight: 8, flexShrink: 0 }}>The Baseball Life</span>
+            {[
+              { emoji: '⚾', label: 'Minor League', count: mlCount },
+              { emoji: '🌟', label: 'Special Events', count: speCount },
+              { emoji: '🏛️', label: 'Pilgrimages', count: pilgCount },
+            ].map(({ emoji, label, count }) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, backgroundColor: 'rgba(139,148,158,0.08)', border: '1px solid #30363D' }}>
+                <span style={{ fontSize: 13 }}>{emoji}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{count}</span>
+                <span style={{ fontSize: 11, color: '#8B949E' }}>{label}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* ── Favorite team picker + Standings ─────────────────────────── */}
         <FavoriteTeamPicker userId={userId} currentFavAbbr={favAbbr} />

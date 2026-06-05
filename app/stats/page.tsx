@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase-server'
 import { haversineDistance, formatCurrency } from '@/lib/utils'
-import type { Stadium, StadiumVisit, Trip, SpecialEvent, SpecialEventType, SpecialVisit } from '@/types'
+import type { Stadium, StadiumVisit, Trip, SpecialEvent, SpecialEventType } from '@/types'
 import { BarChart3, TrendingUp, DollarSign, MapPin, Trophy, Users, Star } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
+import YearRecap from '@/components/YearRecap'
 
 const EVENT_LABELS: Record<SpecialEventType, string> = {
   world_series:      'World Series',
@@ -18,19 +19,19 @@ const EVENT_LABELS: Record<SpecialEventType, string> = {
 export default async function StatsPage() {
   const supabase = await createClient()
 
-  const [{ data: stadiums }, { data: visits }, { data: trips }, { data: events }, { data: specialVisits }] = await Promise.all([
+  const [{ data: stadiums }, { data: visits }, { data: trips }, { data: events }, { data: bleRows }] = await Promise.all([
     supabase.from('stadiums').select('*'),
     supabase.from('stadium_visits').select('*'),
     supabase.from('trips').select('*'),
     supabase.from('special_events').select('*'),
-    supabase.from('special_visits').select('id, visit_type'),
+    supabase.from('baseball_life_entries').select('id, category'),
   ])
 
   const allStadiums: Stadium[] = stadiums ?? []
   const allVisits: StadiumVisit[] = visits ?? []
   const allTrips: Trip[] = trips ?? []
   const allEvents: SpecialEvent[] = events ?? []
-  const allSpecialVisits: Pick<SpecialVisit, 'id' | 'visit_type'>[] = (specialVisits ?? []) as Pick<SpecialVisit, 'id' | 'visit_type'>[]
+  const allBaseballLife = (bleRows ?? []) as { id: string; category: string }[]
 
   const visitedIds = new Set(allVisits.map((v) => v.stadium_id))
   const visitedStadiums = allStadiums.filter((s) => visitedIds.has(s.id))
@@ -442,12 +443,12 @@ export default async function StatsPage() {
         </div>
       )}
 
-      {/* Special Events section */}
-      {(allEvents.length > 0 || allSpecialVisits.length > 0) && (
+      {/* Special Events + Baseball Life section */}
+      {(allEvents.length > 0 || allBaseballLife.length > 0) && (
         <div className="mt-6 card p-6">
           <div className="flex items-center gap-2 font-semibold mb-4" style={{ color: '#E6EDF3' }}>
             <Star size={18} style={{ color: '#F5A623' }} />
-            Special Events &amp; Visits ({allEvents.length + allSpecialVisits.length})
+            Special Events &amp; Baseball Life ({allEvents.length + allBaseballLife.length})
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {(Object.entries(EVENT_LABELS) as [SpecialEventType, string][]).map(([type, label]) => {
@@ -457,6 +458,21 @@ export default async function StatsPage() {
                 <div key={type} className="text-center p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
                   <div className="text-4xl font-bold" style={{ color: '#F5A623' }}>{count}</div>
                   <div className="text-xs mt-1" style={{ color: '#8B949E' }}>{label}</div>
+                </div>
+              )
+            })}
+            {([
+              { cat: 'minor_league', label: 'Minor League', emoji: '⚾' },
+              { cat: 'mlb_special_event', label: 'MLB Events', emoji: '🌟' },
+              { cat: 'spring_training', label: 'Spring Training', emoji: '🌞' },
+              { cat: 'pilgrimage', label: 'Pilgrimages', emoji: '🏛️' },
+            ] as const).map(({ cat, label, emoji }) => {
+              const count = allBaseballLife.filter(e => e.category === cat).length
+              if (count === 0) return null
+              return (
+                <div key={cat} className="text-center p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
+                  <div className="text-4xl font-bold" style={{ color: '#F5A623' }}>{count}</div>
+                  <div className="text-xs mt-1" style={{ color: '#8B949E' }}>{emoji} {label}</div>
                 </div>
               )
             })}

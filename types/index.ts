@@ -222,12 +222,46 @@ export interface SpecialEvent {
   created_at: string
 }
 
+export type BaseballLifeCategory = 'minor_league' | 'mlb_special_event' | 'spring_training' | 'pilgrimage'
+
+export interface BaseballLifeEntry {
+  id: string
+  user_id: string
+  category: BaseballLifeCategory
+  is_game: boolean
+  venue: string | null
+  city: string | null
+  state: string | null
+  minor_league_stadium_id: string | null
+  mlb_stadium_id: string | null
+  visit_date: string
+  opponent: string | null
+  home_team: string | null
+  away_team: string | null
+  final_score_home: number | null
+  final_score_away: number | null
+  game_time: string | null
+  game_pk: number | null
+  event_type: string | null
+  ticket_section: string | null
+  ticket_row: string | null
+  ticket_seats: string[] | null
+  ticket_confirmation: string | null
+  notes: string | null
+  moments: string[] | null
+  photos: string[] | null
+  game_data: Record<string, unknown> | null
+  weather_temp: string | null
+  weather_conditions: string | null
+  created_at: string
+}
+
 export interface Milestone {
   id: string
   name: string
   description: string
   icon: string
-  check: (visits: StadiumVisit[], stadiums: Stadium[], events?: SpecialEvent[], specialVisits?: SpecialVisit[], destinationVisits?: DestinationVisit[]) => boolean
+  check: (visits: StadiumVisit[], stadiums: Stadium[], events?: SpecialEvent[], baseballLifeEntries?: BaseballLifeEntry[], destinationVisits?: DestinationVisit[]) => boolean
   earned_at?: string | null
 }
 
