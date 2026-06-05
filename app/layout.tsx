@@ -50,6 +50,11 @@ function getRank(xp: number) {
   return [...RANK_TIERS].reverse().find(r => xp >= r.minPts) ?? RANK_TIERS[0]
 }
 
+function getNextRankXp(xp: number): number | null {
+  const next = RANK_TIERS.find(r => r.minPts > xp)
+  return next?.minPts ?? null
+}
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -94,6 +99,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const gamesCount = allVisits.length
   const xp = computeXP(visitedCount, gamesCount)
   const rank = getRank(xp)
+  const xpNext = getNextRankXp(xp)
+  const xpMin = rank.minPts
 
   const nextTripRaw = trips?.[0] ?? null
   const stadium = nextTripRaw ? (nextTripRaw as any).stadium : null
@@ -117,7 +124,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           rankName={rank.name}
           rankIcon={rank.icon}
           rankXp={xp}
+          rankXpMin={xpMin}
+          rankXpNext={xpNext}
           userInitial={userInitial}
+          userId={user.id}
+          userEmail={user.email ?? ''}
+          memberSince={user.created_at ?? new Date().toISOString()}
+          gamesCount={gamesCount}
         >
           {children}
         </AppShell>

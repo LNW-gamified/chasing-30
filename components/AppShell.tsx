@@ -1,10 +1,11 @@
 'use client'
 
-import { usePathname, useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutDashboard, Building2, Map, Trophy, Plane, LogOut } from 'lucide-react'
-import { createClient } from '@/lib/supabase'
+import { LayoutDashboard, Building2, Map, Trophy, Plane } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
+import ProfilePanel from '@/components/ProfilePanel'
 
 export interface NextTripInfo {
   id: string
@@ -20,7 +21,13 @@ interface Props {
   rankName: string
   rankIcon: string
   rankXp: number
+  rankXpMin: number
+  rankXpNext: number | null
   userInitial: string
+  userId: string
+  userEmail: string
+  memberSince: string
+  gamesCount: number
 }
 
 // Desktop sidebar shows all items; Map excluded from mobile bottom nav
@@ -51,18 +58,11 @@ function isActive(href: string, pathname: string): boolean {
   return pathname === href || pathname.startsWith(href + '/')
 }
 
-export default function AppShell({ children, nextTrip, visitedCount, rankName, rankIcon, rankXp, userInitial }: Props) {
+export default function AppShell({ children, nextTrip, visitedCount, rankName, rankIcon, rankXp, rankXpMin, rankXpNext, userInitial, userId, userEmail, memberSince, gamesCount }: Props) {
   const pathname = usePathname()
-  const router = useRouter()
+  const [profileOpen, setProfileOpen] = useState(false)
   const pct = Math.round((visitedCount / 30) * 100)
-  const hasTrip = !!nextTrip
   const tripLabel = nextTrip ? daysLabel(nextTrip.daysAway) : ''
-
-  async function handleLogout() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/login')
-  }
 
   return (
     <>
@@ -83,9 +83,12 @@ export default function AppShell({ children, nextTrip, visitedCount, rankName, r
                 <span style={{ fontSize: 10, color: '#8B949E', fontWeight: 600 }}>· {rankXp} pts</span>
               </div>
             </div>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, backgroundColor: 'rgba(31,111,235,0.18)', border: '1px solid rgba(31,111,235,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8B949E', fontWeight: 700, fontSize: '0.875rem' }}>
+            <button
+              onClick={() => setProfileOpen(v => !v)}
+              style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, backgroundColor: profileOpen ? 'rgba(31,111,235,0.3)' : 'rgba(31,111,235,0.18)', border: '1px solid rgba(31,111,235,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8B949E', fontWeight: 700, fontSize: '0.875rem', cursor: 'pointer', marginTop: 2 }}
+            >
               {userInitial}
-            </div>
+            </button>
           </div>
         </div>
 
@@ -116,16 +119,12 @@ export default function AppShell({ children, nextTrip, visitedCount, rankName, r
           })}
         </nav>
 
-        {/* Progress + Sign out */}
+        {/* Progress */}
         <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #30363D' }}>
           <div style={{ fontSize: '0.8125rem', color: '#8B949E', marginBottom: 6 }}>{visitedCount} / 30 · {pct}% complete</div>
-          <div style={{ height: 4, background: '#30363D', borderRadius: 3, overflow: 'hidden', marginBottom: 12 }}>
+          <div style={{ height: 4, background: '#30363D', borderRadius: 3, overflow: 'hidden' }}>
             <div style={{ width: `${pct}%`, height: '100%', background: '#3FB950', borderRadius: 3 }} />
           </div>
-          <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.875rem', borderRadius: 10, width: '100%', background: 'none', border: 'none', cursor: 'pointer', color: '#8B949E', fontWeight: 400, fontSize: '0.875rem' }}>
-            <LogOut size={16} />
-            <span>Sign Out</span>
-          </button>
         </div>
       </aside>
 
@@ -134,7 +133,12 @@ export default function AppShell({ children, nextTrip, visitedCount, rankName, r
         {/* Mobile sticky header */}
         <header className="flex md:hidden items-center justify-between" style={{ position: 'sticky', top: 0, zIndex: 30, height: 48, backgroundColor: 'rgba(11,17,23,0.97)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: '1px solid #30363D', padding: '0 16px' }}>
           <div style={{ fontSize: '1rem', fontWeight: 900, color: '#E6EDF3' }}>⚾ Chasing 30</div>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: 'rgba(31,111,235,0.18)', border: '1px solid rgba(31,111,235,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8B949E', fontWeight: 700, fontSize: '0.875rem' }}>{userInitial}</div>
+          <button
+            onClick={() => setProfileOpen(v => !v)}
+            style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: profileOpen ? 'rgba(31,111,235,0.3)' : 'rgba(31,111,235,0.18)', border: '1px solid rgba(31,111,235,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8B949E', fontWeight: 700, fontSize: '0.875rem', cursor: 'pointer' }}
+          >
+            {userInitial}
+          </button>
         </header>
 
         {/* Page content */}
@@ -155,6 +159,23 @@ export default function AppShell({ children, nextTrip, visitedCount, rankName, r
           })}
         </nav>
       </div>
+
+      {/* Profile panel — rendered at root to avoid stacking context issues */}
+      <ProfilePanel
+        isOpen={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        userId={userId}
+        userEmail={userEmail}
+        userInitial={userInitial}
+        xp={rankXp}
+        xpMin={rankXpMin}
+        xpNext={rankXpNext}
+        rankName={rankName}
+        rankIcon={rankIcon}
+        memberSince={memberSince}
+        visitedCount={visitedCount}
+        gamesCount={gamesCount}
+      />
 
       <style>{`
         @media (min-width: 768px) { .appshell-content { padding-bottom: 0 !important; } }
