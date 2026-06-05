@@ -17,7 +17,7 @@ import TeamLogo from '@/components/TeamLogo'
 import { TEAM_BTN_COLOR, TEAM_GRADIENTS } from '@/lib/team-colors'
 
 const MLB_SCHEDULE_SLUG: Record<string, string> = {
-  ARI: 'diamondbacks', ATL: 'braves',      BAL: 'orioles',    BOS: 'red-sox',
+  ARI: 'dbacks',       ATL: 'braves',      BAL: 'orioles',    BOS: 'red-sox',
   CHC: 'cubs',         CWS: 'white-sox',   CIN: 'reds',       CLE: 'guardians',
   COL: 'rockies',      DET: 'tigers',      HOU: 'astros',     KC:  'royals',
   LAA: 'angels',       LAD: 'dodgers',     MIA: 'marlins',    MIL: 'brewers',
