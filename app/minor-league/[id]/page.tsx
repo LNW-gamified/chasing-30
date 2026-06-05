@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase-server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import SpecialVisitButton from '@/components/SpecialVisitButton'
+import MiLBLogo from '@/components/MiLBLogo'
 import type { BaseballLifeEntry } from '@/types'
 
 export default async function MinorLeagueStadiumPage({ params }: { params: Promise<{ id: string }> }) {
@@ -41,6 +42,7 @@ export default async function MinorLeagueStadiumPage({ params }: { params: Promi
         {/* Header */}
         <div style={{ ...card, padding: '24px', marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+            <MiLBLogo milbTeamId={stadium.milb_team_id ?? null} fallbackAbbr={stadium.affiliate} size={72} style={{ flexShrink: 0, borderRadius: 8 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6 }}>Minor League Stadium</div>
               <h1 style={{ fontSize: 24, fontWeight: 900, color: '#E6EDF3', margin: '0 0 4px', lineHeight: 1.2 }}>{stadium.name}</h1>
