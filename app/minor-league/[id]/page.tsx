@@ -135,7 +135,9 @@ async function fetchMiLBUpcomingGames(milbTeamId: number): Promise<MiLBGame[]> {
     if (!res.ok) return []
     const data = await res.json()
     const raw  = (data.dates ?? []).flatMap((d: any) => d.games ?? [])
-    return raw.slice(0, 20).map((game: any) => {
+      .sort((a: any, b: any) => a.gameDate < b.gameDate ? -1 : 1)
+      .slice(0, 5)
+    return raw.map((game: any) => {
       const isHome = game.teams?.home?.team?.id === milbTeamId
       return {
         gamePk:           game.gamePk,
@@ -689,7 +691,7 @@ export default function MinorLeagueDetailPage() {
                             </div>
                           )
                         })}
-                        {stadium.website_url && (
+                        {upcomingGames.length === 5 && stadium.website_url && (
                           <a
                             href={stadium.website_url}
                             target="_blank"
