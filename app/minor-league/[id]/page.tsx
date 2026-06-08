@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
 import {
-  ArrowLeft, Users, CalendarDays, Trophy, Share2, Plus, MessageSquare,
-  Building2, Map, ChevronRight, CloudRain, Wind, Save, Pencil, ExternalLink,
+  ArrowLeft, Users, CalendarDays, Trophy, Share2, Plus,
+  Building2, ChevronRight, CloudRain, Wind,
 } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 import MiLBLogo from '@/components/MiLBLogo'
@@ -58,8 +58,10 @@ interface BleEntry {
 interface MiLBGame {
   gamePk: number
   gameDate: string
-  awayTeam: string
-  homeTeam: string
+  isHome: boolean
+  opponent: string
+  venue: string | null
+  scheduledInnings: number | null
   promotions: string[]
 }
 
@@ -78,15 +80,6 @@ interface StandingTeam {
   losses: number
   pct: string
   gamesBack: string
-}
-
-interface FoodItem {
-  id: string
-  item_name: string
-  description: string | null
-  is_classic: boolean
-  active: boolean
-  season_year: number | null
 }
 
 interface WeatherRow {
@@ -123,38 +116,38 @@ function SectionTitle({ Icon, children }: {
 
 // ── MiLB API ───────────────────────────────────────────────────────────────────
 
+async function fetchMiLBTeamInfo(milbTeamId: number): Promise<{ leagueId: number | null }> {
+  try {
+    const res  = await fetch(`https://statsapi.mlb.com/api/v1/teams/${milbTeamId}?hydrate=league`)
+    if (!res.ok) return { leagueId: null }
+    const data = await res.json()
+    const team = data.teams?.[0]
+    return { leagueId: team?.league?.id ?? null }
+  } catch { return { leagueId: null } }
+}
+
 async function fetchMiLBUpcomingGames(milbTeamId: number): Promise<MiLBGame[]> {
   const today = new Date().toISOString().split('T')[0]
   const end   = new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0]
-  const url   = `https://statsapi.mlb.com/api/v1/schedule?sportId=12&teamId=${milbTeamId}&startDate=${today}&endDate=${end}&hydrate=game(promotions)`
+  const url   = `https://statsapi.mlb.com/api/v1/schedule?sportId=13&teamId=${milbTeamId}&startDate=${today}&endDate=${end}&hydrate=game(promotions)`
   try {
     const res  = await fetch(url)
     if (!res.ok) return []
     const data = await res.json()
-    const games: MiLBGame[] = []
-    for (const date of data.dates ?? []) {
-      for (const game of date.games ?? []) {
-        if (game.teams?.home?.team?.id !== milbTeamId) continue
-        games.push({
-          gamePk:     game.gamePk,
-          gameDate:   game.gameDate,
-          homeTeam:   game.teams.home.team.name,
-          awayTeam:   game.teams.away.team.name,
-          promotions: (game.promotions ?? []).map((p: any) => p.name).filter(Boolean),
-        })
+    const raw  = (data.dates ?? []).flatMap((d: any) => d.games ?? [])
+    return raw.slice(0, 20).map((game: any) => {
+      const isHome = game.teams?.home?.team?.id === milbTeamId
+      return {
+        gamePk:           game.gamePk,
+        gameDate:         game.gameDate,
+        isHome,
+        opponent:         isHome ? game.teams.away.team.name : game.teams.home.team.name,
+        venue:            isHome ? null : (game.venue?.name ?? null),
+        scheduledInnings: game.scheduledInnings ?? null,
+        promotions:       (game.promotions ?? []).map((p: any) => p.name).filter(Boolean),
       }
-    }
-    return games.slice(0, 12)
+    })
   } catch { return [] }
-}
-
-async function fetchMiLBLeagueId(milbTeamId: number): Promise<number | null> {
-  try {
-    const res  = await fetch(`https://statsapi.mlb.com/api/v1/teams/${milbTeamId}?hydrate=league`)
-    if (!res.ok) return null
-    const data = await res.json()
-    return data.teams?.[0]?.league?.id ?? null
-  } catch { return null }
 }
 
 async function fetchMiLBStandings(leagueId: number, currentTeamId: number): Promise<StandingTeam[]> {
@@ -206,54 +199,37 @@ export default function MinorLeagueDetailPage() {
   const params = useParams()
   const id = params.id as string
 
-  const [stadium,      setStadium]      = useState<MinorLeagueStadium | null>(null)
-  const [visits,       setVisits]       = useState<BleEntry[]>([])
-  const [food,         setFood]         = useState<FoodItem[]>([])
-  const [loading,      setLoading]      = useState(true)
-  const [activeTab,    setActiveTab]    = useState<ActiveTab>('games-witnessed')
+  const [stadium,       setStadium]       = useState<MinorLeagueStadium | null>(null)
+  const [visits,        setVisits]        = useState<BleEntry[]>([])
+  const [loading,       setLoading]       = useState(true)
+  const [activeTab,     setActiveTab]     = useState<ActiveTab>('games-witnessed')
   const [expandedVisit, setExpandedVisit] = useState<string | null>(null)
-  const [showForm,     setShowForm]     = useState(false)
+  const [showForm,      setShowForm]      = useState(false)
   const [heroPhotoError, setHeroPhotoError] = useState(false)
 
   // Game Day Intel
   const [upcomingGames,  setUpcomingGames]  = useState<MiLBGame[]>([])
   const [weather,        setWeather]        = useState<WeatherRow[] | null>(null)
   const [weatherLoading, setWeatherLoading] = useState(false)
-  const [intelSubTab,    setIntelSubTab]    = useState<'food' | 'souvenirs'>('food')
 
   // Stadium Info
-  const [roster,               setRoster]               = useState<RosterPlayer[]>([])
-  const [standings,            setStandings]            = useState<StandingTeam[]>([])
+  const [roster,                setRoster]                = useState<RosterPlayer[]>([])
+  const [standings,             setStandings]             = useState<StandingTeam[]>([])
   const [affiliateMlbStadiumId, setAffiliateMlbStadiumId] = useState<string | null>(null)
-  const [stadiumNote,          setStadiumNote]          = useState('')
-  const [editingNote,          setEditingNote]          = useState(false)
-  const [noteInput,            setNoteInput]            = useState('')
-  const [savingNote,           setSavingNote]           = useState(false)
 
   async function load() {
     const supabase = createClient()
-    const [
-      { data: s },
-      { data: v },
-      { data: f },
-      { data: n },
-    ] = await Promise.all([
+    const [{ data: s }, { data: v }] = await Promise.all([
       supabase.from('minor_league_stadiums').select('*').eq('id', id).single(),
       supabase.from('baseball_life_entries')
         .select('id,visit_date,opponent,home_team,away_team,final_score_home,final_score_away,ticket_section,ticket_row,ticket_seats,notes,moments,weather_temp,weather_conditions')
         .eq('category', 'minor_league')
         .eq('minor_league_stadium_id', id)
         .order('visit_date', { ascending: false }),
-      supabase.from('minor_league_food').select('*').eq('stadium_id', id),
-      supabase.from('minor_league_notes').select('notes').eq('stadium_id', id).maybeSingle(),
     ])
 
     setStadium(s)
     setVisits((v ?? []) as BleEntry[])
-    setFood((f ?? []) as FoodItem[])
-    const note = (n as any)?.notes ?? ''
-    setStadiumNote(note)
-    setNoteInput(note)
     setLoading(false)
 
     if (s?.affiliate) {
@@ -262,10 +238,10 @@ export default function MinorLeagueDetailPage() {
     }
 
     if (s?.milb_team_id) {
-      fetchMiLBUpcomingGames(s.milb_team_id).then(setUpcomingGames)
       fetchMiLBRoster(s.milb_team_id).then(setRoster)
-      fetchMiLBLeagueId(s.milb_team_id).then(lid => {
-        if (lid) fetchMiLBStandings(lid, s.milb_team_id!).then(setStandings)
+      fetchMiLBUpcomingGames(s.milb_team_id).then(setUpcomingGames)
+      fetchMiLBTeamInfo(s.milb_team_id).then(({ leagueId }) => {
+        if (leagueId) fetchMiLBStandings(leagueId, s.milb_team_id!).then(setStandings)
       })
     }
   }
@@ -283,19 +259,6 @@ export default function MinorLeagueDetailPage() {
       .finally(() => setWeatherLoading(false))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, stadium])
-
-  async function saveNote() {
-    setSavingNote(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('minor_league_notes').upsert(
-      { stadium_id: id, notes: noteInput || null, updated_by: user?.id ?? null, updated_at: new Date().toISOString() },
-      { onConflict: 'stadium_id' }
-    )
-    setStadiumNote(noteInput)
-    setEditingNote(false)
-    setSavingNote(false)
-  }
 
   async function shareStadium() {
     const url = typeof window !== 'undefined' ? window.location.href : ''
@@ -322,12 +285,7 @@ export default function MinorLeagueDetailPage() {
               </div>
             ))}
           </div>
-          <div style={{ padding: '16px 0' }}>
-            <div style={{ height: 48, borderRadius: 12, backgroundColor: '#1C2430', overflow: 'hidden', position: 'relative' }}>
-              <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 4, borderTop: '1px solid #30363D', borderBottom: '1px solid #30363D', padding: '4px 0' }}>
+          <div style={{ display: 'flex', gap: 4, borderTop: '1px solid #30363D', borderBottom: '1px solid #30363D', padding: '4px 0', marginTop: 16 }}>
             {[1,2,3].map(i => (
               <div key={i} style={{ flex: 1, height: 40, borderRadius: 6, backgroundColor: '#1C2430', overflow: 'hidden', position: 'relative', margin: 4 }}>
                 <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
@@ -343,10 +301,10 @@ export default function MinorLeagueDetailPage() {
     return <div style={{ padding: 32, color: '#8B949E' }}>Stadium not found.</div>
   }
 
-  const visited      = visits.length > 0
+  const visited         = visits.length > 0
   const affiliateColors = TEAM_GRADIENTS[stadium.affiliate] ?? ['#0B1117', '#161B22']
-  const teamColor    = TEAM_BTN_COLOR[stadium.affiliate] ?? '#1F6FEB'
-  const heroPhoto    = !heroPhotoError ? stadium.image_url : null
+  const teamColor       = TEAM_BTN_COLOR[stadium.affiliate] ?? '#1F6FEB'
+  const heroPhoto       = !heroPhotoError ? stadium.image_url : null
 
   const TABS: { key: ActiveTab; label: string }[] = [
     { key: 'games-witnessed', label: 'Games Witnessed' },
@@ -360,7 +318,6 @@ export default function MinorLeagueDetailPage() {
 
         {/* ── HERO ───────────────────────────────────────────────────────── */}
         <div style={{ position: 'relative', height: 260, overflow: 'hidden' }}>
-          {/* Background */}
           <div style={{
             position: 'absolute', inset: 0,
             background: `linear-gradient(160deg, ${affiliateColors[0]} 0%, ${affiliateColors[1]} 100%)`,
@@ -384,7 +341,6 @@ export default function MinorLeagueDetailPage() {
             background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.2) 35%, rgba(0,0,0,0.65) 65%, rgba(0,0,0,0.9) 100%)',
           }} />
 
-          {/* Back button */}
           <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
             <Link href="/stadiums" style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -396,7 +352,6 @@ export default function MinorLeagueDetailPage() {
             </Link>
           </div>
 
-          {/* Share button */}
           <button
             onClick={shareStadium}
             aria-label="Share"
@@ -411,7 +366,6 @@ export default function MinorLeagueDetailPage() {
             <Share2 size={16} color="#ffffff" />
           </button>
 
-          {/* Hero text */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 16px 18px', zIndex: 10 }}>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: 4 }}>
               {stadium.team} — {stadium.level} affiliate of the {stadium.affiliate_full}
@@ -435,9 +389,9 @@ export default function MinorLeagueDetailPage() {
           <div style={{ backgroundColor: '#161B22', borderBottom: '1px solid #30363D', padding: '14px 12px' }}>
             <div style={{ display: 'flex', gap: 8 }}>
               {[
-                { Icon: Users,       value: stadium.capacity ? stadium.capacity.toLocaleString() : '—', label: 'Capacity'     },
-                { Icon: CalendarDays, value: stadium.opened  ? String(stadium.opened)            : '—', label: 'Year Opened'  },
-                { Icon: Trophy,      value: stadium.level,                                               label: 'Level'        },
+                { Icon: Users,        value: stadium.capacity ? stadium.capacity.toLocaleString() : '—', label: 'Capacity'    },
+                { Icon: CalendarDays, value: stadium.opened   ? String(stadium.opened)            : '—', label: 'Year Opened' },
+                { Icon: Trophy,       value: stadium.level,                                               label: 'Level'       },
               ].map(({ Icon, value, label }) => (
                 <div key={label} style={{
                   flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -564,11 +518,11 @@ export default function MinorLeagueDetailPage() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {visits.map(visit => {
-                      const isExpanded = expandedVisit === visit.id
-                      const hasScore   = visit.final_score_home != null && visit.final_score_away != null
-                      const homeWon    = hasScore && (visit.final_score_home! > visit.final_score_away!)
+                      const isExpanded  = expandedVisit === visit.id
+                      const hasScore    = visit.final_score_home != null && visit.final_score_away != null
+                      const homeWon     = hasScore && (visit.final_score_home! > visit.final_score_away!)
                       const borderColor = hasScore ? (homeWon ? '#3FB950' : '#F85149') : teamColor
-                      const opponent   = visit.opponent ?? visit.away_team ?? '—'
+                      const opponent    = visit.opponent ?? visit.away_team ?? '—'
 
                       return (
                         <div key={visit.id}>
@@ -584,26 +538,18 @@ export default function MinorLeagueDetailPage() {
                               cursor: 'pointer', textAlign: 'left',
                             }}
                           >
-                            {/* Logo */}
                             <div style={{ width: 40, height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={36} />
                             </div>
-
-                            {/* Date + matchup */}
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: 11, color: '#8B949E', marginBottom: 3, fontWeight: 500 }}>
                                 {formatDate(visit.visit_date)}
                               </div>
-                              <div style={{
-                                fontSize: 14, fontWeight: 700, color: '#E6EDF3',
-                                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                              }}>
+                              <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 vs {opponent}
                                 {hasScore && ` · ${visit.final_score_away}–${visit.final_score_home}`}
                               </div>
                             </div>
-
-                            {/* Win/loss dot + chevron */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                               {hasScore && (
                                 <div style={{
@@ -620,14 +566,11 @@ export default function MinorLeagueDetailPage() {
                             </div>
                           </button>
 
-                          {/* Expanded game detail */}
                           {isExpanded && (
                             <div style={{
                               backgroundColor: '#1C2430', border: '1px solid #30363D',
-                              borderTop: 'none', borderRadius: '0 0 12px 12px',
-                              padding: '16px',
+                              borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '16px',
                             }}>
-                              {/* Score banner */}
                               {hasScore && (
                                 <div style={{
                                   background: `linear-gradient(135deg, ${affiliateColors[0]}CC 0%, ${affiliateColors[1]}CC 100%)`,
@@ -648,15 +591,13 @@ export default function MinorLeagueDetailPage() {
                                     backgroundColor: homeWon ? 'rgba(63,185,80,0.25)' : 'rgba(248,81,73,0.25)',
                                     border: `2px solid ${homeWon ? '#3FB950' : '#F85149'}`,
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontSize: 13, fontWeight: 900,
-                                    color: homeWon ? '#3FB950' : '#F85149',
+                                    fontSize: 13, fontWeight: 900, color: homeWon ? '#3FB950' : '#F85149',
                                   }}>
                                     {homeWon ? 'W' : 'L'}
                                   </div>
                                 </div>
                               )}
 
-                              {/* Info rows */}
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
                                 {[
                                   { label: 'Date', value: formatDate(visit.visit_date) },
@@ -676,7 +617,6 @@ export default function MinorLeagueDetailPage() {
                                 ))}
                               </div>
 
-                              {/* Moments */}
                               {visit.moments && visit.moments.length > 0 && (
                                 <div style={{ marginBottom: 12 }}>
                                   <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Moments</div>
@@ -688,17 +628,11 @@ export default function MinorLeagueDetailPage() {
                                 </div>
                               )}
 
-                              {/* Notes */}
                               {visit.notes && (
                                 <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.5, paddingTop: 10, borderTop: '1px solid #30363D', marginTop: 4 }}>
                                   {visit.notes}
                                 </div>
                               )}
-
-                              {/* Attribution */}
-                              <div style={{ marginTop: 12, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                                <span style={{ fontSize: 10, color: '#484F58', fontWeight: 600 }}>⚾ Stats from MiLB</span>
-                              </div>
                             </div>
                           )}
                         </div>
@@ -712,9 +646,9 @@ export default function MinorLeagueDetailPage() {
             {/* ─────────── GAME DAY INTEL ──────────────────────────────── */}
             {activeTab === 'game-day-intel' && (
               <>
-                {/* Upcoming Home Games */}
+                {/* Upcoming Games */}
                 <section style={{ marginBottom: 32 }}>
-                  <SectionTitle Icon={CalendarDays}>Upcoming Home Games</SectionTitle>
+                  <SectionTitle Icon={CalendarDays}>Upcoming Games</SectionTitle>
                   {upcomingGames.length > 0 ? (
                     <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #30363D' }}>
                       <div style={{ backgroundColor: '#0B1117' }}>
@@ -723,6 +657,7 @@ export default function MinorLeagueDetailPage() {
                           const dayAbbr = dt.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/Los_Angeles' })
                           const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })
                           const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
+                          const prefix  = g.isHome ? 'vs' : '@'
                           return (
                             <div key={g.gamePk} style={{
                               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -736,8 +671,13 @@ export default function MinorLeagueDetailPage() {
                                 </div>
                                 <div>
                                   <div style={{ fontWeight: 700, fontSize: 14, color: '#E6EDF3' }}>
-                                    vs {g.awayTeam}
+                                    <span style={{ color: g.isHome ? '#3FB950' : '#8B949E', marginRight: 4 }}>{prefix}</span>
+                                    {g.opponent}
+                                    {g.scheduledInnings === 7 && <span style={{ fontSize: 11, color: '#8B949E', marginLeft: 6 }}>7 inn.</span>}
                                   </div>
+                                  {!g.isHome && g.venue && (
+                                    <div style={{ fontSize: 11, color: '#8B949E', marginTop: 1 }}>{g.venue}</div>
+                                  )}
                                   {g.promotions.length > 0 && (
                                     <div style={{ fontSize: 11, color: '#F5A623', marginTop: 2 }}>
                                       🎁 {g.promotions[0]}{g.promotions.length > 1 ? ` +${g.promotions.length - 1} more` : ''}
@@ -745,9 +685,7 @@ export default function MinorLeagueDetailPage() {
                                   )}
                                 </div>
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <div style={{ fontSize: 13, color: '#8B949E' }}>{timeStr} PT</div>
-                              </div>
+                              <div style={{ fontSize: 13, color: '#8B949E' }}>{timeStr} PT</div>
                             </div>
                           )
                         })}
@@ -769,93 +707,10 @@ export default function MinorLeagueDetailPage() {
                     </div>
                   ) : (
                     <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '24px 16px', textAlign: 'center', color: '#8B949E', fontSize: 14 }}>
-                      {stadium.milb_team_id ? 'No upcoming home games found.' : 'Schedule not available.'}
+                      {stadium.milb_team_id ? 'No upcoming games found.' : 'Schedule not available.'}
                       {stadium.website_url && (
                         <> <a href={stadium.website_url} target="_blank" rel="noopener noreferrer" style={{ color: teamColor, fontWeight: 600, textDecoration: 'none' }}>Check milb.com →</a></>
                       )}
-                    </div>
-                  )}
-                </section>
-
-                {/* Food & Souvenirs */}
-                <section style={{ marginBottom: 32 }}>
-                  <div style={{
-                    display: 'flex', gap: 3, marginBottom: 16,
-                    backgroundColor: '#1C2430', borderRadius: 11,
-                    border: '1px solid #30363D', padding: 3,
-                  }}>
-                    {([
-                      { key: 'food',      emoji: '🍟', label: 'Food'      },
-                      { key: 'souvenirs', emoji: '🛍️', label: 'Souvenirs' },
-                    ] as const).map(({ key, emoji, label }) => (
-                      <button
-                        key={key}
-                        onClick={() => setIntelSubTab(key)}
-                        style={{
-                          flex: 1, padding: '7px 10px', borderRadius: 8,
-                          fontSize: 13, fontWeight: intelSubTab === key ? 700 : 500,
-                          border: 'none', cursor: 'pointer',
-                          backgroundColor: intelSubTab === key ? '#161B22' : 'transparent',
-                          color: intelSubTab === key ? '#E6EDF3' : '#8B949E',
-                          boxShadow: intelSubTab === key ? '0 1px 3px rgba(0,0,0,0.35)' : 'none',
-                          transition: 'background-color 0.15s, color 0.15s',
-                        }}
-                      >
-                        {emoji} {label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {intelSubTab === 'food' && (() => {
-                    const classics = food.filter(f => f.is_classic)
-                    const seasonal = food.filter(f => !f.is_classic && f.active && f.season_year === 2026)
-                    if (classics.length === 0 && seasonal.length === 0) return (
-                      <div style={{ textAlign: 'center', padding: '32px 16px', color: '#484F58', fontSize: 13 }}>
-                        No food intel yet for {stadium.name}.
-                      </div>
-                    )
-                    return (
-                      <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
-                        {classics.length > 0 && (
-                          <>
-                            <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Classics</div>
-                            {classics.map((f, i) => (
-                              <div key={f.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 16px', borderBottom: (i < classics.length - 1 || seasonal.length > 0) ? '1px solid rgba(48,54,61,0.6)' : 'none' }}>
-                                <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🏆</span>
-                                <div>
-                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{f.item_name}</div>
-                                  {f.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{f.description}</div>}
-                                </div>
-                              </div>
-                            ))}
-                          </>
-                        )}
-                        {seasonal.length > 0 && (
-                          <>
-                            <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>This Season</div>
-                            {seasonal.map((f, i) => (
-                              <div key={f.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 16px', borderBottom: i < seasonal.length - 1 ? '1px solid rgba(48,54,61,0.6)' : 'none' }}>
-                                <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🔥</span>
-                                <div>
-                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{f.item_name}</div>
-                                  {f.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{f.description}</div>}
-                                </div>
-                              </div>
-                            ))}
-                          </>
-                        )}
-                      </div>
-                    )
-                  })()}
-
-                  {intelSubTab === 'souvenirs' && (
-                    <div style={{ textAlign: 'center', padding: '40px 24px', backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D' }}>
-                      <div style={{ fontSize: 32, marginBottom: 10 }}>🛍️</div>
-                      <div style={{ fontWeight: 700, fontSize: 15, color: '#E6EDF3', marginBottom: 4 }}>No souvenirs added yet</div>
-                      <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 20 }}>Know a must-have at {stadium.name}? Submit one!</div>
-                      <button style={{ padding: '10px 22px', borderRadius: 10, fontSize: 14, fontWeight: 700, border: `1.5px solid ${teamColor}`, backgroundColor: 'transparent', cursor: 'pointer', color: teamColor }}>
-                        Submit a Souvenir
-                      </button>
                     </div>
                   )}
                 </section>
@@ -948,11 +803,7 @@ export default function MinorLeagueDetailPage() {
                     <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '28px 16px', textAlign: 'center', color: '#484F58', fontSize: 13 }}>
                       Weather data unavailable.
                     </div>
-                  ) : (
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '28px 16px', textAlign: 'center', color: '#8B949E', fontSize: 13 }}>
-                      Open this tab to load weather data.
-                    </div>
-                  )}
+                  ) : null}
                 </section>
               </>
             )}
@@ -965,15 +816,15 @@ export default function MinorLeagueDetailPage() {
                   <SectionTitle Icon={Building2}>About</SectionTitle>
                   <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
                     {[
-                      { label: 'Full Name',  value: stadium.name },
-                      { label: 'Team',       value: stadium.team },
-                      stadium.address ? { label: 'Address', value: stadium.address } : null,
-                      { label: 'City',       value: `${stadium.city}, ${stadium.state}` },
-                      { label: 'Level',      value: stadium.level },
+                      { label: 'Full Name', value: stadium.name },
+                      { label: 'Team',      value: stadium.team },
+                      stadium.address  ? { label: 'Address',  value: stadium.address } : null,
+                      { label: 'City',      value: `${stadium.city}, ${stadium.state}` },
+                      { label: 'Level',     value: stadium.level },
                       stadium.capacity ? { label: 'Capacity', value: stadium.capacity.toLocaleString() } : null,
                       stadium.opened   ? { label: 'Opened',   value: String(stadium.opened) } : null,
                       stadium.surface  ? { label: 'Surface',  value: stadium.surface } : null,
-                      { label: 'Season', value: 'April through September' },
+                      { label: 'Season',    value: 'April through September' },
                     ].filter(Boolean).map((row, i, arr) => (
                       <div key={row!.label} style={{
                         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -1036,7 +887,6 @@ export default function MinorLeagueDetailPage() {
                   <section style={{ marginBottom: 32 }}>
                     <SectionTitle Icon={Trophy}>League Standings</SectionTitle>
                     <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
-                      {/* Header */}
                       <div style={{
                         display: 'grid', gridTemplateColumns: '1fr 36px 36px 48px 36px',
                         gap: 4, padding: '8px 14px',
@@ -1150,109 +1000,6 @@ export default function MinorLeagueDetailPage() {
                     </div>
                   </section>
                 )}
-
-                {/* Links */}
-                <section style={{ marginBottom: 32 }}>
-                  <SectionTitle Icon={Map}>Links</SectionTitle>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {[
-                      stadium.website_url ? { href: stadium.website_url, icon: '🎟️', label: 'Get Tickets' } : null,
-                      stadium.address ? {
-                        href: `https://maps.google.com/?q=${encodeURIComponent(stadium.address + ' ' + stadium.city + ' ' + stadium.state)}`,
-                        icon: '🗺️', label: 'Get Directions',
-                      } : {
-                        href: `https://maps.google.com/?q=${encodeURIComponent(stadium.name + ' ' + stadium.city + ' ' + stadium.state)}`,
-                        icon: '🗺️', label: 'Get Directions',
-                      },
-                      { href: `/trips`, icon: '🚗', label: 'Road Trip Optimizer' },
-                      stadium.website_url ? { href: stadium.website_url, icon: '🌐', label: 'Official Website' } : null,
-                    ].filter(Boolean).map(link => (
-                      <a
-                        key={link!.label}
-                        href={link!.href}
-                        target={link!.href.startsWith('http') ? '_blank' : undefined}
-                        rel={link!.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                        style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          padding: '14px 16px', borderRadius: 12, textDecoration: 'none',
-                          backgroundColor: '#161B22', border: '1px solid #30363D',
-                        }}
-                      >
-                        <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>{link!.icon} {link!.label}</span>
-                        <span style={{ fontSize: 13, color: teamColor }}>Open ↗</span>
-                      </a>
-                    ))}
-                  </div>
-                </section>
-
-                {/* Notes */}
-                <section style={{ marginBottom: 32 }}>
-                  <SectionTitle Icon={MessageSquare}>Notes</SectionTitle>
-                  {editingNote ? (
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: 16 }}>
-                      <textarea
-                        rows={4}
-                        value={noteInput}
-                        onChange={e => setNoteInput(e.target.value)}
-                        placeholder={`Parking tips, best food spots, recommended seats at ${stadium.name}...`}
-                        autoFocus
-                        style={{
-                          width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #30363D',
-                          fontSize: 14, color: '#E6EDF3', backgroundColor: '#1C2430',
-                          resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
-                        }}
-                      />
-                      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                        <button
-                          onClick={saveNote}
-                          disabled={savingNote}
-                          style={{
-                            padding: '9px 18px', borderRadius: 8, fontSize: 14, fontWeight: 700,
-                            backgroundColor: teamColor, color: '#ffffff', border: 'none', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', gap: 6,
-                          }}
-                        >
-                          <Save size={14} /> {savingNote ? 'Saving…' : 'Save Note'}
-                        </button>
-                        <button
-                          onClick={() => setEditingNote(false)}
-                          style={{ padding: '9px 18px', borderRadius: 8, fontSize: 14, fontWeight: 600, border: '1.5px solid #30363D', backgroundColor: '#1C2430', cursor: 'pointer', color: '#8B949E' }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : stadiumNote ? (
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: '#E6EDF3', backgroundColor: 'rgba(139,148,158,0.12)', padding: '3px 10px', borderRadius: 20 }}>
-                          Field Notes
-                        </span>
-                        <button
-                          onClick={() => { setNoteInput(stadiumNote); setEditingNote(true) }}
-                          style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid #30363D', background: '#1C2430', cursor: 'pointer', fontSize: 13, color: '#8B949E', display: 'flex', alignItems: 'center', gap: 4 }}
-                        >
-                          <Pencil size={12} /> Edit
-                        </button>
-                      </div>
-                      <div style={{ fontSize: 14, color: '#E6EDF3', fontStyle: 'italic', lineHeight: 1.6 }}>
-                        &ldquo;{stadiumNote}&rdquo;
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, padding: '40px 24px', textAlign: 'center' }}>
-                      <div style={{ fontSize: 32, marginBottom: 10 }}>💬</div>
-                      <div style={{ fontWeight: 700, fontSize: 15, color: '#E6EDF3', marginBottom: 4 }}>Be the first to share</div>
-                      <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 20 }}>Parking tips, best food spots, recommended seats...</div>
-                      <button
-                        onClick={() => { setNoteInput(''); setEditingNote(true) }}
-                        style={{ padding: '10px 22px', borderRadius: 10, fontSize: 14, fontWeight: 700, border: 'none', backgroundColor: teamColor, cursor: 'pointer', color: '#fff' }}
-                      >
-                        Add a Note
-                      </button>
-                    </div>
-                  )}
-                </section>
               </>
             )}
 
@@ -1260,7 +1007,6 @@ export default function MinorLeagueDetailPage() {
         </div>{/* /max-width */}
       </main>
 
-      {/* ── Log Game form ──────────────────────────────────────────────── */}
       {showForm && (
         <BaseballLifeForm
           defaultCategory="minor_league"
