@@ -977,31 +977,7 @@ export default function MinorLeagueDetailPage() {
                   )
                 })()}
 
-                {/* Ones to Watch */}
-                {roster.length > 0 && (
-                  <section style={{ marginBottom: 32 }}>
-                    <SectionTitle Icon={Trophy}>Ones to Watch</SectionTitle>
-                    <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 14 }}>
-                      Future {stadium.affiliate_full} talent — {new Date().getFullYear()} roster
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {roster.map(p => (
-                        <div key={p.id} style={{
-                          backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D',
-                          padding: '10px 14px', textAlign: 'center', minWidth: 72,
-                        }}>
-                          {p.jerseyNumber && (
-                            <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>#{p.jerseyNumber}</div>
-                          )}
-                          <div style={{ fontSize: 11, color: teamColor, marginTop: p.jerseyNumber ? 4 : 0, lineHeight: 1.3 }}>
-                            {p.name.split(' ').slice(-1)[0]}
-                          </div>
-                          <div style={{ fontSize: 10, color: '#6E7681', marginTop: 2 }}>{p.position}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
+
               </>
             )}
 
