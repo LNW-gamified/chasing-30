@@ -186,10 +186,10 @@ function EventCard({ event, attendedCount, onLog }: {
     <div className="stadium-card" style={{ backgroundColor: '#111827', border: attended ? '1px solid rgba(63,185,80,0.4)' : '1px solid #21262D', borderTop: `3px solid ${meta.color}`, borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s' }}>
       <div style={{ height: 100, position: 'relative', overflow: 'hidden' }}>
         {event.image_url
-          ? <img src={event.image_url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} />
+          ? <img src={event.image_url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
           : <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${hexToRgba(gradColor, 0.35)} 0%, ${hexToRgba(gradColor, 0.12)} 100%)` }} />
         }
-        {event.image_url && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)' }} />}
+        {event.image_url && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.45) 100%)' }} />}
         {attended && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
       </div>
       <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 4 }}>
@@ -231,8 +231,8 @@ function ExperienceCard({ exp, visited, onLog }: {
         {showImage
           ? <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={exp.image_url!} alt="" onError={() => setImgFailed(true)} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.75 }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)' }} />
+              <img src={exp.image_url!} alt="" onError={() => setImgFailed(true)} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.45) 100%)' }} />
             </>
           : <>
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #0A1628 0%, #1B2F4E 100%)' }} />
