@@ -28,7 +28,7 @@ interface BaseballExperience {
   id: string; name: string; slug: string; city: string; state: string | null
   country: string; description: string | null; highlights: string[] | null
   admission: string | null; website_url: string | null; sort_order: number
-  image_url: string | null
+  image_url: string | null; logo_url: string | null
 }
 interface MinorLeagueStadium {
   id: string; name: string; team: string; abbreviation: string
@@ -184,6 +184,7 @@ function EventCard({ event, attendedCount, onLog }: {
   const attended = attendedCount > 0
   const gradColor = EVENT_GRADIENT[event.category] ?? meta.color
   const showLogo = event.logo_url && !logoFailed
+  console.log('[EventCard]', event.slug, { logo_url: event.logo_url, image_url: event.image_url })
   return (
     <div className="stadium-card" style={{ backgroundColor: '#111827', border: attended ? '1px solid rgba(63,185,80,0.4)' : '1px solid #21262D', borderTop: `3px solid ${meta.color}`, borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s' }}>
       <div style={{ height: 100, position: 'relative', overflow: 'hidden' }}>
@@ -232,8 +233,10 @@ function ExperienceCard({ exp, visited, onLog }: {
   exp: BaseballExperience; visited: boolean; onLog: () => void
 }) {
   const [imgFailed, setImgFailed] = useState(false)
+  const [logoFailed, setLogoFailed] = useState(false)
   const loc = [exp.city, exp.state ?? exp.country].filter(Boolean).join(', ')
   const showImage = exp.image_url && !imgFailed
+  const showLogo = exp.logo_url && !logoFailed
   return (
     <div className="stadium-card" style={{ backgroundColor: '#111827', border: visited ? '1px solid rgba(63,185,80,0.4)' : '1px solid #21262D', borderTop: '3px solid #8B949E', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s' }}>
       <div style={{ height: 100, position: 'relative', overflow: 'hidden' }}>
@@ -250,11 +253,13 @@ function ExperienceCard({ exp, visited, onLog }: {
               </div>
             </>
         }
-        {!showImage && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
-            <span style={{ fontSize: 44 }}>🏛️</span>
-          </div>
-        )}
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+          {showLogo
+            /* eslint-disable-next-line @next/next/no-img-element */
+            ? <img src={exp.logo_url!} alt="" onError={() => setLogoFailed(true)} style={{ width: 60, height: 60, objectFit: 'contain' }} />
+            : <span style={{ fontSize: 44 }}>🏛️</span>
+          }
+        </div>
         {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
       </div>
       <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 4 }}>
