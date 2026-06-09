@@ -303,7 +303,7 @@ function MinorLeagueCard({ stadium, visitCount }: {
           <div style={{ fontSize: 11, color: '#8B949E' }}>{stadium.city}, {stadium.state}</div>
           <div style={{ flex: 1, minHeight: 6 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: affiliateAccent, backgroundColor: hexToRgba(affiliateAccent, 0.12), border: `1px solid ${hexToRgba(affiliateAccent, 0.3)}`, padding: '2px 7px', borderRadius: 999 }}>{stadium.level}</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)', border: '1px solid rgba(245,166,35,0.3)', padding: '2px 7px', borderRadius: 999 }}>{stadium.level}</span>
             <span style={{ fontSize: 10, color: '#8B949E' }}>aff: {stadium.affiliate}</span>
             {visited ? (
               <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', border: '1px solid rgba(63,185,80,0.25)', padding: '2px 7px', borderRadius: 999 }}>{visitCount > 1 ? `${visitCount}×` : '✓'}</span>
