@@ -22,7 +22,7 @@ interface NextGameInfo { date: string; opponentAbbr: string }
 interface BaseballEvent {
   id: string; name: string; slug: string; category: string
   description: string | null; is_annual: boolean; sort_order: number
-  image_url: string | null
+  image_url: string | null; logo_url: string | null
 }
 interface BaseballExperience {
   id: string; name: string; slug: string; city: string; state: string | null
@@ -179,9 +179,11 @@ function StadiumCard({ stadium, visited, visitDate, visitCount, nextGame, photo 
 function EventCard({ event, attendedCount, onLog }: {
   event: BaseballEvent; attendedCount: number; onLog: () => void
 }) {
+  const [logoFailed, setLogoFailed] = useState(false)
   const meta = EVENT_META[event.category] ?? { emoji: '🏆', color: '#F5A623', label: event.category }
   const attended = attendedCount > 0
   const gradColor = EVENT_GRADIENT[event.category] ?? meta.color
+  const showLogo = event.logo_url && !logoFailed
   return (
     <div className="stadium-card" style={{ backgroundColor: '#111827', border: attended ? '1px solid rgba(63,185,80,0.4)' : '1px solid #21262D', borderTop: `3px solid ${meta.color}`, borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s' }}>
       <div style={{ height: 100, position: 'relative', overflow: 'hidden' }}>
@@ -190,11 +192,13 @@ function EventCard({ event, attendedCount, onLog }: {
           : <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${hexToRgba(gradColor, 0.35)} 0%, ${hexToRgba(gradColor, 0.12)} 100%)` }} />
         }
         {event.image_url && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)' }} />}
-        {!event.image_url && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
-            <span style={{ fontSize: 48 }}>{meta.emoji}</span>
-          </div>
-        )}
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+          {showLogo
+            /* eslint-disable-next-line @next/next/no-img-element */
+            ? <img src={event.logo_url!} alt="" onError={() => setLogoFailed(true)} style={{ width: 60, height: 60, objectFit: 'contain' }} />
+            : <span style={{ fontSize: 48 }}>{meta.emoji}</span>
+          }
+        </div>
         {attended && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
       </div>
       <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 4 }}>
