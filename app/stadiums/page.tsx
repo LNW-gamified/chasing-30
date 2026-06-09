@@ -233,10 +233,8 @@ function ExperienceCard({ exp, visited, onLog }: {
   exp: BaseballExperience; visited: boolean; onLog: () => void
 }) {
   const [imgFailed, setImgFailed] = useState(false)
-  const [logoFailed, setLogoFailed] = useState(false)
   const loc = [exp.city, exp.state ?? exp.country].filter(Boolean).join(', ')
   const showImage = exp.image_url && !imgFailed
-  const showLogo = exp.logo_url && !logoFailed
   return (
     <div className="stadium-card" style={{ backgroundColor: '#111827', border: visited ? '1px solid rgba(63,185,80,0.4)' : '1px solid #21262D', borderTop: '3px solid #8B949E', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s' }}>
       <div style={{ height: 100, position: 'relative', overflow: 'hidden' }}>
@@ -253,13 +251,6 @@ function ExperienceCard({ exp, visited, onLog }: {
               </div>
             </>
         }
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
-          {showLogo
-            /* eslint-disable-next-line @next/next/no-img-element */
-            ? <img src={exp.logo_url!} alt="" onError={() => setLogoFailed(true)} style={{ width: 60, height: 60, objectFit: 'contain' }} />
-            : <span style={{ fontSize: 44 }}>🏛️</span>
-          }
-        </div>
         {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
       </div>
       <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 4 }}>
@@ -565,8 +556,29 @@ export default function StadiumsPage() {
                 <div style={{ fontSize: 13, color: '#8B949E' }}>All-Star, World Series, Playoffs, and more — track every one</div>
               </div>
 
-              {/* Group by category */}
-              {(['all_star','home_run_derby','world_series','playoffs','field_of_dreams','spring_training'] as const).map(cat => {
+              {/* Marquee Events — All-Star, Home Run Derby, World Series */}
+              {(['all_star','home_run_derby','world_series'] as const).some(cat => baseballEvents.some(e => e.category === cat)) && (
+                <div style={{ marginBottom: 32 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#F5A623', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    🏆 Marquee Events
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {(['all_star','home_run_derby','world_series'] as const).flatMap(cat =>
+                      baseballEvents.filter(e => e.category === cat).map(ev => (
+                        <EventCard
+                          key={ev.id}
+                          event={ev}
+                          attendedCount={eventAttendedCount(ev.slug)}
+                          onLog={() => openLog('mlb_special_event', eventDefaultType(ev.slug))}
+                        />
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Remaining sections */}
+              {(['playoffs','field_of_dreams','spring_training'] as const).map(cat => {
                 const catEvents = baseballEvents.filter(e => e.category === cat)
                 if (catEvents.length === 0) return null
                 const meta = EVENT_META[cat]
