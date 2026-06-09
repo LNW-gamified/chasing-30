@@ -8,12 +8,28 @@ interface Props {
   fallbackAbbr: string
   size?: number
   style?: React.CSSProperties
+  logoUrl?: string | null
 }
 
-export default function MiLBLogo({ milbTeamId, fallbackAbbr, size = 48, style }: Props) {
-  const [failed, setFailed] = useState(false)
+export default function MiLBLogo({ milbTeamId, fallbackAbbr, size = 48, style, logoUrl }: Props) {
+  const [milbFailed, setMilbFailed] = useState(false)
+  const [logoUrlFailed, setLogoUrlFailed] = useState(false)
 
-  if (!milbTeamId || failed) {
+  if (logoUrl && !logoUrlFailed) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={logoUrl}
+        alt=""
+        width={size}
+        height={size}
+        onError={() => setLogoUrlFailed(true)}
+        style={{ width: size, height: size, objectFit: 'contain', ...style }}
+      />
+    )
+  }
+
+  if (!milbTeamId || milbFailed) {
     return <TeamLogo abbreviation={fallbackAbbr} size={size} style={style} />
   }
 
@@ -24,7 +40,7 @@ export default function MiLBLogo({ milbTeamId, fallbackAbbr, size = 48, style }:
       alt=""
       width={size}
       height={size}
-      onError={() => setFailed(true)}
+      onError={() => setMilbFailed(true)}
       style={{ width: size, height: size, objectFit: 'contain', ...style }}
     />
   )

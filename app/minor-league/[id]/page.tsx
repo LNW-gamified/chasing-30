@@ -36,6 +36,7 @@ interface MinorLeagueStadium {
   website_url: string | null
   milb_team_id: number | null
   image_url: string | null
+  logo_url: string | null
 }
 
 interface BleEntry {
@@ -419,7 +420,7 @@ export default function MinorLeagueDetailPage() {
                   boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={40} />
+                    <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={40} logoUrl={stadium.logo_url} />
                     <div>
                       <div style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', lineHeight: 1.1 }}>
                         ⚾ You&apos;ve been here!
@@ -498,7 +499,7 @@ export default function MinorLeagueDetailPage() {
                     border: `1px solid ${teamColor}22`,
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-                      <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={64} />
+                      <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={64} logoUrl={stadium.logo_url} />
                     </div>
                     <div style={{ fontWeight: 700, fontSize: 16, color: '#E6EDF3', marginBottom: 6 }}>
                       Your first game at {stadium.name}
@@ -541,7 +542,7 @@ export default function MinorLeagueDetailPage() {
                             }}
                           >
                             <div style={{ width: 40, height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={36} />
+                              <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={36} logoUrl={stadium.logo_url} />
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: 11, color: '#8B949E', marginBottom: 3, fontWeight: 500 }}>

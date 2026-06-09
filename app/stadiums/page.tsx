@@ -34,7 +34,7 @@ interface MinorLeagueStadium {
   id: string; name: string; team: string; abbreviation: string
   city: string; state: string; level: string; affiliate: string
   affiliate_full: string; description: string | null; milb_team_id: number | null
-  image_url: string | null
+  image_url: string | null; logo_url: string | null
 }
 interface BleEntry { id: string; category: string; event_type: string | null; venue: string | null; minor_league_stadium_id: string | null }
 
@@ -190,9 +190,11 @@ function EventCard({ event, attendedCount, onLog }: {
           : <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${hexToRgba(gradColor, 0.35)} 0%, ${hexToRgba(gradColor, 0.12)} 100%)` }} />
         }
         {event.image_url && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)' }} />}
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
-          <span style={{ fontSize: 48 }}>{meta.emoji}</span>
-        </div>
+        {!event.image_url && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+            <span style={{ fontSize: 48 }}>{meta.emoji}</span>
+          </div>
+        )}
         {attended && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
       </div>
       <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 4 }}>
@@ -241,9 +243,11 @@ function ExperienceCard({ exp, visited, onLog }: {
               </div>
             </>
         }
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
-          <span style={{ fontSize: 44 }}>🏛️</span>
-        </div>
+        {!exp.image_url && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+            <span style={{ fontSize: 44 }}>🏛️</span>
+          </div>
+        )}
         {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
       </div>
       <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 4 }}>
@@ -289,7 +293,7 @@ function MinorLeagueCard({ stadium, visitCount }: {
           }
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)' }} />
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
-            <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={48} />
+            <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={48} logoUrl={stadium.logo_url} />
           </div>
           {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
         </div>
@@ -383,7 +387,7 @@ export default function StadiumsPage() {
       fetch('/api/next-games').then(r => r.ok ? r.json() : {}),
       supabase.from('baseball_events').select('*').order('sort_order'),
       supabase.from('baseball_experiences').select('*').order('sort_order'),
-      supabase.from('minor_league_stadiums').select('id,name,team,abbreviation,city,state,level,affiliate,affiliate_full,description,milb_team_id,image_url').order('name'),
+      supabase.from('minor_league_stadiums').select('id,name,team,abbreviation,city,state,level,affiliate,affiliate_full,description,milb_team_id,image_url,logo_url').order('name'),
       supabase.from('baseball_life_entries').select('id,category,event_type,venue,minor_league_stadium_id'),
     ]).then(([{ data: s }, { data: v }, games, { data: ev }, { data: ex }, { data: mls }, { data: ble }]) => {
       setStadiums(s ?? [])
