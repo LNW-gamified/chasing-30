@@ -27,6 +27,24 @@ export const TEAM_BTN_COLOR: Record<string, string> = {
   TOR: '#134A8E', WSH: '#AB0003',
 }
 
+// Logo container background overrides — only defined for teams where TEAM_BTN_COLOR
+// clashes with the logo (same hue makes the logo invisible).
+// Used exclusively by TeamLogo; does NOT affect button/badge colors.
+// '#FFFFFF' = white bg for red/same-color logos; '#1A1A1A' = near-black for orange logos.
+export const TEAM_LOGO_BG: Record<string, string> = {
+  ARI: '#1A1A1A',  // dark snake logo on red bg — use near-black
+  ATL: '#FFFFFF',  // red A on red bg — use white
+  BAL: '#1A1A1A',  // orange bird on orange bg — use near-black
+  BOS: '#FFFFFF',  // red B on red bg — use white
+  CIN: '#FFFFFF',  // red C on red bg — use white
+  LAA: '#FFFFFF',  // red A on red bg — use white
+  MIN: '#FFFFFF',  // TC mark on dark bg — use white
+  PHI: '#FFFFFF',  // red P on red bg — use white
+  SF:  '#1A1A1A',  // orange logo on orange bg — use near-black
+  STL: '#FFFFFF',  // red bird on red bg — use white
+  WSH: '#FFFFFF',  // red W on red bg — use white
+}
+
 // Two-color gradients for hero / card backgrounds.
 export const TEAM_GRADIENTS: Record<string, [string, string]> = {
   LAA: ['#003263', '#BA0021'], ARI: ['#A71930', '#1A1A1A'],

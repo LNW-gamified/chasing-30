@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { getTeamLogoUrl, LIGHT_BG_LOGO_TEAMS } from '@/lib/team-logos'
-import { TEAM_BTN_COLOR } from '@/lib/team-colors'
+import { TEAM_BTN_COLOR, TEAM_LOGO_BG } from '@/lib/team-colors'
 
 interface Props {
   abbreviation: string
@@ -30,7 +30,7 @@ export default function TeamLogo({ abbreviation, size = 32, className, style }: 
     ...(lightBg
       ? { background: 'rgba(255, 255, 255, 0.90)' }
       : {
-          background: TEAM_BTN_COLOR[abbreviation] ?? '#1F3C6E',
+          background: TEAM_LOGO_BG[abbreviation] ?? TEAM_BTN_COLOR[abbreviation] ?? '#1F3C6E',
           border: '1px solid rgba(255, 255, 255, 0.1)',
         }
     ),
