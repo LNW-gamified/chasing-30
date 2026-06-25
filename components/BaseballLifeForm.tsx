@@ -67,6 +67,37 @@ interface MinorLeagueStadium {
   state: string
   level: string
   affiliate: string
+  milb_team_id: number | null
+}
+
+interface MiLBPastGame {
+  gamePk: number
+  date: string
+  label: string
+  opponent: string
+}
+
+async function fetchMiLBPastGames(milbTeamId: number): Promise<MiLBPastGame[]> {
+  const today = new Date().toISOString().split('T')[0]
+  const year  = new Date().getFullYear()
+  try {
+    const res = await fetch(
+      `https://statsapi.mlb.com/api/v1/schedule?sportId=13&teamId=${milbTeamId}&startDate=${year}-01-01&endDate=${today}`
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    const games: MiLBPastGame[] = []
+    for (const d of data.dates ?? []) {
+      for (const g of d.games ?? []) {
+        if (g.status?.abstractGameState !== 'Final') continue
+        if (g.teams?.home?.team?.id !== milbTeamId) continue
+        const opponent = g.teams?.away?.team?.name ?? 'Unknown'
+        const dt = new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        games.push({ gamePk: g.gamePk, date: d.date, label: `${dt} · vs ${opponent}`, opponent })
+      }
+    }
+    return games.reverse()
+  } catch { return [] }
 }
 
 interface MlbStadium {
@@ -159,17 +190,38 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
   const [giveawayInput,   setGiveawayInput]   = useState('')
   const [uploadingIdx,    setUploadingIdx]    = useState<Record<number, boolean>>({})
 
+  // MiLB past-game picker (minor_league only)
+  const [miLBGames,        setMiLBGames]        = useState<MiLBPastGame[]>([])
+  const [miLBGamesLoading, setMiLBGamesLoading] = useState(false)
+  const [selectedMiLBPk,   setSelectedMiLBPk]   = useState<number | null>(null)
+
   const categoryConfig = CATEGORY_CARDS.find(c => c.value === category)
   const isGame = categoryConfig?.isGame ?? true
 
   // Load stadiums when form opens
   useEffect(() => {
     const supabase = createClient()
-    supabase.from('minor_league_stadiums').select('id,name,team,city,state,level,affiliate').order('name')
+    supabase.from('minor_league_stadiums').select('id,name,team,city,state,level,affiliate,milb_team_id').order('name')
       .then(({ data }) => setMinorLeagueStadiums(data ?? []))
     supabase.from('stadiums').select('id,name,team,abbreviation,city,state').order('name')
       .then(({ data }) => setMlbStadiums(data ?? []))
   }, [])
+
+  useEffect(() => {
+    if (category !== 'minor_league' || !selectedMlsId || useCustomVenue) {
+      setMiLBGames([])
+      setSelectedMiLBPk(null)
+      return
+    }
+    const stadium = minorLeagueStadiums.find(s => s.id === selectedMlsId)
+    if (!stadium?.milb_team_id) { setMiLBGames([]); return }
+    setMiLBGames([])
+    setSelectedMiLBPk(null)
+    setMiLBGamesLoading(true)
+    fetchMiLBPastGames(stadium.milb_team_id)
+      .then(setMiLBGames)
+      .finally(() => setMiLBGamesLoading(false))
+  }, [selectedMlsId, useCustomVenue, category, minorLeagueStadiums])
 
   function toggleMoment(m: string) {
     setSelectedMoments(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m])
@@ -383,6 +435,49 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
                     {useCustomVenue ? '← Pick from list' : "Don't see your stadium? Add it"}
                   </button>
                 </div>
+
+                {/* ── Past game picker ── */}
+                {!useCustomVenue && selectedMlsId && (() => {
+                  const stadium = minorLeagueStadiums.find(s => s.id === selectedMlsId)
+                  if (!stadium?.milb_team_id) return null
+                  return (
+                    <div>
+                      <FieldLabel>Pick a Past Game (optional)</FieldLabel>
+                      {miLBGamesLoading ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#8B949E', fontSize: 13 }}>
+                          <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Loading games…
+                        </div>
+                      ) : miLBGames.length === 0 ? (
+                        <div style={{ fontSize: 13, color: '#484F58', padding: '8px 12px', borderRadius: 8, border: '1px solid #30363D' }}>
+                          No completed home games found this season — enter date below.
+                        </div>
+                      ) : (
+                        <SelectWrap>
+                          <select
+                            value={selectedMiLBPk ?? ''}
+                            onChange={e => {
+                              const pk = parseInt(e.target.value)
+                              if (isNaN(pk)) {
+                                setSelectedMiLBPk(null)
+                              } else {
+                                setSelectedMiLBPk(pk)
+                                const g = miLBGames.find(x => x.gamePk === pk)
+                                if (g) { setVisitDate(g.date); setOpponent(g.opponent) }
+                              }
+                            }}
+                            style={sel}
+                          >
+                            <option value="">— enter date manually —</option>
+                            {miLBGames.map(g => (
+                              <option key={g.gamePk} value={g.gamePk}>{g.label}</option>
+                            ))}
+                          </select>
+                        </SelectWrap>
+                      )}
+                    </div>
+                  )
+                })()}
+
                 {useCustomVenue && (
                   <div style={{ display: 'flex', gap: 8 }}>
                     <div style={{ flex: 2 }}>
