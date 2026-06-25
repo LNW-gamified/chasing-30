@@ -1088,10 +1088,11 @@ export default function MilestoneGrid({
           {/* Manual static experience cards */}
           {filteredStatics.map(s => {
             const expClaims    = claims.filter(c => c.achievement_id === s.id)
-            const hasClaims    = expClaims.length > 0
             const isRepeatable = s.tracking_type === 'manual_repeatable'
             const isBobble     = s.id === 'bobblehead'
-            const count        = expClaims.length
+            const bleCount     = isBobble ? syntheticBleItems.filter(c => c.giveaway_type === 'bobblehead').length : 0
+            const count        = expClaims.length + bleCount
+            const hasClaims    = count > 0
 
             return (
               <button
@@ -1366,10 +1367,11 @@ export default function MilestoneGrid({
       {/* ── Static experience bottom sheet (manual_once / manual_repeatable) ── */}
       {selected?.type === 'static' && (() => {
         const exp          = selected.experience
-        const expClaims    = claims.filter(c => c.achievement_id === exp.id).sort((a, b) => b.claim_date.localeCompare(a.claim_date))
+        const isBobble     = exp.id === 'bobblehead'
+        const bleBobbles   = isBobble ? syntheticBleItems.filter(c => c.giveaway_type === 'bobblehead') : []
+        const expClaims    = [...claims.filter(c => c.achievement_id === exp.id), ...bleBobbles].sort((a, b) => b.claim_date.localeCompare(a.claim_date))
         const hasClaims    = expClaims.length > 0
         const isRepeatable = exp.tracking_type === 'manual_repeatable'
-        const isBobble     = exp.id === 'bobblehead'
         const showsPlayer  = PLAYER_NAME_EXP.has(exp.id)
         const showForm     = isRepeatable || !hasClaims
 
@@ -1569,12 +1571,16 @@ export default function MilestoneGrid({
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {expClaims.map(claim => {
-                        const visit    = allVisits.find(v => v.id === claim.stadium_visit_id)
-                        const stadium  = visit ? allStadiums.find(s => s.id === visit.stadium_id) : null
-                        const bobble   = claim.extra_data?.bobblehead_name ? String(claim.extra_data.bobblehead_name) : null
-                        const player   = claim.extra_data?.player_name     ? String(claim.extra_data.player_name)     : null
-                        const photoUrl = claim.extra_data?.photo_url       ? String(claim.extra_data.photo_url)       : null
-                        const typeInfo = GIVEAWAY_TYPES.find(t => t.value === claim.giveaway_type)
+                        const visit         = allVisits.find(v => v.id === claim.stadium_visit_id)
+                        const stadium       = visit ? allStadiums.find(s => s.id === visit.stadium_id) : null
+                        const bobble        = claim.extra_data?.bobblehead_name ? String(claim.extra_data.bobblehead_name) : null
+                        const player        = claim.extra_data?.player_name     ? String(claim.extra_data.player_name)     : null
+                        const photoUrl      = claim.extra_data?.photo_url       ? String(claim.extra_data.photo_url)       : null
+                        const typeInfo      = GIVEAWAY_TYPES.find(t => t.value === claim.giveaway_type)
+                        const isMiLB        = claim.extra_data?.is_milb === true
+                        const milbAffiliate = isMiLB && claim.extra_data?.milb_affiliate    ? String(claim.extra_data.milb_affiliate)    : null
+                        const milbStadName  = isMiLB && claim.extra_data?.milb_stadium_name ? String(claim.extra_data.milb_stadium_name) : null
+                        const isBleItem     = typeof claim.id === 'string' && claim.id.startsWith('ble-')
 
                         return (
                           <div key={claim.id} style={{ padding: '12px 14px', borderRadius: 10, backgroundColor: 'rgba(139,148,158,0.06)', border: '1px solid #30363D' }}>
@@ -1584,12 +1590,15 @@ export default function MilestoneGrid({
                                 <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3', marginBottom: 6 }}>
                                   {formatDate(claim.claim_date)}
                                 </div>
-                                {stadium && (
+                                {(stadium || (isMiLB && milbAffiliate)) && (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: (bobble || player || claim.notes) ? 6 : 0 }}>
-                                    <TeamLogo abbreviation={stadium.abbreviation} size={24} />
+                                    <TeamLogo abbreviation={isMiLB && milbAffiliate ? milbAffiliate : stadium!.abbreviation} size={24} />
                                     <div style={{ minWidth: 0 }}>
-                                      <div style={{ fontSize: 12, color: '#E6EDF3', fontWeight: 600 }}>{stadium.name}</div>
-                                      {visit && <div style={{ fontSize: 11, color: '#8B949E' }}>{visit.home_team} vs {visit.visiting_team}</div>}
+                                      <div style={{ fontSize: 12, color: '#E6EDF3', fontWeight: 600 }}>{isMiLB && milbStadName ? milbStadName : stadium?.name}</div>
+                                      {isMiLB
+                                        ? <div style={{ fontSize: 10, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '1px 6px', borderRadius: 20, display: 'inline-block', marginTop: 2 }}>MiLB</div>
+                                        : visit && <div style={{ fontSize: 11, color: '#8B949E' }}>{visit.home_team} vs {visit.visiting_team}</div>
+                                      }
                                     </div>
                                   </div>
                                 )}
@@ -1609,22 +1618,24 @@ export default function MilestoneGrid({
                               </div>
 
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
-                                <div style={{ display: 'flex', gap: 2 }}>
-                                  <button
-                                    onClick={() => openEditClaim(claim, exp)}
-                                    title="Edit"
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#484F58', padding: 2, display: 'flex', alignItems: 'center' }}
-                                  >
-                                    <Pencil size={13} />
-                                  </button>
-                                  <button
-                                    onClick={() => removeClaim(claim.id)}
-                                    title="Remove"
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#484F58', padding: 2, display: 'flex', alignItems: 'center' }}
-                                  >
-                                    <X size={13} />
-                                  </button>
-                                </div>
+                                {!isBleItem && (
+                                  <div style={{ display: 'flex', gap: 2 }}>
+                                    <button
+                                      onClick={() => openEditClaim(claim, exp)}
+                                      title="Edit"
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#484F58', padding: 2, display: 'flex', alignItems: 'center' }}
+                                    >
+                                      <Pencil size={13} />
+                                    </button>
+                                    <button
+                                      onClick={() => removeClaim(claim.id)}
+                                      title="Remove"
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#484F58', padding: 2, display: 'flex', alignItems: 'center' }}
+                                    >
+                                      <X size={13} />
+                                    </button>
+                                  </div>
+                                )}
                                 {photoUrl && (
                                   /* eslint-disable-next-line @next/next/no-img-element */
                                   <img
