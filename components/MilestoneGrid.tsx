@@ -378,6 +378,7 @@ export default function MilestoneGrid({
     milb_stadium_name: string | null
     milb_affiliate: string | null
     milb_team_id: number | null
+    milb_logo_url: string | null
   }>>([])
 
   // ── Data loading ──────────────────────────────────────────────────────────
@@ -399,13 +400,13 @@ export default function MilestoneGrid({
     if (valid.length === 0) return
 
     const stadiumIds = [...new Set(valid.map(e => e.minor_league_stadium_id).filter(Boolean))] as string[]
-    const stadiumMap: Record<string, { name: string; affiliate: string; milb_team_id: number | null }> = {}
+    const stadiumMap: Record<string, { name: string; affiliate: string; milb_team_id: number | null; logo_url: string | null }> = {}
     if (stadiumIds.length > 0) {
       const { data: stadiums } = await supabase
         .from('minor_league_stadiums')
-        .select('id, name, affiliate, milb_team_id')
+        .select('id, name, affiliate, milb_team_id, logo_url')
         .in('id', stadiumIds)
-      for (const s of stadiums ?? []) stadiumMap[s.id] = { name: s.name, affiliate: s.affiliate, milb_team_id: s.milb_team_id ?? null }
+      for (const s of stadiums ?? []) stadiumMap[s.id] = { name: s.name, affiliate: s.affiliate, milb_team_id: s.milb_team_id ?? null, logo_url: (s as any).logo_url ?? null }
     }
 
     setBleGiveaways(valid.map(e => ({
@@ -415,6 +416,7 @@ export default function MilestoneGrid({
       milb_stadium_name: e.minor_league_stadium_id ? (stadiumMap[e.minor_league_stadium_id]?.name ?? null) : null,
       milb_affiliate:    e.minor_league_stadium_id ? (stadiumMap[e.minor_league_stadium_id]?.affiliate ?? null) : null,
       milb_team_id:      e.minor_league_stadium_id ? (stadiumMap[e.minor_league_stadium_id]?.milb_team_id ?? null) : null,
+      milb_logo_url:     e.minor_league_stadium_id ? (stadiumMap[e.minor_league_stadium_id]?.logo_url ?? null) : null,
     })))
   }, [])
 
@@ -716,6 +718,7 @@ export default function MilestoneGrid({
           milb_stadium_name: entry.milb_stadium_name ?? undefined,
           milb_affiliate:    entry.milb_affiliate ?? undefined,
           milb_team_id:      entry.milb_team_id ?? undefined,
+          milb_logo_url:     entry.milb_logo_url ?? undefined,
           is_milb:           true,
         },
       }))
@@ -1216,6 +1219,7 @@ export default function MilestoneGrid({
                   const milbAffiliate = isMiLB && claim.extra_data?.milb_affiliate    ? String(claim.extra_data.milb_affiliate)    : null
                   const milbStadName  = isMiLB && claim.extra_data?.milb_stadium_name ? String(claim.extra_data.milb_stadium_name) : null
                   const milbTeamId    = isMiLB && claim.extra_data?.milb_team_id      ? Number(claim.extra_data.milb_team_id)      : null
+                  const milbLogoUrl   = isMiLB && claim.extra_data?.milb_logo_url     ? String(claim.extra_data.milb_logo_url)     : null
                   return (
                     <div key={claim.id} style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden' }}>
                       <div style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden', backgroundColor: '#1C2430' }}>
@@ -1225,7 +1229,7 @@ export default function MilestoneGrid({
                         ) : (
                           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             {isMiLB && milbAffiliate
-                              ? <MiLBLogo milbTeamId={milbTeamId} fallbackAbbr={milbAffiliate} size={60} />
+                              ? <MiLBLogo milbTeamId={milbTeamId} fallbackAbbr={milbAffiliate} size={60} logoUrl={milbLogoUrl} />
                               : stadium
                                 ? <TeamLogo abbreviation={stadium.abbreviation} size={60} />
                                 : <span style={{ fontSize: 40 }}>{typeInfo?.emoji ?? '🎁'}</span>}
@@ -1240,7 +1244,7 @@ export default function MilestoneGrid({
                         </div>
                         {isMiLB && milbAffiliate && milbStadName ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-                            <MiLBLogo milbTeamId={milbTeamId} fallbackAbbr={milbAffiliate} size={26} />
+                            <MiLBLogo milbTeamId={milbTeamId} fallbackAbbr={milbAffiliate} size={26} logoUrl={milbLogoUrl} />
                             <span style={{ fontSize: 13, fontWeight: 600, color: '#C9D1D9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{milbStadName}</span>
                           </div>
                         ) : stadium ? (
@@ -1586,6 +1590,7 @@ export default function MilestoneGrid({
                         const milbAffiliate = isMiLB && claim.extra_data?.milb_affiliate    ? String(claim.extra_data.milb_affiliate)    : null
                         const milbStadName  = isMiLB && claim.extra_data?.milb_stadium_name ? String(claim.extra_data.milb_stadium_name) : null
                         const milbTeamId    = isMiLB && claim.extra_data?.milb_team_id      ? Number(claim.extra_data.milb_team_id)      : null
+                        const milbLogoUrl   = isMiLB && claim.extra_data?.milb_logo_url     ? String(claim.extra_data.milb_logo_url)     : null
                         const isBleItem     = typeof claim.id === 'string' && claim.id.startsWith('ble-')
 
                         return (
@@ -1599,7 +1604,7 @@ export default function MilestoneGrid({
                                 {(stadium || (isMiLB && milbAffiliate)) && (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: (bobble || player || claim.notes) ? 6 : 0 }}>
                                     {isMiLB && milbAffiliate
-                                      ? <MiLBLogo milbTeamId={milbTeamId} fallbackAbbr={milbAffiliate} size={24} />
+                                      ? <MiLBLogo milbTeamId={milbTeamId} fallbackAbbr={milbAffiliate} size={24} logoUrl={milbLogoUrl} />
                                       : <TeamLogo abbreviation={stadium!.abbreviation} size={24} />
                                     }
                                     <div style={{ minWidth: 0 }}>
