@@ -276,6 +276,14 @@ export default function MinorLeagueDetailPage() {
     }
   }
 
+  async function deleteEntry(entryId: string) {
+    if (!confirm('Delete this game entry?')) return
+    const supabase = createClient()
+    await supabase.from('baseball_life_entries').delete().eq('id', entryId)
+    setExpandedVisit(null)
+    await load()
+  }
+
   async function handleFetchStats(entryId: string) {
     setFetchingStatsIds(prev => new Set(prev).add(entryId))
     try {
@@ -592,6 +600,14 @@ export default function MinorLeagueDetailPage() {
                               backgroundColor: '#1C2430', border: '1px solid #30363D',
                               borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '16px',
                             }}>
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+                                <button
+                                  onClick={() => deleteEntry(visit.id)}
+                                  style={{ fontSize: 11, fontWeight: 600, color: '#F85149', background: 'rgba(248,81,73,0.08)', border: '1px solid rgba(248,81,73,0.3)', borderRadius: 8, padding: '4px 10px', cursor: 'pointer' }}
+                                >
+                                  Delete
+                                </button>
+                              </div>
                               {hasScore && (
                                 <div style={{
                                   background: `linear-gradient(135deg, ${affiliateColors[0]}CC 0%, ${affiliateColors[1]}CC 100%)`,
