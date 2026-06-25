@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Loader2, Check, ChevronDown } from 'lucide-react'
+import { X, Loader2, Check, ChevronDown, Camera, Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import type { BaseballLifeCategory } from '@/types'
 
@@ -154,6 +154,11 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
   // Notes step
   const [notes, setNotes] = useState('')
 
+  // Giveaway items (minor_league only)
+  const [giveawayItems,   setGiveawayItems]   = useState<Array<{ name: string; photo_url: string | null }>>([])
+  const [giveawayInput,   setGiveawayInput]   = useState('')
+  const [uploadingIdx,    setUploadingIdx]    = useState<Record<number, boolean>>({})
+
   const categoryConfig = CATEGORY_CARDS.find(c => c.value === category)
   const isGame = categoryConfig?.isGame ?? true
 
@@ -168,6 +173,33 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
 
   function toggleMoment(m: string) {
     setSelectedMoments(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m])
+  }
+
+  function addGiveawayItem() {
+    const name = giveawayInput.trim()
+    if (!name) return
+    setGiveawayItems(prev => [...prev, { name, photo_url: null }])
+    setGiveawayInput('')
+  }
+
+  function removeGiveawayItem(idx: number) {
+    setGiveawayItems(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  async function uploadGiveawayPhoto(idx: number, file: File) {
+    setUploadingIdx(prev => ({ ...prev, [idx]: true }))
+    try {
+      const supabase = createClient()
+      const ext  = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { error } = await supabase.storage.from('giveaway-photos').upload(path, file)
+      if (!error) {
+        const { data: { publicUrl } } = supabase.storage.from('giveaway-photos').getPublicUrl(path)
+        setGiveawayItems(prev => prev.map((item, i) => i === idx ? { ...item, photo_url: publicUrl } : item))
+      }
+    } finally {
+      setUploadingIdx(prev => { const n = { ...prev }; delete n[idx]; return n })
+    }
   }
 
   function selectCategory(c: BaseballLifeCategory) {
@@ -263,6 +295,7 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
       ticket_confirmation:   confirmation.trim() || null,
       moments:               selectedMoments.length > 0 ? selectedMoments : null,
       notes:                 notes.trim() || null,
+      giveaway_items:        giveawayItems.length > 0 ? giveawayItems : null,
     }
 
     const { data: savedEntry, error: saveErr } = await supabase.from('baseball_life_entries').insert(payload).select('id').single()
@@ -544,6 +577,59 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
                 style={{ ...inp, resize: 'vertical' }}
               />
             </div>
+
+            {category === 'minor_league' && (
+              <div>
+                <FieldLabel>Giveaways &amp; Promotions (optional)</FieldLabel>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                  <input
+                    type="text"
+                    value={giveawayInput}
+                    onChange={e => setGiveawayInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addGiveawayItem() } }}
+                    placeholder="e.g. Bobblehead, T-Shirt, Hat…"
+                    style={{ ...inp, flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={addGiveawayItem}
+                    disabled={!giveawayInput.trim()}
+                    style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid #30363D', backgroundColor: giveawayInput.trim() ? '#1F6FEB' : '#1C2430', color: giveawayInput.trim() ? '#fff' : '#484F58', cursor: giveawayInput.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, fontWeight: 600, fontSize: 13 }}
+                  >
+                    <Plus size={13} /> Add
+                  </button>
+                </div>
+                {giveawayItems.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 14px', borderRadius: 10, backgroundColor: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.2)' }}>
+                    {giveawayItems.map((item, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, flex: 1, minWidth: 0 }}>🎁 {item.name}</span>
+                        {item.photo_url ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={item.photo_url} alt={item.name} style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover', display: 'block' }} />
+                            <label style={{ cursor: 'pointer', fontSize: 11, color: '#8B949E', fontWeight: 600 }}>
+                              Replace
+                              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadGiveawayPhoto(idx, f) }} />
+                            </label>
+                          </div>
+                        ) : (
+                          <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#8B949E', padding: '4px 8px', borderRadius: 6, border: '1px dashed #30363D', flexShrink: 0 }}>
+                            {uploadingIdx[idx] ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} /> : <Camera size={11} />}
+                            {uploadingIdx[idx] ? 'Uploading…' : 'Photo'}
+                            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadGiveawayPhoto(idx, f) }} />
+                          </label>
+                        )}
+                        <button type="button" onClick={() => removeGiveawayItem(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8B949E', padding: 2, display: 'flex', flexShrink: 0 }}>
+                          <X size={13} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {error && <div style={{ fontSize: 13, color: '#F85149', padding: '8px 12px', background: 'rgba(248,81,73,0.08)', borderRadius: 8 }}>{error}</div>}
             <button
               onClick={handleSave}

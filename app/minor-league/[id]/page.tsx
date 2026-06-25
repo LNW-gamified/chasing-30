@@ -56,6 +56,7 @@ interface BleEntry {
   weather_conditions: string | null
   game_pk: number | null
   game_data: Record<string, unknown> | null
+  giveaway_items: Array<{ name: string; photo_url: string | null }> | null
 }
 
 interface MiLBGame {
@@ -228,7 +229,7 @@ export default function MinorLeagueDetailPage() {
     const [{ data: s }, { data: v }] = await Promise.all([
       supabase.from('minor_league_stadiums').select('*').eq('id', id).single(),
       supabase.from('baseball_life_entries')
-        .select('id,visit_date,opponent,home_team,away_team,final_score_home,final_score_away,ticket_section,ticket_row,ticket_seats,notes,moments,weather_temp,weather_conditions,game_pk,game_data')
+        .select('id,visit_date,opponent,home_team,away_team,final_score_home,final_score_away,ticket_section,ticket_row,ticket_seats,notes,moments,weather_temp,weather_conditions,game_pk,game_data,giveaway_items')
         .eq('category', 'minor_league')
         .eq('minor_league_stadium_id', id)
         .order('visit_date', { ascending: false }),
@@ -745,6 +746,30 @@ export default function MinorLeagueDetailPage() {
                                 >
                                   {fetchingStatsIds.has(visit.id) ? '⏳ Fetching stats…' : '⚾ Fetch MiLB Stats'}
                                 </button>
+                              )}
+
+                              {visit.giveaway_items && visit.giveaway_items.length > 0 && (
+                                <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 10, backgroundColor: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.2)' }}>
+                                  <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                                    Giveaways &amp; Promotions
+                                  </div>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                    {visit.giveaway_items.map((item, i) => (
+                                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                        <span style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, flex: 1, minWidth: 0 }}>🎁 {item.name}</span>
+                                        {item.photo_url && (
+                                          // eslint-disable-next-line @next/next/no-img-element
+                                          <img
+                                            src={item.photo_url}
+                                            alt={item.name}
+                                            style={{ width: 72, height: 72, borderRadius: 8, objectFit: 'cover', display: 'block', cursor: 'pointer', flexShrink: 0 }}
+                                            onClick={() => window.open(item.photo_url!, '_blank')}
+                                          />
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
                               )}
 
                               {visit.notes && (
