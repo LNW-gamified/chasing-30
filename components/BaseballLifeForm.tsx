@@ -265,8 +265,16 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
       notes:                 notes.trim() || null,
     }
 
-    const { error: saveErr } = await supabase.from('baseball_life_entries').insert(payload)
+    const { data: savedEntry, error: saveErr } = await supabase.from('baseball_life_entries').insert(payload).select('id').single()
     if (saveErr) { setError(saveErr.message); setSaving(false); return }
+
+    if (category === 'minor_league' && resolvedMlsId && savedEntry?.id) {
+      fetch('/api/autofill-milb-game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entryId: savedEntry.id, minorLeagueStadiumId: resolvedMlsId, visitDate }),
+      }).catch(() => {})
+    }
 
     // If MLB special event at a Chase 30 stadium and user opted in, create minimal stadium_visit
     if (category === 'mlb_special_event' && countAsChase30 && resolvedMlbStadiumId) {

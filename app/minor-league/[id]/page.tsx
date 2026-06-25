@@ -54,6 +54,8 @@ interface BleEntry {
   moments: string[] | null
   weather_temp: string | null
   weather_conditions: string | null
+  game_pk: number | null
+  game_data: Record<string, unknown> | null
 }
 
 interface MiLBGame {
@@ -206,9 +208,10 @@ export default function MinorLeagueDetailPage() {
   const [visits,        setVisits]        = useState<BleEntry[]>([])
   const [loading,       setLoading]       = useState(true)
   const [activeTab,     setActiveTab]     = useState<ActiveTab>('games-witnessed')
-  const [expandedVisit, setExpandedVisit] = useState<string | null>(null)
-  const [showForm,      setShowForm]      = useState(false)
-  const [heroPhotoError, setHeroPhotoError] = useState(false)
+  const [expandedVisit,    setExpandedVisit]    = useState<string | null>(null)
+  const [showForm,         setShowForm]         = useState(false)
+  const [heroPhotoError,   setHeroPhotoError]   = useState(false)
+  const [fetchingStatsIds, setFetchingStatsIds] = useState<Set<string>>(new Set())
 
   // Game Day Intel
   const [upcomingGames,  setUpcomingGames]  = useState<MiLBGame[]>([])
@@ -225,7 +228,7 @@ export default function MinorLeagueDetailPage() {
     const [{ data: s }, { data: v }] = await Promise.all([
       supabase.from('minor_league_stadiums').select('*').eq('id', id).single(),
       supabase.from('baseball_life_entries')
-        .select('id,visit_date,opponent,home_team,away_team,final_score_home,final_score_away,ticket_section,ticket_row,ticket_seats,notes,moments,weather_temp,weather_conditions')
+        .select('id,visit_date,opponent,home_team,away_team,final_score_home,final_score_away,ticket_section,ticket_row,ticket_seats,notes,moments,weather_temp,weather_conditions,game_pk,game_data')
         .eq('category', 'minor_league')
         .eq('minor_league_stadium_id', id)
         .order('visit_date', { ascending: false }),
@@ -269,6 +272,20 @@ export default function MinorLeagueDetailPage() {
       try { await navigator.share({ title: stadium?.name ?? 'Stadium', url }) } catch {}
     } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
       await navigator.clipboard.writeText(url)
+    }
+  }
+
+  async function handleFetchStats(entryId: string) {
+    setFetchingStatsIds(prev => new Set(prev).add(entryId))
+    try {
+      await fetch('/api/autofill-milb-game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entryId }),
+      })
+      await load()
+    } finally {
+      setFetchingStatsIds(prev => { const s = new Set(prev); s.delete(entryId); return s })
     }
   }
 
@@ -629,6 +646,105 @@ export default function MinorLeagueDetailPage() {
                                     ))}
                                   </div>
                                 </div>
+                              )}
+
+                              {/* MiLB Box Score */}
+                              {visit.game_data && (() => {
+                                const gd = visit.game_data as any
+                                const innings: Array<{inning: number; home: number|null; away: number|null}> = gd.inningScores ?? []
+                                const awayTeam = visit.away_team ?? gd.awayTeamName ?? 'Away'
+                                const homeTeam = visit.home_team ?? gd.homeTeamName ?? 'Home'
+                                const homeWon = (gd.homeRuns ?? 0) > (gd.awayRuns ?? 0)
+                                return (
+                                  <div style={{ marginTop: 12, backgroundColor: '#0B1117', borderRadius: 10, overflow: 'hidden', border: '1px solid #30363D' }}>
+                                    <div style={{ padding: '5px 10px', borderBottom: '1px solid #30363D', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <span style={{ fontSize: 10, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.1)', borderRadius: 10, padding: '2px 8px' }}>⚾ Stats from MiLB</span>
+                                      {gd.attendance && <span style={{ fontSize: 11, color: '#8B949E' }}>{Number(gd.attendance).toLocaleString()} fans</span>}
+                                    </div>
+                                    {innings.length > 0 && (
+                                      <div style={{ overflowX: 'auto' }}>
+                                        <table style={{ borderCollapse: 'collapse', fontSize: 11, minWidth: '100%' }}>
+                                          <thead>
+                                            <tr style={{ borderBottom: '1px solid #30363D' }}>
+                                              <th style={{ textAlign: 'left', padding: '4px 8px', color: '#8B949E', fontWeight: 600, minWidth: 48 }}>Team</th>
+                                              {innings.map((inn: any) => (
+                                                <th key={inn.inning} style={{ textAlign: 'center', padding: '4px 4px', color: '#8B949E', fontWeight: 600, minWidth: 18 }}>{inn.inning}</th>
+                                              ))}
+                                              <th style={{ textAlign: 'center', padding: '4px 5px', color: '#E6EDF3', fontWeight: 700, borderLeft: '1px solid #30363D', minWidth: 20 }}>R</th>
+                                              <th style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontWeight: 600, minWidth: 20 }}>H</th>
+                                              <th style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontWeight: 600, minWidth: 20 }}>E</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {(['away', 'home'] as const).map(side => {
+                                              const name   = side === 'away' ? awayTeam : homeTeam
+                                              const totalR = side === 'away' ? gd.awayRuns   : gd.homeRuns
+                                              const totalH = side === 'away' ? gd.awayHits   : gd.homeHits
+                                              const totalE = side === 'away' ? gd.awayErrors : gd.homeErrors
+                                              const wins   = side === 'home' ? homeWon : !homeWon
+                                              return (
+                                                <tr key={side}>
+                                                  <td style={{ padding: '4px 8px', fontWeight: wins ? 700 : 500, fontSize: 11, color: wins ? '#E6EDF3' : '#8B949E' }}>{name}</td>
+                                                  {innings.map((inn: any) => {
+                                                    const val = inn[side]
+                                                    return (
+                                                      <td key={inn.inning} style={{ textAlign: 'center', padding: '4px 4px', color: (val != null && val > 0) ? '#E6EDF3' : '#8B949E', fontWeight: (val != null && val > 0) ? 700 : 400, fontSize: 11 }}>
+                                                        {val ?? '—'}
+                                                      </td>
+                                                    )
+                                                  })}
+                                                  <td style={{ textAlign: 'center', padding: '4px 5px', fontWeight: 800, fontSize: 12, color: wins ? '#E6EDF3' : '#8B949E', borderLeft: '1px solid #30363D' }}>{totalR ?? '—'}</td>
+                                                  <td style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontSize: 11 }}>{totalH ?? '—'}</td>
+                                                  <td style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontSize: 11 }}>{totalE ?? '—'}</td>
+                                                </tr>
+                                              )
+                                            })}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    )}
+                                    <div style={{ padding: '8px 10px', borderTop: '1px solid rgba(48,54,61,0.6)' }}>
+                                      {(gd.winningPitcher || gd.losingPitcher) && (
+                                        <div style={{ fontSize: 11, color: '#8B949E', display: 'flex', flexWrap: 'wrap', gap: '2px 10px', marginBottom: 6 }}>
+                                          {gd.winningPitcher && <span><span style={{ color: '#3FB950', fontWeight: 600 }}>W</span> {gd.winningPitcher}</span>}
+                                          {gd.losingPitcher  && <span><span style={{ color: '#F85149', fontWeight: 600 }}>L</span> {gd.losingPitcher}</span>}
+                                          {gd.savePitcher    && <span><span style={{ color: '#F5A623', fontWeight: 600 }}>S</span> {gd.savePitcher}</span>}
+                                        </div>
+                                      )}
+                                      {(gd.homeSP || gd.awaySP) && (
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                                          {[{ label: awayTeam, sp: gd.awaySP }, { label: homeTeam, sp: gd.homeSP }].map(({ label, sp }) =>
+                                            sp ? (
+                                              <div key={label} style={{ backgroundColor: '#161B22', borderRadius: 8, padding: '7px 10px' }}>
+                                                <div style={{ fontSize: 10, color: '#8B949E', marginBottom: 1 }}>{label} SP</div>
+                                                <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3' }}>{sp.name}</div>
+                                                <div style={{ fontSize: 11, color: '#8B949E', marginTop: 2 }}>
+                                                  {[sp.ip && `${sp.ip} IP`, sp.h != null && `${sp.h} H`, sp.er != null && `${sp.er} ER`, sp.k != null && `${sp.k} K`].filter(Boolean).join(' · ')}
+                                                </div>
+                                              </div>
+                                            ) : null
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )
+                              })()}
+
+                              {!visit.game_data && (
+                                <button
+                                  onClick={() => handleFetchStats(visit.id)}
+                                  disabled={fetchingStatsIds.has(visit.id)}
+                                  style={{
+                                    marginTop: 10, width: '100%', padding: '8px', borderRadius: 8,
+                                    fontSize: 12, fontWeight: 600, backgroundColor: 'transparent',
+                                    color: '#58A6FF', border: '1px solid rgba(88,166,255,0.3)',
+                                    cursor: fetchingStatsIds.has(visit.id) ? 'default' : 'pointer',
+                                    opacity: fetchingStatsIds.has(visit.id) ? 0.5 : 1,
+                                  }}
+                                >
+                                  {fetchingStatsIds.has(visit.id) ? '⏳ Fetching stats…' : '⚾ Fetch MiLB Stats'}
+                                </button>
                               )}
 
                               {visit.notes && (
