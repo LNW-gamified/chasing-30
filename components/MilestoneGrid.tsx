@@ -237,6 +237,16 @@ function getItemDisplayName(claim: AchievementClaim): string {
   return GIVEAWAY_TYPES.find(t => t.value === claim.giveaway_type)?.label ?? 'Item'
 }
 
+function guessGiveawayType(name: string): GiveawayTypeValue {
+  const n = name.toLowerCase()
+  if (n.includes('bobblehead') || n.includes('bobble')) return 'bobblehead'
+  if (n.includes('figurine') || n.includes('statue')) return 'figurine'
+  if (n.includes('jersey')) return 'jersey'
+  if (n === 'hat' || n.includes(' hat') || n.includes('cap')) return 'hat'
+  if (n.includes('poster')) return 'poster'
+  return 'other'
+}
+
 // ── Category definitions ───────────────────────────────────────────────────
 
 type CategoryKey = 'all' | 'stadiums' | 'division' | 'gameday' | 'experiences' | 'collection' | 'earned' | 'records'
@@ -359,6 +369,15 @@ export default function MilestoneGrid({
   const [editDeletePhoto,    setEditDeletePhoto]    = useState(false)
   const [editSaving,         setEditSaving]         = useState(false)
 
+  // BLE giveaway items from minor league game entries
+  const [bleGiveaways,   setBleGiveaways]   = useState<Array<{
+    entry_id: string
+    visit_date: string
+    items: Array<{ name: string; photo_url: string | null }>
+    milb_stadium_name: string | null
+    milb_affiliate: string | null
+  }>>([])
+
   // ── Data loading ──────────────────────────────────────────────────────────
 
   const fetchClaims = useCallback(async () => {
@@ -367,7 +386,37 @@ export default function MilestoneGrid({
     if (data) setClaims(data as AchievementClaim[])
   }, [])
 
+  const fetchBleGiveaways = useCallback(async () => {
+    const supabase = createClient()
+    const { data: entries } = await supabase
+      .from('baseball_life_entries')
+      .select('id, visit_date, giveaway_items, minor_league_stadium_id')
+      .not('giveaway_items', 'is', null)
+    if (!entries) return
+    const valid = entries.filter(e => Array.isArray(e.giveaway_items) && (e.giveaway_items as any[]).length > 0)
+    if (valid.length === 0) return
+
+    const stadiumIds = [...new Set(valid.map(e => e.minor_league_stadium_id).filter(Boolean))] as string[]
+    const stadiumMap: Record<string, { name: string; affiliate: string }> = {}
+    if (stadiumIds.length > 0) {
+      const { data: stadiums } = await supabase
+        .from('minor_league_stadiums')
+        .select('id, name, affiliate')
+        .in('id', stadiumIds)
+      for (const s of stadiums ?? []) stadiumMap[s.id] = { name: s.name, affiliate: s.affiliate }
+    }
+
+    setBleGiveaways(valid.map(e => ({
+      entry_id:          e.id,
+      visit_date:        e.visit_date,
+      items:             e.giveaway_items as Array<{ name: string; photo_url: string | null }>,
+      milb_stadium_name: e.minor_league_stadium_id ? (stadiumMap[e.minor_league_stadium_id]?.name ?? null) : null,
+      milb_affiliate:    e.minor_league_stadium_id ? (stadiumMap[e.minor_league_stadium_id]?.affiliate ?? null) : null,
+    })))
+  }, [])
+
   useEffect(() => { fetchClaims() }, [fetchClaims])
+  useEffect(() => { fetchBleGiveaways() }, [fetchBleGiveaways])
 
   // ── Modal helpers ─────────────────────────────────────────────────────────
 
@@ -648,9 +697,30 @@ export default function MilestoneGrid({
     }
   }, [showRecords, allVisits, allStadiums])
 
+  const syntheticBleItems = useMemo<AchievementClaim[]>(() =>
+    bleGiveaways.flatMap(entry =>
+      entry.items.map((item, idx) => ({
+        id:               `ble-${entry.entry_id}-${idx}`,
+        achievement_id:   'collection',
+        stadium_visit_id: null,
+        claim_date:       entry.visit_date,
+        notes:            null,
+        giveaway_type:    guessGiveawayType(item.name),
+        created_at:       entry.visit_date,
+        extra_data: {
+          bobblehead_name:   item.name,
+          photo_url:         item.photo_url ?? undefined,
+          milb_stadium_name: entry.milb_stadium_name ?? undefined,
+          milb_affiliate:    entry.milb_affiliate ?? undefined,
+          is_milb:           true,
+        },
+      }))
+    ),
+  [bleGiveaways])
+
   const giveawayClaims = useMemo(
-    () => claims.filter(c => c.giveaway_type != null),
-    [claims]
+    () => [...claims.filter(c => c.giveaway_type != null), ...syntheticBleItems],
+    [claims, syntheticBleItems]
   )
 
   const collectionTeams = useMemo(() => {
@@ -1137,6 +1207,9 @@ export default function MilestoneGrid({
                   const photoUrl = claim.extra_data?.photo_url ? String(claim.extra_data.photo_url) : null
                   const itemName = getItemDisplayName(claim)
                   const typeInfo = GIVEAWAY_TYPES.find(t => t.value === claim.giveaway_type)
+                  const isMiLB       = claim.extra_data?.is_milb === true
+                  const milbAffiliate = isMiLB && claim.extra_data?.milb_affiliate ? String(claim.extra_data.milb_affiliate) : null
+                  const milbStadName  = isMiLB && claim.extra_data?.milb_stadium_name ? String(claim.extra_data.milb_stadium_name) : null
                   return (
                     <div key={claim.id} style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden' }}>
                       <div style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden', backgroundColor: '#1C2430' }}>
@@ -1145,7 +1218,11 @@ export default function MilestoneGrid({
                           <img src={photoUrl} alt={itemName} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                         ) : (
                           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {stadium ? <TeamLogo abbreviation={stadium.abbreviation} size={60} /> : <span style={{ fontSize: 40 }}>{typeInfo?.emoji ?? '🎁'}</span>}
+                            {milbAffiliate
+                              ? <TeamLogo abbreviation={milbAffiliate} size={60} />
+                              : stadium
+                                ? <TeamLogo abbreviation={stadium.abbreviation} size={60} />
+                                : <span style={{ fontSize: 40 }}>{typeInfo?.emoji ?? '🎁'}</span>}
                           </div>
                         )}
                       </div>
@@ -1153,13 +1230,19 @@ export default function MilestoneGrid({
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{itemName}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4, flexWrap: 'wrap' }}>
                           <span style={{ fontSize: 11, fontWeight: 600, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.1)', padding: '2px 7px', borderRadius: 20 }}>{typeInfo?.emoji} {typeInfo?.label}</span>
+                          {isMiLB && <span style={{ fontSize: 10, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 6px', borderRadius: 20 }}>MiLB</span>}
                         </div>
-                        {stadium && (
+                        {milbAffiliate && milbStadName ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
+                            <TeamLogo abbreviation={milbAffiliate} size={26} />
+                            <span style={{ fontSize: 13, fontWeight: 600, color: '#C9D1D9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{milbStadName}</span>
+                          </div>
+                        ) : stadium ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
                             <TeamLogo abbreviation={stadium.abbreviation} size={26} />
                             <span style={{ fontSize: 13, fontWeight: 600, color: '#C9D1D9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stadium.name}</span>
                           </div>
-                        )}
+                        ) : null}
                         <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 500 }}>{formatDate(claim.claim_date)}</div>
                       </div>
                     </div>
