@@ -139,10 +139,11 @@ async function fetchMiLBUpcomingGames(milbTeamId: number): Promise<MiLBGame[]> {
     if (!res.ok) return []
     const data = await res.json()
     const raw  = (data.dates ?? []).flatMap((d: any) => d.games ?? [])
+      .filter((game: any) => game.teams?.home?.team?.id === milbTeamId)
       .sort((a: any, b: any) => a.gameDate < b.gameDate ? -1 : 1)
       .slice(0, 5)
     return raw.map((game: any) => {
-      const isHome = game.teams?.home?.team?.id === milbTeamId
+      const isHome = true
       return {
         gamePk:           game.gamePk,
         gameDate:         game.gameDate,
