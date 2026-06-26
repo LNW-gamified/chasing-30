@@ -723,7 +723,7 @@ export default function StadiumDetailPage() {
                   <section style={{ marginBottom: 32 }}>
                     <SectionTitle Icon={CalendarDays}>Upcoming Home Games</SectionTitle>
                     <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #30363D' }}>
-                      <div style={{ backgroundColor: '#0B1117' }}>
+                      <div style={{ backgroundColor: '#0B1117', maxHeight: 360, overflowY: 'auto' }}>
                         {upcomingGames.map((g, i) => {
                           const dt = new Date(g.gameDate)
                           const dayAbbr = dt.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/Los_Angeles' })
@@ -763,18 +763,6 @@ export default function StadiumDetailPage() {
                             </div>
                           )
                         })}
-                        <a
-                          href={`https://www.mlb.com/${MLB_SCHEDULE_SLUG[stadium.abbreviation] ?? stadium.abbreviation.toLowerCase()}/schedule`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            display: 'block', padding: '12px 16px', fontSize: 14, fontWeight: 600,
-                            color: '#1F6FEB', textDecoration: 'none',
-                            borderTop: '1px solid rgba(255,255,255,0.06)',
-                          }}
-                        >
-                          See Full Schedule →
-                        </a>
                       </div>
                     </div>
                   </section>

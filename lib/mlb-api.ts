@@ -48,7 +48,7 @@ export interface UpcomingGame {
   promotions: string[]
 }
 
-export async function fetchUpcomingHomeGames(teamAbbr: string, days = 14): Promise<UpcomingGame[]> {
+export async function fetchUpcomingHomeGames(teamAbbr: string, days = 180): Promise<UpcomingGame[]> {
   const teamId = MLB_TEAM_IDS[teamAbbr]
   if (!teamId) return []
 
@@ -77,7 +77,7 @@ export async function fetchUpcomingHomeGames(teamAbbr: string, days = 14): Promi
         })
       }
     }
-    return games.slice(0, 5)
+    return games
   } catch {
     return []
   }
