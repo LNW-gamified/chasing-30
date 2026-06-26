@@ -845,7 +845,7 @@ export default function MinorLeagueDetailPage() {
                                   )}
                                 </div>
                               </div>
-                              <div style={{ fontSize: 13, color: '#8B949E' }}>{timeStr} PT</div>
+                              <div style={{ fontSize: 13, color: '#E6EDF3' }}>{timeStr} PT</div>
                             </div>
                           )
                         })}

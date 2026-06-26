@@ -753,7 +753,7 @@ export default function StadiumDetailPage() {
                                 </div>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <div style={{ fontSize: 13, color: '#8B949E' }}>{timeStr} PT</div>
+                                <div style={{ fontSize: 13, color: '#E6EDF3' }}>{timeStr} PT</div>
                                 <Link
                                   href="/trips"
                                   style={{ fontSize: 11, fontWeight: 700, color: '#1F6FEB', textDecoration: 'none', whiteSpace: 'nowrap' }}
