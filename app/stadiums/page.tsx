@@ -380,7 +380,7 @@ export default function StadiumsPage() {
       fetch('/api/next-games').then(r => r.ok ? r.json() : {}),
       supabase.from('baseball_events').select('*').order('sort_order'),
       supabase.from('baseball_experiences').select('*').order('sort_order'),
-      supabase.from('minor_league_stadiums').select('id,name,team,abbreviation,city,state,level,affiliate,affiliate_full,description,milb_team_id,image_url,logo_url').order('name'),
+      supabase.from('minor_league_stadiums').select('id,name,team,abbreviation,city,state,level,affiliate,affiliate_full,description,milb_team_id,image_url,logo_url').order('sort_order'),
       supabase.from('baseball_life_entries').select('id,category,event_type,venue,minor_league_stadium_id'),
     ]).then(([{ data: s }, { data: v }, games, { data: ev }, { data: ex }, { data: mls }, { data: ble }]) => {
       setStadiums(s ?? [])
