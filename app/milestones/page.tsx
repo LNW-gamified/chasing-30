@@ -162,18 +162,18 @@ export default async function MilestonesPage() {
 
             {/* Animated rank badge */}
             <div className="rank-badge-glow" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-              <RankBadge rankName={currentRank.name} size={100} />
+              <RankBadge rankName={currentRank.name} size={140} />
             </div>
 
             {/* Rank name + description */}
             <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.15em', color: '#F5A623', textTransform: 'uppercase', marginBottom: 6 }}>
               Current Rank
             </div>
-            <h1 style={{ fontSize: 32, fontWeight: 900, color: '#E6EDF3', margin: '0 0 4px', letterSpacing: '-0.5px' }}>
+            <h1 style={{ fontSize: 48, fontWeight: 900, color: '#E6EDF3', margin: '0 0 4px', letterSpacing: '-1px', fontFamily: "'Oswald', sans-serif" }}>
               {currentRank.name}
             </h1>
             <div style={{ fontSize: 14, color: '#8B949E', fontStyle: 'italic', marginBottom: 6 }}>
-              {currentRank.description}
+              {nextRank ? `${nextRank.minPts - totalPoints} XP from ${nextRank.name}` : 'The all-time greats. Welcome.'}
             </div>
             {/* XP Progress bar */}
             {nextRank ? (
@@ -182,17 +182,17 @@ export default async function MilestonesPage() {
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#F5A623' }}>{currentRank.icon} {currentRank.name}</span>
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#8B949E' }}>{nextRank.icon} {nextRank.name}</span>
                 </div>
-                <div style={{ position: 'relative', height: 12, background: '#1C2430', borderRadius: 8, overflow: 'hidden', border: '1px solid #30363D' }}>
+                <div style={{ position: 'relative', height: 18, background: '#1C2430', borderRadius: 10, overflow: 'hidden', border: '1px solid #30363D' }}>
                   <div style={{
                     position: 'absolute', inset: '0 auto 0 0',
                     width: `${Math.min(100, Math.round((totalPoints - currentRank.minPts) / (nextRank.minPts - currentRank.minPts) * 100))}%`,
                     background: 'linear-gradient(90deg, #F5A623, #E8820C)',
-                    borderRadius: 8, transition: 'width 0.6s ease',
+                    borderRadius: 10, transition: 'width 0.6s ease',
                     minWidth: totalPoints > currentRank.minPts ? 12 : 0,
                   }} />
                   <div className="xp-bar-shine" />
                 </div>
-                <div style={{ fontSize: 12, color: '#8B949E', marginTop: 6 }}>
+                <div style={{ fontSize: 13, color: '#8B949E', marginTop: 6, fontFamily: "'Inter', sans-serif" }}>
                   <strong style={{ color: '#E6EDF3' }}>{totalPoints.toLocaleString()} XP</strong> · {nextRank.minPts - totalPoints} more to reach {nextRank.name}
                 </div>
               </div>

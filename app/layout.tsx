@@ -67,6 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <meta name="apple-mobile-web-app-title" content="Chasing 30" />
       <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       <link rel="manifest" href="/manifest.json" />
+      <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
     </>
   )
 
