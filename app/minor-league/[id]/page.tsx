@@ -132,7 +132,7 @@ async function fetchMiLBTeamInfo(milbTeamId: number): Promise<{ leagueId: number
 
 async function fetchMiLBUpcomingGames(milbTeamId: number): Promise<MiLBGame[]> {
   const today = new Date().toISOString().split('T')[0]
-  const end   = new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0]
+  const end   = new Date(Date.now() + 180 * 86400000).toISOString().split('T')[0]
   const url   = `https://statsapi.mlb.com/api/v1/schedule?sportId=13&teamId=${milbTeamId}&startDate=${today}&endDate=${end}&hydrate=game(promotions)`
   try {
     const res  = await fetch(url)
@@ -141,7 +141,6 @@ async function fetchMiLBUpcomingGames(milbTeamId: number): Promise<MiLBGame[]> {
     const raw  = (data.dates ?? []).flatMap((d: any) => d.games ?? [])
       .filter((game: any) => game.teams?.home?.team?.id === milbTeamId)
       .sort((a: any, b: any) => a.gameDate < b.gameDate ? -1 : 1)
-      .slice(0, 5)
     return raw.map((game: any) => {
       const isHome = true
       return {
@@ -812,7 +811,7 @@ export default function MinorLeagueDetailPage() {
                   <SectionTitle Icon={CalendarDays}>Upcoming Games</SectionTitle>
                   {upcomingGames.length > 0 ? (
                     <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #30363D' }}>
-                      <div style={{ backgroundColor: '#0B1117' }}>
+                      <div style={{ backgroundColor: '#0B1117', maxHeight: 360, overflowY: 'auto' }}>
                         {upcomingGames.map((g, i) => {
                           const dt      = new Date(g.gameDate)
                           const dayAbbr = dt.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/Los_Angeles' })
@@ -850,20 +849,6 @@ export default function MinorLeagueDetailPage() {
                             </div>
                           )
                         })}
-                        {upcomingGames.length === 5 && stadium.website_url && (
-                          <a
-                            href={stadium.website_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              display: 'block', padding: '12px 16px', fontSize: 14, fontWeight: 600,
-                              color: teamColor, textDecoration: 'none',
-                              borderTop: '1px solid rgba(255,255,255,0.06)',
-                            }}
-                          >
-                            See Full Schedule →
-                          </a>
-                        )}
                       </div>
                     </div>
                   ) : (
