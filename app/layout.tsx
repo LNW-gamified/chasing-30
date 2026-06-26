@@ -67,7 +67,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <meta name="apple-mobile-web-app-title" content="Chasing 30" />
       <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       <link rel="manifest" href="/manifest.json" />
-      <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700;900&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
     </>
   )
 
@@ -75,7 +77,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     return (
       <html lang="en" className="h-full">
         <head>{sharedHead}</head>
-        <body className="h-full" style={{ backgroundColor: '#0a0e1a' }}>
+        <body className="h-full" style={{ backgroundColor: '#0a0e1a', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
           <ServiceWorkerRegistrar />
           {children}
         </body>
