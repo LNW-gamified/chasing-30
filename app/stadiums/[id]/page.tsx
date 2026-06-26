@@ -725,7 +725,7 @@ export default function StadiumDetailPage() {
                     <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #30363D' }}>
                       <div style={{ backgroundColor: '#0B1117', maxHeight: 360, overflowY: 'auto' }}>
                         {upcomingGames.map((g, i) => {
-                          const dt = new Date(g.gameDate)
+                          const dt      = new Date(g.gameDate)
                           const dayAbbr = dt.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/Los_Angeles' })
                           const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })
                           const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
@@ -742,7 +742,8 @@ export default function StadiumDetailPage() {
                                 </div>
                                 <div>
                                   <div style={{ fontWeight: 700, fontSize: 14, color: '#E6EDF3' }}>
-                                    {g.awayTeam} @ {g.homeTeam}
+                                    <span style={{ color: '#3FB950', marginRight: 4 }}>vs</span>
+                                    {g.awayTeam}
                                   </div>
                                   {g.promotions.length > 0 && (
                                     <div style={{ fontSize: 11, color: '#F5A623', marginTop: 2 }}>
