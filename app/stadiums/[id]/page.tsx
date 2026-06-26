@@ -740,8 +740,15 @@ export default function StadiumDetailPage() {
                                   <div style={{ fontSize: 10, color: '#8B949E', fontWeight: 600 }}>{dayAbbr}</div>
                                   <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 700 }}>{dateStr}</div>
                                 </div>
-                                <div style={{ fontWeight: 700, fontSize: 14, color: '#E6EDF3' }}>
-                                  {g.awayTeam} @ {g.homeTeam}
+                                <div>
+                                  <div style={{ fontWeight: 700, fontSize: 14, color: '#E6EDF3' }}>
+                                    {g.awayTeam} @ {g.homeTeam}
+                                  </div>
+                                  {g.promotions.length > 0 && (
+                                    <div style={{ fontSize: 11, color: '#F5A623', marginTop: 2 }}>
+                                      🎁 {g.promotions[0]}{g.promotions.length > 1 ? ` +${g.promotions.length - 1} more` : ''}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

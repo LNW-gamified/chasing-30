@@ -336,8 +336,8 @@ export default function MinorLeagueDetailPage() {
   const heroPhoto       = !heroPhotoError ? stadium.image_url : null
 
   const TABS: { key: ActiveTab; label: string }[] = [
-    { key: 'games-witnessed', label: 'Games Witnessed' },
-    { key: 'game-day-intel',  label: 'Game Day Intel'  },
+    { key: 'games-witnessed', label: 'Games Attended' },
+    { key: 'game-day-intel',  label: 'Upcoming Games'  },
     { key: 'stadium-info',    label: 'Stadium Info'    },
   ]
 

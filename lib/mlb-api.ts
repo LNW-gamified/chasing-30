@@ -45,6 +45,7 @@ export interface UpcomingGame {
   awayTeam: string
   venue: string
   status: string
+  promotions: string[]
 }
 
 export async function fetchUpcomingHomeGames(teamAbbr: string, days = 14): Promise<UpcomingGame[]> {
@@ -53,7 +54,7 @@ export async function fetchUpcomingHomeGames(teamAbbr: string, days = 14): Promi
 
   const today = new Date().toISOString().split('T')[0]
   const end = new Date(Date.now() + days * 86400000).toISOString().split('T')[0]
-  const url = `https://statsapi.mlb.com/api/v1/schedule?teamId=${teamId}&startDate=${today}&endDate=${end}&sportId=1&hydrate=team,venue`
+  const url = `https://statsapi.mlb.com/api/v1/schedule?teamId=${teamId}&startDate=${today}&endDate=${end}&sportId=1&hydrate=team,venue,game(promotions)`
 
   try {
     const res = await fetch(url)
@@ -72,6 +73,7 @@ export async function fetchUpcomingHomeGames(teamAbbr: string, days = 14): Promi
           awayTeam: game.teams.away.team.name,
           venue: game.venue?.name ?? '',
           status: game.status?.abstractGameState ?? '',
+          promotions: (game.promotions ?? []).map((p: { name?: string }) => p.name).filter(Boolean) as string[],
         })
       }
     }
