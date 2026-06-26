@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Check, X, Share2, Calendar, MapPin, Search, ChevronRight, Zap, Hand, Plus, Pencil } from 'lucide-react'
-import type { SerializableMilestone, StadiumVisit, Stadium, SpecialEvent } from '@/types'
+import type { SerializableMilestone, StadiumVisit, Stadium, SpecialEvent, BaseballLifeEntry } from '@/types'
 import { createClient } from '@/lib/supabase'
 import TeamLogo from '@/components/TeamLogo'
 import MiLBLogo from '@/components/MiLBLogo'
 import { STATIC_EXPERIENCES, type StaticExperience } from '@/lib/static-experiences'
+import { BASEBALL_LIFE_ACHIEVEMENTS } from '@/lib/baseball-life-achievements'
+import SpecialVisitButton from '@/components/SpecialVisitButton'
 import { classifyDayNightHeuristic } from '@/lib/sunrise-sunset'
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -210,7 +212,7 @@ const CATEGORIES: { key: CategoryKey; label: string; emoji: string }[] = [
   { key: 'stadiums',    label: 'Stadiums',         emoji: '🏟️' },
   { key: 'division',    label: 'Division & League', emoji: '🗺️' },
   { key: 'gameday',     label: 'Game Day',         emoji: '⚾' },
-  { key: 'experiences', label: 'Experiences',      emoji: '🌟' },
+  { key: 'experiences', label: 'Baseball Life',     emoji: '⚾' },
   { key: 'collection',  label: 'Collection',       emoji: '🎁' },
 ]
 
@@ -274,6 +276,7 @@ interface Props {
   allVisits: StadiumVisit[]
   allStadiums: Stadium[]
   allEvents: SpecialEvent[]
+  allBle: BaseballLifeEntry[]
   currentRankName: string
   rankTiers: Array<{ name: string; minPts: number; icon: string; description?: string }>
 }
@@ -285,7 +288,7 @@ type SelectedItem =
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function MilestoneGrid({
-  earned, unearned, ladders, allVisits, allStadiums, allEvents, currentRankName, rankTiers,
+  earned, unearned, ladders, allVisits, allStadiums, allEvents, allBle, currentRankName, rankTiers,
 }: Props) {
   const [filter, setFilter]     = useState<CategoryKey>('all')
   const [search, setSearch]     = useState('')
@@ -537,6 +540,22 @@ export default function MilestoneGrid({
     return STATIC_EXPERIENCES.filter(s => claimedIds.has(s.id)).length
   }, [claims])
 
+  const earnedBlaIds = useMemo(
+    () => new Set(BASEBALL_LIFE_ACHIEVEMENTS.filter(a => a.check(allBle)).map(a => a.id)),
+    [allBle]
+  )
+
+  const filteredBla = useMemo(() => {
+    const shouldShow = filter === 'all' || filter === 'experiences' || filter === 'earned'
+    if (!shouldShow) return []
+    return BASEBALL_LIFE_ACHIEVEMENTS.filter(a => {
+      if (filter === 'earned') return earnedBlaIds.has(a.id)
+      if (!search) return true
+      const q = search.toLowerCase()
+      return a.name.toLowerCase().includes(q) || a.description.toLowerCase().includes(q)
+    })
+  }, [filter, search, earnedBlaIds])
+
   // Active challenges: top 3 by completion % across regular milestones + ladder progress
   const activeChallenges = useMemo(() => {
     const regularChallenges = unearned
@@ -604,6 +623,7 @@ export default function MilestoneGrid({
     if (!showStatics) return []
     return STATIC_EXPERIENCES.filter(s => {
       if (filter === 'collection') return COLLECTION_IDS.has(s.id)
+      if (filter === 'experiences') return !COLLECTION_IDS.has(s.id)
       if (filter === 'earned') {
         const claimedIds = new Set(claims.map(c => c.achievement_id))
         return claimedIds.has(s.id)
@@ -825,6 +845,32 @@ export default function MilestoneGrid({
           </div>
         )}
 
+        {/* ── Recent Activity strip ───────────────────────────────────────── */}
+        {allBle.length > 0 && filter === 'all' && !search && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em' }}>📋 Recent Activity</div>
+              <SpecialVisitButton label="+ Log Entry" variant="secondary" />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              {allBle.slice(0, 3).map((entry) => {
+                const CAT_EMOJI: Record<string, string> = { minor_league: '⚾', mlb_special_event: '🌟', spring_training: '🌞', pilgrimage: '🏛️' }
+                const emoji = CAT_EMOJI[entry.category] ?? '📋'
+                const dt = new Date(entry.visit_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                const name = entry.event_type || entry.venue || entry.category
+                const line = entry.opponent ? `${name} vs ${entry.opponent}` : name
+                return (
+                  <div key={entry.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderRadius: 10, backgroundColor: '#161B22', border: '1px solid #21262D' }}>
+                    <span style={{ fontSize: 15, flexShrink: 0 }}>{emoji}</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: '#C9D1D9', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{line}</span>
+                    <span style={{ fontSize: 11, color: '#484F58', flexShrink: 0 }}>{dt}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ── Category card carousel ──────────────────────────────────────── */}
         <div className="no-scrollbar" style={{ overflowX: 'auto', display: 'flex', gap: 8, marginBottom: 20, paddingBottom: 4 }}>
           {CATEGORIES.map(cat => {
@@ -834,7 +880,7 @@ export default function MilestoneGrid({
             if (cat.key === 'stadiums')    count = ladders.filter(m => LADDER_STADIUM_IDS.has(m.id)).length
             if (cat.key === 'division')    count = allMilestones.filter(m => DIVISION_IDS.has(m.id)).length
             if (cat.key === 'gameday')     count = allMilestones.filter(m => GAMEDAY_IDS.has(m.id)).length
-            if (cat.key === 'experiences') count = allMilestones.filter(m => EXPERIENCE_MILESTONE_IDS.has(m.id)).length + STATIC_EXPERIENCES.filter(s => !COLLECTION_IDS.has(s.id)).length
+            if (cat.key === 'experiences') count = allMilestones.filter(m => EXPERIENCE_MILESTONE_IDS.has(m.id)).length + STATIC_EXPERIENCES.filter(s => !COLLECTION_IDS.has(s.id)).length + BASEBALL_LIFE_ACHIEVEMENTS.length
             if (cat.key === 'collection')  count = STATIC_EXPERIENCES.filter(s => COLLECTION_IDS.has(s.id)).length
             return (
               <button
@@ -1227,7 +1273,38 @@ export default function MilestoneGrid({
             )
           })}
 
-          {filteredMilestones.length === 0 && filteredStatics.length === 0 && (
+          {/* Baseball Life achievement cards (auto-detected from BLE entries) */}
+          {filteredBla.map(a => {
+            const isEarned = earnedBlaIds.has(a.id)
+            return (
+              <div
+                key={a.id}
+                style={{
+                  position: 'relative', display: 'flex', flexDirection: 'column',
+                  padding: '16px 14px 14px', borderRadius: 16, overflow: 'hidden', minHeight: 150,
+                  background: isEarned ? 'linear-gradient(135deg, #1A1500 0%, #2A1E00 100%)' : '#161B22',
+                  borderWidth: 1.5, borderStyle: 'solid',
+                  borderColor: isEarned ? 'rgba(245,166,35,0.4)' : '#30363D',
+                  filter: !isEarned ? 'grayscale(30%)' : 'none',
+                  opacity: isEarned ? 1 : 0.7,
+                }}
+              >
+                {isEarned && <div className="earned-card-shine" />}
+                {isEarned && (
+                  <div style={{ position: 'absolute', top: 10, right: 10, width: 20, height: 20, borderRadius: '50%', backgroundColor: '#3FB950', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Check size={10} color="#0B1117" strokeWidth={3.5} />
+                  </div>
+                )}
+                <div style={{ fontSize: 32, marginBottom: 10, filter: isEarned ? 'none' : 'grayscale(60%)', lineHeight: 1 }}>{a.icon}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: isEarned ? '#E6EDF3' : '#C9D1D9', marginBottom: 3, lineHeight: 1.3 }}>{a.name}</div>
+                  <div style={{ fontSize: 12, color: '#8B949E', lineHeight: 1.4 }}>{a.description}</div>
+                </div>
+              </div>
+            )
+          })}
+
+          {filteredMilestones.length === 0 && filteredStatics.length === 0 && filteredBla.length === 0 && (
             <div className="col-span-2 md:col-span-3" style={{ textAlign: 'center', padding: '48px 0' }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>🔍</div>
               <div style={{ fontSize: 16, fontWeight: 600, color: '#8B949E', marginBottom: 4 }}>No matches</div>

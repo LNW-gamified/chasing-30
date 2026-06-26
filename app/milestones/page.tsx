@@ -4,9 +4,8 @@ import { MILESTONES } from '@/lib/milestones'
 import { STATIC_EXPERIENCES } from '@/lib/static-experiences'
 import type { Stadium, StadiumVisit, SpecialEvent, BaseballLifeEntry, DestinationVisit, SerializableMilestone } from '@/types'
 import SpecialVisitButton from '@/components/SpecialVisitButton'
-import { BASEBALL_LIFE_ACHIEVEMENTS, BASEBALL_LIFE_CATEGORY_GROUPS } from '@/lib/baseball-life-achievements'
 import { RankBadge } from '@/components/RankBadge'
-import { ClipboardList, Trophy } from 'lucide-react'
+import { Trophy } from 'lucide-react'
 
 export const RANK_TIERS = [
   { name: 'Sandlot Kid',       minPts: 0,    icon: '⚾', description: 'Where every legend begins' },
@@ -152,8 +151,9 @@ export default async function MilestonesPage() {
 
         {/* ── Gamified Hero ─────────────────────────────────────── */}
         <div style={{ backgroundColor: '#0D1117', borderBottom: '1px solid #30363D', padding: '32px 16px 28px', overflow: 'hidden', position: 'relative' }}>
-          <div style={{ textAlign: 'center', marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, maxWidth: 560, margin: '0 auto 8px' }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.15em' }}>The Record Books</span>
+            <SpecialVisitButton label="+ Log Entry" variant="secondary" />
           </div>
           {/* Background radial glow */}
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(245,166,35,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
@@ -234,116 +234,11 @@ export default async function MilestonesPage() {
           allVisits={allVisits}
           allStadiums={allStadiums}
           allEvents={allEvents}
+          allBle={allBle}
           currentRankName={currentRank.name}
           rankTiers={RANK_TIERS}
         />
 
-        {/* ── The Baseball Life section ─────────────────────────────── */}
-        {(() => {
-          const CAT_EMOJI: Record<string, string> = {
-            minor_league: '⚾', mlb_special_event: '🌟', spring_training: '🌞', pilgrimage: '🏛️',
-          }
-          const CAT_LABEL: Record<string, string> = {
-            minor_league: 'Minor League', mlb_special_event: 'MLB Special Event',
-            spring_training: 'Spring Training', pilgrimage: 'Pilgrimage',
-          }
-          const earnedAchievements = new Set(BASEBALL_LIFE_ACHIEVEMENTS.filter(a => a.check(allBle)).map(a => a.id))
-          return (
-            <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 16px 40px' }}>
-              <div style={{ borderTop: '1px solid #30363D', paddingTop: 28 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                  <div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: '#E6EDF3', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <ClipboardList size={18} color="#8B949E" /> The Baseball Life
-                    </div>
-                    <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
-                      {allBle.length > 0 ? `${allBle.length} entr${allBle.length === 1 ? 'y' : 'ies'} logged` : 'Minor league, spring training, special events & pilgrimages'}
-                    </div>
-                  </div>
-                  <SpecialVisitButton label="Log Entry" variant="primary" />
-                </div>
-
-                {/* Achievement groups */}
-                {BASEBALL_LIFE_CATEGORY_GROUPS.map(group => {
-                  const groupAchievements = BASEBALL_LIFE_ACHIEVEMENTS.filter(a => a.category === group.key)
-                  const groupEarned = groupAchievements.filter(a => earnedAchievements.has(a.id)).length
-                  return (
-                    <div key={group.key} style={{ marginBottom: 22 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        {group.icon} {group.label}
-                        <span style={{ fontSize: 12, color: '#484F58' }}>({groupEarned}/{groupAchievements.length})</span>
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8 }}>
-                        {groupAchievements.map(ach => {
-                          const isEarned = earnedAchievements.has(ach.id)
-                          return (
-                            <div
-                              key={ach.id}
-                              style={{
-                                padding: '12px 14px', borderRadius: 12,
-                                backgroundColor: isEarned ? 'rgba(63,185,80,0.06)' : '#0D1117',
-                                border: `1px solid ${isEarned ? 'rgba(63,185,80,0.3)' : '#21262D'}`,
-                                opacity: isEarned ? 1 : 0.6,
-                              }}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                                <span style={{ fontSize: 20 }}>{ach.icon}</span>
-                                {isEarned && (
-                                  <span style={{ fontSize: 10, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', padding: '2px 6px', borderRadius: 8, marginLeft: 'auto' }}>✓ Earned</span>
-                                )}
-                              </div>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{ach.name}</div>
-                              <div style={{ fontSize: 11, color: '#8B949E', marginTop: 2, lineHeight: 1.4 }}>{ach.description}</div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })}
-
-                {/* Recent entries */}
-                {allBle.length > 0 && (
-                  <div style={{ marginTop: 24 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', marginBottom: 10 }}>Recent Entries</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {allBle.slice(0, 5).map((entry: any) => {
-                        const emoji = CAT_EMOJI[entry.category] ?? '📋'
-                        const label = CAT_LABEL[entry.category] ?? entry.category
-                        const dt = new Date(entry.visit_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                        const teamName = entry.event_type || entry.venue || label
-                        const hasOpponent = !!entry.opponent
-                        const hasScore = entry.final_score_home != null && entry.final_score_away != null
-                        const primaryLine = hasOpponent ? `${teamName} vs ${entry.opponent}` : teamName
-                        const scorePart = hasScore ? ` · ${entry.final_score_home}-${entry.final_score_away}` : ''
-                        return (
-                          <div key={entry.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D' }}>
-                            <span style={{ fontSize: 22, flexShrink: 0 }}>{emoji}</span>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{primaryLine}</div>
-                              <div style={{ fontSize: 12, color: '#8B949E' }}>{label}{scorePart} · {dt}</div>
-                            </div>
-                          </div>
-                        )
-                      })}
-                      {allBle.length > 5 && (
-                        <div style={{ textAlign: 'center', fontSize: 13, color: '#8B949E', paddingTop: 4 }}>
-                          +{allBle.length - 5} more
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {allBle.length === 0 && (
-                  <div style={{ textAlign: 'center', padding: '32px 0', color: '#484F58', fontSize: 13 }}>
-                    No Baseball Life entries yet. Tap Log Entry to add your first!
-                  </div>
-                )}
-              </div>
-            </div>
-          )
-        })()}
       </main>
     </div>
   )
