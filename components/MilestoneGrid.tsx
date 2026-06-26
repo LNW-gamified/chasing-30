@@ -12,17 +12,15 @@ import { classifyDayNightHeuristic } from '@/lib/sunrise-sunset'
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const MILESTONE_POINTS: Record<string, number> = {
-  first_game: 25, five_stadiums: 50, ten_stadiums: 75,
-  fifteen_stadiums: 100, twenty_stadiums: 125, twentyfive_stadiums: 150, all_stadiums: 300,
   al_east: 50, al_central: 50, al_west: 50, nl_east: 50, nl_central: 50, nl_west: 50,
   american_league: 100, national_league: 100,
-  east_coast: 100, midwest: 100, west_coast: 100,
-  five_games: 35, ten_games: 50,
   world_series_attendance: 150, all_star_attendance: 100, postseason_attendance: 100,
-  spring_training_attendance: 50, minor_league_attendance: 50,
+  spring_training_attendance: 50,
   hall_of_fame_visit: 75, field_of_dreams_visit: 75,
+  louisville_slugger_visit: 50, rawlings_factory_visit: 50,
+  negro_leagues_visit: 75, doubleday_visit: 50,
   international_game: 100, historic_ballparks_all: 200,
-  first_special_event: 30,
+  full_experience: 100,
   walk_off_witness: 75, double_walk_off: 125,
   no_hit_wonder: 150, perfect_day: 300, committee_work: 100,
   extra_credit: 50, marathon_man: 75,
@@ -30,28 +28,6 @@ const MILESTONE_POINTS: Record<string, number> = {
   full_cycle: 150, history_maker: 200,
   run_factory: 50, pitchers_duel: 75,
 }
-
-const PLACES_IDS = new Set([
-  'five_stadiums', 'ten_stadiums', 'fifteen_stadiums', 'twenty_stadiums',
-  'twentyfive_stadiums', 'all_stadiums',
-  'al_east', 'al_central', 'al_west',
-  'nl_east', 'nl_central', 'nl_west',
-  'american_league', 'national_league',
-  'east_coast', 'midwest', 'west_coast',
-])
-
-const EXPERIENCE_IDS = new Set([
-  'first_game', 'five_games', 'ten_games',
-  'first_special_event', 'world_series_attendance', 'all_star_attendance',
-  'postseason_attendance', 'spring_training_attendance', 'minor_league_attendance',
-  'hall_of_fame_visit', 'field_of_dreams_visit', 'international_game', 'historic_ballparks_all',
-  'walk_off_witness', 'double_walk_off',
-  'no_hit_wonder', 'perfect_day', 'committee_work',
-  'extra_credit', 'marathon_man',
-  'lights_out', 'grand_slam_witness',
-  'full_cycle', 'history_maker',
-  'run_factory', 'pitchers_duel',
-])
 
 // Which experiences take a "player name" extra field
 const PLAYER_NAME_EXP = new Set(['autograph', 'met_player'])
@@ -120,15 +96,6 @@ function getSerializableMilestoneContext(
   const sn = (id: string) => allStadiums.find(s => s.id === id)?.name
 
   switch (milestone.id) {
-    case 'first_game':  return sv[0] ? { date: sv[0].visit_date, location: sn(sv[0].stadium_id) } : null
-    case 'five_games':  return sv[4] ? { date: sv[4].visit_date, location: sn(sv[4].stadium_id) } : null
-    case 'ten_games':   return sv[9] ? { date: sv[9].visit_date, location: sn(sv[9].stadium_id) } : null
-    case 'five_stadiums':       return getNthUniqueVisit(5,  sv, allStadiums)
-    case 'ten_stadiums':        return getNthUniqueVisit(10, sv, allStadiums)
-    case 'fifteen_stadiums':    return getNthUniqueVisit(15, sv, allStadiums)
-    case 'twenty_stadiums':     return getNthUniqueVisit(20, sv, allStadiums)
-    case 'twentyfive_stadiums': return getNthUniqueVisit(25, sv, allStadiums)
-    case 'all_stadiums':        return getNthUniqueVisit(30, sv, allStadiums)
     case 'al_east':    return getCompletionContext(allStadiums.filter(s => s.league === 'AL' && s.division === 'East'),    sv, allStadiums)
     case 'al_central': return getCompletionContext(allStadiums.filter(s => s.league === 'AL' && s.division === 'Central'), sv, allStadiums)
     case 'al_west':    return getCompletionContext(allStadiums.filter(s => s.league === 'AL' && s.division === 'West'),    sv, allStadiums)
@@ -137,17 +104,16 @@ function getSerializableMilestoneContext(
     case 'nl_west':    return getCompletionContext(allStadiums.filter(s => s.league === 'NL' && s.division === 'West'),    sv, allStadiums)
     case 'american_league': return getCompletionContext(allStadiums.filter(s => s.league === 'AL'), sv, allStadiums)
     case 'national_league': return getCompletionContext(allStadiums.filter(s => s.league === 'NL'), sv, allStadiums)
-    case 'east_coast':  return getCompletionContext(allStadiums.filter(s => s.division === 'East'),    sv, allStadiums)
-    case 'midwest':     return getCompletionContext(allStadiums.filter(s => s.division === 'Central'), sv, allStadiums)
-    case 'west_coast':  return getCompletionContext(allStadiums.filter(s => s.division === 'West'),    sv, allStadiums)
-    case 'first_special_event': { const e = se[0]; return e ? { date: e.event_date, location: e.stadium_name ?? e.venue_name ?? undefined } : null }
     case 'world_series_attendance':   { const e = se.find(e => e.event_type === 'world_series');   return e ? { date: e.event_date, location: e.stadium_name ?? undefined } : null }
     case 'all_star_attendance':       { const e = se.find(e => e.event_type === 'all_star_game');  return e ? { date: e.event_date, location: e.stadium_name ?? undefined } : null }
     case 'postseason_attendance':     { const e = se.find(e => e.event_type === 'postseason');     return e ? { date: e.event_date, location: e.stadium_name ?? undefined } : null }
     case 'spring_training_attendance':{ const e = se.find(e => e.event_type === 'spring_training');return e ? { date: e.event_date, location: e.stadium_name ?? undefined } : null }
-    case 'minor_league_attendance':   { const e = se.find(e => e.event_type === 'minor_league');   return e ? { date: e.event_date, location: e.venue_name ?? e.stadium_name ?? undefined } : null }
     case 'hall_of_fame_visit': { const e = se.find(e => e.event_type === 'historic_ballpark' && e.venue_name === 'National Baseball Hall of Fame'); return e ? { date: e.event_date, location: 'Cooperstown, NY' } : null }
     case 'field_of_dreams_visit': { const e = se.find(e => e.event_type === 'historic_ballpark' && e.venue_name === 'Field of Dreams'); return e ? { date: e.event_date, location: 'Dyersville, IA' } : null }
+    case 'louisville_slugger_visit': { const e = se.find(e => e.venue_name?.toLowerCase().includes('louisville slugger')); return e ? { date: e.event_date, location: 'Louisville, KY' } : null }
+    case 'rawlings_factory_visit':   { const e = se.find(e => e.venue_name?.toLowerCase().includes('rawlings'));           return e ? { date: e.event_date, location: 'Rawlings Factory' } : null }
+    case 'negro_leagues_visit':      { const e = se.find(e => e.venue_name === 'Negro Leagues Baseball Museum');          return e ? { date: e.event_date, location: 'Kansas City, MO' } : null }
+    case 'doubleday_visit':          { const e = se.find(e => e.venue_name?.toLowerCase().includes('doubleday'));         return e ? { date: e.event_date, location: 'Cooperstown, NY' } : null }
     case 'international_game': { const e = se.find(e => e.event_type === 'international'); return e ? { date: e.event_date, location: e.stadium_name ?? e.city ?? undefined } : null }
     case 'historic_ballparks_all': {
       const VENUES = ['Louisville Slugger Museum & Factory', 'National Baseball Hall of Fame', 'Negro Leagues Baseball Museum', 'Field of Dreams', 'Rickwood Field']
@@ -179,25 +145,13 @@ function getMilestoneProgress(
   allStadiums: Stadium[],
   allEvents: SpecialEvent[]
 ): { current: number; total: number } | null {
-  const visitedCount = new Set(allVisits.map(v => v.stadium_id)).size
   const visitedIds   = new Set(allVisits.map(v => v.stadium_id))
   const divCount = (lg: string, dv: string) => allStadiums.filter(s => s.league === lg && s.division === dv).length
   const divVis   = (lg: string, dv: string) => allStadiums.filter(s => s.league === lg && s.division === dv && visitedIds.has(s.id)).length
-  const lgCount  = (lg: string) => allStadiums.filter(s => s.league   === lg).length
-  const lgVis    = (lg: string) => allStadiums.filter(s => s.league   === lg && visitedIds.has(s.id)).length
-  const regCount = (dv: string) => allStadiums.filter(s => s.division === dv).length
-  const regVis   = (dv: string) => allStadiums.filter(s => s.division === dv && visitedIds.has(s.id)).length
+  const lgCount  = (lg: string) => allStadiums.filter(s => s.league === lg).length
+  const lgVis    = (lg: string) => allStadiums.filter(s => s.league === lg && visitedIds.has(s.id)).length
 
   switch (id) {
-    case 'first_game':          return { current: Math.min(allVisits.length, 1),  total: 1  }
-    case 'five_stadiums':       return { current: Math.min(visitedCount, 5),       total: 5  }
-    case 'ten_stadiums':        return { current: Math.min(visitedCount, 10),      total: 10 }
-    case 'fifteen_stadiums':    return { current: Math.min(visitedCount, 15),      total: 15 }
-    case 'twenty_stadiums':     return { current: Math.min(visitedCount, 20),      total: 20 }
-    case 'twentyfive_stadiums': return { current: Math.min(visitedCount, 25),      total: 25 }
-    case 'all_stadiums':        return { current: visitedCount,                    total: 30 }
-    case 'five_games':          return { current: Math.min(allVisits.length, 5),  total: 5  }
-    case 'ten_games':           return { current: Math.min(allVisits.length, 10), total: 10 }
     case 'al_east':    return { current: divVis('AL', 'East'),    total: divCount('AL', 'East')    }
     case 'al_central': return { current: divVis('AL', 'Central'), total: divCount('AL', 'Central') }
     case 'al_west':    return { current: divVis('AL', 'West'),    total: divCount('AL', 'West')    }
@@ -206,9 +160,6 @@ function getMilestoneProgress(
     case 'nl_west':    return { current: divVis('NL', 'West'),    total: divCount('NL', 'West')    }
     case 'american_league': return { current: lgVis('AL'), total: lgCount('AL') }
     case 'national_league': return { current: lgVis('NL'), total: lgCount('NL') }
-    case 'east_coast':  return { current: regVis('East'),    total: regCount('East')    }
-    case 'midwest':     return { current: regVis('Central'), total: regCount('Central') }
-    case 'west_coast':  return { current: regVis('West'),    total: regCount('West')    }
     case 'historic_ballparks_all': {
       const VENUES = ['Louisville Slugger Museum & Factory', 'National Baseball Hall of Fame', 'Negro Leagues Baseball Museum', 'Field of Dreams', 'Rickwood Field']
       const visited = new Set(allEvents.filter(e => e.event_type === 'historic_ballpark' && e.venue_name).map(e => e.venue_name!))
@@ -263,16 +214,10 @@ const CATEGORIES: { key: CategoryKey; label: string; emoji: string }[] = [
   { key: 'collection',  label: 'Collection',       emoji: '🎁' },
 ]
 
-const STADIUM_COUNT_IDS = new Set([
-  'first_game', 'five_games', 'ten_games',
-  'five_stadiums', 'ten_stadiums', 'fifteen_stadiums',
-  'twenty_stadiums', 'twentyfive_stadiums', 'all_stadiums',
-])
 const DIVISION_IDS = new Set([
   'al_east', 'al_central', 'al_west',
   'nl_east', 'nl_central', 'nl_west',
   'american_league', 'national_league',
-  'east_coast', 'midwest', 'west_coast',
 ])
 const GAMEDAY_IDS = new Set([
   'walk_off_witness', 'double_walk_off', 'no_hit_wonder', 'perfect_day',
@@ -280,16 +225,22 @@ const GAMEDAY_IDS = new Set([
   'grand_slam_witness', 'full_cycle', 'history_maker', 'run_factory', 'pitchers_duel',
 ])
 const EXPERIENCE_MILESTONE_IDS = new Set([
-  'first_special_event', 'world_series_attendance', 'all_star_attendance',
-  'postseason_attendance', 'spring_training_attendance', 'minor_league_attendance',
-  'hall_of_fame_visit', 'field_of_dreams_visit', 'international_game', 'historic_ballparks_all',
+  'world_series_attendance', 'all_star_attendance',
+  'postseason_attendance', 'spring_training_attendance',
+  'hall_of_fame_visit', 'field_of_dreams_visit',
+  'louisville_slugger_visit', 'rawlings_factory_visit',
+  'negro_leagues_visit', 'doubleday_visit',
+  'international_game', 'historic_ballparks_all', 'full_experience',
 ])
 const COLLECTION_IDS = new Set(['bobblehead', 'foul_ball', 'autograph', 'met_player', 'jumbotron', 'seventh_inning', 'fireworks_night', 'rivalry_game', 'enemy_territory', 'rain_delay', 'early_bird', 'jersey_day', 'night_owl'])
 
+// Ladder milestone IDs for category routing
+const LADDER_STADIUM_IDS = new Set(['stadium_explorer', 'games_attended'])
+const LADDER_EXPERIENCE_IDS = new Set(['minor_league_explorer'])
+
 function milestoneCategory(id: string): CategoryKey {
-  if (STADIUM_COUNT_IDS.has(id)) return 'stadiums'
-  if (DIVISION_IDS.has(id))      return 'division'
-  if (GAMEDAY_IDS.has(id))       return 'gameday'
+  if (DIVISION_IDS.has(id))            return 'division'
+  if (GAMEDAY_IDS.has(id))             return 'gameday'
   if (EXPERIENCE_MILESTONE_IDS.has(id)) return 'experiences'
   return 'stadiums'
 }
@@ -319,6 +270,7 @@ function ConfettiPiece({ color, left, delay, size }: { color: string; left: numb
 interface Props {
   earned: SerializableMilestone[]
   unearned: SerializableMilestone[]
+  ladders: SerializableMilestone[]
   allVisits: StadiumVisit[]
   allStadiums: Stadium[]
   allEvents: SpecialEvent[]
@@ -333,7 +285,7 @@ type SelectedItem =
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function MilestoneGrid({
-  earned, unearned, allVisits, allStadiums, allEvents, currentRankName, rankTiers,
+  earned, unearned, ladders, allVisits, allStadiums, allEvents, currentRankName, rankTiers,
 }: Props) {
   const [filter, setFilter]     = useState<CategoryKey>('all')
   const [search, setSearch]     = useState('')
@@ -603,7 +555,7 @@ export default function MilestoneGrid({
   const filteredMilestones = useMemo(() => {
     return allMilestones.filter(m => {
       if (filter === 'earned')      return earnedIds.has(m.id)
-      if (filter === 'stadiums')    return STADIUM_COUNT_IDS.has(m.id)
+      if (filter === 'stadiums')    return false  // ladders handle stadium/games counts
       if (filter === 'division')    return DIVISION_IDS.has(m.id)
       if (filter === 'gameday')     return GAMEDAY_IDS.has(m.id)
       if (filter === 'experiences') return EXPERIENCE_MILESTONE_IDS.has(m.id)
@@ -616,6 +568,23 @@ export default function MilestoneGrid({
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, search, earned, unearned, earnedIds])
+
+  const filteredLadders = useMemo(() => {
+    return ladders.filter(m => {
+      if (filter === 'collection' || filter === 'division' || filter === 'gameday') return false
+      if (filter === 'earned') return (m.currentValue ?? 0) >= (m.tiers?.[0]?.threshold ?? 1)
+      if (filter === 'stadiums')    return LADDER_STADIUM_IDS.has(m.id)
+      if (filter === 'experiences') return LADDER_EXPERIENCE_IDS.has(m.id)
+      // 'all' and 'records' (records handled separately)
+      if (filter === 'records') return false
+      return true
+    }).filter(m => {
+      if (!search) return true
+      const q = search.toLowerCase()
+      return m.name.toLowerCase().includes(q) || m.description.toLowerCase().includes(q)
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, search, ladders])
 
   const showStatics = filter === 'all' || filter === 'experiences' || filter === 'collection' || filter === 'earned'
   const showRecords = filter === 'records'
@@ -850,7 +819,7 @@ export default function MilestoneGrid({
             const active = filter === cat.key
             let count: number | null = null
             if (cat.key === 'earned')      count = earned.length + earnedStaticCount
-            if (cat.key === 'stadiums')    count = allMilestones.filter(m => STADIUM_COUNT_IDS.has(m.id)).length
+            if (cat.key === 'stadiums')    count = ladders.filter(m => LADDER_STADIUM_IDS.has(m.id)).length
             if (cat.key === 'division')    count = allMilestones.filter(m => DIVISION_IDS.has(m.id)).length
             if (cat.key === 'gameday')     count = allMilestones.filter(m => GAMEDAY_IDS.has(m.id)).length
             if (cat.key === 'experiences') count = allMilestones.filter(m => EXPERIENCE_MILESTONE_IDS.has(m.id)).length + STATIC_EXPERIENCES.filter(s => !COLLECTION_IDS.has(s.id)).length
@@ -1011,6 +980,100 @@ export default function MilestoneGrid({
 
         {/* ── Achievement card grid ───────────────────────────────────────── */}
         {!showRecords && <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12, marginBottom: 40 }}>
+
+          {/* ── Ladder milestone cards (full-width) ── */}
+          {filteredLadders.map(m => {
+            const tiers = m.tiers ?? []
+            const val   = m.currentValue ?? 0
+            const earnedTiers   = tiers.filter(t => t.threshold <= val)
+            const unearnedTiers = tiers.filter(t => t.threshold > val)
+            const currentTier   = earnedTiers[earnedTiers.length - 1] ?? null
+            const nextTier      = unearnedTiers[0] ?? null
+            const totalEarnedPts = earnedTiers.reduce((s, t) => s + t.points, 0)
+            const allComplete   = earnedTiers.length === tiers.length
+            const pct = nextTier && currentTier
+              ? Math.round(((val - currentTier.threshold) / (nextTier.threshold - currentTier.threshold)) * 100)
+              : nextTier ? Math.round((val / nextTier.threshold) * 100) : 100
+
+            return (
+              <div
+                key={m.id}
+                style={{
+                  gridColumn: '1 / -1',
+                  padding: '16px 18px 16px',
+                  borderRadius: 16,
+                  background: currentTier
+                    ? 'linear-gradient(135deg, #1A1500 0%, #2A1E00 100%)'
+                    : '#161B22',
+                  border: `1.5px solid ${currentTier ? 'rgba(245,166,35,0.4)' : '#30363D'}`,
+                  position: 'relative', overflow: 'hidden',
+                }}
+              >
+                {currentTier && <div className="earned-card-shine" />}
+
+                {/* Header row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                  <span style={{ fontSize: 28, lineHeight: 1, filter: currentTier ? 'none' : 'grayscale(60%)' }}>{m.icon}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.2 }}>{m.name}</div>
+                    <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{m.description}</div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <Zap size={9} color={currentTier ? '#F5A623' : '#484F58'} />
+                      <span style={{ fontSize: 9, fontWeight: 700, color: currentTier ? '#F5A623' : '#484F58', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Auto</span>
+                    </div>
+                    {totalEarnedPts > 0 && (
+                      <div style={{ fontSize: 10, fontWeight: 800, color: '#F5A623', background: 'rgba(245,166,35,0.15)', padding: '2px 8px', borderRadius: 20 }}>
+                        +{totalEarnedPts} XP
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Tier dots row */}
+                <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
+                  {tiers.map((tier, i) => {
+                    const unlocked = tier.threshold <= val
+                    const isCurrent = tier === currentTier
+                    return (
+                      <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, minWidth: 0 }}>
+                        <div style={{
+                          width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                          background: unlocked ? (isCurrent ? '#F5A623' : 'rgba(245,166,35,0.35)') : '#1C2430',
+                          border: `2px solid ${unlocked ? '#F5A623' : '#30363D'}`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          {unlocked && <Check size={10} color={isCurrent ? '#000' : '#F5A623'} strokeWidth={3} />}
+                        </div>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: unlocked ? '#F5A623' : '#484F58', lineHeight: 1 }}>{tier.threshold}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Progress bar toward next tier */}
+                {!allComplete && (
+                  <div>
+                    <div style={{ height: 4, background: '#1C2430', borderRadius: 3, overflow: 'hidden', marginBottom: 4 }}>
+                      <div style={{ height: '100%', borderRadius: 3, width: `${Math.max(pct, val > 0 ? 4 : 0)}%`, background: 'linear-gradient(90deg, #F5A623, #E8820C)', transition: 'width 0.4s ease' }} />
+                    </div>
+                    <div style={{ fontSize: 10, color: '#8B949E' }}>
+                      {currentTier
+                        ? <><span style={{ color: '#F5A623', fontWeight: 700 }}>{currentTier.label}</span> · {val}/{nextTier?.threshold} toward <span style={{ color: '#C9D1D9' }}>{nextTier?.label}</span></>
+                        : <>{val}/{nextTier?.threshold} toward <span style={{ color: '#C9D1D9' }}>{nextTier?.label}</span></>
+                      }
+                    </div>
+                  </div>
+                )}
+                {allComplete && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#3FB950', fontWeight: 700 }}>
+                    <Check size={12} strokeWidth={3} /> All tiers complete · {val} total
+                  </div>
+                )}
+              </div>
+            )
+          })}
 
           {/* Auto-tracked milestone cards */}
           {filteredMilestones.map(m => {

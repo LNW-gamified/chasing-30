@@ -10,7 +10,6 @@ export interface StaticExperience {
 
 export const STATIC_EXPERIENCES: StaticExperience[] = [
   // manual_once
-  { id: 'walk_off_win',    name: 'Walk-Off Win',           description: 'Witness a walk-off victory in person',         icon: '🎉', tracking_type: 'manual_once' },
   { id: 'opening_day',     name: 'Opening Day',            description: 'Attend Opening Day for any team',              icon: '🌱', tracking_type: 'manual_once' },
   // manual_repeatable
   { id: 'bobblehead',      name: 'Bobblehead Collection',  description: 'Score a giveaway item at the park',           icon: '🪆', tracking_type: 'manual_repeatable' },

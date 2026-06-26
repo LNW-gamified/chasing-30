@@ -4,71 +4,59 @@ function visitedIds(visits: StadiumVisit[]): Set<string> {
   return new Set(visits.map((v) => v.stadium_id))
 }
 
-function stadiumsInDivision(
-  stadiums: Stadium[],
-  league: string,
-  division: string
-) {
+function stadiumsInDivision(stadiums: Stadium[], league: string, division: string) {
   return stadiums.filter((s) => s.league === league && s.division === division)
 }
 
-function allVisited(
-  group: Stadium[],
-  visited: Set<string>
-): boolean {
+function allVisited(group: Stadium[], visited: Set<string>): boolean {
   return group.every((s) => visited.has(s.id))
 }
 
+function milbCount(events: SpecialEvent[] | undefined, ble: BaseballLifeEntry[] | undefined): number {
+  return (events ?? []).filter(e => e.event_type === 'minor_league').length +
+         (ble   ?? []).filter(e => e.category   === 'minor_league').length
+}
+
 export const MILESTONES: Milestone[] = [
+
+  // ── LADDER: Stadium Explorer ────────────────────────────────────────────────
   {
-    id: 'first_game',
-    name: 'First Pitch',
-    description: 'Attend your first MLB game',
-    icon: '⚾',
-    check: (visits) => visits.length >= 1,
-  },
-  {
-    id: 'five_stadiums',
-    name: 'Road Warrior',
-    description: 'Visit 5 different stadiums',
-    icon: '🚗',
-    check: (visits) => visitedIds(visits).size >= 5,
-  },
-  {
-    id: 'ten_stadiums',
-    name: 'Double Digits',
-    description: 'Visit 10 different stadiums',
-    icon: '🔟',
-    check: (visits) => visitedIds(visits).size >= 10,
-  },
-  {
-    id: 'fifteen_stadiums',
-    name: 'Halfway There',
-    description: 'Visit 15 different stadiums',
+    id: 'stadium_explorer',
+    name: 'Stadium Explorer',
+    description: 'Visit MLB stadiums across the country',
     icon: '🏟️',
-    check: (visits) => visitedIds(visits).size >= 15,
+    tiers: [
+      { threshold: 1,  label: 'First Pitch',   points: 25  },
+      { threshold: 5,  label: 'Road Warrior',   points: 50  },
+      { threshold: 10, label: 'Double Digits',  points: 75  },
+      { threshold: 15, label: 'Halfway There',  points: 100 },
+      { threshold: 20, label: 'On Deck',        points: 125 },
+      { threshold: 25, label: 'Final Stretch',  points: 150 },
+      { threshold: 30, label: 'The Full 30',    points: 300 },
+    ],
+    getValue: (visits) => new Set(visits.map(v => v.stadium_id)).size,
+    check:    (visits) => new Set(visits.map(v => v.stadium_id)).size >= 1,
   },
+
+  // ── LADDER: Games Attended ──────────────────────────────────────────────────
   {
-    id: 'twenty_stadiums',
-    name: 'On Deck',
-    description: 'Visit 20 different stadiums',
-    icon: '🎯',
-    check: (visits) => visitedIds(visits).size >= 20,
+    id: 'games_attended',
+    name: 'Games Attended',
+    description: 'Total MLB games attended in person',
+    icon: '🎟️',
+    tiers: [
+      { threshold: 1,   label: 'First Game',           points: 25  },
+      { threshold: 5,   label: 'Season Ticket Holder', points: 35  },
+      { threshold: 10,  label: 'Superfan',             points: 50  },
+      { threshold: 25,  label: 'Die-Hard',             points: 75  },
+      { threshold: 50,  label: 'Lifer',                points: 100 },
+      { threshold: 100, label: 'Legend',               points: 200 },
+    ],
+    getValue: (visits) => visits.length,
+    check:    (visits) => visits.length >= 1,
   },
-  {
-    id: 'twentyfive_stadiums',
-    name: 'Final Stretch',
-    description: 'Visit 25 different stadiums',
-    icon: '🏃',
-    check: (visits) => visitedIds(visits).size >= 25,
-  },
-  {
-    id: 'all_stadiums',
-    name: 'The Full 30',
-    description: 'Visit all 30 MLB stadiums',
-    icon: '🏆',
-    check: (visits) => visitedIds(visits).size >= 30,
-  },
+
+  // ── Division & League achievements ──────────────────────────────────────────
   {
     id: 'al_east',
     name: 'AL East Complete',
@@ -83,10 +71,7 @@ export const MILESTONES: Milestone[] = [
     description: 'Visit all 5 AL Central stadiums',
     icon: '🌽',
     check: (visits, stadiums) =>
-      allVisited(
-        stadiumsInDivision(stadiums, 'AL', 'Central'),
-        visitedIds(visits)
-      ),
+      allVisited(stadiumsInDivision(stadiums, 'AL', 'Central'), visitedIds(visits)),
   },
   {
     id: 'al_west',
@@ -110,10 +95,7 @@ export const MILESTONES: Milestone[] = [
     description: 'Visit all 5 NL Central stadiums',
     icon: '🐻',
     check: (visits, stadiums) =>
-      allVisited(
-        stadiumsInDivision(stadiums, 'NL', 'Central'),
-        visitedIds(visits)
-      ),
+      allVisited(stadiumsInDivision(stadiums, 'NL', 'Central'), visitedIds(visits)),
   },
   {
     id: 'nl_west',
@@ -129,10 +111,7 @@ export const MILESTONES: Milestone[] = [
     description: 'Visit all 15 American League stadiums',
     icon: '🇺🇸',
     check: (visits, stadiums) =>
-      allVisited(
-        stadiums.filter((s) => s.league === 'AL'),
-        visitedIds(visits)
-      ),
+      allVisited(stadiums.filter((s) => s.league === 'AL'), visitedIds(visits)),
   },
   {
     id: 'national_league',
@@ -140,65 +119,10 @@ export const MILESTONES: Milestone[] = [
     description: 'Visit all 15 National League stadiums',
     icon: '⭐',
     check: (visits, stadiums) =>
-      allVisited(
-        stadiums.filter((s) => s.league === 'NL'),
-        visitedIds(visits)
-      ),
-  },
-  {
-    id: 'east_coast',
-    name: 'East Coast Tour',
-    description: 'Visit all East division stadiums (AL + NL East)',
-    icon: '🌅',
-    check: (visits, stadiums) => {
-      const east = stadiums.filter((s) => s.division === 'East')
-      return allVisited(east, visitedIds(visits))
-    },
-  },
-  {
-    id: 'midwest',
-    name: 'Midwest Swing',
-    description: 'Visit all Central division stadiums (AL + NL Central)',
-    icon: '🌾',
-    check: (visits, stadiums) => {
-      const central = stadiums.filter((s) => s.division === 'Central')
-      return allVisited(central, visitedIds(visits))
-    },
-  },
-  {
-    id: 'west_coast',
-    name: 'West Coast Wanderer',
-    description: 'Visit all West division stadiums (AL + NL West)',
-    icon: '🌊',
-    check: (visits, stadiums) => {
-      const west = stadiums.filter((s) => s.division === 'West')
-      return allVisited(west, visitedIds(visits))
-    },
-  },
-  {
-    id: 'five_games',
-    name: 'Season Ticket Holder',
-    description: 'Attend 5 total games',
-    icon: '🎟️',
-    check: (visits) => visits.length >= 5,
-  },
-  {
-    id: 'ten_games',
-    name: 'Superfan',
-    description: 'Attend 10 total games',
-    icon: '🤩',
-    check: (visits) => visits.length >= 10,
+      allVisited(stadiums.filter((s) => s.league === 'NL'), visitedIds(visits)),
   },
 
-  // Special event milestones
-  {
-    id: 'first_special_event',
-    name: 'Beyond the Diamond',
-    description: 'Log your first special baseball experience',
-    icon: '🌟',
-    check: (_v, _s, events, ble) =>
-      (events ?? []).length >= 1 || (ble ?? []).length >= 1,
-  },
+  // ── Special events ──────────────────────────────────────────────────────────
   {
     id: 'world_series_attendance',
     name: 'World Series Witness',
@@ -251,15 +175,25 @@ export const MILESTONES: Milestone[] = [
       (events ?? []).some((e: SpecialEvent) => e.event_type === 'spring_training') ||
       (ble ?? []).some((e: BaseballLifeEntry) => e.category === 'spring_training'),
   },
+
+  // ── LADDER: Minor League Explorer ───────────────────────────────────────────
   {
-    id: 'minor_league_attendance',
-    name: 'Minor League Maven',
-    description: 'Attend a minor league game',
+    id: 'minor_league_explorer',
+    name: 'Minor League Explorer',
+    description: 'Attend minor league games across the country',
     icon: '🌱',
-    check: (_v, _s, events, ble) =>
-      (events ?? []).some((e: SpecialEvent) => e.event_type === 'minor_league') ||
-      (ble ?? []).some((e: BaseballLifeEntry) => e.category === 'minor_league'),
+    tiers: [
+      { threshold: 1,  label: 'First MiLB Game',     points: 25  },
+      { threshold: 5,  label: 'MiLB Regular',         points: 50  },
+      { threshold: 10, label: 'Farm System Fan',       points: 75  },
+      { threshold: 25, label: 'Minor League Maven',    points: 100 },
+      { threshold: 50, label: 'MiLB Devotee',          points: 150 },
+    ],
+    getValue: (_v, _s, events, ble) => milbCount(events, ble),
+    check:    (_v, _s, events, ble) => milbCount(events, ble) >= 1,
   },
+
+  // ── Destinations & pilgrimages ──────────────────────────────────────────────
   {
     id: 'hall_of_fame_visit',
     name: 'Cooperstown Pilgrim',
@@ -294,6 +228,71 @@ export const MILESTONES: Milestone[] = [
       ),
   },
   {
+    id: 'louisville_slugger_visit',
+    name: 'The Bat Factory',
+    description: 'Visit the Louisville Slugger Museum and Factory',
+    icon: '🪵',
+    check: (_v, _s, events, ble, destinationVisits) =>
+      (events ?? []).some((e: SpecialEvent) =>
+        e.event_type === 'historic_ballpark' && e.venue_name?.toLowerCase().includes('louisville slugger')
+      ) ||
+      (ble ?? []).some((e: BaseballLifeEntry) =>
+        e.category === 'pilgrimage' && (
+          e.venue?.toLowerCase().includes('louisville slugger') ||
+          e.event_type?.toLowerCase().includes('louisville slugger')
+        )
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'louisville_slugger'),
+  },
+  {
+    id: 'rawlings_factory_visit',
+    name: 'Raw Material',
+    description: 'Visit the Rawlings Baseball Factory',
+    icon: '⚾',
+    check: (_v, _s, events, ble, destinationVisits) =>
+      (ble ?? []).some((e: BaseballLifeEntry) =>
+        e.category === 'pilgrimage' && (
+          e.venue?.toLowerCase().includes('rawlings') ||
+          e.event_type?.toLowerCase().includes('rawlings')
+        )
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'rawlings_factory'),
+  },
+  {
+    id: 'negro_leagues_visit',
+    name: 'A League of Their Own',
+    description: 'Visit the Negro Leagues Baseball Museum',
+    icon: '✊',
+    check: (_v, _s, events, ble, destinationVisits) =>
+      (events ?? []).some((e: SpecialEvent) =>
+        e.event_type === 'historic_ballpark' && e.venue_name === 'Negro Leagues Baseball Museum'
+      ) ||
+      (ble ?? []).some((e: BaseballLifeEntry) =>
+        e.category === 'pilgrimage' && (
+          e.venue?.toLowerCase().includes('negro leagues') ||
+          e.event_type?.toLowerCase().includes('negro leagues')
+        )
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'negro_leagues'),
+  },
+  {
+    id: 'doubleday_visit',
+    name: 'Where Baseball Was Born',
+    description: 'Visit Doubleday Field in Cooperstown, NY',
+    icon: '🌾',
+    check: (_v, _s, events, ble, destinationVisits) =>
+      (events ?? []).some((e: SpecialEvent) =>
+        e.event_type === 'historic_ballpark' && e.venue_name?.toLowerCase().includes('doubleday')
+      ) ||
+      (ble ?? []).some((e: BaseballLifeEntry) =>
+        e.category === 'pilgrimage' && (
+          e.venue?.toLowerCase().includes('doubleday') ||
+          e.event_type?.toLowerCase().includes('doubleday')
+        )
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'doubleday_field'),
+  },
+  {
     id: 'international_game',
     name: 'Global Ambassador',
     description: 'Attend an international MLB game',
@@ -322,8 +321,16 @@ export const MILESTONES: Milestone[] = [
       return HISTORIC_VENUES.every((v) => visited.has(v))
     },
   },
+  {
+    id: 'full_experience',
+    name: 'The Full Experience',
+    description: 'Visit 5 or more baseball destinations',
+    icon: '🗺️',
+    check: (_v, _s, _e, _sv, destinationVisits) =>
+      new Set((destinationVisits ?? []).map((dv: DestinationVisit) => dv.destination_id)).size >= 5,
+  },
 
-  // ── Game-event achievements (auto-detected via MLB API) ────────────────
+  // ── Game-event achievements (auto-detected via MLB API) ─────────────────────
   {
     id: 'walk_off_witness',
     name: 'Walk-Off Witness',
@@ -414,25 +421,5 @@ export const MILESTONES: Milestone[] = [
     description: 'Watch a 1-0 masterpiece in person',
     icon: '🎯',
     check: (visits) => visits.some(v => v.game_events?.includes('pitchers_duel')),
-  },
-
-  // ── Baseball Destination achievements ─────────────────────────────────
-  {
-    id: 'factory_tour',
-    name: 'Factory Tour',
-    description: 'Visit the Louisville Slugger or Rawlings baseball factory',
-    icon: '🪵',
-    check: (_v, _s, _e, _sv, destinationVisits) =>
-      (destinationVisits ?? []).some((dv: DestinationVisit) =>
-        ['louisville_slugger', 'rawlings_factory'].includes((dv.destination as any)?.slug)
-      ),
-  },
-  {
-    id: 'full_experience',
-    name: 'The Full Experience',
-    description: 'Visit 5 or more baseball destinations',
-    icon: '🗺️',
-    check: (_v, _s, _e, _sv, destinationVisits) =>
-      new Set((destinationVisits ?? []).map((dv: DestinationVisit) => dv.destination_id)).size >= 5,
   },
 ]

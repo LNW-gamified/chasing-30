@@ -256,11 +256,19 @@ export interface BaseballLifeEntry {
   created_at: string
 }
 
+export interface LadderTier {
+  threshold: number
+  label: string
+  points: number
+}
+
 export interface Milestone {
   id: string
   name: string
   description: string
   icon: string
+  tiers?: LadderTier[]
+  getValue?: (visits: StadiumVisit[], stadiums: Stadium[], events?: SpecialEvent[], baseballLifeEntries?: BaseballLifeEntry[], destinationVisits?: DestinationVisit[]) => number
   check: (visits: StadiumVisit[], stadiums: Stadium[], events?: SpecialEvent[], baseballLifeEntries?: BaseballLifeEntry[], destinationVisits?: DestinationVisit[]) => boolean
   earned_at?: string | null
 }
@@ -271,6 +279,8 @@ export interface SerializableMilestone {
   description: string
   icon: string
   earnDate?: string | null
+  tiers?: LadderTier[]
+  currentValue?: number
 }
 
 export interface StadiumWithVisit extends Stadium {

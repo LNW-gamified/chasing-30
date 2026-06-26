@@ -20,18 +20,22 @@ export const RANK_TIERS = [
 ]
 
 export const MILESTONE_POINTS: Record<string, number> = {
-  first_game: 25, five_stadiums: 50, ten_stadiums: 75,
-  fifteen_stadiums: 100, twenty_stadiums: 125, twentyfive_stadiums: 150, all_stadiums: 300,
+  // Ladder milestone points are computed per-tier in totalPoints below
   al_east: 50, al_central: 50, al_west: 50, nl_east: 50, nl_central: 50, nl_west: 50,
   american_league: 100, national_league: 100,
-  east_coast: 100, midwest: 100, west_coast: 100,
-  five_games: 35, ten_games: 50,
   world_series_attendance: 150, all_star_attendance: 100, postseason_attendance: 100,
-  spring_training_attendance: 50, minor_league_attendance: 50,
+  spring_training_attendance: 50,
   hall_of_fame_visit: 75, field_of_dreams_visit: 75,
+  louisville_slugger_visit: 50, rawlings_factory_visit: 50,
+  negro_leagues_visit: 75, doubleday_visit: 50,
   international_game: 100, historic_ballparks_all: 200,
-  first_special_event: 30,
-  factory_tour: 50, full_experience: 100,
+  full_experience: 100,
+  walk_off_witness: 75, double_walk_off: 125,
+  no_hit_wonder: 150, perfect_day: 300, committee_work: 100,
+  extra_credit: 50, marathon_man: 75,
+  lights_out: 50, grand_slam_witness: 75,
+  full_cycle: 150, history_maker: 200,
+  run_factory: 50, pitchers_duel: 75,
 }
 
 function getRank(pts: number) {
@@ -47,21 +51,16 @@ function computeInProgress(
   allVisits: StadiumVisit[],
   allStadiums: Stadium[]
 ): number {
-  const visitedCount = new Set(allVisits.map(v => v.stadium_id)).size
   const visitedIds = new Set(allVisits.map(v => v.stadium_id))
   let count = 0
   for (const id of unearnedIds) {
-    if (['five_stadiums','ten_stadiums','fifteen_stadiums','twenty_stadiums','twentyfive_stadiums','all_stadiums'].includes(id)) {
-      if (visitedCount > 0) { count++; continue }
-    } else if (['five_games','ten_games'].includes(id)) {
-      if (allVisits.length > 0) { count++; continue }
-    } else if (/^(al|nl)_(east|central|west)$/.test(id)) {
+    if (/^(al|nl)_(east|central|west)$/.test(id)) {
       const league = id.startsWith('al') ? 'AL' : 'NL'
       const div = id.includes('east') ? 'East' : id.includes('central') ? 'Central' : 'West'
       const divS = allStadiums.filter(s => s.league === league && s.division === div)
       if (divS.some(s => visitedIds.has(s.id))) { count++; continue }
-    } else if (['american_league','national_league','east_coast','midwest','west_coast'].includes(id)) {
-      if (visitedCount > 0) { count++; continue }
+    } else if (['american_league', 'national_league'].includes(id)) {
+      if (visitedIds.size > 0) { count++; continue }
     }
   }
   return count
@@ -96,9 +95,11 @@ function toSerializable(
   allBle: BaseballLifeEntry[],
   allDestVisits: DestinationVisit[]
 ): SerializableMilestone[] {
-  return ms.map(({ id, name, description, icon, check }) => ({
-    id, name, description, icon,
-    earnDate: computeEarnDate({ id, name, description, icon, check }, allVisits, allStadiums, allEvents, allBle, allDestVisits),
+  return ms.map((m) => ({
+    id: m.id, name: m.name, description: m.description, icon: m.icon,
+    earnDate: m.tiers ? null : computeEarnDate(m, allVisits, allStadiums, allEvents, allBle, allDestVisits),
+    tiers: m.tiers,
+    currentValue: m.getValue ? m.getValue(allVisits, allStadiums, allEvents, allBle, allDestVisits) : undefined,
   }))
 }
 
@@ -120,9 +121,18 @@ export default async function MilestonesPage() {
   const allBle: BaseballLifeEntry[] = (bleRows ?? []) as BaseballLifeEntry[]
   const allDestVisits: DestinationVisit[] = (destVisits ?? []) as DestinationVisit[]
 
-  const earned   = MILESTONES.filter(m =>  m.check(allVisits, allStadiums, allEvents, allBle, allDestVisits))
-  const unearned = MILESTONES.filter(m => !m.check(allVisits, allStadiums, allEvents, allBle, allDestVisits))
-  const totalPoints = earned.reduce((sum, m) => sum + (MILESTONE_POINTS[m.id] ?? 25), 0)
+  const ladderMilestones  = MILESTONES.filter(m => m.tiers != null)
+  const regularMilestones = MILESTONES.filter(m => m.tiers == null)
+
+  const earned   = regularMilestones.filter(m =>  m.check(allVisits, allStadiums, allEvents, allBle, allDestVisits))
+  const unearned = regularMilestones.filter(m => !m.check(allVisits, allStadiums, allEvents, allBle, allDestVisits))
+
+  const ladderPoints = ladderMilestones.reduce((sum, m) => {
+    const val = m.getValue ? m.getValue(allVisits, allStadiums, allEvents, allBle, allDestVisits) : 0
+    return sum + (m.tiers ?? []).filter(t => t.threshold <= val).reduce((s, t) => s + t.points, 0)
+  }, 0)
+  const totalPoints = earned.reduce((sum, m) => sum + (MILESTONE_POINTS[m.id] ?? 25), 0) + ladderPoints
+
   const currentRank = getRank(totalPoints)
   const nextRank = getNextRank(totalPoints)
   const visitedCount = new Set(allVisits.map(v => v.stadium_id)).size
@@ -130,8 +140,13 @@ export default async function MilestonesPage() {
 
   const claimedIds = new Set((claims ?? []).map(c => c.achievement_id))
   const earnedStaticCount = STATIC_EXPERIENCES.filter(s => claimedIds.has(s.id)).length
+
+  const earnedLadderCount = ladderMilestones.filter(m =>
+    m.getValue ? m.getValue(allVisits, allStadiums, allEvents, allBle, allDestVisits) >= (m.tiers?.[0]?.threshold ?? 1) : false
+  ).length
+
   const totalAchievements = MILESTONES.length + STATIC_EXPERIENCES.length
-  const totalEarned = earned.length + earnedStaticCount
+  const totalEarned = earned.length + earnedStaticCount + earnedLadderCount
 
   return (
     <div>
@@ -221,6 +236,7 @@ export default async function MilestonesPage() {
         <MilestoneGrid
           earned={toSerializable(earned, allVisits, allStadiums, allEvents, allBle, allDestVisits)}
           unearned={toSerializable(unearned, allVisits, allStadiums, allEvents, allBle, allDestVisits)}
+          ladders={toSerializable(ladderMilestones, allVisits, allStadiums, allEvents, allBle, allDestVisits)}
           allVisits={allVisits}
           allStadiums={allStadiums}
           allEvents={allEvents}
