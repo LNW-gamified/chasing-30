@@ -20,7 +20,7 @@ export const STATIC_EXPERIENCES: StaticExperience[] = [
   { id: 'seventh_inning',  name: 'Seventh Inning Stretch', description: 'Sing Take Me Out to the Ballgame',             icon: '🎵', tracking_type: 'manual_repeatable' },
   { id: 'fireworks_night', name: 'Fireworks Night',        description: 'Stay for post-game fireworks',                 icon: '🎆', tracking_type: 'manual_repeatable' },
   { id: 'rivalry_game',    name: 'Rivalry Game',           description: 'Attend a heated rivalry matchup',              icon: '⚔️', tracking_type: 'manual_repeatable' },
-  { id: 'enemy_territory', name: 'Enemy Territory',        description: 'Cheer for the visiting team at a ballpark',    icon: '🕵️', tracking_type: 'manual_repeatable' },
+  { id: 'enemy_territory', name: 'Enemy Territory',        description: 'Attend a game as a visiting team fan in enemy territory', icon: '🕵️', tracking_type: 'manual_repeatable' },
   { id: 'rain_delay',      name: 'Rain Delay',             description: 'Sit through a rain delay at a ballpark',       icon: '🌧️', tracking_type: 'manual_repeatable' },
   { id: 'early_bird',      name: 'Early Bird',             description: 'Arrive early to watch batting practice',       icon: '🌅', tracking_type: 'manual_repeatable' },
   { id: 'jersey_day',      name: 'Jersey Day',             description: 'Wear your team jersey to a game',              icon: '👕', tracking_type: 'manual_repeatable' },

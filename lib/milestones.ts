@@ -305,7 +305,7 @@ export const MILESTONES: Milestone[] = [
     name: 'Baseball Historian',
     description: 'Visit all 5 historic baseball destinations',
     icon: '📜',
-    check: (_v, _s, events) => {
+    check: (_v, _s, events, ble) => {
       const HISTORIC_VENUES = [
         'Louisville Slugger Museum & Factory',
         'National Baseball Hall of Fame',
@@ -313,11 +313,19 @@ export const MILESTONES: Milestone[] = [
         'Field of Dreams',
         'Rickwood Field',
       ]
-      const visited = new Set(
+      const visited = new Set<string>(
         (events ?? [])
           .filter((e: SpecialEvent) => e.event_type === 'historic_ballpark' && e.venue_name)
           .map((e: SpecialEvent) => e.venue_name as string)
       )
+      for (const e of (ble ?? []).filter((e: BaseballLifeEntry) => e.category === 'pilgrimage')) {
+        const v = e.venue?.toLowerCase() ?? ''
+        if (v.includes('louisville slugger')) visited.add('Louisville Slugger Museum & Factory')
+        if (v.includes('hall of fame'))       visited.add('National Baseball Hall of Fame')
+        if (v.includes('negro leagues'))      visited.add('Negro Leagues Baseball Museum')
+        if (v.includes('field of dreams'))    visited.add('Field of Dreams')
+        if (v.includes('rickwood'))           visited.add('Rickwood Field')
+      }
       return HISTORIC_VENUES.every((v) => visited.has(v))
     },
   },
@@ -383,13 +391,13 @@ export const MILESTONES: Milestone[] = [
   {
     id: 'lights_out',
     name: 'Lights Out',
-    description: 'Watch the home team blank their opponent',
+    description: 'Watch the home team throw a shutout in person',
     icon: '💡',
     check: (visits) => visits.some(v => v.game_events?.includes('shutout')),
   },
   {
     id: 'grand_slam_witness',
-    name: 'Slam Dunk',
+    name: 'Grand Salami',
     description: 'Witness a grand slam in person',
     icon: '💥',
     check: (visits) => visits.some(v => v.game_events?.includes('grand_slam')),

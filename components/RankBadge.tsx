@@ -41,37 +41,27 @@ function SandlotKid(p: SvgProps) {
   )
 }
 
-// ── Minor Leaguer: baseball + team bus ───────────────────────────────────────
+// ── Minor Leaguer: baseball with subtle pennant accent ────────────────────────
 function MinorLeaguer(p: SvgProps) {
   return (
     <svg {...p}>
-      {/* Baseball */}
-      <circle cx="50" cy="42" r="34" fill="#FEFEF4" stroke="#C8B098" strokeWidth="2" />
+      <circle cx="50" cy="56" r="44" fill="#FEFEF4" stroke="#C8B098" strokeWidth="2" />
+      <circle cx="50" cy="56" r="44" fill="rgba(46,134,193,0.06)" />
       {/* Left seam */}
-      <path d="M30 31 C24 36 24 48 30 53" stroke="#C0392B" strokeWidth="2" strokeLinecap="round" />
-      <line x1="30" y1="35" x2="24" y2="32" stroke="#C0392B" strokeWidth="1.3" strokeLinecap="round" />
-      <line x1="28" y1="41" x2="21" y2="40" stroke="#C0392B" strokeWidth="1.3" strokeLinecap="round" />
-      <line x1="28" y1="47" x2="21" y2="47" stroke="#C0392B" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M27 43 C20 49 20 63 27 69" stroke="#C0392B" strokeWidth="2.5" strokeLinecap="round" />
+      <line x1="27" y1="47" x2="20" y2="44" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="25" y1="53" x2="17" y2="52" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="24" y1="59" x2="16" y2="59" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="26" y1="65" x2="19" y2="68" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" />
       {/* Right seam */}
-      <path d="M70 31 C76 36 76 48 70 53" stroke="#C0392B" strokeWidth="2" strokeLinecap="round" />
-      <line x1="70" y1="35" x2="76" y2="32" stroke="#C0392B" strokeWidth="1.3" strokeLinecap="round" />
-      <line x1="72" y1="41" x2="79" y2="40" stroke="#C0392B" strokeWidth="1.3" strokeLinecap="round" />
-      <line x1="72" y1="47" x2="79" y2="47" stroke="#C0392B" strokeWidth="1.3" strokeLinecap="round" />
-      {/* Connector */}
-      <line x1="50" y1="76" x2="50" y2="83" stroke="#484F58" strokeWidth="1.5" strokeDasharray="2,2" />
-      {/* Bus body */}
-      <rect x="12" y="83" width="76" height="22" rx="4" fill="#2E86C1" stroke="#1A5276" strokeWidth="1.5" />
-      {/* Windshield */}
-      <rect x="14" y="86" width="15" height="9" rx="2" fill="#AED6F1" stroke="#1A5276" strokeWidth="0.8" />
-      {/* Windows */}
-      <rect x="33" y="86" width="12" height="9" rx="2" fill="#AED6F1" stroke="#1A5276" strokeWidth="0.8" />
-      <rect x="49" y="86" width="12" height="9" rx="2" fill="#AED6F1" stroke="#1A5276" strokeWidth="0.8" />
-      <rect x="65" y="86" width="12" height="9" rx="2" fill="#AED6F1" stroke="#1A5276" strokeWidth="0.8" />
-      {/* Wheels */}
-      <circle cx="27" cy="105" r="5" fill="#17202A" stroke="#2E86C1" strokeWidth="1" />
-      <circle cx="27" cy="105" r="2" fill="#2E86C1" />
-      <circle cx="68" cy="105" r="5" fill="#17202A" stroke="#2E86C1" strokeWidth="1" />
-      <circle cx="68" cy="105" r="2" fill="#2E86C1" />
+      <path d="M73 43 C80 49 80 63 73 69" stroke="#C0392B" strokeWidth="2.5" strokeLinecap="round" />
+      <line x1="73" y1="47" x2="80" y2="44" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="75" y1="53" x2="83" y2="52" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="76" y1="59" x2="84" y2="59" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="74" y1="65" x2="81" y2="68" stroke="#C0392B" strokeWidth="1.5" strokeLinecap="round" />
+      {/* Pennant pole + flag */}
+      <line x1="50" y1="12" x2="50" y2="30" stroke="#2E86C1" strokeWidth="2" strokeLinecap="round" />
+      <path d="M50 12 L72 18 L50 24 Z" fill="#2E86C1" />
     </svg>
   )
 }

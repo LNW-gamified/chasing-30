@@ -2,13 +2,11 @@ import { createClient } from '@/lib/supabase-server'
 import MilestoneGrid from '@/components/MilestoneGrid'
 import { MILESTONES } from '@/lib/milestones'
 import { STATIC_EXPERIENCES } from '@/lib/static-experiences'
-import Link from 'next/link'
 import type { Stadium, StadiumVisit, SpecialEvent, BaseballLifeEntry, DestinationVisit, SerializableMilestone } from '@/types'
 import SpecialVisitButton from '@/components/SpecialVisitButton'
 import { BASEBALL_LIFE_ACHIEVEMENTS, BASEBALL_LIFE_CATEGORY_GROUPS } from '@/lib/baseball-life-achievements'
-import { DESTINATIONS, DESTINATION_GROUPS, destinationLocation } from '@/lib/destinations'
 import { RankBadge } from '@/components/RankBadge'
-import { Map, ClipboardList, Trophy } from 'lucide-react'
+import { ClipboardList, Trophy } from 'lucide-react'
 
 export const RANK_TIERS = [
   { name: 'Sandlot Kid',       minPts: 0,    icon: '⚾', description: 'Where every legend begins' },
@@ -177,10 +175,6 @@ export default async function MilestonesPage() {
             <div style={{ fontSize: 14, color: '#8B949E', fontStyle: 'italic', marginBottom: 6 }}>
               {currentRank.description}
             </div>
-            <div style={{ fontSize: 15, color: '#8B949E', marginBottom: 24 }}>
-              {totalPoints.toLocaleString()} XP
-            </div>
-
             {/* XP Progress bar */}
             {nextRank ? (
               <div style={{ marginBottom: 24 }}>
@@ -199,7 +193,7 @@ export default async function MilestonesPage() {
                   <div className="xp-bar-shine" />
                 </div>
                 <div style={{ fontSize: 12, color: '#8B949E', marginTop: 6 }}>
-                  <strong style={{ color: '#E6EDF3' }}>{nextRank.minPts - totalPoints}</strong> XP to {nextRank.name}
+                  <strong style={{ color: '#E6EDF3' }}>{totalPoints.toLocaleString()} XP</strong> · {nextRank.minPts - totalPoints} more to reach {nextRank.name}
                 </div>
               </div>
             ) : (
@@ -243,74 +237,6 @@ export default async function MilestonesPage() {
           currentRankName={currentRank.name}
           rankTiers={RANK_TIERS}
         />
-
-        {/* ── Baseball Destinations section ─────────────────────────── */}
-        {(() => {
-          const visitedSlugs = new Set(allDestVisits.map((dv: any) => dv.destination?.slug).filter(Boolean))
-          const visitedCount = visitedSlugs.size
-          return (
-            <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 16px 0' }}>
-              <div style={{ borderTop: '1px solid #30363D', paddingTop: 28, marginBottom: 28 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: '#E6EDF3', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Map size={18} color="#8B949E" /> Baseball Destinations
-                    </div>
-                    <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
-                      {visitedCount}/{DESTINATIONS.length} visited
-                    </div>
-                  </div>
-                  <Link href="/trips" style={{
-                    padding: '8px 16px', borderRadius: 20, border: 'none',
-                    backgroundColor: '#1F6FEB', color: '#fff',
-                    fontSize: 13, fontWeight: 700, textDecoration: 'none',
-                  }}>
-                    Plan Trip
-                  </Link>
-                </div>
-
-                {DESTINATION_GROUPS.map(group => {
-                  const groupDests = DESTINATIONS.filter(d => group.types.includes(d.type))
-                  const groupVisited = groupDests.filter(d => visitedSlugs.has(d.slug)).length
-                  return (
-                    <div key={group.label} style={{ marginBottom: 20 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        {group.icon} {group.label}
-                        <span style={{ fontSize: 12, color: '#484F58' }}>({groupVisited}/{groupDests.length})</span>
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
-                        {groupDests.map(d => {
-                          const isVisited = visitedSlugs.has(d.slug)
-                          return (
-                            <div key={d.slug} style={{
-                              background: `linear-gradient(135deg, ${d.heroColor[0]}, ${d.heroColor[1]})`,
-                              borderRadius: 12, padding: '12px 14px',
-                              border: isVisited ? '1.5px solid #F5A623' : '1px solid #30363D',
-                              position: 'relative', overflow: 'hidden',
-                              opacity: isVisited ? 1 : 0.6,
-                            }}>
-                              {isVisited && (
-                                <div style={{
-                                  position: 'absolute', top: 8, right: 8,
-                                  width: 20, height: 20, borderRadius: '50%',
-                                  background: '#F5A623', display: 'flex', alignItems: 'center',
-                                  justifyContent: 'center', fontSize: 10, color: '#000', fontWeight: 900,
-                                }}>✓</div>
-                              )}
-                              <div style={{ fontSize: 24, marginBottom: 6 }}>{d.icon}</div>
-                              <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.3 }}>{d.name}</div>
-                              <div style={{ fontSize: 10, color: '#8B949E', marginTop: 2 }}>{destinationLocation(d)}</div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })()}
 
         {/* ── The Baseball Life section ─────────────────────────────── */}
         {(() => {
@@ -385,13 +311,17 @@ export default async function MilestonesPage() {
                         const emoji = CAT_EMOJI[entry.category] ?? '📋'
                         const label = CAT_LABEL[entry.category] ?? entry.category
                         const dt = new Date(entry.visit_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                        const displayName = entry.event_type || entry.venue || label
+                        const teamName = entry.event_type || entry.venue || label
+                        const hasOpponent = !!entry.opponent
+                        const hasScore = entry.final_score_home != null && entry.final_score_away != null
+                        const primaryLine = hasOpponent ? `${teamName} vs ${entry.opponent}` : teamName
+                        const scorePart = hasScore ? ` · ${entry.final_score_home}-${entry.final_score_away}` : ''
                         return (
                           <div key={entry.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D' }}>
                             <span style={{ fontSize: 22, flexShrink: 0 }}>{emoji}</span>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</div>
-                              <div style={{ fontSize: 12, color: '#8B949E' }}>{label} · {dt}</div>
+                              <div style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{primaryLine}</div>
+                              <div style={{ fontSize: 12, color: '#8B949E' }}>{label}{scorePart} · {dt}</div>
                             </div>
                           </div>
                         )

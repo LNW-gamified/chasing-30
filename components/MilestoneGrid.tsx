@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Check, X, Share2, Calendar, MapPin, Search, ChevronRight, Zap, Hand, Lock, Plus, Pencil } from 'lucide-react'
+import { Check, X, Share2, Calendar, MapPin, Search, ChevronRight, Zap, Hand, Plus, Pencil } from 'lucide-react'
 import type { SerializableMilestone, StadiumVisit, Stadium, SpecialEvent } from '@/types'
 import { createClient } from '@/lib/supabase'
 import TeamLogo from '@/components/TeamLogo'
@@ -537,18 +537,30 @@ export default function MilestoneGrid({
     return STATIC_EXPERIENCES.filter(s => claimedIds.has(s.id)).length
   }, [claims])
 
-  // Active challenges: unearned milestones closest to completion
+  // Active challenges: top 3 by completion % across regular milestones + ladder progress
   const activeChallenges = useMemo(() => {
-    return unearned
+    const regularChallenges = unearned
       .map(m => ({ m, prog: getMilestoneProgress(m.id, allVisits, allStadiums, allEvents) }))
-      .filter(({ prog }) => prog && prog.current > 0 && prog.current < prog.total)
+      .filter((x): x is { m: SerializableMilestone; prog: { current: number; total: number } } =>
+        x.prog != null && x.prog.current > 0 && x.prog.current < x.prog.total
+      )
+
+    const ladderChallenges = ladders.flatMap(m => {
+      const val = m.currentValue ?? 0
+      if (val === 0) return []
+      const nextTier = (m.tiers ?? []).find(t => t.threshold > val)
+      if (!nextTier) return []
+      return [{ m, prog: { current: val, total: nextTier.threshold } }]
+    })
+
+    return [...regularChallenges, ...ladderChallenges]
       .sort((a, b) => {
-        const pa = a.prog!.current / a.prog!.total
-        const pb = b.prog!.current / b.prog!.total
+        const pa = a.prog.current / a.prog.total
+        const pb = b.prog.current / b.prog.total
         return pb - pa
       })
       .slice(0, 3)
-  }, [unearned, allVisits, allStadiums, allEvents])
+  }, [unearned, ladders, allVisits, allStadiums, allEvents])
 
   // Filtered milestones by category
   const allMilestones = [...earned, ...unearned]
@@ -1040,8 +1052,8 @@ export default function MilestoneGrid({
                       <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, minWidth: 0 }}>
                         <div style={{
                           width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
-                          background: unlocked ? (isCurrent ? '#F5A623' : 'rgba(245,166,35,0.35)') : '#1C2430',
-                          border: `2px solid ${unlocked ? '#F5A623' : '#30363D'}`,
+                          background: unlocked ? (isCurrent ? '#F5A623' : 'rgba(245,166,35,0.35)') : 'rgba(255,255,255,0.1)',
+                          border: `2px solid ${unlocked ? '#F5A623' : 'rgba(255,255,255,0.2)'}`,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}>
                           {unlocked && <Check size={10} color={isCurrent ? '#000' : '#F5A623'} strokeWidth={3} />}
@@ -1104,15 +1116,8 @@ export default function MilestoneGrid({
                 {/* Earned shine overlay */}
                 {isEarned && <div className="earned-card-shine" />}
 
-                {/* Locked overlay */}
-                {!isEarned && !progress?.current && (
-                  <div style={{ position: 'absolute', top: 10, right: 10 }}>
-                    <Lock size={12} color="#484F58" />
-                  </div>
-                )}
-
                 {/* Points badge */}
-                <div style={{ position: 'absolute', top: 10, right: isEarned ? 10 : 26, fontSize: 10, fontWeight: 800, color: isEarned ? '#F5A623' : '#484F58', background: isEarned ? 'rgba(245,166,35,0.15)' : 'rgba(48,54,61,0.5)', padding: '2px 7px', borderRadius: 20 }}>
+                <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 10, fontWeight: 800, color: isEarned ? '#F5A623' : '#484F58', background: isEarned ? 'rgba(245,166,35,0.15)' : 'rgba(48,54,61,0.5)', padding: '2px 7px', borderRadius: 20 }}>
                   +{pts}
                 </div>
 
@@ -1182,12 +1187,6 @@ export default function MilestoneGrid({
                 }}
               >
                 {hasClaims && <div className="earned-card-shine" />}
-
-                {!hasClaims && (
-                  <div style={{ position: 'absolute', top: 10, right: 10 }}>
-                    <Lock size={12} color="#484F58" />
-                  </div>
-                )}
 
                 {/* Earned check */}
                 {hasClaims && !isRepeatable && (

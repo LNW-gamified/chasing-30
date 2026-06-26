@@ -186,6 +186,82 @@ export const BASEBALL_LIFE_ACHIEVEMENTS: BaseballLifeAchievement[] = [
       )
     ),
   },
+  // ── Stadium Tours ─────────────────────────────────────────────────────────
+  {
+    id: 'bl_fenway_tour',
+    name: 'The Green Monster',
+    description: 'Take a tour of Fenway Park',
+    icon: '🏯',
+    category: 'pilgrimage',
+    check: (e) => e.some(x => x.category === 'pilgrimage' && x.venue?.toLowerCase().includes('fenway')),
+  },
+  {
+    id: 'bl_wrigley_tour',
+    name: 'The Friendly Confines',
+    description: 'Take a tour of Wrigley Field',
+    icon: '🍀',
+    category: 'pilgrimage',
+    check: (e) => e.some(x => x.category === 'pilgrimage' && x.venue?.toLowerCase().includes('wrigley')),
+  },
+  {
+    id: 'bl_yankee_tour',
+    name: 'The House That Ruth Built',
+    description: 'Take a tour of Yankee Stadium',
+    icon: '🏛️',
+    category: 'pilgrimage',
+    check: (e) => e.some(x => x.category === 'pilgrimage' && x.venue?.toLowerCase().includes('yankee')),
+  },
+  {
+    id: 'bl_dodger_tour',
+    name: 'Chavez Ravine',
+    description: 'Take a tour of Dodger Stadium',
+    icon: '🌴',
+    category: 'pilgrimage',
+    check: (e) => e.some(x => x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('dodger') || x.venue?.toLowerCase().includes('chavez ravine'))),
+  },
+  {
+    id: 'bl_oracle_tour',
+    name: 'The Splash Zone',
+    description: 'Take a tour of Oracle Park',
+    icon: '🌉',
+    category: 'pilgrimage',
+    check: (e) => e.some(x => x.category === 'pilgrimage' && x.venue?.toLowerCase().includes('oracle')),
+  },
+
+  // ── Amateur & Other ───────────────────────────────────────────────────────
+  {
+    id: 'bl_little_league_ws',
+    name: 'Back to Basics',
+    description: 'Attend the Little League World Series in Williamsport, PA',
+    icon: '⚾',
+    category: 'pilgrimage',
+    check: (e) => e.some(x => x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('little league') || x.venue?.toLowerCase().includes('williamsport'))),
+  },
+  {
+    id: 'bl_cape_cod_league',
+    name: 'Future Stars',
+    description: 'Watch a Cape Cod Baseball League game in Hyannis, MA',
+    icon: '🦞',
+    category: 'pilgrimage',
+    check: (e) => e.some(x => x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('cape cod') || x.venue?.toLowerCase().includes('hyannis'))),
+  },
+  {
+    id: 'bl_arizona_fall_league',
+    name: 'Fall Prospects',
+    description: 'Attend an Arizona Fall League game in Scottsdale, AZ',
+    icon: '🌵',
+    category: 'pilgrimage',
+    check: (e) => e.some(x => x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('arizona fall') || x.venue?.toLowerCase().includes('scottsdale') || x.event_type?.toLowerCase().includes('arizona fall'))),
+  },
+  {
+    id: 'bl_college_world_series',
+    name: 'College Classic',
+    description: 'Attend the College World Series in Omaha, NE',
+    icon: '🎓',
+    category: 'pilgrimage',
+    check: (e) => e.some(x => x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('college world series') || x.venue?.toLowerCase().includes('omaha') || x.event_type?.toLowerCase().includes('college world series'))),
+  },
+
   {
     id: 'bl_grand_tour',
     name: 'The Grand Tour',
