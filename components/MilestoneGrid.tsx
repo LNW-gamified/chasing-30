@@ -904,7 +904,7 @@ export default function MilestoneGrid({
         <ConfettiPiece key={p.id} color={p.color} left={p.left} delay={p.delay} size={p.size} />
       ))}
 
-      <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 16px 0' }}>
+      <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 16px 80px' }}>
 
         {/* ── Personal Records compact summary ───────────────────────────── */}
         {personalRecords && personalRecords.totalGames > 0 && (
