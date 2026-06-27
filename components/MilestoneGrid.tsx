@@ -259,6 +259,7 @@ interface Props {
 type SelectedItem =
   | { type: 'milestone'; milestone: SerializableMilestone; isEarned: boolean }
   | { type: 'static'; experience: StaticExperience }
+  | { type: 'bla'; achievement: typeof BASEBALL_LIFE_ACHIEVEMENTS[number]; isEarned: boolean }
 
 // ── Component ──────────────────────────────────────────────────────────────
 
@@ -1375,31 +1376,53 @@ export default function MilestoneGrid({
           {/* Baseball Life achievement cards (auto-detected from BLE entries) */}
           {filteredBla.map(a => {
             const isEarned = earnedBlaIds.has(a.id)
+            const pts = 25
             return (
-              <div
+              <button
                 key={a.id}
+                onClick={() => { setSelected({ type: 'bla', achievement: a, isEarned }); if (isEarned) fireConfetti() }}
                 style={{
                   position: 'relative', display: 'flex', flexDirection: 'column',
-                  padding: '16px 14px 14px', borderRadius: 16, overflow: 'hidden', minHeight: 150,
-                  background: isEarned ? 'linear-gradient(135deg, #1A1500 0%, #2A1E00 100%)' : '#161B22',
+                  padding: '16px 14px 14px', borderRadius: 16, border: 'none', cursor: 'pointer',
+                  textAlign: 'left', overflow: 'hidden', minHeight: 150,
+                  background: isEarned
+                    ? 'linear-gradient(135deg, #1A1500 0%, #2A1E00 100%)'
+                    : '#161B22',
                   borderWidth: 1.5, borderStyle: 'solid',
                   borderColor: isEarned ? 'rgba(245,166,35,0.4)' : '#30363D',
                   filter: !isEarned ? 'grayscale(30%)' : 'none',
-                  opacity: isEarned ? 1 : 0.7,
+                  opacity: !isEarned ? 0.7 : 1,
+                  transition: 'opacity 0.15s, border-color 0.15s',
                 }}
               >
                 {isEarned && <div className="earned-card-shine" />}
+
+                {/* XP badge */}
+                <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 12, fontWeight: 800, color: isEarned ? '#F5A623' : '#484F58', background: isEarned ? 'rgba(245,166,35,0.15)' : 'rgba(48,54,61,0.5)', padding: '2px 7px', borderRadius: 20 }}>
+                  +{pts}
+                </div>
+
+                {/* Earned check */}
                 {isEarned && (
-                  <div style={{ position: 'absolute', top: 10, right: 10, width: 20, height: 20, borderRadius: '50%', backgroundColor: '#3FB950', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ position: 'absolute', top: 10, left: 10, width: 20, height: 20, borderRadius: '50%', backgroundColor: '#3FB950', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Check size={10} color="#0B1117" strokeWidth={3.5} />
                   </div>
                 )}
-                <div style={{ fontSize: 32, marginBottom: 10, filter: isEarned ? 'none' : 'grayscale(60%)', lineHeight: 1 }}>{a.icon}</div>
+
+                {/* Tracked badge */}
+                <div style={{ position: 'absolute', bottom: 10, left: 10, display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <Zap size={9} color={isEarned ? '#F5A623' : '#484F58'} />
+                  <span style={{ fontSize: 9, fontWeight: 700, color: isEarned ? '#F5A623' : '#484F58', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tracked</span>
+                </div>
+
+                {/* Icon */}
+                <div style={{ fontSize: 32, marginBottom: 10, filter: isEarned ? 'none' : 'grayscale(60%)', lineHeight: 1, marginTop: isEarned ? 14 : 0 }}>{a.icon}</div>
+
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: isEarned ? '#E6EDF3' : '#C9D1D9', marginBottom: 3, lineHeight: 1.3 }}>{a.name}</div>
-                  <div style={{ fontSize: 12, color: '#8B949E', lineHeight: 1.4 }}>{a.description}</div>
+                  <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.4, marginBottom: 24 }}>{a.description}</div>
                 </div>
-              </div>
+              </button>
             )
           })}
 
@@ -1910,6 +1933,53 @@ export default function MilestoneGrid({
                         )
                       })}
                     </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {selected?.type === 'bla' && (() => {
+        const { achievement: a, isEarned } = selected
+        return (
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, backgroundColor: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(4px)' }}
+            onClick={closeModal}
+          >
+            <div
+              className={isEarned ? 'unlock-card' : undefined}
+              style={{ width: '100%', maxWidth: 360, borderRadius: 20, backgroundColor: '#161B22', position: 'relative', border: isEarned ? '1px solid rgba(245,166,35,0.4)' : '1px solid #30363D', overflow: 'hidden' }}
+              onClick={e => e.stopPropagation()}
+            >
+              {isEarned && <div className="earned-card-shine" style={{ position: 'absolute', top: 0, bottom: 0, width: '60%', background: 'linear-gradient(105deg,transparent,rgba(245,166,35,0.08),transparent)', pointerEvents: 'none', animation: 'earned-shine 3s ease-in-out infinite' }} />}
+              <button onClick={closeModal} style={{ position: 'absolute', top: 14, right: 14, zIndex: 10, width: 30, height: 30, borderRadius: '50%', border: 'none', backgroundColor: 'rgba(139,148,158,0.12)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={15} color="#8B949E" />
+              </button>
+
+              <div style={{ padding: '28px 24px 24px', textAlign: 'center' }}>
+                <div style={{ width: 80, height: 80, borderRadius: '50%', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, backgroundColor: isEarned ? 'rgba(245,166,35,0.18)' : 'rgba(139,148,158,0.08)', border: `2px solid ${isEarned ? 'rgba(245,166,35,0.4)' : '#30363D'}` }}>
+                  {a.icon}
+                </div>
+
+                {isEarned && (
+                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', color: '#F5A623', textTransform: 'uppercase', marginBottom: 8 }}>
+                    Achievement Unlocked!
+                  </div>
+                )}
+
+                <div style={{ fontSize: 19, fontWeight: 800, color: '#E6EDF3', marginBottom: 6 }}>{a.name}</div>
+                <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.5, marginBottom: 16 }}>{a.description}</div>
+
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, backgroundColor: 'rgba(245,166,35,0.08)', border: '1px solid rgba(245,166,35,0.2)', marginBottom: 16 }}>
+                  <Zap size={10} color="#F5A623" />
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#F5A623' }}>Auto-Tracked · +25 XP</span>
+                </div>
+
+                {!isEarned && (
+                  <div style={{ fontSize: 12, color: '#8B949E', backgroundColor: '#0D1117', borderRadius: 10, padding: '10px 14px', marginTop: 4 }}>
+                    Log a Baseball Life entry to unlock this achievement automatically.
                   </div>
                 )}
               </div>
