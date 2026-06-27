@@ -766,15 +766,7 @@ export default function MinorLeagueDetailPage() {
                               backgroundColor: '#1C2430', border: '1px solid #30363D',
                               borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '16px',
                             }}>
-                              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
-                                <button
-                                  onClick={() => openEdit(visit)}
-                                  style={{ fontSize: 11, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '4px 10px', cursor: 'pointer', marginRight: 6 }}
-                                >
-                                  Edit Giveaways
-                                </button>
-                              </div>
-                              {hasScore && (
+                                {hasScore && (
                                 <div style={{
                                   background: `linear-gradient(135deg, ${affiliateColors[0]}CC 0%, ${affiliateColors[1]}CC 100%)`,
                                   borderRadius: 10, padding: '14px 16px', marginBottom: 14,
@@ -930,8 +922,17 @@ export default function MinorLeagueDetailPage() {
                                 </button>
                               )}
 
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+                                <button
+                                  onClick={() => openEdit(visit)}
+                                  style={{ fontSize: 11, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '4px 10px', cursor: 'pointer' }}
+                                >
+                                  Edit Giveaways
+                                </button>
+                              </div>
+
                               {visit.giveaway_items && visit.giveaway_items.length > 0 && (
-                                <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 10, backgroundColor: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.2)' }}>
+                                <div style={{ marginTop: 8, padding: '12px 14px', borderRadius: 10, backgroundColor: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.2)' }}>
                                   <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
                                     Giveaways &amp; Promotions
                                   </div>
