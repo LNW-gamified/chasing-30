@@ -21,7 +21,7 @@ export default function DashboardSpecialVisitButton() {
           color: '#8B949E', fontWeight: 600, fontSize: 13, cursor: 'pointer',
         }}
       >
-        <ClipboardList size={14} /> Log Baseball Life Entry
+        <ClipboardList size={14} /> Log Beyond the 30 Entry
       </button>
       {open && (
         <BaseballLifeForm
