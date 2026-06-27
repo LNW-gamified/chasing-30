@@ -987,15 +987,22 @@ export default function MilestoneGrid({
                 key={cat.key}
                 onClick={() => setFilter(cat.key)}
                 style={{
-                  flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                  padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${active ? '#1F6FEB' : '#30363D'}`,
+                  flexShrink: 0, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6,
+                  padding: '8px 14px', borderRadius: 20, border: `1.5px solid ${active ? '#1F6FEB' : '#30363D'}`,
                   backgroundColor: active ? '#1F6FEB' : '#161B22',
-                  cursor: 'pointer', minWidth: 72, transition: 'all 0.15s',
+                  cursor: 'pointer', transition: 'all 0.15s',
                 }}
               >
-                <span style={{ fontSize: 20 }}>{cat.emoji}</span>
-                <span style={{ fontSize: 11, fontWeight: active ? 700 : 500, color: active ? '#ffffff' : '#8B949E', whiteSpace: 'nowrap' }}>{cat.label}</span>
-                {count !== null && <span style={{ fontSize: 10, fontWeight: 700, color: active ? '#ffffff' : '#484F58' }}>{count}</span>}
+                <span style={{ fontSize: 14 }}>{cat.emoji}</span>
+                <span style={{ fontSize: 12, fontWeight: active ? 700 : 500, color: active ? '#ffffff' : '#8B949E', whiteSpace: 'nowrap' }}>{cat.label}</span>
+                {count !== null && (
+                  <span style={{
+                    fontSize: 11, fontWeight: 700,
+                    color: active ? '#ffffff' : '#8B949E',
+                    backgroundColor: active ? 'rgba(255,255,255,0.2)' : 'rgba(139,148,158,0.15)',
+                    padding: '1px 7px', borderRadius: 20,
+                  }}>{count}</span>
+                )}
               </button>
             )
           })}
