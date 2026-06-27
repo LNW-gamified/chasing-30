@@ -23,7 +23,7 @@ export async function GET() {
       games.map((g: any) => {
         const ls = g.linescore
         const inningNum  = ls?.currentInning ?? null
-        const inningHalf = ls?.isTopInning === false ? '▼' : '▲'
+        const inningHalf = ls?.isTopInning === false ? 'Bot' : 'Top'
         const inning = inningNum ? `${inningHalf} ${inningNum}` : null
         return {
           gamePk:    g.gamePk,
