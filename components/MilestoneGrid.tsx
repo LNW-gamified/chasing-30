@@ -215,7 +215,7 @@ const CATEGORIES: { key: CategoryKey; label: string; emoji: string }[] = [
   { key: 'division',    label: 'Division & League', emoji: '🗺️' },
   { key: 'gameday',     label: 'Game Day',         emoji: '⚾' },
   { key: 'experiences', label: 'Baseball Life',     emoji: '⚾' },
-  { key: 'collection',  label: 'Collection',       emoji: '🎁' },
+  { key: 'collection',  label: 'Giveaways',         emoji: '🎁' },
 ]
 
 const DIVISION_IDS = new Set([
@@ -646,7 +646,6 @@ export default function MilestoneGrid({
   const sortedVisits = [...allVisits].sort((a, b) => b.visit_date.localeCompare(a.visit_date))
 
   const personalRecords = useMemo(() => {
-    if (!showRecords) return null
     const asc = [...allVisits].sort((a, b) => a.visit_date.localeCompare(b.visit_date))
     const withScore = allVisits.filter(v => v.home_runs != null && v.away_runs != null)
     const wins   = withScore.filter(v => v.home_runs! > v.away_runs!)
@@ -706,7 +705,7 @@ export default function MilestoneGrid({
       dayGames, nightGames, twilightGames,
       fmtDate, fmtScore, stadiumFor,
     }
-  }, [showRecords, allVisits, allStadiums])
+  }, [allVisits, allStadiums])
 
   const syntheticBleItems = useMemo<AchievementClaim[]>(() =>
     bleGiveaways.flatMap(entry =>
@@ -869,6 +868,48 @@ export default function MilestoneGrid({
       ))}
 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 16px 0' }}>
+
+        {/* ── Personal Records compact summary ───────────────────────────── */}
+        {personalRecords && personalRecords.totalGames > 0 && (
+          <div
+            style={{
+              marginBottom: 20, padding: '14px 16px', borderRadius: 14,
+              backgroundColor: '#161B22', border: '1px solid #30363D',
+              display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>📖 Your Record Book</div>
+              <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{personalRecords.totalGames}</div>
+                  <div style={{ fontSize: 10, color: '#8B949E', marginTop: 2 }}>Games</div>
+                </div>
+                {personalRecords.scored > 0 && (
+                  <div>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: '#3FB950', lineHeight: 1 }}>{personalRecords.wins}–{personalRecords.losses}</div>
+                    <div style={{ fontSize: 10, color: '#8B949E', marginTop: 2 }}>W–L Record</div>
+                  </div>
+                )}
+                {personalRecords.topStadium && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <TeamLogo abbreviation={personalRecords.topStadium.abbreviation} size={24} />
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3', lineHeight: 1 }}>{personalRecords.topStadium.name}</div>
+                      <div style={{ fontSize: 10, color: '#8B949E', marginTop: 2 }}>Most visited · {personalRecords.topStadiumCount}x</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => setFilter('records')}
+              style={{ fontSize: 11, fontWeight: 700, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', flexShrink: 0 }}
+            >
+              Full Records →
+            </button>
+          </div>
+        )}
 
         {/* ── Category card carousel ──────────────────────────────────────── */}
         <div className="no-scrollbar" style={{ overflowX: 'auto', display: 'flex', gap: 8, marginBottom: 20, paddingBottom: 4 }}>
@@ -1078,7 +1119,7 @@ export default function MilestoneGrid({
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                       <Zap size={9} color={currentTier ? '#F5A623' : '#484F58'} />
-                      <span style={{ fontSize: 9, fontWeight: 700, color: currentTier ? '#F5A623' : '#484F58', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Auto</span>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: currentTier ? '#F5A623' : '#484F58', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tracked</span>
                     </div>
                     {totalEarnedPts > 0 && (
                       <div style={{ fontSize: 10, fontWeight: 800, color: '#F5A623', background: 'rgba(245,166,35,0.15)', padding: '2px 8px', borderRadius: 20 }}>
@@ -1112,8 +1153,8 @@ export default function MilestoneGrid({
                 {/* Progress bar toward next tier */}
                 {!allComplete && (
                   <div>
-                    <div style={{ height: 4, background: '#1C2430', borderRadius: 3, overflow: 'hidden', marginBottom: 4 }}>
-                      <div style={{ height: '100%', borderRadius: 3, width: `${Math.max(pct, val > 0 ? 4 : 0)}%`, background: 'linear-gradient(90deg, #F5A623, #E8820C)', transition: 'width 0.4s ease' }} />
+                    <div style={{ height: 8, background: '#1C2430', borderRadius: 6, overflow: 'hidden', marginBottom: 4 }}>
+                      <div style={{ height: '100%', borderRadius: 6, width: `${Math.max(pct, val > 0 ? 4 : 0)}%`, background: 'linear-gradient(90deg, #F5A623, #E8820C)', transition: 'width 0.4s ease' }} />
                     </div>
                     <div style={{ fontSize: 10, color: '#8B949E' }}>
                       {currentTier
@@ -1162,14 +1203,14 @@ export default function MilestoneGrid({
                 {isEarned && <div className="earned-card-shine" />}
 
                 {/* Points badge */}
-                <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 10, fontWeight: 800, color: isEarned ? '#F5A623' : '#484F58', background: isEarned ? 'rgba(245,166,35,0.15)' : 'rgba(48,54,61,0.5)', padding: '2px 7px', borderRadius: 20 }}>
+                <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 12, fontWeight: 800, color: isEarned ? '#F5A623' : '#484F58', background: isEarned ? 'rgba(245,166,35,0.15)' : 'rgba(48,54,61,0.5)', padding: '2px 7px', borderRadius: 20 }}>
                   +{pts}
                 </div>
 
                 {/* Auto-tracked badge */}
                 <div style={{ position: 'absolute', bottom: 10, left: 10, display: 'flex', alignItems: 'center', gap: 3 }}>
                   <Zap size={9} color={isEarned ? '#F5A623' : '#484F58'} />
-                  <span style={{ fontSize: 9, fontWeight: 700, color: isEarned ? '#F5A623' : '#484F58', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Auto</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: isEarned ? '#F5A623' : '#484F58', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tracked</span>
                 </div>
 
                 {/* Icon */}
@@ -1343,10 +1384,14 @@ export default function MilestoneGrid({
             )}
             {collectionTeams.length === 1 && <div style={{ marginBottom: 16 }} />}
 
-            {filteredCollection.length === 0 ? (
-              <div style={{ textAlign: 'center', color: '#8B949E', fontSize: 14, padding: '24px 0' }}>No items match this filter.</div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12 }}>
+            <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12 }}>
+                {filteredCollection.length === 0 && (
+                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '48px 16px' }}>
+                    <div style={{ fontSize: 40, marginBottom: 12 }}>🎁</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3', marginBottom: 6 }}>Nothing in the collection yet</div>
+                    <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.5 }}>Log giveaways from your game entries to start building your collection.</div>
+                  </div>
+                )}
                 {filteredCollection.map(claim => {
                   const visit    = allVisits.find(v => v.id === claim.stadium_visit_id)
                   const stadium  = visit ? allStadiums.find(s => s.id === visit.stadium_id) : null
@@ -1401,8 +1446,7 @@ export default function MilestoneGrid({
                     </div>
                   )
                 })}
-              </div>
-            )}
+            </div>
           </div>
         )}
 
