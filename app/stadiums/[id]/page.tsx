@@ -935,7 +935,7 @@ export default function StadiumDetailPage() {
                   </div>
                   {stadiumSummary && (
                     <div style={{ padding: '14px 16px', borderTop: '1px solid #30363D', fontSize: 13, color: '#8B949E', lineHeight: 1.7 }}>
-                      {stadiumSummary.length > 400 ? stadiumSummary.slice(0, 400) + '…' : stadiumSummary}
+                      {stadiumSummary}
                     </div>
                   )}
                 </section>
