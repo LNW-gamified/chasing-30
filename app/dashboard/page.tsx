@@ -480,12 +480,12 @@ export default async function DashboardPage() {
           <SectionHeader label="Your Scouting Report" />
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {([
-              { Icon: CalendarDays,  value: totalGames,                label: 'Total Games',     valSize: 48, color: '#1F6FEB', sub: `${gamesAttended} MLB · ${mlCount} MiLB` },
-              { Icon: ClipboardList, value: beyondThe30Total,          label: 'Beyond the 30',   valSize: 48, color: '#F5A623', sub: beyondThe30Sub },
-              { Icon: MapPin,        value: destinationsVisited,       label: 'Destinations',    valSize: 48, color: '#1F6FEB', sub: null },
-              { Icon: DollarSign,    value: formatCurrency(totalSpent),label: 'Total Spent',     valSize: 44, color: '#3FB950', sub: null },
-              { Icon: Trophy,        value: favDivision,               label: 'Fav Division',    valSize: favDivision.length > 7 ? 22 : 30, color: '#F5A623', sub: null },
-              { Icon: Eye,           value: mostSeenTeam,              label: 'Most Seen Team',  valSize: mostSeenTeam.length > 7 ? 22 : 30, color: '#F5A623', sub: null },
+              { Icon: CalendarDays,  value: totalGames,                label: 'Total Games',     valSize: 36, color: '#1F6FEB', sub: `${gamesAttended} MLB · ${mlCount} MiLB` },
+              { Icon: ClipboardList, value: beyondThe30Total,          label: 'Beyond the 30',   valSize: 36, color: '#F5A623', sub: beyondThe30Sub },
+              { Icon: MapPin,        value: destinationsVisited,       label: 'Destinations',    valSize: 36, color: '#1F6FEB', sub: null },
+              { Icon: DollarSign,    value: formatCurrency(totalSpent),label: 'Total Spent',     valSize: 32, color: '#3FB950', sub: null },
+              { Icon: Trophy,        value: favDivision,               label: 'Fav Division',    valSize: favDivision.length > 7 ? 18 : 24, color: '#F5A623', sub: null },
+              { Icon: Eye,           value: mostSeenTeam,              label: 'Most Seen Team',  valSize: mostSeenTeam.length > 7 ? 18 : 24, color: '#F5A623', sub: null },
             ]).map(({ Icon, value, label, valSize, color, sub }) => (
               <div
                 key={label}
@@ -511,7 +511,7 @@ export default async function DashboardPage() {
                     {label}
                   </div>
                   {sub && (
-                    <div style={{ fontSize: 10, color: '#484F58', marginTop: 3, fontWeight: 500 }}>
+                    <div style={{ fontSize: 10, color: '#8B949E', marginTop: 3, fontWeight: 500 }}>
                       {sub}
                     </div>
                   )}
