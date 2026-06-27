@@ -12,19 +12,6 @@ export interface BaseballLifeAchievement {
 export const BASEBALL_LIFE_ACHIEVEMENTS: BaseballLifeAchievement[] = [
   // ── MLB Special Events ────────────────────────────────────────────────────
   {
-    id: 'bl_midsummer_classic',
-    name: 'Midsummer Classic',
-    description: 'Attend the MLB All-Star Game',
-    icon: '🌟',
-    category: 'mlb_special_event',
-    check: (e) => e.some(x =>
-      x.category === 'mlb_special_event' && (
-        x.event_type?.toLowerCase().includes('all-star') ||
-        x.event_type?.toLowerCase().includes('all star')
-      )
-    ),
-  },
-  {
     id: 'bl_derby_day',
     name: 'Derby Day',
     description: 'Attend the Home Run Derby',
@@ -33,27 +20,6 @@ export const BASEBALL_LIFE_ACHIEVEMENTS: BaseballLifeAchievement[] = [
     check: (e) => e.some(x =>
       x.category === 'mlb_special_event' &&
       x.event_type?.toLowerCase().includes('home run derby')
-    ),
-  },
-  {
-    id: 'bl_october_baseball',
-    name: 'October Baseball',
-    description: 'Attend any playoff game',
-    icon: '🍂',
-    category: 'mlb_special_event',
-    check: (e) => e.some(x =>
-      x.category === 'mlb_special_event' &&
-      ['Wild Card', 'ALDS', 'NLDS', 'ALCS', 'NLCS', 'Playoff'].some(t => x.event_type?.includes(t))
-    ),
-  },
-  {
-    id: 'bl_fall_classic',
-    name: 'Fall Classic',
-    description: 'Attend a World Series game',
-    icon: '🏆',
-    category: 'mlb_special_event',
-    check: (e) => e.some(x =>
-      x.category === 'mlb_special_event' && x.event_type?.toLowerCase().includes('world series')
     ),
   },
   {
@@ -69,14 +35,6 @@ export const BASEBALL_LIFE_ACHIEVEMENTS: BaseballLifeAchievement[] = [
   },
 
   // ── Spring Training ───────────────────────────────────────────────────────
-  {
-    id: 'bl_spring_awakening',
-    name: 'Spring Awakening',
-    description: 'Attend your first spring training game',
-    icon: '🌞',
-    category: 'spring_training',
-    check: (e) => e.filter(x => x.category === 'spring_training').length >= 1,
-  },
   {
     id: 'bl_cactus_league',
     name: 'Cactus League',
@@ -95,71 +53,6 @@ export const BASEBALL_LIFE_ACHIEVEMENTS: BaseballLifeAchievement[] = [
   },
 
   // ── Pilgrimages ───────────────────────────────────────────────────────────
-  {
-    id: 'bl_cooperstown_pilgrim',
-    name: 'Cooperstown Pilgrim',
-    description: 'Visit the National Baseball Hall of Fame',
-    icon: '🏛️',
-    category: 'pilgrimage',
-    check: (e) => e.some(x =>
-      x.category === 'pilgrimage' && (
-        x.venue?.toLowerCase().includes('hall of fame') ||
-        x.event_type?.toLowerCase().includes('hall of fame')
-      )
-    ),
-  },
-  {
-    id: 'bl_bat_factory',
-    name: 'The Bat Factory',
-    description: 'Visit the Louisville Slugger Museum and Factory',
-    icon: '🪵',
-    category: 'pilgrimage',
-    check: (e) => e.some(x =>
-      x.category === 'pilgrimage' && (
-        x.venue?.toLowerCase().includes('louisville slugger') ||
-        x.event_type?.toLowerCase().includes('louisville slugger')
-      )
-    ),
-  },
-  {
-    id: 'bl_where_it_began',
-    name: 'Where It All Began',
-    description: 'Visit the Field of Dreams site in Dyersville',
-    icon: '🌾',
-    category: 'pilgrimage',
-    check: (e) => e.some(x =>
-      x.category === 'pilgrimage' && (
-        x.venue?.toLowerCase().includes('field of dreams') ||
-        x.event_type?.toLowerCase().includes('field of dreams')
-      )
-    ),
-  },
-  {
-    id: 'bl_raw_material',
-    name: 'Raw Material',
-    description: 'Visit the Rawlings Baseball Factory',
-    icon: '⚾',
-    category: 'pilgrimage',
-    check: (e) => e.some(x =>
-      x.category === 'pilgrimage' && (
-        x.venue?.toLowerCase().includes('rawlings') ||
-        x.event_type?.toLowerCase().includes('rawlings')
-      )
-    ),
-  },
-  {
-    id: 'bl_negro_leagues_honor',
-    name: 'Negro Leagues Honor',
-    description: 'Visit the Negro Leagues Baseball Museum',
-    icon: '✊',
-    category: 'pilgrimage',
-    check: (e) => e.some(x =>
-      x.category === 'pilgrimage' && (
-        x.venue?.toLowerCase().includes('negro leagues') ||
-        x.event_type?.toLowerCase().includes('negro leagues')
-      )
-    ),
-  },
   // ── Stadium Tours ─────────────────────────────────────────────────────────
   {
     id: 'bl_fenway_tour',
