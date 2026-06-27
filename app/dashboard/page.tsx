@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import { MILESTONES } from '@/lib/milestones'
-import type { Stadium, StadiumVisit, SpecialEvent, BaseballLifeEntry, Trip } from '@/types'
+import type { Stadium, StadiumVisit, BaseballLifeEntry, Trip } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
 import { CalendarDays, ClipboardList, MapPin, DollarSign, Trophy, Eye } from 'lucide-react'
@@ -113,7 +113,6 @@ export default async function DashboardPage() {
   const [
     { data: stadiums },
     { data: visits },
-    { data: events },
     { data: trips },
     { data: { user } },
     { data: baseballLifeEntries },
@@ -122,7 +121,6 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     supabase.from('stadiums').select('*').order('league').order('division').order('name'),
     supabase.from('stadium_visits').select('*').order('visit_date', { ascending: false }),
-    supabase.from('special_events').select('*'),
     supabase.from('trips').select('*, stadium:stadiums(*)').order('start_date', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false }),
     supabase.auth.getUser(),
     supabase.from('baseball_life_entries').select('id, category'),
@@ -141,14 +139,13 @@ export default async function DashboardPage() {
 
   const allStadiums:     Stadium[]      = stadiums ?? []
   const allVisits:       StadiumVisit[] = visits ?? []
-  const allEvents:       SpecialEvent[] = events ?? []
   const allTrips:        Trip[]         = trips ?? []
   const allBaseballLife: BaseballLifeEntry[] = (baseballLifeEntries ?? []) as BaseballLifeEntry[]
   const todayHistory:    HistoryFact[]  = (historyFacts ?? []) as HistoryFact[]
 
   const visitedIds   = new Set(allVisits.map(v => v.stadium_id))
   const visitedCount = visitedIds.size
-  const earnedMilestones = MILESTONES.filter(m => m.check(allVisits, allStadiums, allEvents, allBaseballLife))
+  const earnedMilestones = MILESTONES.filter(m => m.check(allVisits, allStadiums, [], allBaseballLife))
   const pct = Math.round((visitedCount / 30) * 100)
   const name = getFirstName(user)
 

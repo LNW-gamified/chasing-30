@@ -1,36 +1,23 @@
 import { createClient } from '@/lib/supabase-server'
 import { haversineDistance, formatCurrency } from '@/lib/utils'
-import type { Stadium, StadiumVisit, Trip, SpecialEvent, SpecialEventType } from '@/types'
+import type { Stadium, StadiumVisit, Trip } from '@/types'
 import { BarChart3, TrendingUp, DollarSign, MapPin, Trophy, Users, Star } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 import YearRecap from '@/components/YearRecap'
 
-const EVENT_LABELS: Record<SpecialEventType, string> = {
-  world_series:      'World Series',
-  all_star_game:     'All-Star Game',
-  postseason:        'Postseason',
-  spring_training:   'Spring Training',
-  minor_league:      'Minor League',
-  historic_ballpark: 'Historic Ballpark',
-  international:     'International',
-  other:             'Other',
-}
-
 export default async function StatsPage() {
   const supabase = await createClient()
 
-  const [{ data: stadiums }, { data: visits }, { data: trips }, { data: events }, { data: bleRows }] = await Promise.all([
+  const [{ data: stadiums }, { data: visits }, { data: trips }, { data: bleRows }] = await Promise.all([
     supabase.from('stadiums').select('*'),
     supabase.from('stadium_visits').select('*'),
     supabase.from('trips').select('*'),
-    supabase.from('special_events').select('*'),
     supabase.from('baseball_life_entries').select('id, category, is_game'),
   ])
 
   const allStadiums: Stadium[] = stadiums ?? []
   const allVisits: StadiumVisit[] = visits ?? []
   const allTrips: Trip[] = trips ?? []
-  const allEvents: SpecialEvent[] = events ?? []
   const allBaseballLife = (bleRows ?? []) as { id: string; category: string; is_game: boolean }[]
 
   const mlbGames = allVisits.length

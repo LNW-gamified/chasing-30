@@ -6,7 +6,7 @@ import InstallPrompt from '@/components/InstallPrompt'
 import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar'
 import { MILESTONES } from '@/lib/milestones'
 import { RANK_TIERS, MILESTONE_POINTS } from '@/lib/ranks'
-import type { StadiumVisit, Stadium, SpecialEvent, BaseballLifeEntry } from '@/types'
+import type { StadiumVisit, Stadium, BaseballLifeEntry } from '@/types'
 
 export const metadata: Metadata = {
   title: 'Chasing 30',
@@ -59,7 +59,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
 
-  const [{ data: trips }, { data: visits }, { data: stadiums }, { data: events }, { data: bleEntries }] = await Promise.all([
+  const [{ data: trips }, { data: visits }, { data: stadiums }, { data: bleEntries }] = await Promise.all([
     supabase.from('trips')
       .select('id, name, start_date, stadium:stadiums(name, abbreviation)')
       .eq('status', 'planned')
@@ -68,13 +68,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       .limit(1),
     supabase.from('stadium_visits').select('*'),
     supabase.from('stadiums').select('*'),
-    supabase.from('special_events').select('*'),
     supabase.from('baseball_life_entries').select('id, category'),
   ])
 
   const allVisits: StadiumVisit[] = visits ?? []
   const allStadiums: Stadium[] = stadiums ?? []
-  const allEvents: SpecialEvent[] = events ?? []
   const allBaseballLife: BaseballLifeEntry[] = (bleEntries ?? []) as BaseballLifeEntry[]
 
   const visitedCount = new Set(allVisits.map(v => v.stadium_id)).size
@@ -82,10 +80,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   const ladderMilestones = MILESTONES.filter(m => m.tiers != null)
   const regularMilestones = MILESTONES.filter(m => m.tiers == null)
-  const earned = regularMilestones.filter(m => m.check(allVisits, allStadiums, allEvents, allBaseballLife))
+  const earned = regularMilestones.filter(m => m.check(allVisits, allStadiums, [], allBaseballLife))
 
   const ladderPoints = ladderMilestones.reduce((sum, m) => {
-    const val = m.getValue ? m.getValue(allVisits, allStadiums, allEvents, allBaseballLife) : 0
+    const val = m.getValue ? m.getValue(allVisits, allStadiums, [], allBaseballLife) : 0
     return sum + (m.tiers ?? []).filter(t => t.threshold <= val).reduce((s, t) => s + t.points, 0)
   }, 0)
   const xp = earned.reduce((sum, m) => sum + (MILESTONE_POINTS[m.id] ?? 25), 0) + ladderPoints

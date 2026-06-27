@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase-server'
 import MilestoneGrid from '@/components/MilestoneGrid'
 import { MILESTONES } from '@/lib/milestones'
 import { STATIC_EXPERIENCES } from '@/lib/static-experiences'
-import type { Stadium, StadiumVisit, SpecialEvent, BaseballLifeEntry, DestinationVisit, SerializableMilestone } from '@/types'
+import type { Stadium, StadiumVisit, BaseballLifeEntry, DestinationVisit, SerializableMilestone } from '@/types'
 import SpecialVisitButton from '@/components/SpecialVisitButton'
 import { RankBadge } from '@/components/RankBadge'
 import { Trophy } from 'lucide-react'
@@ -34,20 +34,18 @@ function computeEarnDate(
   m: typeof MILESTONES[number],
   allVisits: StadiumVisit[],
   allStadiums: Stadium[],
-  allEvents: SpecialEvent[],
   allBle: BaseballLifeEntry[],
   allDestVisits: DestinationVisit[]
 ): string | null {
   const sorted = [...allVisits].sort((a, b) => a.visit_date.localeCompare(b.visit_date))
   for (let i = 0; i < sorted.length; i++) {
-    if (m.check(sorted.slice(0, i + 1), allStadiums, allEvents, allBle, allDestVisits)) {
+    if (m.check(sorted.slice(0, i + 1), allStadiums, [], allBle, allDestVisits)) {
       return sorted[i].visit_date
     }
   }
-  const eventDate = [...allEvents].sort((a, b) => (a.event_date ?? '').localeCompare(b.event_date ?? ''))[0]?.event_date
   const bleDate = [...allBle].sort((a, b) => a.visit_date.localeCompare(b.visit_date))[0]?.visit_date
   const dvDate = [...allDestVisits].sort((a, b) => (a.visit_date ?? '').localeCompare(b.visit_date ?? ''))[0]?.visit_date
-  const fallback = [eventDate, bleDate, dvDate].filter(Boolean).sort()[0]
+  const fallback = [bleDate, dvDate].filter(Boolean).sort()[0]
   return fallback ?? null
 }
 
@@ -55,25 +53,23 @@ function toSerializable(
   ms: typeof MILESTONES,
   allVisits: StadiumVisit[],
   allStadiums: Stadium[],
-  allEvents: SpecialEvent[],
   allBle: BaseballLifeEntry[],
   allDestVisits: DestinationVisit[]
 ): SerializableMilestone[] {
   return ms.map((m) => ({
     id: m.id, name: m.name, description: m.description, icon: m.icon,
-    earnDate: m.tiers ? null : computeEarnDate(m, allVisits, allStadiums, allEvents, allBle, allDestVisits),
+    earnDate: m.tiers ? null : computeEarnDate(m, allVisits, allStadiums, allBle, allDestVisits),
     tiers: m.tiers,
-    currentValue: m.getValue ? m.getValue(allVisits, allStadiums, allEvents, allBle, allDestVisits) : undefined,
+    currentValue: m.getValue ? m.getValue(allVisits, allStadiums, [], allBle, allDestVisits) : undefined,
   }))
 }
 
 export default async function MilestonesPage() {
   const supabase = await createClient()
 
-  const [{ data: stadiums }, { data: visits }, { data: events }, { data: claims }, { data: bleRows }, { data: destVisits }] = await Promise.all([
+  const [{ data: stadiums }, { data: visits }, { data: claims }, { data: bleRows }, { data: destVisits }] = await Promise.all([
     supabase.from('stadiums').select('*'),
     supabase.from('stadium_visits').select('*'),
-    supabase.from('special_events').select('*'),
     supabase.from('achievement_claims').select('achievement_id'),
     supabase.from('baseball_life_entries').select('*').order('visit_date', { ascending: false }),
     supabase.from('destination_visits').select('*, destination:destinations(*)').order('visit_date', { ascending: false }),
@@ -81,18 +77,17 @@ export default async function MilestonesPage() {
 
   const allStadiums: Stadium[] = stadiums ?? []
   const allVisits: StadiumVisit[] = visits ?? []
-  const allEvents: SpecialEvent[] = events ?? []
   const allBle: BaseballLifeEntry[] = (bleRows ?? []) as BaseballLifeEntry[]
   const allDestVisits: DestinationVisit[] = (destVisits ?? []) as DestinationVisit[]
 
   const ladderMilestones  = MILESTONES.filter(m => m.tiers != null)
   const regularMilestones = MILESTONES.filter(m => m.tiers == null)
 
-  const earned   = regularMilestones.filter(m =>  m.check(allVisits, allStadiums, allEvents, allBle, allDestVisits))
-  const unearned = regularMilestones.filter(m => !m.check(allVisits, allStadiums, allEvents, allBle, allDestVisits))
+  const earned   = regularMilestones.filter(m =>  m.check(allVisits, allStadiums, [], allBle, allDestVisits))
+  const unearned = regularMilestones.filter(m => !m.check(allVisits, allStadiums, [], allBle, allDestVisits))
 
   const ladderPoints = ladderMilestones.reduce((sum, m) => {
-    const val = m.getValue ? m.getValue(allVisits, allStadiums, allEvents, allBle, allDestVisits) : 0
+    const val = m.getValue ? m.getValue(allVisits, allStadiums, [], allBle, allDestVisits) : 0
     return sum + (m.tiers ?? []).filter(t => t.threshold <= val).reduce((s, t) => s + t.points, 0)
   }, 0)
   const totalPoints = earned.reduce((sum, m) => sum + (MILESTONE_POINTS[m.id] ?? 25), 0) + ladderPoints
@@ -106,7 +101,7 @@ export default async function MilestonesPage() {
   const earnedStaticCount = STATIC_EXPERIENCES.filter(s => claimedIds.has(s.id)).length
 
   const earnedLadderCount = ladderMilestones.filter(m =>
-    m.getValue ? m.getValue(allVisits, allStadiums, allEvents, allBle, allDestVisits) >= (m.tiers?.[0]?.threshold ?? 1) : false
+    m.getValue ? m.getValue(allVisits, allStadiums, [], allBle, allDestVisits) >= (m.tiers?.[0]?.threshold ?? 1) : false
   ).length
 
   const totalAchievements = MILESTONES.length + STATIC_EXPERIENCES.length
@@ -195,12 +190,12 @@ export default async function MilestonesPage() {
 
         {/* MilestoneGrid (client, handles everything interactive) */}
         <MilestoneGrid
-          earned={toSerializable(earned, allVisits, allStadiums, allEvents, allBle, allDestVisits)}
-          unearned={toSerializable(unearned, allVisits, allStadiums, allEvents, allBle, allDestVisits)}
-          ladders={toSerializable(ladderMilestones, allVisits, allStadiums, allEvents, allBle, allDestVisits)}
+          earned={toSerializable(earned, allVisits, allStadiums, allBle, allDestVisits)}
+          unearned={toSerializable(unearned, allVisits, allStadiums, allBle, allDestVisits)}
+          ladders={toSerializable(ladderMilestones, allVisits, allStadiums, allBle, allDestVisits)}
           allVisits={allVisits}
           allStadiums={allStadiums}
-          allEvents={allEvents}
+          allEvents={[]}
           allBle={allBle}
           currentRankName={currentRank.name}
           rankTiers={RANK_TIERS}
