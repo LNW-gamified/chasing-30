@@ -521,6 +521,14 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+        <div style={{ textAlign: 'right', marginTop: -12, marginBottom: SECTION_GAP }}>
+          <Link
+            href="/stats"
+            style={{ fontSize: 12, fontWeight: 600, color: '#58A6FF', textDecoration: 'none' }}
+          >
+            View full stats →
+          </Link>
+        </div>
 
 {/* ── Favorite team picker + Standings ─────────────────────────── */}
         <FavoriteTeamPicker userId={userId} currentFavAbbr={favAbbr} />
