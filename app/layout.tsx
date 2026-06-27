@@ -5,7 +5,7 @@ import AppShell from '@/components/AppShell'
 import InstallPrompt from '@/components/InstallPrompt'
 import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar'
 import { MILESTONES } from '@/lib/milestones'
-import { RANK_TIERS, MILESTONE_POINTS } from '@/app/milestones/page'
+import { RANK_TIERS, MILESTONE_POINTS } from '@/lib/ranks'
 import type { StadiumVisit, Stadium, SpecialEvent, BaseballLifeEntry } from '@/types'
 
 export const metadata: Metadata = {

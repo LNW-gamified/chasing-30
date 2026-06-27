@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { X, Loader2, Check, ChevronDown, Camera, Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import type { BaseballLifeCategory } from '@/types'
+import { GAME_MOMENTS } from '@/lib/moments'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -51,11 +52,6 @@ const SPRING_TRAINING_TEAMS = [
   'Toronto Blue Jays', 'Washington Nationals',
 ]
 
-const MOMENTS = [
-  'Walk-off win', 'Home run', 'Grand slam', 'No-hitter', 'Perfect game',
-  'Extra innings', 'Comeback win', 'Historic moment', 'Bobblehead giveaway',
-  'Fireworks after', 'Met a player', 'On the jumbotron', 'First pitch ceremony',
-]
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -635,15 +631,15 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
             <div>
               <FieldLabel>Game Day Moments</FieldLabel>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {MOMENTS.map(m => {
-                  const active = selectedMoments.includes(m)
+                {GAME_MOMENTS.map(({ id, icon, label }) => {
+                  const active = selectedMoments.includes(id)
                   return (
                     <button
-                      key={m}
-                      onClick={() => toggleMoment(m)}
+                      key={id}
+                      onClick={() => toggleMoment(id)}
                       style={{ padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: `1px solid ${active ? 'rgba(31,111,235,0.5)' : '#30363D'}`, backgroundColor: active ? 'rgba(31,111,235,0.12)' : 'transparent', color: active ? '#58A6FF' : '#8B949E', display: 'flex', alignItems: 'center', gap: 4 }}
                     >
-                      {active && <Check size={11} />}{m}
+                      {icon} {label}
                     </button>
                   )
                 })}
