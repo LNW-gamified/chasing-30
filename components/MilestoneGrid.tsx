@@ -10,7 +10,7 @@ import { STATIC_EXPERIENCES, type StaticExperience } from '@/lib/static-experien
 import { BASEBALL_LIFE_ACHIEVEMENTS } from '@/lib/baseball-life-achievements'
 import SpecialVisitButton from '@/components/SpecialVisitButton'
 import { classifyDayNightHeuristic } from '@/lib/sunrise-sunset'
-import { MILESTONE_POINTS } from '@/app/milestones/page'
+import { MILESTONE_POINTS } from '@/lib/ranks'
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
