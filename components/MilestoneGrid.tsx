@@ -205,17 +205,13 @@ function guessGiveawayType(name: string): GiveawayTypeValue {
 
 // ── Category definitions ───────────────────────────────────────────────────
 
-type CategoryKey = 'all' | 'stadiums' | 'division' | 'gameday' | 'experiences' | 'collection' | 'earned' | 'records'
+type CategoryKey = 'all' | 'earned' | 'inprogress' | 'records'
 
 const CATEGORIES: { key: CategoryKey; label: string; emoji: string }[] = [
-  { key: 'all',         label: 'All',              emoji: '🎯' },
-  { key: 'earned',      label: 'Earned',           emoji: '✅' },
-  { key: 'records',     label: 'Personal Records', emoji: '📋' },
-  { key: 'stadiums',    label: 'Stadiums',         emoji: '🏟️' },
-  { key: 'division',    label: 'Division & League', emoji: '🗺️' },
-  { key: 'gameday',     label: 'Game Day',         emoji: '⚾' },
-  { key: 'experiences', label: 'Baseball Life',     emoji: '⚾' },
-  { key: 'collection',  label: 'Giveaways',         emoji: '🎁' },
+  { key: 'all',        label: 'All',              emoji: '🎯' },
+  { key: 'earned',     label: 'Earned',           emoji: '✅' },
+  { key: 'inprogress', label: 'In Progress',      emoji: '⏳' },
+  { key: 'records',    label: 'Personal Records', emoji: '📋' },
 ]
 
 const DIVISION_IDS = new Set([
@@ -242,12 +238,6 @@ const COLLECTION_IDS = new Set(['bobblehead', 'foul_ball', 'autograph', 'met_pla
 const LADDER_STADIUM_IDS = new Set(['stadium_explorer', 'games_attended'])
 const LADDER_EXPERIENCE_IDS = new Set(['minor_league_explorer'])
 
-function milestoneCategory(id: string): CategoryKey {
-  if (DIVISION_IDS.has(id))            return 'division'
-  if (GAMEDAY_IDS.has(id))             return 'gameday'
-  if (EXPERIENCE_MILESTONE_IDS.has(id)) return 'experiences'
-  return 'stadiums'
-}
 
 // ── Confetti ───────────────────────────────────────────────────────────────
 
@@ -329,6 +319,9 @@ export default function MilestoneGrid({
 
   // Photo lightbox
   const [lightboxItem, setLightboxItem] = useState<{ url: string; name: string; claimId: string } | null>(null)
+
+  // Giveaway type inline update
+  const [updatingClaimId, setUpdatingClaimId] = useState<string | null>(null)
 
   // BLE giveaway items from minor league game entries
   const [bleGiveaways,   setBleGiveaways]   = useState<Array<{
@@ -451,6 +444,19 @@ export default function MilestoneGrid({
     if (exp.tracking_type === 'manual_once') closeModal()
   }
 
+  async function updateGiveawayType(claimId: string, newType: GiveawayTypeValue) {
+    setUpdatingClaimId(claimId)
+    const supabase = createClient()
+    const claim = claims.find(c => c.id === claimId)
+    if (claim) {
+      await supabase.from('achievement_claims').update({
+        giveaway_type: newType
+      }).eq('id', claimId)
+      await fetchClaims()
+    }
+    setUpdatingClaimId(null)
+  }
+
   async function removeClaim(claimId: string) {
     const supabase = createClient()
     await supabase.from('achievement_claims').delete().eq('id', claimId)
@@ -545,13 +551,18 @@ export default function MilestoneGrid({
     return STATIC_EXPERIENCES.filter(s => claimedIds.has(s.id)).length
   }, [claims])
 
+  const earnedLadderCount = useMemo(
+    () => ladders.filter(m => (m.currentValue ?? 0) >= (m.tiers?.[0]?.threshold ?? 1)).length,
+    [ladders]
+  )
+
   const earnedBlaIds = useMemo(
     () => new Set(BASEBALL_LIFE_ACHIEVEMENTS.filter(a => a.check(allBle)).map(a => a.id)),
     [allBle]
   )
 
   const filteredBla = useMemo(() => {
-    const shouldShow = filter === 'all' || filter === 'experiences' || filter === 'earned'
+    const shouldShow = filter === 'all' || filter === 'earned'
     if (!shouldShow) return []
     return BASEBALL_LIFE_ACHIEVEMENTS.filter(a => {
       if (filter === 'earned') return earnedBlaIds.has(a.id)
@@ -591,11 +602,11 @@ export default function MilestoneGrid({
   const filteredMilestones = useMemo(() => {
     return allMilestones.filter(m => {
       if (filter === 'earned')      return earnedIds.has(m.id)
-      if (filter === 'stadiums')    return false  // ladders handle stadium/games counts
-      if (filter === 'division')    return DIVISION_IDS.has(m.id)
-      if (filter === 'gameday')     return GAMEDAY_IDS.has(m.id)
-      if (filter === 'experiences') return EXPERIENCE_MILESTONE_IDS.has(m.id)
-      if (filter === 'collection')  return false
+      if (filter === 'inprogress') {
+        if (earnedIds.has(m.id)) return false
+        const prog = getMilestoneProgress(m.id, allVisits, allStadiums, allEvents)
+        return prog != null && prog.current > 0
+      }
       return true
     }).filter(m => {
       if (!search) return true
@@ -607,12 +618,9 @@ export default function MilestoneGrid({
 
   const filteredLadders = useMemo(() => {
     return ladders.filter(m => {
-      if (filter === 'collection' || filter === 'division' || filter === 'gameday') return false
-      if (filter === 'earned') return (m.currentValue ?? 0) >= (m.tiers?.[0]?.threshold ?? 1)
-      if (filter === 'stadiums')    return LADDER_STADIUM_IDS.has(m.id)
-      if (filter === 'experiences') return LADDER_EXPERIENCE_IDS.has(m.id)
-      // 'all' and 'records' (records handled separately)
-      if (filter === 'records') return false
+      if (filter === 'earned')      return (m.currentValue ?? 0) >= (m.tiers?.[0]?.threshold ?? 1)
+      if (filter === 'inprogress')  return (m.currentValue ?? 0) > 0 && (m.currentValue ?? 0) < (m.tiers?.[m.tiers.length - 1]?.threshold ?? Infinity)
+      if (filter === 'records')     return false
       return true
     }).filter(m => {
       if (!search) return true
@@ -622,17 +630,16 @@ export default function MilestoneGrid({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, search, ladders])
 
-  const showStatics = filter === 'all' || filter === 'experiences' || filter === 'collection' || filter === 'earned'
+  const showStatics = filter === 'all' || filter === 'earned' || filter === 'inprogress'
   const showRecords = filter === 'records'
   const filteredStatics = useMemo(() => {
     if (!showStatics) return []
     return STATIC_EXPERIENCES.filter(s => {
-      if (filter === 'collection') return COLLECTION_IDS.has(s.id)
-      if (filter === 'experiences') return !COLLECTION_IDS.has(s.id)
       if (filter === 'earned') {
         const claimedIds = new Set(claims.map(c => c.achievement_id))
         return claimedIds.has(s.id)
       }
+      if (filter === 'inprogress') return false
       if (!search) return true
       const q = search.toLowerCase()
       return s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
@@ -916,12 +923,18 @@ export default function MilestoneGrid({
           {CATEGORIES.map(cat => {
             const active = filter === cat.key
             let count: number | null = null
-            if (cat.key === 'earned')      count = earned.length + earnedStaticCount
-            if (cat.key === 'stadiums')    count = ladders.filter(m => LADDER_STADIUM_IDS.has(m.id)).length
-            if (cat.key === 'division')    count = allMilestones.filter(m => DIVISION_IDS.has(m.id)).length
-            if (cat.key === 'gameday')     count = allMilestones.filter(m => GAMEDAY_IDS.has(m.id)).length
-            if (cat.key === 'experiences') count = allMilestones.filter(m => EXPERIENCE_MILESTONE_IDS.has(m.id)).length + STATIC_EXPERIENCES.filter(s => !COLLECTION_IDS.has(s.id)).length + BASEBALL_LIFE_ACHIEVEMENTS.length
-            if (cat.key === 'collection')  count = STATIC_EXPERIENCES.filter(s => COLLECTION_IDS.has(s.id)).length
+            if (cat.key === 'earned') count = earned.length + earnedStaticCount + earnedLadderCount
+            if (cat.key === 'inprogress') {
+              const inProgressRegular = allMilestones.filter(m => {
+                if (earnedIds.has(m.id)) return false
+                const prog = getMilestoneProgress(m.id, allVisits, allStadiums, allEvents)
+                return prog != null && prog.current > 0
+              }).length
+              const inProgressLadders = ladders.filter(m =>
+                (m.currentValue ?? 0) > 0 && (m.currentValue ?? 0) < (m.tiers?.[m.tiers.length - 1]?.threshold ?? Infinity)
+              ).length
+              count = inProgressRegular + inProgressLadders
+            }
             return (
               <button
                 key={cat.key}
@@ -1354,7 +1367,7 @@ export default function MilestoneGrid({
         </div>}
 
         {/* ── My Collection section ───────────────────────────────────────── */}
-        {giveawayClaims.length > 0 && (filter === 'all' || filter === 'collection') && (
+        {giveawayClaims.length > 0 && filter === 'all' && (
           <div style={{ marginBottom: 48 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
               <div>
@@ -1429,6 +1442,31 @@ export default function MilestoneGrid({
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4, flexWrap: 'wrap' }}>
                           <span style={{ fontSize: 11, fontWeight: 600, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.1)', padding: '2px 7px', borderRadius: 20 }}>{typeInfo?.emoji} {typeInfo?.label}</span>
                           {isMiLB && <span style={{ fontSize: 10, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 6px', borderRadius: 20 }}>MiLB</span>}
+                        </div>
+                        <div style={{ marginTop: 8, width: '100%' }}>
+                          <select
+                            value={claim.giveaway_type ?? 'other'}
+                            disabled={updatingClaimId === claim.id}
+                            onChange={(e) => updateGiveawayType(claim.id, e.target.value as GiveawayTypeValue)}
+                            style={{
+                              width: '100%',
+                              backgroundColor: '#0D1117',
+                              border: '1px solid #30363D',
+                              borderRadius: 8,
+                              padding: '6px 8px',
+                              color: updatingClaimId === claim.id ? '#484F58' : '#E6EDF3',
+                              fontSize: 12,
+                              fontWeight: 600,
+                              cursor: updatingClaimId === claim.id ? 'default' : 'pointer',
+                              fontFamily: 'inherit',
+                            }}
+                          >
+                            {GIVEAWAY_TYPES.map(t => (
+                              <option key={t.value} value={t.value}>
+                                {t.emoji} {t.label}
+                              </option>
+                            ))}
+                          </select>
                         </div>
                         {isMiLB && milbAffiliate && milbStadName ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
