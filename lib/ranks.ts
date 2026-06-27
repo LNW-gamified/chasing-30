@@ -23,6 +23,13 @@ export const MILESTONE_POINTS: Record<string, number> = {
   lights_out: 50, grand_slam_witness: 75,
   full_cycle: 150, history_maker: 200,
   run_factory: 50, pitchers_duel: 75,
+  bl_derby_day: 75, bl_field_of_dreams_game: 75,
+  bl_cactus_league: 50, bl_grapefruit_league: 50,
+  bl_fenway_tour: 50, bl_wrigley_tour: 50, bl_yankee_tour: 50,
+  bl_dodger_tour: 50, bl_oracle_tour: 50,
+  bl_little_league_ws: 75, bl_cape_cod_league: 75,
+  bl_arizona_fall_league: 75, bl_college_world_series: 75,
+  bl_grand_tour: 100, bl_full_circuit: 100, bl_baseball_lifer: 150,
 }
 
 export function getRank(pts: number) {
