@@ -650,6 +650,15 @@ export default function MilestoneGrid({
     const highestScore = withScore.reduce<StadiumVisit | null>((best, v) => !best || (v.home_runs! + v.away_runs!) > (best.home_runs! + best.away_runs!) ? v : best, null)
     const lowestScore  = withScore.filter(v => v.home_runs! + v.away_runs! > 0).reduce<StadiumVisit | null>((best, v) => !best || (v.home_runs! + v.away_runs!) < (best.home_runs! + best.away_runs!) ? v : best, null)
 
+    const biggestCrowd = allVisits.filter(v => v.attendance != null)
+      .reduce<StadiumVisit | null>((best, v) => !best || v.attendance! > best.attendance! ? v : best, null)
+
+    const hottestGame = allVisits.filter(v => v.temperature != null)
+      .reduce<StadiumVisit | null>((best, v) => !best || v.temperature! > best.temperature! ? v : best, null)
+
+    const coldestGame = allVisits.filter(v => v.temperature != null)
+      .reduce<StadiumVisit | null>((best, v) => !best || v.temperature! < best.temperature! ? v : best, null)
+
     // Most visited stadium
     const stadiumCounts: Record<string, number> = {}
     for (const v of allVisits) stadiumCounts[v.stadium_id] = (stadiumCounts[v.stadium_id] ?? 0) + 1
@@ -695,6 +704,7 @@ export default function MilestoneGrid({
       totalGames: allVisits.length,
       wins: wins.length, losses: losses.length, scored: withScore.length,
       biggestWin, biggestLoss, highestScore, lowestScore,
+      biggestCrowd, hottestGame, coldestGame,
       topStadium, topStadiumCount, topOpponentName, topOpponentCount,
       byYear, maxYearCount,
       dayGames, nightGames, twilightGames,
@@ -1026,31 +1036,42 @@ export default function MilestoneGrid({
                 </div>
 
                 {/* ── Best Games ── */}
-                {personalRecords.scored > 0 && (
+                {personalRecords.totalGames > 0 && (
                   <div style={{ marginBottom: 24 }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>🏆 Best Games</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {[
-                        personalRecords.biggestWin && { emoji: '🎉', label: 'Biggest Win', v: personalRecords.biggestWin, detail: `${personalRecords.fmtScore(personalRecords.biggestWin)} · +${personalRecords.biggestWin.home_runs! - personalRecords.biggestWin.away_runs!} run margin` },
-                        personalRecords.biggestLoss && { emoji: '😬', label: 'Biggest Loss', v: personalRecords.biggestLoss, detail: `${personalRecords.fmtScore(personalRecords.biggestLoss)} · ${personalRecords.biggestLoss.away_runs! - personalRecords.biggestLoss.home_runs!} run margin` },
-                        personalRecords.highestScore && { emoji: '💣', label: 'Highest Scoring', v: personalRecords.highestScore, detail: `${personalRecords.fmtScore(personalRecords.highestScore)} · ${personalRecords.highestScore.home_runs! + personalRecords.highestScore.away_runs!} total runs` },
-                        personalRecords.lowestScore && { emoji: '🎯', label: "Pitcher's Duel", v: personalRecords.lowestScore, detail: `${personalRecords.fmtScore(personalRecords.lowestScore)} · ${personalRecords.lowestScore.home_runs! + personalRecords.lowestScore.away_runs!} total runs` },
-                      ].filter(Boolean).map((row) => {
-                        const r = row!
-                        const stadium = personalRecords.stadiumFor(r.v)
-                        return (
-                          <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D' }}>
-                            <span style={{ fontSize: 22, flexShrink: 0 }}>{r.emoji}</span>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', marginBottom: 2 }}>{r.label}</div>
-                              <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {stadium?.name ?? '—'} · {personalRecords.fmtDate(r.v.visit_date)}
+                      {(() => {
+                        const shownIds = new Set<string>()
+                        const rows = [
+                          personalRecords.firstGame ? { emoji: '⭐', label: 'First Game', v: personalRecords.firstGame, detail: personalRecords.fmtDate(personalRecords.firstGame.visit_date) } : null,
+                          personalRecords.biggestWin ? { emoji: '🎉', label: 'Biggest Win', v: personalRecords.biggestWin, detail: `${personalRecords.fmtScore(personalRecords.biggestWin)} · +${personalRecords.biggestWin.home_runs! - personalRecords.biggestWin.away_runs!} run margin` } : null,
+                          personalRecords.biggestLoss ? { emoji: '😬', label: 'Biggest Loss', v: personalRecords.biggestLoss, detail: `${personalRecords.fmtScore(personalRecords.biggestLoss)} · ${personalRecords.biggestLoss.away_runs! - personalRecords.biggestLoss.home_runs!} run margin` } : null,
+                          personalRecords.highestScore ? { emoji: '💣', label: 'Highest Scoring', v: personalRecords.highestScore, detail: `${personalRecords.fmtScore(personalRecords.highestScore)} · ${personalRecords.highestScore.home_runs! + personalRecords.highestScore.away_runs!} total runs` } : null,
+                          personalRecords.lowestScore ? { emoji: '🎯', label: "Pitcher's Duel", v: personalRecords.lowestScore, detail: `${personalRecords.fmtScore(personalRecords.lowestScore)} · ${personalRecords.lowestScore.home_runs! + personalRecords.lowestScore.away_runs!} total runs` } : null,
+                          personalRecords.biggestCrowd ? { emoji: '👥', label: 'Biggest Crowd', v: personalRecords.biggestCrowd, detail: `${personalRecords.biggestCrowd.attendance?.toLocaleString()} fans` } : null,
+                          personalRecords.hottestGame ? { emoji: '🌡️', label: 'Hottest Game', v: personalRecords.hottestGame, detail: `${personalRecords.hottestGame.temperature}°F` } : null,
+                          personalRecords.coldestGame && personalRecords.coldestGame.id !== personalRecords.hottestGame?.id ? { emoji: '🥶', label: 'Coldest Game', v: personalRecords.coldestGame, detail: `${personalRecords.coldestGame.temperature}°F` } : null,
+                        ].filter(Boolean)
+
+                        return rows.map((row) => {
+                          if (!row) return null
+                          if (shownIds.has(row.v.id)) return null
+                          shownIds.add(row.v.id)
+                          const stadium = personalRecords.stadiumFor(row.v)
+                          return (
+                            <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D' }}>
+                              <span style={{ fontSize: 22, flexShrink: 0 }}>{row.emoji}</span>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', marginBottom: 2 }}>{row.label}</div>
+                                <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {stadium?.name ?? '—'} · {personalRecords.fmtDate(row.v.visit_date)}
+                                </div>
+                                <div style={{ fontSize: 11, color: '#8B949E', marginTop: 2 }}>{row.detail}</div>
                               </div>
-                              <div style={{ fontSize: 11, color: '#8B949E', marginTop: 2 }}>{r.detail}</div>
                             </div>
-                          </div>
-                        )
-                      })}
+                          )
+                        })
+                      })()}
                     </div>
                   </div>
                 )}
