@@ -198,7 +198,7 @@ export default async function MilestonesPage() {
               </div>
             ) : (
               <div style={{ marginBottom: 24 }}>
-                <div style={{ position: 'relative', height: 12, background: 'linear-gradient(90deg, #F5A623, #E8820C)', borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(245,166,35,0.3)' }}>
+                <div style={{ position: 'relative', height: 18, background: 'linear-gradient(90deg, #F5A623, #E8820C)', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(245,166,35,0.3)' }}>
                   <div className="xp-bar-shine" />
                 </div>
                 <div style={{ fontSize: 12, color: '#3FB950', marginTop: 6, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>

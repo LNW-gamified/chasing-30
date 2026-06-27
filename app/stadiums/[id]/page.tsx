@@ -118,6 +118,7 @@ export default function StadiumDetailPage() {
   const [weatherLoading, setWeatherLoading]     = useState(false)
   const [tripMonths, setTripMonths]             = useState<Set<number>>(new Set())
   const [visitPromos, setVisitPromos]           = useState<Record<string, { promotions: string[]; promotion_photos: Record<string, string> }>>({})
+  const [lightboxUrl, setLightboxUrl]           = useState<string | null>(null)
 
   const [unlockedMilestones, setUnlockedMilestones] = useState<{ name: string; icon: string }[]>([])
   const prevEarnedIdsRef = useRef<Set<string>>(new Set())
@@ -372,6 +373,33 @@ export default function StadiumDetailPage() {
 
   return (
     <div style={{ color: '#E6EDF3' }}>
+      {lightboxUrl && (
+        <div
+          onClick={() => setLightboxUrl(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            backgroundColor: 'rgba(0,0,0,0.92)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightboxUrl}
+            alt="Photo"
+            style={{ maxWidth: '100%', maxHeight: '90vh', borderRadius: 12, objectFit: 'contain' }}
+          />
+          <button
+            onClick={() => setLightboxUrl(null)}
+            style={{
+              position: 'absolute', top: 20, right: 20,
+              background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%',
+              width: 36, height: 36, color: '#fff', fontSize: 18, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >×</button>
+        </div>
+      )}
       <main style={{ minHeight: '100vh' }}>
 
         {/* ── HERO ─────────────────────────────────────────────────── */}
@@ -699,7 +727,7 @@ export default function StadiumDetailPage() {
                                         /* eslint-disable-next-line @next/next/no-img-element */
                                         <img src={photoUrl} alt={name}
                                           style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', display: 'block', cursor: 'pointer', flexShrink: 0 }}
-                                          onClick={() => window.open(photoUrl, '_blank')} />
+                                          onClick={() => setLightboxUrl(photoUrl)} />
                                       )}
                                     </div>
                                   )

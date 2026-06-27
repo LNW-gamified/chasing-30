@@ -24,14 +24,17 @@ export default async function StatsPage() {
     supabase.from('stadium_visits').select('*'),
     supabase.from('trips').select('*'),
     supabase.from('special_events').select('*'),
-    supabase.from('baseball_life_entries').select('id, category'),
+    supabase.from('baseball_life_entries').select('id, category, is_game'),
   ])
 
   const allStadiums: Stadium[] = stadiums ?? []
   const allVisits: StadiumVisit[] = visits ?? []
   const allTrips: Trip[] = trips ?? []
   const allEvents: SpecialEvent[] = events ?? []
-  const allBaseballLife = (bleRows ?? []) as { id: string; category: string }[]
+  const allBaseballLife = (bleRows ?? []) as { id: string; category: string; is_game: boolean }[]
+
+  const minorLeagueGamesCount = allBaseballLife.filter(e => e.category === 'minor_league' && e.is_game).length
+  const totalGamesAttended = allVisits.length + minorLeagueGamesCount
 
   const visitedIds = new Set(allVisits.map((v) => v.stadium_id))
   const visitedStadiums = allStadiums.filter((s) => visitedIds.has(s.id))
@@ -155,7 +158,7 @@ export default async function StatsPage() {
     {
       icon: <TrendingUp size={20} />,
       label: 'Games Witnessed',
-      value: allVisits.length.toString(),
+      value: totalGamesAttended.toString(),
       sub: `across ${visitedIds.size} stadium${visitedIds.size !== 1 ? 's' : ''}`,
       color: '#1F6FEB',
     },

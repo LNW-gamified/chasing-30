@@ -283,7 +283,6 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       }
 
       const gamesWithPromos = games.filter(g => g.promotions.length > 0)
-      console.log(`[Promos] ${stadium.abbreviation}: ${gamesWithPromos.length}/${games.length} games have promotions:`, gamesWithPromos.map(g => `${g.gameDate}: ${g.promotions.join(', ')}`))
 
       // Restore selectedPk when editing an existing stop
       let restoredPk = ''
