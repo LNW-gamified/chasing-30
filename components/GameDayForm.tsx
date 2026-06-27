@@ -6,17 +6,7 @@ import type { Stadium, StadiumVisit, InningScore } from '@/types'
 import { X, Plus, Minus, ImagePlus, Trash2, CloudSun, Loader2 } from 'lucide-react'
 import { GAME_MOMENTS } from '@/lib/moments'
 import { fetchSeasonHomeGames, type SeasonGame, STADIUM_TZ, TZ_LABEL } from '@/lib/mlb-api'
-
-const TEAM_ACCENT: Record<string, string> = {
-  NYY: '#003087', BOS: '#BD3039', LAD: '#005A9C', CHC: '#0E3386',
-  CWS: '#888D8D', STL: '#C41E3A', ATL: '#CE1141', NYM: '#002D72',
-  PHI: '#E81828', WSH: '#AB0003', MIA: '#00A3E0', PIT: '#FDB827',
-  CIN: '#C6011F', MIL: '#FFC52F', HOU: '#EB6E1F', TEX: '#003278',
-  LAA: '#BA0021', OAK: '#003831', SEA: '#0C2C56', SD:  '#2F241D',
-  COL: '#33006F', ARI: '#A71930', SF:  '#FD5A1E', MIN: '#002B5C',
-  CLE: '#E31937', DET: '#0C2340', KC:  '#004687', BAL: '#DF4601',
-  TB:  '#092C5C', TOR: '#134A8E',
-}
+import { TEAM_PRIMARY } from '@/lib/team-colors'
 
 interface ExtraSeat { section: string; row: string; number: string }
 
@@ -958,7 +948,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
               {GAME_MOMENTS.map(({ id, icon, label }) => {
                 const selected = selectedMoments.includes(id)
-                const accent   = TEAM_ACCENT[stadium.abbreviation] ?? '#1F6FEB'
+                const accent   = TEAM_PRIMARY[stadium.abbreviation] ?? '#1F6FEB'
                 return (
                   <button
                     key={id}
