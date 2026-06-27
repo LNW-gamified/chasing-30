@@ -438,6 +438,12 @@ export default async function StatsPage() {
         </div>
       )}
 
+      {allVisits.length > 0 && (
+        <div className="mt-6">
+          <YearRecap allVisits={allVisits} allStadiums={allStadiums} />
+        </div>
+      )}
+
     </div>
   )
 }
