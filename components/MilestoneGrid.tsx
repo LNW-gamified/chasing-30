@@ -697,6 +697,11 @@ export default function MilestoneGrid({
 
     const fmtDate = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     const fmtScore = (v: StadiumVisit) => `${v.away_runs}–${v.home_runs}`
+    const fmtMatchup = (v: StadiumVisit) => {
+      const away = v.visiting_team?.replace(/^vs\.?\s+/i, '').trim() ?? 'Away'
+      const home = v.home_team ?? 'Home'
+      return `${away} ${v.away_runs ?? '?'} · ${home} ${v.home_runs ?? '?'}`
+    }
     const stadiumFor = (v: StadiumVisit) => allStadiums.find(s => s.id === v.stadium_id)
 
     return {
@@ -708,7 +713,7 @@ export default function MilestoneGrid({
       topStadium, topStadiumCount, topOpponentName, topOpponentCount,
       byYear, maxYearCount,
       dayGames, nightGames, twilightGames,
-      fmtDate, fmtScore, stadiumFor,
+      fmtDate, fmtScore, fmtMatchup, stadiumFor,
     }
   }, [allVisits, allStadiums])
 
@@ -1043,14 +1048,49 @@ export default function MilestoneGrid({
                       {(() => {
                         const shownIds = new Set<string>()
                         const rows = [
-                          personalRecords.firstGame ? { emoji: '⭐', label: 'First Game', v: personalRecords.firstGame, detail: personalRecords.fmtDate(personalRecords.firstGame.visit_date) } : null,
-                          personalRecords.biggestWin ? { emoji: '🎉', label: 'Biggest Win', v: personalRecords.biggestWin, detail: `${personalRecords.fmtScore(personalRecords.biggestWin)} · +${personalRecords.biggestWin.home_runs! - personalRecords.biggestWin.away_runs!} run margin` } : null,
-                          personalRecords.biggestLoss ? { emoji: '😬', label: 'Biggest Loss', v: personalRecords.biggestLoss, detail: `${personalRecords.fmtScore(personalRecords.biggestLoss)} · ${personalRecords.biggestLoss.away_runs! - personalRecords.biggestLoss.home_runs!} run margin` } : null,
-                          personalRecords.highestScore ? { emoji: '💣', label: 'Highest Scoring', v: personalRecords.highestScore, detail: `${personalRecords.fmtScore(personalRecords.highestScore)} · ${personalRecords.highestScore.home_runs! + personalRecords.highestScore.away_runs!} total runs` } : null,
-                          personalRecords.lowestScore ? { emoji: '🎯', label: "Pitcher's Duel", v: personalRecords.lowestScore, detail: `${personalRecords.fmtScore(personalRecords.lowestScore)} · ${personalRecords.lowestScore.home_runs! + personalRecords.lowestScore.away_runs!} total runs` } : null,
-                          personalRecords.biggestCrowd ? { emoji: '👥', label: 'Biggest Crowd', v: personalRecords.biggestCrowd, detail: `${personalRecords.biggestCrowd.attendance?.toLocaleString()} fans` } : null,
-                          personalRecords.hottestGame ? { emoji: '🌡️', label: 'Hottest Game', v: personalRecords.hottestGame, detail: `${personalRecords.hottestGame.temperature}°F` } : null,
-                          personalRecords.coldestGame && personalRecords.coldestGame.id !== personalRecords.hottestGame?.id ? { emoji: '🥶', label: 'Coldest Game', v: personalRecords.coldestGame, detail: `${personalRecords.coldestGame.temperature}°F` } : null,
+                          personalRecords.firstGame ? {
+                            emoji: '⭐', label: 'First Game', v: personalRecords.firstGame,
+                            detail: personalRecords.fmtMatchup(personalRecords.firstGame),
+                            detail2: null,
+                          } : null,
+                          personalRecords.biggestWin ? {
+                            emoji: '🎉', label: 'Biggest Win', v: personalRecords.biggestWin,
+                            detail: personalRecords.fmtMatchup(personalRecords.biggestWin),
+                            detail2: personalRecords.biggestWin.winning_pitcher ? `W: ${personalRecords.biggestWin.winning_pitcher}` : null,
+                          } : null,
+                          personalRecords.biggestLoss ? {
+                            emoji: '😬', label: 'Biggest Loss', v: personalRecords.biggestLoss,
+                            detail: personalRecords.fmtMatchup(personalRecords.biggestLoss),
+                            detail2: personalRecords.biggestLoss.losing_pitcher ? `L: ${personalRecords.biggestLoss.losing_pitcher}` : null,
+                          } : null,
+                          personalRecords.highestScore ? {
+                            emoji: '💣', label: 'Highest Scoring', v: personalRecords.highestScore,
+                            detail: personalRecords.fmtMatchup(personalRecords.highestScore),
+                            detail2: `${personalRecords.highestScore.home_runs! + personalRecords.highestScore.away_runs!} total runs`,
+                          } : null,
+                          personalRecords.lowestScore ? {
+                            emoji: '🎯', label: "Pitcher's Duel", v: personalRecords.lowestScore,
+                            detail: personalRecords.fmtMatchup(personalRecords.lowestScore),
+                            detail2: [
+                              personalRecords.lowestScore.home_starter_name,
+                              personalRecords.lowestScore.away_starter_name,
+                            ].filter(Boolean).join(' vs ') || null,
+                          } : null,
+                          personalRecords.biggestCrowd ? {
+                            emoji: '👥', label: 'Biggest Crowd', v: personalRecords.biggestCrowd,
+                            detail: personalRecords.fmtMatchup(personalRecords.biggestCrowd),
+                            detail2: `${personalRecords.biggestCrowd.attendance?.toLocaleString()} fans`,
+                          } : null,
+                          personalRecords.hottestGame ? {
+                            emoji: '🌡️', label: 'Hottest Game', v: personalRecords.hottestGame,
+                            detail: personalRecords.fmtMatchup(personalRecords.hottestGame),
+                            detail2: `${personalRecords.hottestGame.temperature}°F${personalRecords.hottestGame.weather ? ` · ${personalRecords.hottestGame.weather}` : ''}`,
+                          } : null,
+                          personalRecords.coldestGame && personalRecords.coldestGame.id !== personalRecords.hottestGame?.id ? {
+                            emoji: '🥶', label: 'Coldest Game', v: personalRecords.coldestGame,
+                            detail: personalRecords.fmtMatchup(personalRecords.coldestGame),
+                            detail2: `${personalRecords.coldestGame.temperature}°F${personalRecords.coldestGame.weather ? ` · ${personalRecords.coldestGame.weather}` : ''}`,
+                          } : null,
                         ].filter(Boolean)
 
                         return rows.map((row) => {
@@ -1067,6 +1107,7 @@ export default function MilestoneGrid({
                                   {stadium?.name ?? '—'} · {personalRecords.fmtDate(row.v.visit_date)}
                                 </div>
                                 <div style={{ fontSize: 11, color: '#8B949E', marginTop: 2 }}>{row.detail}</div>
+                                {row.detail2 && <div style={{ fontSize: 11, color: '#484F58', marginTop: 1 }}>{row.detail2}</div>}
                               </div>
                             </div>
                           )
