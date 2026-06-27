@@ -1,18 +1,7 @@
 import { NextResponse } from 'next/server'
+import { MLB_TEAM_IDS, MLB_ID_TO_ABBR as ID_TO_ABBR } from '@/lib/mlb-api'
 
 export const revalidate = 3600
-
-const MLB_TEAM_IDS: Record<string, number> = {
-  ARI: 109, ATL: 144, BAL: 110, BOS: 111, CHC: 112, CWS: 145,
-  CIN: 113, CLE: 114, COL: 115, DET: 116, HOU: 117, KC:  118,
-  LAA: 108, LAD: 119, MIA: 146, MIL: 158, MIN: 142, NYM: 121,
-  NYY: 147, OAK: 133, PHI: 143, PIT: 134, SD:  135, SF:  137,
-  SEA: 136, STL: 138, TB:  139, TEX: 140, TOR: 141, WSH: 120,
-}
-
-const ID_TO_ABBR: Record<number, string> = Object.fromEntries(
-  Object.entries(MLB_TEAM_IDS).map(([abbr, id]) => [id, abbr])
-)
 
 function fmtGameDate(dateStr: string): string {
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
