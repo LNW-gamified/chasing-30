@@ -10,26 +10,9 @@ import { STATIC_EXPERIENCES, type StaticExperience } from '@/lib/static-experien
 import { BASEBALL_LIFE_ACHIEVEMENTS } from '@/lib/baseball-life-achievements'
 import SpecialVisitButton from '@/components/SpecialVisitButton'
 import { classifyDayNightHeuristic } from '@/lib/sunrise-sunset'
+import { MILESTONE_POINTS } from '@/app/milestones/page'
 
 // ── Constants ──────────────────────────────────────────────────────────────
-
-const MILESTONE_POINTS: Record<string, number> = {
-  al_east: 50, al_central: 50, al_west: 50, nl_east: 50, nl_central: 50, nl_west: 50,
-  american_league: 100, national_league: 100,
-  world_series_attendance: 150, all_star_attendance: 100, postseason_attendance: 100,
-  spring_training_attendance: 50,
-  hall_of_fame_visit: 75, field_of_dreams_visit: 75,
-  louisville_slugger_visit: 50, rawlings_factory_visit: 50,
-  negro_leagues_visit: 75, doubleday_visit: 50,
-  international_game: 100, historic_ballparks_all: 200,
-  full_experience: 100,
-  walk_off_witness: 75, double_walk_off: 125,
-  no_hit_wonder: 150, perfect_day: 300, committee_work: 100,
-  extra_credit: 50, marathon_man: 75,
-  lights_out: 50, grand_slam_witness: 75,
-  full_cycle: 150, history_maker: 200,
-  run_factory: 50, pitchers_duel: 75,
-}
 
 // Which experiences take a "player name" extra field
 const PLAYER_NAME_EXP = new Set(['autograph', 'met_player'])
