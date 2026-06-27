@@ -39,6 +39,7 @@ const GIVEAWAY_TYPES = [
   { value: 'bobblehead', label: 'Bobblehead', emoji: '🪆' },
   { value: 'figurine',   label: 'Figurine',   emoji: '🏺' },
   { value: 'jersey',     label: 'Jersey',     emoji: '👕' },
+  { value: 'tshirt',     label: 'T-Shirt',    emoji: '👔' },
   { value: 'hat',        label: 'Hat',        emoji: '🎩' },
   { value: 'poster',     label: 'Poster',     emoji: '📋' },
   { value: 'other',      label: 'Other',      emoji: '🎁' },
@@ -196,6 +197,7 @@ function guessGiveawayType(name: string): GiveawayTypeValue {
   if (n.includes('bobblehead') || n.includes('bobble')) return 'bobblehead'
   if (n.includes('figurine') || n.includes('statue')) return 'figurine'
   if (n.includes('jersey')) return 'jersey'
+  if (n.includes('t-shirt') || n.includes('tshirt') || n.includes('t shirt')) return 'tshirt'
   if (n === 'hat' || n.includes(' hat') || n.includes('cap')) return 'hat'
   if (n.includes('poster')) return 'poster'
   return 'other'
@@ -324,6 +326,9 @@ export default function MilestoneGrid({
   const [editPhotoFile,      setEditPhotoFile]      = useState<File | null>(null)
   const [editDeletePhoto,    setEditDeletePhoto]    = useState(false)
   const [editSaving,         setEditSaving]         = useState(false)
+
+  // Photo lightbox
+  const [lightboxItem, setLightboxItem] = useState<{ url: string; name: string; claimId: string } | null>(null)
 
   // BLE giveaway items from minor league game entries
   const [bleGiveaways,   setBleGiveaways]   = useState<Array<{
@@ -783,93 +788,87 @@ export default function MilestoneGrid({
 
   return (
     <>
+      {lightboxItem && (
+        <div
+          onClick={() => setLightboxItem(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            backgroundColor: 'rgba(0,0,0,0.92)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightboxItem.url}
+            alt={lightboxItem.name}
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 12, objectFit: 'contain', marginBottom: 16 }}
+          />
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', padding: '14px 16px', width: '100%', maxWidth: 400 }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Item Name</div>
+            <input
+              defaultValue={lightboxItem.name}
+              id="lightbox-name-input"
+              style={{ width: '100%', backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 14, marginBottom: 12, boxSizing: 'border-box' }}
+            />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={async () => {
+                  const input = document.getElementById('lightbox-name-input') as HTMLInputElement
+                  const newName = input?.value?.trim()
+                  if (!newName) return
+                  const supabase = createClient()
+                  const claim = claims.find(c => c.id === lightboxItem.claimId)
+                  if (!claim) return
+                  await supabase.from('achievement_claims').update({
+                    extra_data: { ...claim.extra_data, bobblehead_name: newName }
+                  }).eq('id', lightboxItem.claimId)
+                  setLightboxItem(null)
+                  await fetchClaims()
+                }}
+                style={{ flex: 1, padding: '9px', borderRadius: 8, backgroundColor: '#1F6FEB', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+              >Save Name</button>
+              <label style={{ flex: 1, padding: '9px', borderRadius: 8, border: '1px solid #30363D', color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'center' as const }}>
+                Replace Photo
+                <input type="file" accept="image/*" style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    const supabase = createClient()
+                    const ext = file.name.split('.').pop()
+                    const path = `${lightboxItem.claimId}-${Date.now()}.${ext}`
+                    const { data, error } = await supabase.storage.from('achievement-photos').upload(path, file, { upsert: true })
+                    if (!error && data) {
+                      const { data: urlData } = supabase.storage.from('achievement-photos').getPublicUrl(data.path)
+                      const claim = claims.find(c => c.id === lightboxItem.claimId)
+                      await supabase.from('achievement_claims').update({
+                        extra_data: { ...claim?.extra_data, photo_url: urlData.publicUrl }
+                      }).eq('id', lightboxItem.claimId)
+                      setLightboxItem(null)
+                      await fetchClaims()
+                    }
+                  }}
+                />
+              </label>
+              <button
+                onClick={() => setLightboxItem(null)}
+                style={{ padding: '9px 14px', borderRadius: 8, border: '1px solid #30363D', background: 'none', color: '#8B949E', fontSize: 13, cursor: 'pointer' }}
+              >✕</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confetti layer */}
       {confetti.map(p => (
         <ConfettiPiece key={p.id} color={p.color} left={p.left} delay={p.delay} size={p.size} />
       ))}
 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 16px 0' }}>
-
-        {/* ── Rank progression strip ──────────────────────────────────────── */}
-        <div className="no-scrollbar" style={{ overflowX: 'auto', display: 'flex', alignItems: 'center', marginBottom: 28, paddingBottom: 4 }}>
-          {rankTiers.map((tier, i) => {
-            const isCurrent = tier.name === currentRankName
-            const isPast    = i < currentRankIdx
-            return (
-              <div key={tier.name} style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 10px', borderRadius: 12, backgroundColor: isCurrent ? 'rgba(245,166,35,0.1)' : 'transparent', border: `1.5px solid ${isCurrent ? 'rgba(245,166,35,0.35)' : 'transparent'}` }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: isPast ? 0 : 16, backgroundColor: isCurrent ? 'rgba(245,166,35,0.15)' : isPast ? 'rgba(63,185,80,0.1)' : 'rgba(139,148,158,0.08)', border: `2px solid ${isCurrent ? '#F5A623' : isPast ? 'rgba(63,185,80,0.35)' : '#30363D'}` }}>
-                    {isPast ? <Check size={14} color="#3FB950" strokeWidth={3} /> : tier.icon}
-                  </div>
-                  <span style={{ fontSize: 10, fontWeight: isCurrent ? 700 : 500, color: isCurrent ? '#F5A623' : '#8B949E', whiteSpace: 'nowrap' }}>{tier.name}</span>
-                </div>
-                {i < rankTiers.length - 1 && <div style={{ width: 16, height: 2, flexShrink: 0, backgroundColor: i < currentRankIdx ? 'rgba(63,185,80,0.3)' : '#30363D' }} />}
-              </div>
-            )
-          })}
-        </div>
-
-        {/* ── Active Challenges ───────────────────────────────────────────── */}
-        {activeChallenges.length > 0 && filter === 'all' && !search && (
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
-              🔥 Active Challenges
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {activeChallenges.map(({ m, prog }) => {
-                const pct = Math.round((prog!.current / prog!.total) * 100)
-                const left = prog!.total - prog!.current
-                const isDiv = DIVISION_IDS.has(m.id)
-                return (
-                  <button
-                    key={m.id}
-                    className="challenge-card"
-                    onClick={() => setSelected({ type: 'milestone', milestone: m, isEarned: false })}
-                    style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14, border: '1px solid rgba(31,111,235,0.3)', backgroundColor: 'rgba(31,111,235,0.06)', cursor: 'pointer', textAlign: 'left', width: '100%' }}
-                  >
-                    <div style={{ width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, backgroundColor: 'rgba(31,111,235,0.1)', flexShrink: 0 }}>{m.icon}</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3' }}>{m.name}</span>
-                        <span style={{ fontSize: 11, color: '#58A6FF', fontWeight: 700, flexShrink: 0, marginLeft: 8 }}>{left} away</span>
-                      </div>
-                      <div style={{ position: 'relative', height: 6, background: '#1C2430', borderRadius: 4, overflow: 'hidden', marginBottom: 4 }}>
-                        <div style={{ position: 'absolute', inset: '0 auto 0 0', width: `${pct}%`, background: isDiv ? 'linear-gradient(90deg,#1F6FEB,#58A6FF)' : 'linear-gradient(90deg,#F5A623,#E8820C)', borderRadius: 4, minWidth: 8 }} />
-                      </div>
-                      <div style={{ fontSize: 11, color: '#8B949E' }}>{prog!.current} / {prog!.total} · {pct}% complete</div>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── Recent Activity strip ───────────────────────────────────────── */}
-        {allBle.length > 0 && filter === 'all' && !search && (
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em' }}>📋 Recent Activity</div>
-              <SpecialVisitButton label="+ Log Entry" variant="secondary" />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              {allBle.slice(0, 3).map((entry) => {
-                const CAT_EMOJI: Record<string, string> = { minor_league: '⚾', mlb_special_event: '🌟', spring_training: '🌞', pilgrimage: '🏛️' }
-                const emoji = CAT_EMOJI[entry.category] ?? '📋'
-                const dt = new Date(entry.visit_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                const name = entry.event_type || entry.venue || entry.category
-                const line = entry.opponent ? `${name} vs ${entry.opponent}` : name
-                return (
-                  <div key={entry.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderRadius: 10, backgroundColor: '#161B22', border: '1px solid #21262D' }}>
-                    <span style={{ fontSize: 15, flexShrink: 0 }}>{emoji}</span>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: '#C9D1D9', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{line}</span>
-                    <span style={{ fontSize: 11, color: '#484F58', flexShrink: 0 }}>{dt}</span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
 
         {/* ── Category card carousel ──────────────────────────────────────── */}
         <div className="no-scrollbar" style={{ overflowX: 'auto', display: 'flex', gap: 8, marginBottom: 20, paddingBottom: 4 }}>
@@ -1364,7 +1363,12 @@ export default function MilestoneGrid({
                       <div style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden', backgroundColor: '#1C2430' }}>
                         {photoUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={photoUrl} alt={itemName} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                          <img
+                            src={photoUrl}
+                            alt={itemName}
+                            onClick={() => setLightboxItem({ url: photoUrl, name: itemName, claimId: claim.id })}
+                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', cursor: 'pointer' }}
+                          />
                         ) : (
                           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             {isMiLB && milbAffiliate
