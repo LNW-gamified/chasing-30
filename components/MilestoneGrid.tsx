@@ -447,12 +447,30 @@ export default function MilestoneGrid({
   async function updateGiveawayType(claimId: string, newType: GiveawayTypeValue) {
     setUpdatingClaimId(claimId)
     const supabase = createClient()
-    const claim = claims.find(c => c.id === claimId)
-    if (claim) {
-      await supabase.from('achievement_claims').update({
-        giveaway_type: newType
-      }).eq('id', claimId)
-      await fetchClaims()
+
+    if (claimId.startsWith('ble-')) {
+      const parts = claimId.split('-')
+      const entryId = parts.slice(1, parts.length - 1).join('-')
+      const itemIdx = parseInt(parts[parts.length - 1], 10)
+      const { data: entry } = await supabase
+        .from('baseball_life_entries')
+        .select('giveaway_items')
+        .eq('id', entryId)
+        .single()
+      if (entry?.giveaway_items) {
+        const items = [...(entry.giveaway_items as Array<{ name: string; photo_url: string | null; type?: string }>)]
+        if (items[itemIdx]) {
+          items[itemIdx] = { ...items[itemIdx], type: newType }
+          await supabase.from('baseball_life_entries').update({ giveaway_items: items }).eq('id', entryId)
+          await fetchBleGiveaways()
+        }
+      }
+    } else {
+      const claim = claims.find(c => c.id === claimId)
+      if (claim) {
+        await supabase.from('achievement_claims').update({ giveaway_type: newType }).eq('id', claimId)
+        await fetchClaims()
+      }
     }
     setUpdatingClaimId(null)
   }
@@ -722,7 +740,7 @@ export default function MilestoneGrid({
         stadium_visit_id: null,
         claim_date:       entry.visit_date,
         notes:            null,
-        giveaway_type:    guessGiveawayType(item.name),
+        giveaway_type:    ((item as any).type as GiveawayTypeValue) ?? guessGiveawayType(item.name),
         created_at:       entry.visit_date,
         extra_data: {
           bobblehead_name:   item.name,
@@ -821,17 +839,39 @@ export default function MilestoneGrid({
               id="lightbox-name-input"
               style={{ width: '100%', backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 14, marginBottom: 12, boxSizing: 'border-box' }}
             />
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Category</div>
+              <select
+                id="lightbox-type-select"
+                defaultValue={(() => {
+                  const c = claims.find(cl => cl.id === lightboxItem.claimId)
+                  return c?.giveaway_type ?? 'other'
+                })()}
+                style={{
+                  width: '100%', backgroundColor: '#0D1117', border: '1px solid #30363D',
+                  borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13,
+                  fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box' as const,
+                }}
+              >
+                {GIVEAWAY_TYPES.map(t => (
+                  <option key={t.value} value={t.value}>{t.emoji} {t.label}</option>
+                ))}
+              </select>
+            </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={async () => {
                   const input = document.getElementById('lightbox-name-input') as HTMLInputElement
+                  const typeSelect = document.getElementById('lightbox-type-select') as HTMLSelectElement
                   const newName = input?.value?.trim()
+                  const newType = typeSelect?.value as GiveawayTypeValue
                   if (!newName) return
                   const supabase = createClient()
                   const claim = claims.find(c => c.id === lightboxItem.claimId)
                   if (!claim) return
                   await supabase.from('achievement_claims').update({
-                    extra_data: { ...claim.extra_data, bobblehead_name: newName }
+                    extra_data: { ...claim.extra_data, bobblehead_name: newName },
+                    giveaway_type: newType,
                   }).eq('id', lightboxItem.claimId)
                   setLightboxItem(null)
                   await fetchClaims()
@@ -1442,31 +1482,6 @@ export default function MilestoneGrid({
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4, flexWrap: 'wrap' }}>
                           <span style={{ fontSize: 11, fontWeight: 600, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.1)', padding: '2px 7px', borderRadius: 20 }}>{typeInfo?.emoji} {typeInfo?.label}</span>
                           {isMiLB && <span style={{ fontSize: 10, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 6px', borderRadius: 20 }}>MiLB</span>}
-                        </div>
-                        <div style={{ marginTop: 8, width: '100%' }}>
-                          <select
-                            value={claim.giveaway_type ?? 'other'}
-                            disabled={updatingClaimId === claim.id}
-                            onChange={(e) => updateGiveawayType(claim.id, e.target.value as GiveawayTypeValue)}
-                            style={{
-                              width: '100%',
-                              backgroundColor: '#0D1117',
-                              border: '1px solid #30363D',
-                              borderRadius: 8,
-                              padding: '6px 8px',
-                              color: updatingClaimId === claim.id ? '#484F58' : '#E6EDF3',
-                              fontSize: 12,
-                              fontWeight: 600,
-                              cursor: updatingClaimId === claim.id ? 'default' : 'pointer',
-                              fontFamily: 'inherit',
-                            }}
-                          >
-                            {GIVEAWAY_TYPES.map(t => (
-                              <option key={t.value} value={t.value}>
-                                {t.emoji} {t.label}
-                              </option>
-                            ))}
-                          </select>
                         </div>
                         {isMiLB && milbAffiliate && milbStadName ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
