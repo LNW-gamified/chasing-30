@@ -300,7 +300,9 @@ export default function MilestoneGrid({
   const [editSaving,         setEditSaving]         = useState(false)
 
   // Photo lightbox
-  const [lightboxItem, setLightboxItem] = useState<{ url: string; name: string; claimId: string } | null>(null)
+  const [lightboxItem, setLightboxItem] = useState<{ url: string; name: string; claimId: string; currentType: GiveawayTypeValue } | null>(null)
+  const [lightboxType, setLightboxType] = useState<GiveawayTypeValue>('other')
+  const [lightboxName, setLightboxName] = useState<string>('')
 
   // Giveaway type inline update
   const [updatingClaimId, setUpdatingClaimId] = useState<string | null>(null)
@@ -808,7 +810,8 @@ export default function MilestoneGrid({
             >✕</button>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Item Name</div>
             <input
-              defaultValue={lightboxItem.name}
+              value={lightboxName}
+              onChange={(e) => setLightboxName(e.target.value)}
               id="lightbox-name-input"
               style={{ width: '100%', backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 14, marginBottom: 12, boxSizing: 'border-box' }}
             />
@@ -816,10 +819,8 @@ export default function MilestoneGrid({
               <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Category</div>
               <select
                 id="lightbox-type-select"
-                defaultValue={(() => {
-                  const c = claims.find(cl => cl.id === lightboxItem.claimId)
-                  return c?.giveaway_type ?? 'other'
-                })()}
+                value={lightboxType}
+                onChange={(e) => setLightboxType(e.target.value as GiveawayTypeValue)}
                 style={{
                   width: '100%', backgroundColor: '#0D1117', border: '1px solid #30363D',
                   borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13,
@@ -834,10 +835,8 @@ export default function MilestoneGrid({
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={async () => {
-                  const input = document.getElementById('lightbox-name-input') as HTMLInputElement
-                  const typeSelect = document.getElementById('lightbox-type-select') as HTMLSelectElement
-                  const newName = input?.value?.trim()
-                  const newType = typeSelect?.value as GiveawayTypeValue
+                  const newName = lightboxName.trim()
+                  const newType = lightboxType
                   if (!newName) return
                   const supabase = createClient()
                   const claimId = lightboxItem.claimId
@@ -1430,7 +1429,12 @@ export default function MilestoneGrid({
                           <img
                             src={photoUrl}
                             alt={itemName}
-                            onClick={() => setLightboxItem({ url: photoUrl, name: itemName, claimId: claim.id })}
+                            onClick={() => {
+                              const currentType = claim.giveaway_type ?? 'other'
+                              setLightboxItem({ url: photoUrl, name: itemName, claimId: claim.id, currentType })
+                              setLightboxType(currentType)
+                              setLightboxName(itemName)
+                            }}
                             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', cursor: 'pointer' }}
                           />
                         ) : (
