@@ -64,7 +64,7 @@ function StatusBadge({ isLive, isFinal }: { isLive: boolean; isFinal: boolean })
       background: 'rgba(248,81,73,0.18)', border: '1px solid rgba(248,81,73,0.4)',
     }}>
       <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#F85149' }} className="animate-pulse"/>
-      <span style={{ fontSize: 13, fontWeight: 700, color: '#F85149', letterSpacing: '0.08em' }}>LIVE</span>
+      <span style={{ fontSize: 11, fontWeight: 700, color: '#F85149', letterSpacing: '0.08em' }}>LIVE</span>
     </div>
   )
   if (isFinal) return (
@@ -73,7 +73,7 @@ function StatusBadge({ isLive, isFinal }: { isLive: boolean; isFinal: boolean })
       padding: '3px 10px', borderRadius: 20,
       background: 'rgba(230,237,243,0.1)', border: '1px solid rgba(230,237,243,0.2)',
     }}>
-      <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', letterSpacing: '0.08em' }}>FINAL</span>
+      <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', letterSpacing: '0.08em' }}>FINAL</span>
     </div>
   )
   return (
@@ -82,7 +82,7 @@ function StatusBadge({ isLive, isFinal }: { isLive: boolean; isFinal: boolean })
       padding: '3px 10px', borderRadius: 20,
       background: 'rgba(31,111,235,0.15)', border: '1px solid rgba(31,111,235,0.35)',
     }}>
-      <span style={{ fontSize: 13, fontWeight: 700, color: '#58A6FF', letterSpacing: '0.08em' }}>PREVIEW</span>
+      <span style={{ fontSize: 11, fontWeight: 700, color: '#58A6FF', letterSpacing: '0.08em' }}>PREVIEW</span>
     </div>
   )
 }
@@ -273,7 +273,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, marginTop: 4 }}>
                 <StatusBadge isLive={g.isLive} isFinal={g.isFinal} />
                 {g.isLive && g.inning && (
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#3FB950', letterSpacing: '0.04em' }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#3FB950', letterSpacing: '0.04em' }}>
                     {g.inning}
                   </span>
                 )}
