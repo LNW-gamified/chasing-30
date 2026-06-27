@@ -652,19 +652,10 @@ export default function StadiumDetailPage() {
                               borderRadius: 12, cursor: 'pointer', textAlign: 'left',
                             }}
                           >
-                            {/* Thumbnail or logo */}
-                            {visit.photo_url ? (
-                              /* eslint-disable-next-line @next/next/no-img-element */
-                              <img
-                                src={visit.photo_url}
-                                alt={`Game ${formatDate(visit.visit_date)}`}
-                                style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', flexShrink: 0, display: 'block' }}
-                              />
-                            ) : (
-                              <div style={{ width: 40, height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <TeamLogo abbreviation={stadium.abbreviation} size={40} />
-                              </div>
-                            )}
+                            {/* Team logo — always show logo on collapsed row */}
+                            <div style={{ width: 40, height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <TeamLogo abbreviation={stadium.abbreviation} size={40} />
+                            </div>
 
                             {/* Center: date + matchup */}
                             <div style={{ flex: 1, minWidth: 0 }}>
