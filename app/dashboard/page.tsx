@@ -370,7 +370,7 @@ export default async function DashboardPage() {
                       {nextPlannedTrip.stadium.city}{nextPlannedTrip.stadium.state ? `, ${nextPlannedTrip.stadium.state}` : ''}
                     </div>
                   )}
-                  <div style={{ fontSize: 12, color: 'rgba(245,166,35,0.6)', marginTop: 8, fontFamily: 'monospace' }}>
+                  <div style={{ fontSize: 13, color: 'rgba(245,166,35,0.6)', marginTop: 8, fontFamily: 'monospace' }}>
                     {fmtDate(nextPlannedTrip.start_date)}
                   </div>
                 </div>
