@@ -815,7 +815,7 @@ function PassportStamp({ def, visitDate }: { def: StampDef; visitDate: string | 
             color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.04em',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{def.stadium}</div>
-          <div style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.75)', marginTop: 2, letterSpacing: '0.04em' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 2, letterSpacing: '0.04em' }}>
             {def.city}, {def.state}
           </div>
           {fmtDate && (
@@ -926,7 +926,7 @@ export default function PassportGrid({ stamps, userName, passportNo, earnedCount
             background: 'transparent',
             border: '1.5px solid rgba(197,164,126,0.4)',
             color: '#C5A47E', fontFamily: 'monospace',
-            fontSize: 10, fontWeight: 700, letterSpacing: '0.14em',
+            fontSize: 12, fontWeight: 700, letterSpacing: '0.14em',
             cursor: 'pointer', textTransform: 'uppercase',
           }}
         >
@@ -942,7 +942,7 @@ export default function PassportGrid({ stamps, userName, passportNo, earnedCount
             Stadium Passport
           </div>
           <div style={{
-            fontFamily: 'monospace', fontSize: 9, fontWeight: 700,
+            fontFamily: 'monospace', fontSize: 11, fontWeight: 700,
             color: 'rgba(197,164,126,0.5)', letterSpacing: '0.2em', textTransform: 'uppercase',
           }}>
             United States Baseball Tour · Est. 1869

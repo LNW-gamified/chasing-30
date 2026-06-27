@@ -60,7 +60,7 @@ export default function Navigation() {
               }}
             >
               <Icon size={active ? 30 : 26} strokeWidth={active ? 2.5 : 1.8} />
-              <span style={{ fontSize: 11, fontWeight: active ? 700 : 400, lineHeight: 1 }}>{label}</span>
+              <span style={{ fontSize: 13, fontWeight: active ? 700 : 400, lineHeight: 1 }}>{label}</span>
             </Link>
           )
         })}

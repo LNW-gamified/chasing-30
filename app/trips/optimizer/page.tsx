@@ -331,7 +331,7 @@ export default function OptimizerPage() {
                     <div className="truncate" style={{ fontSize: 13, fontWeight: 800, color: isStart ? '#E6EDF3' : '#C9D1D9', lineHeight: 1.2 }}>
                       {ABBR_TO_NICKNAME[abbr] ?? abbr}
                     </div>
-                    <div className="truncate" style={{ fontSize: 11, color: '#6E7681' }}>{s.city}</div>
+                    <div className="truncate" style={{ fontSize: 13, color: '#6E7681' }}>{s.city}</div>
                   </div>
                   {isStart && (
                     <div className="absolute top-1 right-1 flex items-center justify-center rounded-full w-4 h-4" style={{ backgroundColor: primary }}>
@@ -413,7 +413,7 @@ export default function OptimizerPage() {
           {results.length === 0 ? (
             <div className="card p-10 text-center">
               <div className="flex justify-center mb-3">
-                <Search size={40} color="#484F58" strokeWidth={1.5} />
+                <Search size={40} color="#8B949E" strokeWidth={1.5} />
               </div>
               <div className="text-lg font-semibold mb-1" style={{ color: '#8B949E' }}>No windows found</div>
               <div className="text-base" style={{ color: '#8B949E' }}>

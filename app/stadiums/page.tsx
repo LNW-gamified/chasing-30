@@ -141,32 +141,32 @@ function StadiumCard({ stadium, visited, visitDate, visitCount, nextGame, photo 
         <div style={{ height: 136, position: 'relative', flexShrink: 0, overflow: 'hidden', background: `linear-gradient(to bottom, ${hexToRgba(accent, 0.55)} 0%, ${hexToRgba(accent, 0.2)} 100%)`, borderTop: `3px solid ${accent}` }}>
           {photo && <img src={photo} alt={stadium.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55 }} />}
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)' }} />
-          {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
+          {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#0B1117', fontWeight: 900 }}>✓</div>}
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
             <TeamLogo abbreviation={stadium.abbreviation} size={80} />
           </div>
         </div>
         <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 2 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{stadium.team}</div>
-          <div style={{ fontSize: 11, color: '#8B949E', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{stadium.name}</div>
-          <div style={{ fontSize: 11, color: '#8B949E' }}>{stadium.city}</div>
+          <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{stadium.name}</div>
+          <div style={{ fontSize: 13, color: '#8B949E' }}>{stadium.city}</div>
           <div style={{ flex: 1, minHeight: 8 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
             <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 5 }}>
               {visited ? (
                 <>
-                  <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', border: '1px solid rgba(63,185,80,0.25)', padding: '2px 7px', borderRadius: 999 }}>Visited ✓</span>
-                  {visitCount && visitCount > 1 && <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)', border: '1px solid rgba(245,166,35,0.25)', padding: '2px 7px', borderRadius: 999 }}>{visitCount}×</span>}
-                  {visitDate && <span style={{ fontSize: 11, color: '#8B949E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{fmtDate(visitDate)}</span>}
+                  <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', border: '1px solid rgba(63,185,80,0.25)', padding: '2px 7px', borderRadius: 999 }}>Visited ✓</span>
+                  {visitCount && visitCount > 1 && <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)', border: '1px solid rgba(245,166,35,0.25)', padding: '2px 7px', borderRadius: 999 }}>{visitCount}×</span>}
+                  {visitDate && <span style={{ fontSize: 13, color: '#8B949E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{fmtDate(visitDate)}</span>}
                 </>
               ) : (
                 <>
-                  <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid rgba(139,148,158,0.25)', padding: '2px 8px', borderRadius: 999 }}>On the List</span>
-                  {nextGame && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}><CalendarDays size={11} color="#C9D1D9" style={{ flexShrink: 0 }}/>{nextGame.date} vs {TEAM_NICKNAME[nextGame.opponentAbbr] ?? nextGame.opponentAbbr}</span>}
+                  <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid rgba(139,148,158,0.25)', padding: '2px 8px', borderRadius: 999 }}>On the List</span>
+                  {nextGame && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 13, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}><CalendarDays size={11} color="#C9D1D9" style={{ flexShrink: 0 }}/>{nextGame.date} vs {TEAM_NICKNAME[nextGame.opponentAbbr] ?? nextGame.opponentAbbr}</span>}
                 </>
               )}
             </div>
-            <ChevronRight size={13} color="#484F58" style={{ flexShrink: 0 }} />
+            <ChevronRight size={13} color="#8B949E" style={{ flexShrink: 0 }} />
           </div>
         </div>
       </div>
@@ -190,24 +190,24 @@ function EventCard({ event, attendedCount, onLog }: {
           : <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${hexToRgba(gradColor, 0.35)} 0%, ${hexToRgba(gradColor, 0.12)} 100%)` }} />
         }
         {event.image_url && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.45) 100%)' }} />}
-        {attended && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
+        {attended && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#0B1117', fontWeight: 900 }}>✓</div>}
       </div>
       <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 4 }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: meta.color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{meta.label}</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: meta.color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{meta.label}</span>
         <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.3 }}>{event.name}</div>
-        {event.description && <div style={{ fontSize: 11, color: '#8B949E', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{event.description}</div>}
+        {event.description && <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{event.description}</div>}
         <div style={{ flex: 1, minHeight: 8 }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
           {attended ? (
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', border: '1px solid rgba(63,185,80,0.25)', padding: '2px 8px', borderRadius: 999 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', border: '1px solid rgba(63,185,80,0.25)', padding: '2px 8px', borderRadius: 999 }}>
               Attended {attendedCount > 1 ? `${attendedCount}×` : '✓'}
             </span>
           ) : (
-            <span style={{ fontSize: 10, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid rgba(139,148,158,0.25)', padding: '2px 8px', borderRadius: 999 }}>Not yet</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid rgba(139,148,158,0.25)', padding: '2px 8px', borderRadius: 999 }}>Not yet</span>
           )}
           <button
             onClick={e => { e.stopPropagation(); onLog() }}
-            style={{ fontSize: 11, fontWeight: 700, color: meta.color, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
+            style={{ fontSize: 13, fontWeight: 700, color: meta.color, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
           >
             + Log
           </button>
@@ -241,25 +241,25 @@ function ExperienceCard({ exp, visited, onLog }: {
               </div>
             </>
         }
-        {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
+        {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#0B1117', fontWeight: 900 }}>✓</div>}
       </div>
       <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 4 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <MapPin size={10} color="#8B949E" />
-          <span style={{ fontSize: 10, color: '#8B949E' }}>{loc}</span>
+          <span style={{ fontSize: 12, color: '#8B949E' }}>{loc}</span>
         </div>
         <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.3 }}>{exp.name}</div>
-        {exp.description && <div style={{ fontSize: 11, color: '#8B949E', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{exp.description}</div>}
+        {exp.description && <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{exp.description}</div>}
         <div style={{ flex: 1, minHeight: 8 }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
           {visited ? (
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', border: '1px solid rgba(63,185,80,0.25)', padding: '2px 8px', borderRadius: 999 }}>Visited ✓</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', border: '1px solid rgba(63,185,80,0.25)', padding: '2px 8px', borderRadius: 999 }}>Visited ✓</span>
           ) : (
-            <span style={{ fontSize: 10, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid rgba(139,148,158,0.25)', padding: '2px 8px', borderRadius: 999 }}>Not yet</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid rgba(139,148,158,0.25)', padding: '2px 8px', borderRadius: 999 }}>Not yet</span>
           )}
           <button
             onClick={e => { e.stopPropagation(); onLog() }}
-            style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
+            style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
           >
             + Log
           </button>
@@ -288,20 +288,20 @@ function MinorLeagueCard({ stadium, visitCount }: {
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
             <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={48} logoUrl={stadium.logo_url} />
           </div>
-          {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#0B1117', fontWeight: 900 }}>✓</div>}
+          {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#0B1117', fontWeight: 900 }}>✓</div>}
         </div>
         <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 3 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2 }}>{stadium.team}</div>
-          <div style={{ fontSize: 11, color: '#8B949E' }}>{stadium.name}</div>
-          <div style={{ fontSize: 11, color: '#8B949E' }}>{stadium.city}, {stadium.state}</div>
+          <div style={{ fontSize: 13, color: '#8B949E' }}>{stadium.name}</div>
+          <div style={{ fontSize: 13, color: '#8B949E' }}>{stadium.city}, {stadium.state}</div>
           <div style={{ flex: 1, minHeight: 6 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)', border: '1px solid rgba(245,166,35,0.3)', padding: '2px 7px', borderRadius: 999 }}>{stadium.level}</span>
-            <span style={{ fontSize: 10, color: '#8B949E' }}>aff: {stadium.affiliate}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)', border: '1px solid rgba(245,166,35,0.3)', padding: '2px 7px', borderRadius: 999 }}>{stadium.level}</span>
+            <span style={{ fontSize: 12, color: '#8B949E' }}>aff: {stadium.affiliate}</span>
             {visited ? (
-              <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', border: '1px solid rgba(63,185,80,0.25)', padding: '2px 7px', borderRadius: 999 }}>{visitCount > 1 ? `${visitCount}×` : '✓'}</span>
+              <span style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', border: '1px solid rgba(63,185,80,0.25)', padding: '2px 7px', borderRadius: 999 }}>{visitCount > 1 ? `${visitCount}×` : '✓'}</span>
             ) : (
-              <ChevronRight size={12} color="#484F58" style={{ marginLeft: 'auto' }} />
+              <ChevronRight size={12} color="#8B949E" style={{ marginLeft: 'auto' }} />
             )}
           </div>
         </div>
@@ -471,7 +471,7 @@ export default function StadiumsPage() {
           <div style={{ maxWidth: 960, margin: '0 auto', padding: '20px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>The Ballparks</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>The Ballparks</div>
                 <div style={{ fontSize: 28, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1, marginBottom: 4 }}>{visitedCount} of 30 visited</div>
                 <div style={{ fontSize: 14, color: '#8B949E' }}>Chasing all 30 MLB ballparks</div>
               </div>
@@ -549,7 +549,7 @@ export default function StadiumsPage() {
               {/* Marquee Events — All-Star, Home Run Derby, World Series */}
               {(['all_star','home_run_derby','world_series'] as const).some(cat => baseballEvents.some(e => e.category === cat)) && (
                 <div style={{ marginBottom: 32 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#F5A623', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     🏆 Marquee Events
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -574,7 +574,7 @@ export default function StadiumsPage() {
                 const meta = EVENT_META[cat]
                 return (
                   <div key={cat} style={{ marginBottom: 32 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: meta.color, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: meta.color, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                       {meta.emoji} {meta.label}
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -682,7 +682,7 @@ export default function StadiumsPage() {
         .stadium-card:hover {
           transform: translateY(-2px) !important;
           box-shadow: 0 6px 24px rgba(0,0,0,0.4) !important;
-          border-color: #484F58 !important;
+          border-color: #8B949E !important;
           opacity: 1 !important;
         }
         .stadium-card:active { transform: translateY(0) !important; transition: transform 0.05s !important; }

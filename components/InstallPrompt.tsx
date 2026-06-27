@@ -60,7 +60,7 @@ export default function InstallPrompt() {
         <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.3 }}>
           Add Chasing 30 to your home screen
         </div>
-        <div style={{ fontSize: 11, color: '#8B949E', marginTop: 2 }}>
+        <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
           Quick access, offline support
         </div>
       </div>

@@ -153,7 +153,7 @@ function SectionHeader({ icon, label }: { icon: React.ReactNode; label: string }
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '28px 0 16px' }}>
       <span style={{ color: '#1F6FEB', flexShrink: 0, display: 'flex' }}>{icon}</span>
       <span style={{
-        fontSize: 11, fontWeight: 700, color: '#8B949E',
+        fontSize: 13, fontWeight: 700, color: '#8B949E',
         textTransform: 'uppercase', letterSpacing: '0.09em', whiteSpace: 'nowrap',
       }}>
         {label}
@@ -698,7 +698,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 28, marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <MapPin size={15} style={{ color: '#1F6FEB' }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.09em' }}>
                   Stadiums &amp; Games
                 </span>
               </div>
@@ -831,7 +831,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                                   padding: '8px 10px', borderRadius: 8, marginBottom: 8,
                                   backgroundColor: 'rgba(245,166,35,0.07)',
                                   border: '1px solid rgba(245,166,35,0.25)',
-                                  fontSize: 11, color: '#F5A623',
+                                  fontSize: 13, color: '#F5A623',
                                 }}>
                                   ⭐ MLB event — this stadium will count as a visit toward your Chase progress
                                 </div>
@@ -966,7 +966,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                             backgroundColor: 'rgba(245,166,35,0.06)',
                             border: '1px solid rgba(245,166,35,0.25)',
                           }}>
-                            <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(245,166,35,0.7)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.7)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
                               Game Day Promotions
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -983,7 +983,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                                         <button type="button" onClick={() => removePromoPhoto(i, promoName)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#F85149', padding: 2, display: 'flex' }}>
                                           <X size={14} />
                                         </button>
-                                        <label style={{ cursor: 'pointer', fontSize: 11, color: '#8B949E', fontWeight: 600 }}>
+                                        <label style={{ cursor: 'pointer', fontSize: 13, color: '#8B949E', fontWeight: 600 }}>
                                           Replace
                                           <input type="file" accept="image/*" style={{ display: 'none' }}
                                             onChange={e => { const f = e.target.files?.[0]; if (f) uploadPromoPhoto(i, promoName, f) }} />
@@ -992,7 +992,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                                     ) : (
                                       <label style={{
                                         cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4,
-                                        fontSize: 11, fontWeight: 600, color: '#8B949E',
+                                        fontSize: 13, fontWeight: 600, color: '#8B949E',
                                         padding: '4px 8px', borderRadius: 6, border: '1px dashed #30363D', flexShrink: 0,
                                       }}>
                                         {uploading ? <Loader2 size={11} className="animate-spin" /> : <Camera size={11} />}
@@ -1020,7 +1020,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                       <div style={{ borderTop: '1px solid #30363D', paddingTop: 16, marginBottom: 16 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14 }}>
                           <Ticket size={13} style={{ color: '#F5A623' }} />
-                          <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                             Tickets &amp; Seats
                           </span>
                         </div>
@@ -1100,7 +1100,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                         <div>
                           <label style={labelStyle}>
                             Confirmation #
-                            <span style={{ fontWeight: 400, color: '#484F58', marginLeft: 4 }}>(optional)</span>
+                            <span style={{ fontWeight: 400, color: '#8B949E', marginLeft: 4 }}>(optional)</span>
                           </label>
                           <input type="text" style={inputStyle} placeholder="ABC-123456"
                             value={stop.ticket_confirmation}
@@ -1114,7 +1114,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                       <div style={{ borderTop: '1px solid #30363D', paddingTop: 16 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12 }}>
                           <DollarSign size={13} style={{ color: '#3FB950' }} />
-                          <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                             Stop Budget
                           </span>
                         </div>
@@ -1131,13 +1131,13 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                               </div>
                               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                                 <div>
-                                  <label style={{ ...labelStyle, fontSize: 11 }}>Est ($)</label>
+                                  <label style={{ ...labelStyle, fontSize: 13 }}>Est ($)</label>
                                   <input type="number" min={0} step={0.01} style={inputStyle}
                                     value={stop[`est_${cat.key}` as keyof StopDraft] as string}
                                     onChange={e => setStop(i, `est_${cat.key}`, e.target.value)} />
                                 </div>
                                 <div>
-                                  <label style={{ ...labelStyle, fontSize: 11 }}>Actual ($)</label>
+                                  <label style={{ ...labelStyle, fontSize: 13 }}>Actual ($)</label>
                                   <input type="number" min={0} step={0.01} style={inputStyle}
                                     value={stop[`actual_${cat.key}` as keyof StopDraft] as string}
                                     onChange={e => setStop(i, `actual_${cat.key}`, e.target.value)} />
@@ -1190,13 +1190,13 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                     <div>
-                      <label style={{ ...labelStyle, fontSize: 11 }}>Est ($)</label>
+                      <label style={{ ...labelStyle, fontSize: 13 }}>Est ($)</label>
                       <input type="number" min={0} step={0.01} style={inputStyle}
                         value={form[`est_${cat.key}` as keyof typeof form]}
                         onChange={e => setField(`est_${cat.key}`, e.target.value)} />
                     </div>
                     <div>
-                      <label style={{ ...labelStyle, fontSize: 11 }}>Actual ($)</label>
+                      <label style={{ ...labelStyle, fontSize: 13 }}>Actual ($)</label>
                       <input type="number" min={0} step={0.01} style={inputStyle}
                         value={form[`actual_${cat.key}` as keyof typeof form]}
                         onChange={e => setField(`actual_${cat.key}`, e.target.value)} />

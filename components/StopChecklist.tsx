@@ -68,7 +68,7 @@ export default function StopChecklist({ stopId, items, onReload }: Props) {
           <span style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>Don't Forget</span>
           {totalItems > 0 ? (
             <span style={{
-              fontSize: 11, padding: '2px 8px', borderRadius: 999, fontWeight: 600,
+              fontSize: 13, padding: '2px 8px', borderRadius: 999, fontWeight: 600,
               backgroundColor: checkedCount === totalItems
                 ? 'rgba(63,185,80,0.12)' : 'rgba(139,148,158,0.1)',
               color: checkedCount === totalItems ? '#3FB950' : '#8B949E',
@@ -80,7 +80,7 @@ export default function StopChecklist({ stopId, items, onReload }: Props) {
               {CATEGORIES.map(cat => (
                 <cat.Icon key={cat.id} size={14} color={cat.color} strokeWidth={1.8} />
               ))}
-              <span style={{ fontSize: 12, color: '#484F58', marginLeft: 2 }}>Add items</span>
+              <span style={{ fontSize: 12, color: '#8B949E', marginLeft: 2 }}>Add items</span>
             </div>
           )}
         </div>
@@ -103,7 +103,7 @@ export default function StopChecklist({ stopId, items, onReload }: Props) {
               <div key={cat.id} style={{ marginBottom: 14 }}>
                 {/* Category heading */}
                 <div style={{
-                  fontSize: 10, fontWeight: 700, color: '#8B949E',
+                  fontSize: 12, fontWeight: 700, color: '#8B949E',
                   textTransform: 'uppercase', letterSpacing: '0.07em',
                   marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5,
                 }}>
@@ -126,10 +126,10 @@ export default function StopChecklist({ stopId, items, onReload }: Props) {
                       onClick={() => toggleItem(item.id, !item.checked)}
                       style={{
                         flexShrink: 0, width: 17, height: 17, borderRadius: 4,
-                        border: `2px solid ${item.checked ? '#3FB950' : '#484F58'}`,
+                        border: `2px solid ${item.checked ? '#3FB950' : '#8B949E'}`,
                         backgroundColor: item.checked ? '#3FB950' : 'transparent',
                         cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 10, color: '#0B1117', lineHeight: 1,
+                        fontSize: 12, color: '#0B1117', lineHeight: 1,
                       }}
                     >
                       {item.checked ? '✓' : ''}
@@ -138,7 +138,7 @@ export default function StopChecklist({ stopId, items, onReload }: Props) {
                     {/* Label */}
                     <span style={{
                       flex: 1, fontSize: 13,
-                      color: item.checked ? '#484F58' : '#E6EDF3',
+                      color: item.checked ? '#8B949E' : '#E6EDF3',
                       textDecoration: item.checked ? 'line-through' : 'none',
                     }}>
                       {item.item}
@@ -150,7 +150,7 @@ export default function StopChecklist({ stopId, items, onReload }: Props) {
                       className="checklist-delete"
                       style={{
                         padding: '2px 3px', background: 'none', border: 'none',
-                        cursor: 'pointer', color: '#484F58', lineHeight: 1,
+                        cursor: 'pointer', color: '#8B949E', lineHeight: 1,
                       }}
                     >
                       <X size={11} />
@@ -205,7 +205,7 @@ export default function StopChecklist({ stopId, items, onReload }: Props) {
                     style={{
                       display: 'flex', alignItems: 'center', gap: 3,
                       marginTop: 5, padding: '3px 0', background: 'none', border: 'none',
-                      cursor: 'pointer', color: '#484F58', fontSize: 12,
+                      cursor: 'pointer', color: '#8B949E', fontSize: 12,
                     }}
                   >
                     <Plus size={11} /> Add item

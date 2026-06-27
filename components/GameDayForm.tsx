@@ -425,7 +425,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
             <div style={{ marginTop: 16 }}>
               <div
                 style={{
-                  fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
+                  fontSize: 13, fontWeight: 600, textTransform: 'uppercase',
                   letterSpacing: '0.08em', color: '#1F6FEB',
                   borderBottom: '1px solid #30363D', paddingBottom: 6, marginBottom: 10,
                 }}

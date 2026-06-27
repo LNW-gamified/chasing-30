@@ -261,7 +261,7 @@ export default async function DashboardPage() {
                 boxSizing: 'border-box',
               }}
             >
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(63,185,80,0.55)', textTransform: 'uppercase', letterSpacing: '0.22em', marginBottom: 10 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(63,185,80,0.55)', textTransform: 'uppercase', letterSpacing: '0.22em', marginBottom: 10 }}>
                 THE CHASE
               </div>
 
@@ -382,7 +382,7 @@ export default async function DashboardPage() {
                   }}>
                     {daysUntil(nextPlannedTrip.start_date)}
                   </div>
-                  <div style={{ fontSize: 11, color: 'rgba(245,166,35,0.6)', fontFamily: 'monospace', letterSpacing: '0.12em' }}>
+                  <div style={{ fontSize: 13, color: 'rgba(245,166,35,0.6)', fontFamily: 'monospace', letterSpacing: '0.12em' }}>
                     {daysUntil(nextPlannedTrip.start_date) === 0 ? 'TODAY' : daysUntil(nextPlannedTrip.start_date) === 1 ? 'DAY' : 'DAYS'}
                   </div>
                 </div>
@@ -399,7 +399,7 @@ export default async function DashboardPage() {
               <span style={{ fontSize: 14, fontWeight: 800, color: '#E6EDF3' }}>{favStadium.team}</span>
               <span style={{ fontSize: 12, color: '#8B949E', marginLeft: 2 }}>· Playoff Picture</span>
               {playoffPic.clinched && (
-                <span style={{ fontSize: 10, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', padding: '2px 8px', borderRadius: 10 }}>✓ CLINCHED</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', padding: '2px 8px', borderRadius: 10 }}>✓ CLINCHED</span>
               )}
             </div>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
@@ -421,7 +421,7 @@ export default async function DashboardPage() {
                   : null,
               ].filter(Boolean).map(stat => (
                 <div key={stat!.label}>
-                  <div style={{ fontSize: 10, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{stat!.label}</div>
+                  <div style={{ fontSize: 12, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{stat!.label}</div>
                   <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3' }}>{stat!.value}</div>
                 </div>
               ))}
@@ -507,11 +507,11 @@ export default async function DashboardPage() {
                   {value.toString()}
                 </div>
                 <div style={{ marginTop: 'auto' }}>
-                  <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     {label}
                   </div>
                   {sub && (
-                    <div style={{ fontSize: 10, color: '#8B949E', marginTop: 3, fontWeight: 500 }}>
+                    <div style={{ fontSize: 12, color: '#8B949E', marginTop: 3, fontWeight: 500 }}>
                       {sub}
                     </div>
                   )}

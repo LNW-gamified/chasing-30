@@ -188,7 +188,7 @@ function TableHeader({ gbLabel }: { gbLabel: string }) {
       display: 'flex', alignItems: 'center',
       padding: '5px 12px',
       borderBottom: '1px solid #30363D',
-      fontSize: 10, fontWeight: 700, color: '#484F58',
+      fontSize: 12, fontWeight: 700, color: '#8B949E',
       textTransform: 'uppercase', letterSpacing: '0.07em',
     }}>
       <span style={{ flex: 1 }} />
@@ -230,7 +230,7 @@ function TeamRow({
           margin: '0 12px',
           display: 'flex', alignItems: 'center', gap: 6,
         }}>
-          <span style={{ fontSize: 9, fontWeight: 700, color: '#F85149', letterSpacing: '0.08em', padding: '2px 0' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#F85149', letterSpacing: '0.08em', padding: '2px 0' }}>
             ── WC LINE ──
           </span>
         </div>
@@ -253,7 +253,7 @@ function TeamRow({
           </span>
           {clinchBadge && (
             <span style={{
-              fontSize: 9, fontWeight: 800, padding: '1px 5px', borderRadius: 20,
+              fontSize: 11, fontWeight: 800, padding: '1px 5px', borderRadius: 20,
               color: clinchBadge.color, backgroundColor: `${clinchBadge.color}18`,
               border: `1px solid ${clinchBadge.color}44`, flexShrink: 0,
             }}>
@@ -262,7 +262,7 @@ function TeamRow({
           )}
           {team.eliminationNumber && !clinchBadge && (
             <span style={{
-              fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 20, flexShrink: 0,
+              fontSize: 11, fontWeight: 700, padding: '1px 5px', borderRadius: 20, flexShrink: 0,
               color: '#F85149', backgroundColor: 'rgba(248,81,73,0.08)',
               border: '1px solid rgba(248,81,73,0.25)',
             }}>
@@ -280,13 +280,13 @@ function TeamRow({
         }}>
           {gbValue}
         </span>
-        <span style={{ width: COL_L10, textAlign: 'right', flexShrink: 0, fontSize: 11, color: '#8B949E', fontVariantNumeric: 'tabular-nums' }}>
+        <span style={{ width: COL_L10, textAlign: 'right', flexShrink: 0, fontSize: 13, color: '#8B949E', fontVariantNumeric: 'tabular-nums' }}>
           {team.last10}
         </span>
         <span style={{ width: COL_TREND, textAlign: 'center', flexShrink: 0 }}>
           {team.trend === 'up'   && <TrendingUp   size={13} color="#3FB950" strokeWidth={2.5} />}
           {team.trend === 'down' && <TrendingDown size={13} color="#F85149" strokeWidth={2.5} />}
-          {team.trend === 'flat' && <Minus        size={13} color="#484F58" strokeWidth={2} />}
+          {team.trend === 'flat' && <Minus        size={13} color="#8B949E" strokeWidth={2} />}
         </span>
       </div>
     </>
@@ -344,7 +344,7 @@ export default function PennantRace({ favAbbr }: { favAbbr: string }) {
           🏆 The Pennant Race
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {updLabel && <span style={{ fontSize: 11, color: '#8B949E' }}>{updLabel}</span>}
+          {updLabel && <span style={{ fontSize: 13, color: '#8B949E' }}>{updLabel}</span>}
           <button
             onClick={poll}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8B949E', display: 'flex', padding: 2 }}
@@ -374,7 +374,7 @@ export default function PennantRace({ favAbbr }: { favAbbr: string }) {
               </span>
               {data.leaderMagicNumber && (
                 <span style={{
-                  fontSize: 11, fontWeight: 700,
+                  fontSize: 13, fontWeight: 700,
                   color: '#F5A623', background: 'rgba(245,166,35,0.12)',
                   border: '1px solid rgba(245,166,35,0.3)',
                   borderRadius: 20, padding: '2px 10px',

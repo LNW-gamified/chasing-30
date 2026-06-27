@@ -138,7 +138,7 @@ export default function DestinationTripForm({ onClose, onSaved }: Props) {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           <div>
-            <div style={{ fontSize: 11, color: '#8B949E', textTransform: 'uppercase', letterSpacing: 1 }}>
+            <div style={{ fontSize: 13, color: '#8B949E', textTransform: 'uppercase', letterSpacing: 1 }}>
               Baseball Destination Trip
             </div>
             <div style={{ fontSize: 18, fontWeight: 700, color: '#E6EDF3', marginTop: 2 }}>
@@ -179,7 +179,7 @@ export default function DestinationTripForm({ onClose, onSaved }: Props) {
                   if (!items.length) return null
                   return (
                     <div key={group.label}>
-                      <div style={{ fontSize: 11, color: '#8B949E', padding: '6px 8px 2px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      <div style={{ fontSize: 13, color: '#8B949E', padding: '6px 8px 2px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                         {group.icon} {group.label}
                       </div>
                       {items.map(d => (
@@ -199,7 +199,7 @@ export default function DestinationTripForm({ onClose, onSaved }: Props) {
                           <span style={{ fontSize: 20, flexShrink: 0 }}>{d.icon}</span>
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: 600 }}>{d.name}</div>
-                            <div style={{ fontSize: 11, color: '#8B949E' }}>{destinationLocation(d)}</div>
+                            <div style={{ fontSize: 13, color: '#8B949E' }}>{destinationLocation(d)}</div>
                           </div>
                         </button>
                       ))}

@@ -92,7 +92,7 @@ body {
 
 .card-hover:hover {
   background-color: var(--color-bg-elevated);
-  border-color: #484F58;
+  border-color: #8B949E;
 }
 
 .btn-primary {
@@ -139,7 +139,7 @@ body {
 .btn-secondary:hover {
   background-color: var(--color-bg-elevated);
   color: var(--color-text-primary);
-  border-color: #484F58;
+  border-color: #8B949E;
 }
 
 .input {

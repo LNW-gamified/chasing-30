@@ -259,7 +259,7 @@ export default function TripsPage() {
               border: '1px solid #30363D',
             }}>
               <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}>
-                <Plane size={52} color="#484F58" strokeWidth={1.2} />
+                <Plane size={52} color="#8B949E" strokeWidth={1.2} />
               </div>
               <div style={{ fontSize: 20, fontWeight: 700, color: '#E6EDF3', marginBottom: 8 }}>Your road trip starts here</div>
               <div style={{ fontSize: 15, color: '#8B949E', marginBottom: 24 }}>
@@ -331,7 +331,7 @@ export default function TripsPage() {
                               display: 'flex', alignItems: 'center', gap: 7,
                             }}>
                               <MapPin size={12} color="#F5A623" />
-                              <span style={{ fontSize: 11, fontWeight: 700, color: '#F5A623', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                              <span style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                                 Baseball Destination
                               </span>
                             </div>
@@ -391,7 +391,7 @@ export default function TripsPage() {
                                 <span style={{ fontSize: 20 }}>{destInfo.icon}</span>
                                 <div>
                                   <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{destInfo.name}</div>
-                                  <div style={{ fontSize: 11, color: '#8B949E' }}>
+                                  <div style={{ fontSize: 13, color: '#8B949E' }}>
                                     {destInfo.city !== 'Various' ? `${destInfo.city}${destInfo.state ? `, ${destInfo.state}` : ''}` : 'Location varies'}
                                   </div>
                                 </div>
@@ -433,10 +433,10 @@ export default function TripsPage() {
                                   {totalStops > 0 && (
                                     <div>
                                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                        <span style={{ fontSize: 11, color: allVisited ? '#3FB950' : '#8B949E', fontWeight: 600 }}>
+                                        <span style={{ fontSize: 13, color: allVisited ? '#3FB950' : '#8B949E', fontWeight: 600 }}>
                                           {allVisited ? '✓ All stops visited' : `${stopsVisited} of ${totalStops} stops visited`}
                                         </span>
-                                        <span style={{ fontSize: 11, color: '#484F58' }}>
+                                        <span style={{ fontSize: 13, color: '#8B949E' }}>
                                           {Math.round((stopsVisited / totalStops) * 100)}%
                                         </span>
                                       </div>
@@ -460,7 +460,7 @@ export default function TripsPage() {
                                 display: 'inline-flex', alignItems: 'center', gap: 4,
                                 padding: '3px 10px', borderRadius: 20, marginBottom: 10,
                                 backgroundColor: 'rgba(139,148,158,0.1)',
-                                color: '#8B949E', fontSize: 10, fontWeight: 600,
+                                color: '#8B949E', fontSize: 12, fontWeight: 600,
                                 letterSpacing: '0.08em',
                                 border: '1px solid rgba(139,148,158,0.2)',
                               }}>

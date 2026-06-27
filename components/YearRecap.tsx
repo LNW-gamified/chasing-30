@@ -78,7 +78,7 @@ export default function YearRecap({ allVisits, allStadiums }: Props) {
         <div style={{ backgroundColor: '#0D1117', borderRadius: 16, border: '1px solid #30363D', overflow: 'hidden' }}>
           {/* Banner */}
           <div style={{ background: 'linear-gradient(135deg, #0E1B2E 0%, #1A1500 100%)', padding: '20px 24px', borderBottom: '1px solid #30363D' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#F5A623', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>
               {year} Season
             </div>
             <div style={{ fontSize: 28, fontWeight: 900, color: '#E6EDF3', lineHeight: 1.1 }}>
@@ -100,7 +100,7 @@ export default function YearRecap({ allVisits, allStadiums }: Props) {
             ].map(({ label, value }) => (
               <div key={label} style={{ backgroundColor: '#161B22', padding: '16px 12px', textAlign: 'center' }}>
                 <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{value}</div>
-                <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
+                <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
               </div>
             ))}
           </div>
@@ -115,9 +115,9 @@ export default function YearRecap({ allVisits, allStadiums }: Props) {
                 const s = allStadiums.find(s => s.id === v.stadium_id)
                 return (
                   <div key={label} style={{ flex: 1, backgroundColor: '#1C2430', borderRadius: 10, padding: '10px 12px' }}>
-                    <div style={{ fontSize: 10, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
+                    <div style={{ fontSize: 12, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
                     <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3' }}>{s?.name ?? '—'}</div>
-                    <div style={{ fontSize: 11, color: '#8B949E', marginTop: 2 }}>
+                    <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
                       {new Date(v.visit_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </div>
                   </div>
@@ -129,7 +129,7 @@ export default function YearRecap({ allVisits, allStadiums }: Props) {
             {recap.topStad && recap.topStadCount > 1 && (
               <div style={{ backgroundColor: '#1C2430', borderRadius: 10, padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontSize: 10, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', marginBottom: 2 }}>Most Visited</div>
+                  <div style={{ fontSize: 12, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', marginBottom: 2 }}>Most Visited</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{recap.topStad.name}</div>
                 </div>
                 <div style={{ fontSize: 22, fontWeight: 900, color: '#F5A623' }}>{recap.topStadCount}×</div>
@@ -139,7 +139,7 @@ export default function YearRecap({ allVisits, allStadiums }: Props) {
             {/* Moments */}
             {recap.topMoments.length > 0 && (
               <div>
-                <div style={{ fontSize: 10, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Memorable Moments</div>
+                <div style={{ fontSize: 12, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Memorable Moments</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {recap.topMoments.map(([event, count]) => (
                     <span key={event} style={{ fontSize: 12, fontWeight: 600, color: '#C9D1D9', backgroundColor: '#1C2430', border: '1px solid #30363D', borderRadius: 20, padding: '4px 10px' }}>
@@ -153,7 +153,7 @@ export default function YearRecap({ allVisits, allStadiums }: Props) {
             {/* New stadiums */}
             {recap.newStadiums.length > 0 && (
               <div>
-                <div style={{ fontSize: 10, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>New Stadiums Checked Off</div>
+                <div style={{ fontSize: 12, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>New Stadiums Checked Off</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {recap.newStadiums.map(s => (
                     <span key={s.id} style={{ fontSize: 12, fontWeight: 600, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.1)', border: '1px solid rgba(63,185,80,0.3)', borderRadius: 20, padding: '4px 10px' }}>

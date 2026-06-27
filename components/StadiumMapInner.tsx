@@ -324,7 +324,7 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
                 width: 32, height: 32, borderRadius: '50%',
-                border: '2.5px solid #484F58',
+                border: '2.5px solid #8B949E',
                 backgroundColor: '#1C2430',
                 flexShrink: 0,
               }} />
@@ -492,7 +492,7 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
                   display: 'inline-flex', alignItems: 'center', gap: 4,
                   padding: '2px 8px', borderRadius: 20,
                   backgroundColor: 'rgba(63,185,80,0.12)', color: '#3FB950',
-                  fontSize: 11, fontWeight: 600, marginBottom: 10,
+                  fontSize: 13, fontWeight: 600, marginBottom: 10,
                 }}>
                   ✓ Visited{selected.visits.length > 1 ? ` · ${selected.visits.length}×` : ''}
                 </span>

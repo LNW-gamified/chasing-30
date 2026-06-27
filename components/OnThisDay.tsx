@@ -118,14 +118,14 @@ export default function OnThisDay({ facts }: { facts: HistoryFact[] }) {
         background: 'rgba(0,0,0,0.25)',
       }}>
         <div style={{
-          fontFamily: 'monospace', fontSize: 10, fontWeight: 700,
+          fontFamily: 'monospace', fontSize: 12, fontWeight: 700,
           letterSpacing: '0.22em', color: '#F5A623',
           textShadow: '0 0 10px rgba(245,166,35,0.5)',
         }}>
           ◈ ON THIS DAY IN BASEBALL
         </div>
         <div style={{
-          fontFamily: 'monospace', fontSize: 10, fontWeight: 700,
+          fontFamily: 'monospace', fontSize: 12, fontWeight: 700,
           letterSpacing: '0.14em', color: 'rgba(245,166,35,0.55)',
         }}>
           {dateStr}
@@ -145,12 +145,12 @@ export default function OnThisDay({ facts }: { facts: HistoryFact[] }) {
           <div style={{ textAlign: 'center', padding: '24px 0 16px' }}>
             <div style={{ fontSize: 30, marginBottom: 10, opacity: 0.6 }}>⚾</div>
             <div style={{
-              fontFamily: 'monospace', fontSize: 10, fontWeight: 700,
+              fontFamily: 'monospace', fontSize: 12, fontWeight: 700,
               letterSpacing: '0.18em', color: 'rgba(245,166,35,0.4)',
             }}>
               NO HISTORIC RECORD FOR TODAY
             </div>
-            <div style={{ fontSize: 13, color: '#484F58', marginTop: 8, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 13, color: '#8B949E', marginTop: 8, lineHeight: 1.5 }}>
               But history is being made somewhere —<br />check the scoreboard tomorrow.
             </div>
           </div>
@@ -172,7 +172,7 @@ export default function OnThisDay({ facts }: { facts: HistoryFact[] }) {
                   padding: '2px 7px', borderRadius: 4,
                   background: `${color}18`,
                   border: `1px solid ${color}55`,
-                  fontFamily: 'monospace', fontSize: 9, fontWeight: 700,
+                  fontFamily: 'monospace', fontSize: 11, fontWeight: 700,
                   letterSpacing: '0.16em', color,
                 }}>
                   {label}
@@ -194,7 +194,7 @@ export default function OnThisDay({ facts }: { facts: HistoryFact[] }) {
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                 {fact.player_name && (
                   <span style={{
-                    fontFamily: 'monospace', fontSize: 10, fontWeight: 700,
+                    fontFamily: 'monospace', fontSize: 12, fontWeight: 700,
                     letterSpacing: '0.06em', color: 'rgba(245,166,35,0.75)',
                   }}>
                     ▸ {fact.player_name}
@@ -202,7 +202,7 @@ export default function OnThisDay({ facts }: { facts: HistoryFact[] }) {
                 )}
                 {fact.team && (
                   <span style={{
-                    fontFamily: 'monospace', fontSize: 10,
+                    fontFamily: 'monospace', fontSize: 12,
                     letterSpacing: '0.06em', color: 'rgba(200,223,192,0.4)',
                   }}>
                     {fact.team}
@@ -252,7 +252,7 @@ export default function OnThisDay({ facts }: { facts: HistoryFact[] }) {
               />
             ))}
             <span style={{
-              fontFamily: 'monospace', fontSize: 9,
+              fontFamily: 'monospace', fontSize: 11,
               color: 'rgba(245,166,35,0.35)', marginLeft: 4,
             }}>
               {idx + 1}/{facts.length}

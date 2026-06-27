@@ -79,8 +79,8 @@ export default function AppShell({ children, nextTrip, visitedCount, rankName, r
               <div style={{ fontSize: '0.75rem', color: '#8B949E', marginTop: 2 }}>MLB Stadium Tracker</div>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 8, padding: '3px 10px', borderRadius: 999, backgroundColor: 'rgba(245,166,35,0.1)', border: '1px solid rgba(245,166,35,0.25)' }}>
                 <span style={{ fontSize: 12 }}>{rankIcon}</span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#F5A623' }}>{rankName}</span>
-                <span style={{ fontSize: 10, color: '#8B949E', fontWeight: 600 }}>· {rankXp} pts</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#F5A623' }}>{rankName}</span>
+                <span style={{ fontSize: 12, color: '#8B949E', fontWeight: 600 }}>· {rankXp} pts</span>
               </div>
             </div>
             <button
@@ -98,7 +98,7 @@ export default function AppShell({ children, nextTrip, visitedCount, rankName, r
             <Link href={`/trips/${nextTrip.id}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12, textDecoration: 'none', backgroundColor: 'rgba(31,111,235,0.08)', border: '1px solid rgba(31,111,235,0.2)' }}>
               {nextTrip.stadiumAbbr && <TeamLogo abbreviation={nextTrip.stadiumAbbr} size={28} />}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#1F6FEB', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Next Stop</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#1F6FEB', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>Next Stop</div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextTrip.stadiumName}</div>
               </div>
               <span style={{ fontSize: 13, fontWeight: 800, color: '#F5A623', flexShrink: 0 }}>{tripLabel}</span>

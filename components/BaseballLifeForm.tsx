@@ -126,7 +126,7 @@ const sel: React.CSSProperties = { ...inp, appearance: 'none', paddingRight: 36 
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
       {children}
     </div>
   )
@@ -136,7 +136,7 @@ function SelectWrap({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ position: 'relative' }}>
       {children}
-      <ChevronDown size={14} color="#484F58" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+      <ChevronDown size={14} color="#8B949E" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
     </div>
   )
 }
@@ -444,7 +444,7 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
                           <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Loading games…
                         </div>
                       ) : miLBGames.length === 0 ? (
-                        <div style={{ fontSize: 13, color: '#484F58', padding: '8px 12px', borderRadius: 8, border: '1px solid #30363D' }}>
+                        <div style={{ fontSize: 13, color: '#8B949E', padding: '8px 12px', borderRadius: 8, border: '1px solid #30363D' }}>
                           No completed home games found this season — enter date below.
                         </div>
                       ) : (
@@ -522,7 +522,7 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
                     </div>
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>Count as Chase 30 visit</div>
-                      <div style={{ fontSize: 11, color: '#8B949E' }}>Also logs this as an MLB stadium visit</div>
+                      <div style={{ fontSize: 13, color: '#8B949E' }}>Also logs this as an MLB stadium visit</div>
                     </div>
                   </div>
                 )}
@@ -685,7 +685,7 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
                     type="button"
                     onClick={addGiveawayItem}
                     disabled={!giveawayInput.trim()}
-                    style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid #30363D', backgroundColor: giveawayInput.trim() ? '#1F6FEB' : '#1C2430', color: giveawayInput.trim() ? '#fff' : '#484F58', cursor: giveawayInput.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, fontWeight: 600, fontSize: 13 }}
+                    style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid #30363D', backgroundColor: giveawayInput.trim() ? '#1F6FEB' : '#1C2430', color: giveawayInput.trim() ? '#fff' : '#8B949E', cursor: giveawayInput.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, fontWeight: 600, fontSize: 13 }}
                   >
                     <Plus size={13} /> Add
                   </button>
@@ -699,13 +699,13 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={item.photo_url} alt={item.name} style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover', display: 'block' }} />
-                            <label style={{ cursor: 'pointer', fontSize: 11, color: '#8B949E', fontWeight: 600 }}>
+                            <label style={{ cursor: 'pointer', fontSize: 13, color: '#8B949E', fontWeight: 600 }}>
                               Replace
                               <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadGiveawayPhoto(idx, f) }} />
                             </label>
                           </div>
                         ) : (
-                          <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#8B949E', padding: '4px 8px', borderRadius: 6, border: '1px dashed #30363D', flexShrink: 0 }}>
+                          <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: '#8B949E', padding: '4px 8px', borderRadius: 6, border: '1px dashed #30363D', flexShrink: 0 }}>
                             {uploadingIdx[idx] ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} /> : <Camera size={11} />}
                             {uploadingIdx[idx] ? 'Uploading…' : 'Photo'}
                             <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadGiveawayPhoto(idx, f) }} />

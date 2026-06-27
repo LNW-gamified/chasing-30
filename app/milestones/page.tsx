@@ -114,7 +114,7 @@ export default async function MilestonesPage() {
         {/* ── Gamified Hero ─────────────────────────────────────── */}
         <div style={{ backgroundColor: '#0D1117', borderBottom: '1px solid #30363D', padding: '16px 16px 14px', overflow: 'hidden', position: 'relative' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, maxWidth: 560, margin: '0 auto 8px' }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.15em' }}>The Record Books</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.15em' }}>The Record Books</span>
             <SpecialVisitButton label="+ Log Entry" variant="secondary" />
           </div>
           {/* Background radial glow */}
@@ -170,15 +170,15 @@ export default async function MilestonesPage() {
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 14px', borderRadius: 14, background: 'rgba(63,185,80,0.1)', border: '1px solid rgba(63,185,80,0.25)', minWidth: 64 }}>
                 <span style={{ fontSize: 22, fontWeight: 900, color: '#3FB950', lineHeight: 1 }}>{totalEarned}</span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#3FB950', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Earned</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#3FB950', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Earned</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 14px', borderRadius: 14, background: 'rgba(31,111,235,0.1)', border: '1px solid rgba(31,111,235,0.25)', minWidth: 64 }}>
                 <span style={{ fontSize: 22, fontWeight: 900, color: '#58A6FF', lineHeight: 1 }}>{inProgress}</span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#58A6FF', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>In Progress</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#58A6FF', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>In Progress</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 14px', borderRadius: 14, background: 'rgba(139,148,158,0.08)', border: '1px solid #30363D', minWidth: 64 }}>
                 <span style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{totalAchievements}</span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Total</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Total</span>
               </div>
             </div>
 

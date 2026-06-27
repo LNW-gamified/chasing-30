@@ -559,7 +559,7 @@ export default function MinorLeagueDetailPage() {
           </button>
 
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 16px 18px', zIndex: 10 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: 4 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: 4 }}>
               {stadium.team} — {stadium.level} affiliate of the {stadium.affiliate_full}
             </div>
             <h1 style={{ margin: '0 0 4px', fontSize: 28, fontWeight: 800, color: '#ffffff', lineHeight: 1.1, textShadow: '0 2px 10px rgba(0,0,0,0.4)' }}>
@@ -591,7 +591,7 @@ export default function MinorLeagueDetailPage() {
                   border: '1px solid #30363D',
                 }}>
                   <Icon size={15} color={teamColor} strokeWidth={2} style={{ marginBottom: 5 }} />
-                  <div style={{ fontSize: 9, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</div>
                   <div style={{ fontWeight: 800, fontSize: 15, color: '#E6EDF3', lineHeight: 1.2, textAlign: 'center' }}>{value}</div>
                 </div>
               ))}
@@ -734,7 +734,7 @@ export default function MinorLeagueDetailPage() {
                               <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={36} logoUrl={stadium.logo_url} />
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 11, color: '#8B949E', marginBottom: 3, fontWeight: 500 }}>
+                              <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 3, fontWeight: 500 }}>
                                 {formatDate(visit.visit_date)}
                               </div>
                               <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -755,7 +755,7 @@ export default function MinorLeagueDetailPage() {
                               )}
                               <ChevronRight
                                 size={16}
-                                color={isExpanded ? '#E6EDF3' : '#484F58'}
+                                color={isExpanded ? '#E6EDF3' : '#8B949E'}
                                 style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}
                               />
                             </div>
@@ -774,7 +774,7 @@ export default function MinorLeagueDetailPage() {
                                   display: 'flex', alignItems: 'center', gap: 12,
                                 }}>
                                   <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', fontWeight: 600, marginBottom: 3 }}>
+                                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', fontWeight: 600, marginBottom: 3 }}>
                                       {visit.home_team ?? stadium.team} vs {visit.away_team ?? opponent}
                                     </div>
                                     <div style={{ fontSize: 28, fontWeight: 900, color: '#ffffff', lineHeight: 1 }}>
@@ -814,10 +814,10 @@ export default function MinorLeagueDetailPage() {
 
                               {visit.moments && visit.moments.length > 0 && (
                                 <div style={{ marginBottom: 12 }}>
-                                  <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Moments</div>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Moments</div>
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                                     {visit.moments.map(m => (
-                                      <span key={m} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 12, backgroundColor: 'rgba(31,111,235,0.1)', border: '1px solid rgba(31,111,235,0.2)', color: '#58A6FF' }}>{m}</span>
+                                      <span key={m} style={{ fontSize: 13, padding: '3px 8px', borderRadius: 12, backgroundColor: 'rgba(31,111,235,0.1)', border: '1px solid rgba(31,111,235,0.2)', color: '#58A6FF' }}>{m}</span>
                                     ))}
                                   </div>
                                 </div>
@@ -833,12 +833,12 @@ export default function MinorLeagueDetailPage() {
                                 return (
                                   <div style={{ marginTop: 12, backgroundColor: '#0B1117', borderRadius: 10, overflow: 'hidden', border: '1px solid #30363D' }}>
                                     <div style={{ padding: '5px 10px', borderBottom: '1px solid #30363D', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                      <span style={{ fontSize: 10, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.1)', borderRadius: 10, padding: '2px 8px' }}>⚾ Stats from MiLB</span>
-                                      {gd.attendance && <span style={{ fontSize: 11, color: '#8B949E' }}>{Number(gd.attendance).toLocaleString()} fans</span>}
+                                      <span style={{ fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.1)', borderRadius: 10, padding: '2px 8px' }}>⚾ Stats from MiLB</span>
+                                      {gd.attendance && <span style={{ fontSize: 13, color: '#8B949E' }}>{Number(gd.attendance).toLocaleString()} fans</span>}
                                     </div>
                                     {innings.length > 0 && (
                                       <div style={{ overflowX: 'auto' }}>
-                                        <table style={{ borderCollapse: 'collapse', fontSize: 11, minWidth: '100%' }}>
+                                        <table style={{ borderCollapse: 'collapse', fontSize: 13, minWidth: '100%' }}>
                                           <thead>
                                             <tr style={{ borderBottom: '1px solid #30363D' }}>
                                               <th style={{ textAlign: 'left', padding: '4px 8px', color: '#8B949E', fontWeight: 600, minWidth: 48 }}>Team</th>
@@ -859,18 +859,18 @@ export default function MinorLeagueDetailPage() {
                                               const wins   = side === 'home' ? homeWon : !homeWon
                                               return (
                                                 <tr key={side}>
-                                                  <td style={{ padding: '4px 8px', fontWeight: wins ? 700 : 500, fontSize: 11, color: wins ? '#E6EDF3' : '#8B949E' }}>{name}</td>
+                                                  <td style={{ padding: '4px 8px', fontWeight: wins ? 700 : 500, fontSize: 13, color: wins ? '#E6EDF3' : '#8B949E' }}>{name}</td>
                                                   {innings.map((inn: any) => {
                                                     const val = inn[side]
                                                     return (
-                                                      <td key={inn.inning} style={{ textAlign: 'center', padding: '4px 4px', color: (val != null && val > 0) ? '#E6EDF3' : '#8B949E', fontWeight: (val != null && val > 0) ? 700 : 400, fontSize: 11 }}>
+                                                      <td key={inn.inning} style={{ textAlign: 'center', padding: '4px 4px', color: (val != null && val > 0) ? '#E6EDF3' : '#8B949E', fontWeight: (val != null && val > 0) ? 700 : 400, fontSize: 13 }}>
                                                         {val ?? '—'}
                                                       </td>
                                                     )
                                                   })}
                                                   <td style={{ textAlign: 'center', padding: '4px 5px', fontWeight: 800, fontSize: 12, color: wins ? '#E6EDF3' : '#8B949E', borderLeft: '1px solid #30363D' }}>{totalR ?? '—'}</td>
-                                                  <td style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontSize: 11 }}>{totalH ?? '—'}</td>
-                                                  <td style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontSize: 11 }}>{totalE ?? '—'}</td>
+                                                  <td style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontSize: 13 }}>{totalH ?? '—'}</td>
+                                                  <td style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontSize: 13 }}>{totalE ?? '—'}</td>
                                                 </tr>
                                               )
                                             })}
@@ -880,7 +880,7 @@ export default function MinorLeagueDetailPage() {
                                     )}
                                     <div style={{ padding: '8px 10px', borderTop: '1px solid rgba(48,54,61,0.6)' }}>
                                       {(gd.winningPitcher || gd.losingPitcher) && (
-                                        <div style={{ fontSize: 11, color: '#8B949E', display: 'flex', flexWrap: 'wrap', gap: '2px 10px', marginBottom: 6 }}>
+                                        <div style={{ fontSize: 13, color: '#8B949E', display: 'flex', flexWrap: 'wrap', gap: '2px 10px', marginBottom: 6 }}>
                                           {gd.winningPitcher && <span><span style={{ color: '#3FB950', fontWeight: 600 }}>W</span> {gd.winningPitcher}</span>}
                                           {gd.losingPitcher  && <span><span style={{ color: '#F85149', fontWeight: 600 }}>L</span> {gd.losingPitcher}</span>}
                                           {gd.savePitcher    && <span><span style={{ color: '#F5A623', fontWeight: 600 }}>S</span> {gd.savePitcher}</span>}
@@ -891,9 +891,9 @@ export default function MinorLeagueDetailPage() {
                                           {[{ label: awayTeam, sp: gd.awaySP }, { label: homeTeam, sp: gd.homeSP }].map(({ label, sp }) =>
                                             sp ? (
                                               <div key={label} style={{ backgroundColor: '#161B22', borderRadius: 8, padding: '7px 10px' }}>
-                                                <div style={{ fontSize: 10, color: '#8B949E', marginBottom: 1 }}>{label} SP</div>
+                                                <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 1 }}>{label} SP</div>
                                                 <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3' }}>{sp.name}</div>
-                                                <div style={{ fontSize: 11, color: '#8B949E', marginTop: 2 }}>
+                                                <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
                                                   {[sp.ip && `${sp.ip} IP`, sp.h != null && `${sp.h} H`, sp.er != null && `${sp.er} ER`, sp.k != null && `${sp.k} K`].filter(Boolean).join(' · ')}
                                                 </div>
                                               </div>
@@ -925,7 +925,7 @@ export default function MinorLeagueDetailPage() {
                               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
                                 <button
                                   onClick={() => openEdit(visit)}
-                                  style={{ fontSize: 11, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '4px 10px', cursor: 'pointer' }}
+                                  style={{ fontSize: 13, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '4px 10px', cursor: 'pointer' }}
                                 >
                                   Edit Giveaways
                                 </button>
@@ -933,7 +933,7 @@ export default function MinorLeagueDetailPage() {
 
                               {visit.giveaway_items && visit.giveaway_items.length > 0 && (
                                 <div style={{ marginTop: 8, padding: '12px 14px', borderRadius: 10, backgroundColor: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.2)' }}>
-                                  <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
                                     Giveaways &amp; Promotions
                                   </div>
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -964,7 +964,7 @@ export default function MinorLeagueDetailPage() {
                               <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid #30363D' }}>
                                 <button
                                   onClick={() => deleteEntry(visit.id)}
-                                  style={{ fontSize: 11, fontWeight: 500, color: '#8B949E', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                                  style={{ fontSize: 13, fontWeight: 500, color: '#8B949E', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                                 >
                                   Delete this entry
                                 </button>
@@ -1002,20 +1002,20 @@ export default function MinorLeagueDetailPage() {
                             }}>
                               <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                                 <div style={{ textAlign: 'center', minWidth: 36 }}>
-                                  <div style={{ fontSize: 10, color: '#8B949E', fontWeight: 600 }}>{dayAbbr}</div>
+                                  <div style={{ fontSize: 12, color: '#8B949E', fontWeight: 600 }}>{dayAbbr}</div>
                                   <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 700 }}>{dateStr}</div>
                                 </div>
                                 <div>
                                   <div style={{ fontWeight: 700, fontSize: 14, color: '#E6EDF3' }}>
                                     <span style={{ color: g.isHome ? '#3FB950' : '#8B949E', marginRight: 4 }}>{prefix}</span>
                                     {g.opponent}
-                                    {g.scheduledInnings === 7 && <span style={{ fontSize: 11, color: '#8B949E', marginLeft: 6 }}>7 inn.</span>}
+                                    {g.scheduledInnings === 7 && <span style={{ fontSize: 13, color: '#8B949E', marginLeft: 6 }}>7 inn.</span>}
                                   </div>
                                   {!g.isHome && g.venue && (
-                                    <div style={{ fontSize: 11, color: '#8B949E', marginTop: 1 }}>{g.venue}</div>
+                                    <div style={{ fontSize: 13, color: '#8B949E', marginTop: 1 }}>{g.venue}</div>
                                   )}
                                   {g.promotions.length > 0 && (
-                                    <div style={{ fontSize: 11, color: '#F5A623', marginTop: 2 }}>
+                                    <div style={{ fontSize: 13, color: '#F5A623', marginTop: 2 }}>
                                       🎁 {g.promotions[0]}{g.promotions.length > 1 ? ` +${g.promotions.length - 1} more` : ''}
                                     </div>
                                   )}
@@ -1096,7 +1096,7 @@ export default function MinorLeagueDetailPage() {
                               }}>
                                 <div style={{ height: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
                                   {isBest && (
-                                    <div style={{ fontSize: 10, fontWeight: 800, color: '#fff', backgroundColor: '#1F6FEB', borderRadius: 20, padding: '1px 5px', whiteSpace: 'nowrap' }}>Best</div>
+                                    <div style={{ fontSize: 12, fontWeight: 800, color: '#fff', backgroundColor: '#1F6FEB', borderRadius: 20, padding: '1px 5px', whiteSpace: 'nowrap' }}>Best</div>
                                   )}
                                 </div>
                                 <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', marginBottom: 4 }}>{MONTH_NAMES[w.month]}</div>
@@ -1104,11 +1104,11 @@ export default function MinorLeagueDetailPage() {
                                 <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', marginBottom: 4 }}>{Math.round(w.avg_high_temp)}°</div>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, marginBottom: 2 }}>
                                   <CloudRain size={11} color="#8B949E" strokeWidth={2} />
-                                  <span style={{ fontSize: 11, color: '#8B949E' }}>{w.avg_precip_days.toFixed(0)}d</span>
+                                  <span style={{ fontSize: 13, color: '#8B949E' }}>{w.avg_precip_days.toFixed(0)}d</span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
                                   <Wind size={11} color="#8B949E" strokeWidth={2} />
-                                  <span style={{ fontSize: 11, color: '#8B949E' }}>{Math.round(w.avg_wind_speed)}mph</span>
+                                  <span style={{ fontSize: 13, color: '#8B949E' }}>{Math.round(w.avg_wind_speed)}mph</span>
                                 </div>
                               </div>
                             )
@@ -1116,13 +1116,13 @@ export default function MinorLeagueDetailPage() {
                         </div>
                         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 10, paddingLeft: 2 }}>
                           {(['great', 'good', 'fair', 'avoid'] as const).map(r => (
-                            <span key={r} style={{ fontSize: 11, color: '#8B949E' }}>{RATING_LABEL[r]}</span>
+                            <span key={r} style={{ fontSize: 13, color: '#8B949E' }}>{RATING_LABEL[r]}</span>
                           ))}
                         </div>
                       </>
                     )
                   })() : weather !== null ? (
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '28px 16px', textAlign: 'center', color: '#484F58', fontSize: 13 }}>
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '28px 16px', textAlign: 'center', color: '#8B949E', fontSize: 13 }}>
                       Weather data unavailable.
                     </div>
                   ) : null}
@@ -1177,7 +1177,7 @@ export default function MinorLeagueDetailPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                       <TeamLogo abbreviation={stadium.affiliate} size={56} />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
                           MLB Parent Club
                         </div>
                         <div style={{ fontSize: 20, fontWeight: 800, color: '#ffffff', lineHeight: 1.1 }}>
@@ -1212,7 +1212,7 @@ export default function MinorLeagueDetailPage() {
                       <div style={{
                         display: 'grid', gridTemplateColumns: '1fr 36px 36px 48px 36px',
                         gap: 4, padding: '8px 14px',
-                        fontSize: 10, fontWeight: 700, color: '#8B949E',
+                        fontSize: 12, fontWeight: 700, color: '#8B949E',
                         textTransform: 'uppercase', letterSpacing: '0.07em',
                         borderBottom: '1px solid #30363D',
                       }}>
@@ -1266,7 +1266,7 @@ export default function MinorLeagueDetailPage() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         {groups.map(group => (
                           <div key={group.label}>
-                            <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
                               {group.label}
                             </div>
                             <div style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden' }}>
@@ -1278,13 +1278,13 @@ export default function MinorLeagueDetailPage() {
                                 }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                     {p.jerseyNumber && (
-                                      <span style={{ fontSize: 11, fontWeight: 800, color: teamColor, width: 24, textAlign: 'right', flexShrink: 0 }}>
+                                      <span style={{ fontSize: 13, fontWeight: 800, color: teamColor, width: 24, textAlign: 'right', flexShrink: 0 }}>
                                         #{p.jerseyNumber}
                                       </span>
                                     )}
                                     <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{p.name}</span>
                                   </div>
-                                  <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 8px', borderRadius: 10 }}>
+                                  <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 8px', borderRadius: 10 }}>
                                     {p.position}
                                   </span>
                                 </div>

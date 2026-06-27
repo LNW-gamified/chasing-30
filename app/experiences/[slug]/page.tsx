@@ -86,13 +86,13 @@ export default function ExperienceDetailPage() {
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
               {exp.admission && (
                 <div>
-                  <div style={{ fontSize: 10, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Admission</div>
+                  <div style={{ fontSize: 12, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Admission</div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', marginTop: 2 }}>{exp.admission}</div>
                 </div>
               )}
               {exp.hours && (
                 <div>
-                  <div style={{ fontSize: 10, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Hours</div>
+                  <div style={{ fontSize: 12, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Hours</div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', marginTop: 2 }}>{exp.hours}</div>
                 </div>
               )}
@@ -146,7 +146,7 @@ export default function ExperienceDetailPage() {
               ))}
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: '#484F58', fontSize: 13 }}>
+            <div style={{ textAlign: 'center', padding: '40px 0', color: '#8B949E', fontSize: 13 }}>
               You haven&apos;t visited yet. Tap &quot;Log a Visit&quot; when you do!
             </div>
           )}

@@ -77,12 +77,12 @@ const numCell = (v: any, highlight?: boolean): React.CSSProperties => ({
 })
 
 const LABEL: React.CSSProperties = {
-  fontSize: 10, fontWeight: 700, color: '#8B949E',
+  fontSize: 12, fontWeight: 700, color: '#8B949E',
   textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8,
 }
 
 const TABLE_HDR: React.CSSProperties = {
-  fontSize: 11, fontWeight: 700, color: '#58A6FF',
+  fontSize: 13, fontWeight: 700, color: '#58A6FF',
   borderBottom: '1px solid #30363D', paddingBottom: 6, marginBottom: 0,
   textTransform: 'uppercase', letterSpacing: '0.06em',
 }
@@ -98,10 +98,10 @@ function BattersTable({ label, batters, totals }: {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 420 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #30363D' }}>
-              <th style={{ textAlign: 'left', padding: '4px 6px', color: '#8B949E', fontWeight: 600, fontSize: 11, minWidth: 110, position: 'sticky', left: 0, backgroundColor: '#0D1117', zIndex: 2, borderRight: '1px solid rgba(48,54,61,0.5)' }}>Name</th>
-              <th style={{ textAlign: 'left', padding: '4px 4px', color: '#8B949E', fontWeight: 600, fontSize: 11, minWidth: 28 }}>Pos</th>
+              <th style={{ textAlign: 'left', padding: '4px 6px', color: '#8B949E', fontWeight: 600, fontSize: 13, minWidth: 110, position: 'sticky', left: 0, backgroundColor: '#0D1117', zIndex: 2, borderRight: '1px solid rgba(48,54,61,0.5)' }}>Name</th>
+              <th style={{ textAlign: 'left', padding: '4px 4px', color: '#8B949E', fontWeight: 600, fontSize: 13, minWidth: 28 }}>Pos</th>
               {['AB','R','H','RBI','BB','K','AVG','OPS'].map(h => (
-                <th key={h} style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontWeight: 600, fontSize: 11, minWidth: 30 }}>{h}</th>
+                <th key={h} style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontWeight: 600, fontSize: 13, minWidth: 30 }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -112,7 +112,7 @@ function BattersTable({ label, batters, totals }: {
                 backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(28,36,48,0.3)',
               }}>
                 <td style={{ padding: '5px 6px', color: '#E6EDF3', fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140, position: 'sticky', left: 0, backgroundColor: '#0D1117', zIndex: 1, borderRight: '1px solid rgba(48,54,61,0.5)' }}>{b.name}</td>
-                <td style={{ padding: '5px 4px', color: '#8B949E', fontSize: 11 }}>{b.pos}</td>
+                <td style={{ padding: '5px 4px', color: '#8B949E', fontSize: 13 }}>{b.pos}</td>
                 <td style={numCell(b.ab, true)}>{b.ab ?? '—'}</td>
                 <td style={numCell(b.r, (b.r ?? 0) > 0)}>{b.r ?? '—'}</td>
                 <td style={numCell(b.h, (b.h ?? 0) > 0)}>{b.h ?? '—'}</td>
@@ -125,7 +125,7 @@ function BattersTable({ label, batters, totals }: {
             ))}
             {totals && (
               <tr style={{ borderTop: '1px solid #30363D', backgroundColor: 'rgba(28,36,48,0.6)' }}>
-                <td colSpan={2} style={{ padding: '5px 6px', color: '#8B949E', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', position: 'sticky', left: 0, backgroundColor: '#1C2430', zIndex: 1 }}>Totals</td>
+                <td colSpan={2} style={{ padding: '5px 6px', color: '#8B949E', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', position: 'sticky', left: 0, backgroundColor: '#1C2430', zIndex: 1 }}>Totals</td>
                 <td style={numCell(totals.atBats, true)}>{totals.atBats ?? '—'}</td>
                 <td style={numCell(totals.runs, true)}>{totals.runs ?? '—'}</td>
                 <td style={numCell(totals.hits, true)}>{totals.hits ?? '—'}</td>
@@ -154,9 +154,9 @@ function PitchersTable({ label, pitchers, winnerName, loserName, saveName }: {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 380 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #30363D' }}>
-              <th style={{ textAlign: 'left', padding: '4px 6px', color: '#8B949E', fontWeight: 600, fontSize: 11, minWidth: 110, position: 'sticky', left: 0, backgroundColor: '#0D1117', zIndex: 2, borderRight: '1px solid rgba(48,54,61,0.5)' }}>Name</th>
+              <th style={{ textAlign: 'left', padding: '4px 6px', color: '#8B949E', fontWeight: 600, fontSize: 13, minWidth: 110, position: 'sticky', left: 0, backgroundColor: '#0D1117', zIndex: 2, borderRight: '1px solid rgba(48,54,61,0.5)' }}>Name</th>
               {['IP','H','R','ER','BB','K','HR','ERA'].map(h => (
-                <th key={h} style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontWeight: 600, fontSize: 11, minWidth: 32 }}>{h}</th>
+                <th key={h} style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontWeight: 600, fontSize: 13, minWidth: 32 }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -174,7 +174,7 @@ function PitchersTable({ label, pitchers, winnerName, loserName, saveName }: {
                 }}>
                   <td style={{ padding: '5px 6px', color: '#E6EDF3', fontSize: 12, whiteSpace: 'nowrap', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', position: 'sticky', left: 0, backgroundColor: '#0D1117', zIndex: 1, borderRight: '1px solid rgba(48,54,61,0.5)' }}>
                     {p.name}
-                    {dec && <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 800, color: decColor, border: `1px solid ${decColor}`, borderRadius: 4, padding: '1px 4px' }}>{dec}</span>}
+                    {dec && <span style={{ marginLeft: 5, fontSize: 12, fontWeight: 800, color: decColor, border: `1px solid ${decColor}`, borderRadius: 4, padding: '1px 4px' }}>{dec}</span>}
                   </td>
                   <td style={numCell(p.ip, true)}>{p.ip ?? '—'}</td>
                   <td style={numCell(p.h)}>{p.h ?? '—'}</td>
@@ -282,16 +282,16 @@ export default function BoxScore({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {fetchingStats ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#8B949E' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: '#8B949E' }}>
                 <RefreshCw size={11} style={{ animation: 'spin 1s linear infinite' }} />
                 Fetching MLB stats…
               </div>
             ) : visit.stats_auto_populated ? (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 600, color: '#3FB950', background: 'rgba(63,185,80,0.1)', borderRadius: 20, padding: '2px 8px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600, color: '#3FB950', background: 'rgba(63,185,80,0.1)', borderRadius: 20, padding: '2px 8px' }}>
                 ⚾ Stats from MLB
               </div>
             ) : statsError ? (
-              <div style={{ fontSize: 11, color: '#F85149' }}>{statsError}</div>
+              <div style={{ fontSize: 13, color: '#F85149' }}>{statsError}</div>
             ) : null}
             <div style={{ fontSize: 12, color: '#8B949E' }}>{formatDate(visit.visit_date)}</div>
           </div>
@@ -308,8 +308,8 @@ export default function BoxScore({
         {/* Score */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 8, alignItems: 'center', marginBottom: 8 }}>
           <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 1 }}>{visit.visiting_team}</div>
-            {visit.visiting_team_record && <div style={{ fontSize: 10, color: '#8B949E' }}>({visit.visiting_team_record})</div>}
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 1 }}>{visit.visiting_team}</div>
+            {visit.visiting_team_record && <div style={{ fontSize: 12, color: '#8B949E' }}>({visit.visiting_team_record})</div>}
           </div>
           <div style={{ textAlign: 'center' }}>
             {hasScore ? (
@@ -321,13 +321,13 @@ export default function BoxScore({
             ) : (
               <div style={{ fontSize: 13, color: '#8B949E' }}>vs</div>
             )}
-            <div style={{ fontSize: 9, fontWeight: 700, color: '#8B949E', marginTop: 1, letterSpacing: '0.08em' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', marginTop: 1, letterSpacing: '0.08em' }}>
               {hasScore ? `FINAL${innings.length > 9 ? `/${innings.length}` : ''}${isWalkOff ? ' · WO' : ''}` : null}
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 1 }}>{visit.home_team}</div>
-            {visit.home_team_record && <div style={{ fontSize: 10, color: '#8B949E' }}>({visit.home_team_record})</div>}
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 1 }}>{visit.home_team}</div>
+            {visit.home_team_record && <div style={{ fontSize: 12, color: '#8B949E' }}>({visit.home_team_record})</div>}
           </div>
         </div>
 
@@ -341,7 +341,7 @@ export default function BoxScore({
 
         {/* Decisions */}
         {(visit.winning_pitcher || visit.losing_pitcher) && (
-          <div style={{ fontSize: 11, color: '#8B949E', display: 'flex', flexWrap: 'wrap', gap: '3px 10px', marginBottom: 4 }}>
+          <div style={{ fontSize: 13, color: '#8B949E', display: 'flex', flexWrap: 'wrap', gap: '3px 10px', marginBottom: 4 }}>
             {visit.winning_pitcher && <span><span style={{ color: '#3FB950', fontWeight: 600 }}>W</span> {visit.winning_pitcher}</span>}
             {visit.losing_pitcher && <span><span style={{ color: '#F85149', fontWeight: 600 }}>L</span> {visit.losing_pitcher}</span>}
             {visit.save_pitcher && <span><span style={{ color: '#F5A623', fontWeight: 600 }}>S</span> {visit.save_pitcher}</span>}
@@ -350,12 +350,12 @@ export default function BoxScore({
 
         {/* First pitch + attendance + day/night */}
         {(visit.first_pitch_time || visit.attendance || dayNight) && (
-          <div style={{ fontSize: 11, color: '#8B949E', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ fontSize: 13, color: '#8B949E', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
             {visit.first_pitch_time && <span>First pitch: {visit.first_pitch_time}</span>}
             {visit.attendance && <span>{visit.attendance.toLocaleString()} fans</span>}
             {dayNight && (
               <span style={{
-                padding: '2px 8px', borderRadius: 10, fontSize: 10, fontWeight: 700,
+                padding: '2px 8px', borderRadius: 10, fontSize: 12, fontWeight: 700,
                 backgroundColor: dayNight === 'day' ? 'rgba(245,166,35,0.15)' : 'rgba(31,111,235,0.15)',
                 color: dayNight === 'day' ? '#F5A623' : '#58A6FF',
               }}>
@@ -374,7 +374,7 @@ export default function BoxScore({
               <tr style={{ borderBottom: '1px solid #30363D' }}>
                 <th style={{ textAlign: 'left', padding: '5px 10px', color: '#8B949E', fontWeight: 600, minWidth: 52, position: 'sticky', left: 0, backgroundColor: '#0B1117', zIndex: 1 }}>Team</th>
                 {innings.map(inn => (
-                  <th key={inn.inning} style={{ textAlign: 'center', padding: '5px 6px', color: '#8B949E', fontWeight: 600, minWidth: 22, fontSize: 11 }}>{inn.inning}</th>
+                  <th key={inn.inning} style={{ textAlign: 'center', padding: '5px 6px', color: '#8B949E', fontWeight: 600, minWidth: 22, fontSize: 13 }}>{inn.inning}</th>
                 ))}
                 <th style={{ textAlign: 'center', padding: '5px 6px', color: '#E6EDF3', fontWeight: 700, borderLeft: '1px solid #30363D', minWidth: 22 }}>R</th>
                 <th style={{ textAlign: 'center', padding: '5px 6px', color: '#8B949E', fontWeight: 600, minWidth: 22 }}>H</th>
@@ -416,7 +416,7 @@ export default function BoxScore({
       <div style={{ display: 'flex', borderBottom: '1px solid #30363D', backgroundColor: '#0D1117' }}>
         {(['overview', 'box'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
-            padding: '7px 14px', fontSize: 11, fontWeight: 700,
+            padding: '7px 14px', fontSize: 13, fontWeight: 700,
             background: 'none', border: 'none', cursor: 'pointer',
             color: tab === t ? '#E6EDF3' : '#8B949E',
             borderBottom: tab === t ? '2px solid #1F6FEB' : '2px solid transparent',
@@ -427,7 +427,7 @@ export default function BoxScore({
         ))}
         {visit.mlb_game_pk && (
           <a href={`https://www.mlb.com/gameday/${visit.mlb_game_pk}/final/box-score`} target="_blank" rel="noopener noreferrer"
-            style={{ marginLeft: 'auto', padding: '7px 12px', fontSize: 11, fontWeight: 600, color: '#8B949E', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+            style={{ marginLeft: 'auto', padding: '7px 12px', fontSize: 13, fontWeight: 600, color: '#8B949E', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
             MLB.com ↗
           </a>
         )}
@@ -457,7 +457,7 @@ export default function BoxScore({
                         { side: 'Home', name: visit.home_starter_name, wl: visit.home_starter_wl, ip: visit.home_starter_ip, h: visit.home_starter_h, er: visit.home_starter_er, bb: visit.home_starter_bb, k: visit.home_starter_k },
                       ].map(({ side, name, wl, ip, h, er, bb, k }) => name ? (
                         <div key={side} style={{ backgroundColor: '#1C2430', borderRadius: 10, padding: '10px 12px' }}>
-                          <div style={{ fontSize: 11, color: '#8B949E' }}>{side}</div>
+                          <div style={{ fontSize: 13, color: '#8B949E' }}>{side}</div>
                           <div style={{ fontWeight: 600, fontSize: 14, color: '#E6EDF3' }}>{name}</div>
                           {wl && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 1 }}>{wl}</div>}
                           <div style={{ display: 'flex', gap: 8, marginTop: 4, fontSize: 12, color: '#8B949E' }}>
@@ -478,7 +478,7 @@ export default function BoxScore({
                     <div style={{ overflowX: 'auto' }}>
                       <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
                         <thead>
-                          <tr style={{ color: '#8B949E', fontSize: 11 }}>
+                          <tr style={{ color: '#8B949E', fontSize: 13 }}>
                             <th style={{ textAlign: 'left', paddingBottom: 5, paddingRight: 12 }}>Team</th>
                             {['R','H','E','LOB'].map(h => (
                               <th key={h} style={{ textAlign: 'center', paddingBottom: 5, paddingLeft: 10, paddingRight: 10 }}>{h}</th>
@@ -511,7 +511,7 @@ export default function BoxScore({
               </>
             )}
             {visit.stats_auto_populated && (
-              <div style={{ marginTop: 8, paddingTop: 10, borderTop: '1px solid rgba(48,54,61,0.5)', textAlign: 'center', fontSize: 11, color: '#8B949E' }}>
+              <div style={{ marginTop: 8, paddingTop: 10, borderTop: '1px solid rgba(48,54,61,0.5)', textAlign: 'center', fontSize: 13, color: '#8B949E' }}>
                 ⚾ Official data via MLB Stats API
               </div>
             )}
@@ -531,7 +531,7 @@ export default function BoxScore({
                       <span style={{ fontSize: 18 }}>🏏</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{topHitter.name}</div>
-                        <div style={{ fontSize: 11, color: '#8B949E' }}>
+                        <div style={{ fontSize: 13, color: '#8B949E' }}>
                           {[
                             topHitter.h != null && topHitter.ab != null ? `${topHitter.h}-for-${topHitter.ab}` : null,
                             topHitter.rbi ? `${topHitter.rbi} RBI` : null,
@@ -539,7 +539,7 @@ export default function BoxScore({
                           ].filter(Boolean).join(' · ')}
                         </div>
                       </div>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)', padding: '2px 7px', borderRadius: 10 }}>Offense</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)', padding: '2px 7px', borderRadius: 10 }}>Offense</span>
                     </div>
                   )}
                   {topPitcher && (
@@ -547,7 +547,7 @@ export default function BoxScore({
                       <span style={{ fontSize: 18 }}>⚾</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{topPitcher.name}</div>
-                        <div style={{ fontSize: 11, color: '#8B949E' }}>
+                        <div style={{ fontSize: 13, color: '#8B949E' }}>
                           {[
                             topPitcher.ip  ? `${topPitcher.ip} IP` : null,
                             topPitcher.k   ? `${topPitcher.k} K`   : null,
@@ -555,7 +555,7 @@ export default function BoxScore({
                           ].filter(Boolean).join(' · ')}
                         </div>
                       </div>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: '#58A6FF', backgroundColor: 'rgba(88,166,255,0.12)', padding: '2px 7px', borderRadius: 10 }}>Pitching</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#58A6FF', backgroundColor: 'rgba(88,166,255,0.12)', padding: '2px 7px', borderRadius: 10 }}>Pitching</span>
                     </div>
                   )}
                 </div>
@@ -568,7 +568,7 @@ export default function BoxScore({
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                   {(visit.weather || visit.temperature || weather) && (
                     <div>
-                      <div style={{ fontSize: 11, color: '#8B949E' }}>Weather</div>
+                      <div style={{ fontSize: 13, color: '#8B949E' }}>Weather</div>
                       <div style={{ fontSize: 13, color: '#E6EDF3', marginTop: 1 }}>
                         {visit.weather
                           ? `${visit.weather}${visit.temperature ? ` · ${visit.temperature}°F` : ''}`
@@ -580,7 +580,7 @@ export default function BoxScore({
                   )}
                   {visit.game_duration && (
                     <div>
-                      <div style={{ fontSize: 11, color: '#8B949E' }}>Duration</div>
+                      <div style={{ fontSize: 13, color: '#8B949E' }}>Duration</div>
                       <div style={{ fontSize: 13, color: '#E6EDF3', marginTop: 1 }}>{visit.game_duration}</div>
                     </div>
                   )}
@@ -605,7 +605,7 @@ export default function BoxScore({
                         ...(isFirst ? { boxShadow: '0 0 12px rgba(245,166,35,0.4)', borderColor: 'rgba(245,166,35,0.5)', color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.1)' } : {}),
                       }}>
                         <span style={{ fontSize: 14 }}>{m.icon}</span>{m.label}
-                        {isFirst && <span style={{ fontSize: 10, marginLeft: 2, fontWeight: 800 }}>★ First!</span>}
+                        {isFirst && <span style={{ fontSize: 12, marginLeft: 2, fontWeight: 800 }}>★ First!</span>}
                       </span>
                     )
                   })}
@@ -694,13 +694,13 @@ export default function BoxScore({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {scoringPlays.map((play, i) => (
                     <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 10px', borderRadius: 8, backgroundColor: '#1C2430', border: '1px solid #30363D' }}>
-                      <div style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, color: '#484F58', width: 44, paddingTop: 1 }}>
+                      <div style={{ flexShrink: 0, fontSize: 13, fontWeight: 700, color: '#8B949E', width: 44, paddingTop: 1 }}>
                         {play.halfInning === 'top' ? '▲' : '▼'}{play.inning}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 12, color: '#C9D1D9', lineHeight: 1.5 }}>{play.description}</div>
                       </div>
-                      <div style={{ flexShrink: 0, fontSize: 11, fontWeight: 800, color: '#8B949E', paddingTop: 1 }}>
+                      <div style={{ flexShrink: 0, fontSize: 13, fontWeight: 800, color: '#8B949E', paddingTop: 1 }}>
                         {play.awayScore}–{play.homeScore}
                       </div>
                     </div>

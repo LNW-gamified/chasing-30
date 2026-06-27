@@ -73,7 +73,7 @@ export default function UpNextPill({ compact = false }: { compact?: boolean }) {
       >
         {next.stadiumAbbr && <TeamLogo abbreviation={next.stadiumAbbr} size={24} />}
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em', lineHeight: 1.3 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em', lineHeight: 1.3 }}>
             Next Stop
           </div>
           <div style={{
@@ -103,7 +103,7 @@ export default function UpNextPill({ compact = false }: { compact?: boolean }) {
     >
       {next.stadiumAbbr && <TeamLogo abbreviation={next.stadiumAbbr} size={24} />}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#1F6FEB', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#1F6FEB', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 2 }}>
           Next Stop
         </div>
         <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

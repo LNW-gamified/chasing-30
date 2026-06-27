@@ -194,7 +194,7 @@ function LeagueTable({
         display: 'flex', alignItems: 'center', gap: 8,
         padding: '0.6rem 1rem',
         borderBottom: '1px solid #30363D',
-        fontSize: 11, fontWeight: 600, color: '#8B949E',
+        fontSize: 13, fontWeight: 600, color: '#8B949E',
         textTransform: 'uppercase', letterSpacing: '0.08em',
       }}>
         <span style={{ width: 18, flexShrink: 0 }}>#</span>
@@ -222,7 +222,7 @@ function LeagueTable({
               }}
             >
               <span style={{
-                fontSize: 11, color: '#484F58', width: 18,
+                fontSize: 13, color: '#8B949E', width: 18,
                 flexShrink: 0, textAlign: 'right', fontVariantNumeric: 'tabular-nums',
               }}>
                 {team.rank}

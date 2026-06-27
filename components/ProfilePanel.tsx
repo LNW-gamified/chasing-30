@@ -67,7 +67,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 16px', marginBottom: 6, marginTop: 20 }}>
+    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 16px', marginBottom: 6, marginTop: 20 }}>
       {title}
     </div>
   )
@@ -239,12 +239,12 @@ export default function ProfilePanel({
               <span style={{ fontSize: 16 }}>{rankIcon}</span>
               <span style={{ fontSize: 13, fontWeight: 700, color: '#F5A623' }}>{rankName}</span>
             </div>
-            <span style={{ fontSize: 11, color: '#8B949E', fontWeight: 600 }}>{xp} XP</span>
+            <span style={{ fontSize: 13, color: '#8B949E', fontWeight: 600 }}>{xp} XP</span>
           </div>
           <div style={{ height: 4, background: '#30363D', borderRadius: 3, overflow: 'hidden', marginBottom: 5 }}>
             <div style={{ width: `${Math.round(xpProgress * 100)}%`, height: '100%', background: '#F5A623', borderRadius: 3, transition: 'width 0.4s ease' }} />
           </div>
-          <div style={{ fontSize: 11, color: '#8B949E' }}>
+          <div style={{ fontSize: 13, color: '#8B949E' }}>
             {xpNext != null ? `${xpToNext} XP to next rank` : 'Max rank achieved 🏆'}
           </div>
         </div>
@@ -262,14 +262,14 @@ export default function ProfilePanel({
               <>
                 <TeamLogo abbreviation={favTeamData.abbr} size={28} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Favorite Team</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Favorite Team</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{favTeamData.name}</div>
                 </div>
               </>
             ) : (
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Favorite Team</div>
-                <div style={{ fontSize: 13, color: '#484F58' }}>Not set</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 1 }}>Favorite Team</div>
+                <div style={{ fontSize: 13, color: '#8B949E' }}>Not set</div>
               </div>
             )}
             <button
@@ -283,7 +283,7 @@ export default function ProfilePanel({
           {/* Home city / state */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>Home City</label>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>Home City</label>
               <input
                 type="text"
                 placeholder="e.g. Chicago"
@@ -294,7 +294,7 @@ export default function ProfilePanel({
               />
             </div>
             <div style={{ width: 80 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>State</label>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>State</label>
               <input
                 type="text"
                 placeholder="IL"
@@ -319,7 +319,7 @@ export default function ProfilePanel({
             ].map(stat => (
               <div key={stat.label} style={{ backgroundColor: '#0D1117', border: '1px solid #21262D', borderRadius: 10, padding: '10px 12px' }}>
                 <div style={{ fontSize: 18, fontWeight: 800, color: '#E6EDF3', lineHeight: 1 }}>{stat.value}</div>
-                <div style={{ fontSize: 11, color: '#8B949E', marginTop: 3 }}>{stat.label}</div>
+                <div style={{ fontSize: 13, color: '#8B949E', marginTop: 3 }}>{stat.label}</div>
               </div>
             ))}
           </div>
@@ -404,7 +404,7 @@ export default function ProfilePanel({
                   <TeamLogo abbreviation={team.abbr} size={28} />
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3' }}>{team.abbr}</div>
-                    <div style={{ fontSize: 10, color: '#8B949E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{team.name}</div>
+                    <div style={{ fontSize: 12, color: '#8B949E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{team.name}</div>
                   </div>
                   {selected && <Check size={12} style={{ marginLeft: 'auto', color: '#1F6FEB', flexShrink: 0 }} />}
                 </button>

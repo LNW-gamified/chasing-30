@@ -581,7 +581,7 @@ export default function TripDetailPage() {
             }}>
               {!allBudgetZero && (
                 <div style={{ flexShrink: 0 }}>
-                  <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
+                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
                     Est. Total
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: '#F5A623' }}>
@@ -591,7 +591,7 @@ export default function TripDetailPage() {
               )}
               {!allBudgetZero && actualTotal > 0 && (
                 <div style={{ flexShrink: 0 }}>
-                  <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
+                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
                     Actual
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: overBudget ? '#F85149' : '#3FB950' }}>
@@ -601,7 +601,7 @@ export default function TripDetailPage() {
               )}
               {stops.length > 0 && (
                 <div style={{ flexShrink: 0 }}>
-                  <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
+                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
                     Stadiums
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>
@@ -611,7 +611,7 @@ export default function TripDetailPage() {
               )}
               {(loadingMiles || totalDrivingMiles !== null) && (
                 <div style={{ flexShrink: 0 }}>
-                  <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
+                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
                     Drive
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>
@@ -628,7 +628,7 @@ export default function TripDetailPage() {
             <div style={{ marginBottom: 28 }}>
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12,
-                fontSize: 11, fontWeight: 700, color: '#8B949E',
+                fontSize: 13, fontWeight: 700, color: '#8B949E',
                 textTransform: 'uppercase', letterSpacing: '0.08em',
               }}>
                 <MapPin size={13} style={{ color: '#1F6FEB' }} />
@@ -686,7 +686,7 @@ export default function TripDetailPage() {
                             </div>
                             {(dest as any)?.is_mlb_event && (
                               <span style={{
-                                fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 20,
+                                fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 20,
                                 color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)',
                                 border: '1px solid rgba(245,166,35,0.35)',
                               }}>⭐ MLB Event</span>
@@ -733,12 +733,12 @@ export default function TripDetailPage() {
                               { label: 'Parking', Icon: Car,      est: stop.est_parking, actual: stop.actual_parking },
                             ] as const).map(({ label, Icon, est, actual }, ci) => (
                               <div key={label} style={{ flex: 1, padding: '10px 12px', borderRight: ci < 2 ? '1px solid #30363D' : 'none' }}>
-                                <div style={{ fontSize: 10, color: '#8B949E', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 3 }}>
+                                <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 3 }}>
                                   <Icon size={10} strokeWidth={2} /> {label}
                                 </div>
                                 <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{formatCurrency(est)}</div>
                                 {actual > 0 && (
-                                  <div style={{ fontSize: 11, color: actual > est ? '#F85149' : '#3FB950', marginTop: 1 }}>
+                                  <div style={{ fontSize: 13, color: actual > est ? '#F85149' : '#3FB950', marginTop: 1 }}>
                                     {formatCurrency(actual)}
                                   </div>
                                 )}
@@ -885,14 +885,14 @@ export default function TripDetailPage() {
                                 size={56}
                                 style={{ borderRadius: '50%', border: '2px solid rgba(255,255,255,0.12)' }}
                               />
-                              <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', letterSpacing: '0.06em' }}>
+                              <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', letterSpacing: '0.06em' }}>
                                 {stadium.abbreviation}
                               </span>
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                               <span style={{
-                                fontSize: 18, fontWeight: 900, color: '#484F58',
+                                fontSize: 18, fontWeight: 900, color: '#8B949E',
                                 letterSpacing: '-0.02em', lineHeight: 1,
                               }}>VS</span>
                             </div>
@@ -916,14 +916,14 @@ export default function TripDetailPage() {
                                     <span style={{ fontSize: 24 }}>⚾</span>
                                   </div>
                                 )}
-                                <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', letterSpacing: '0.06em' }}>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', letterSpacing: '0.06em' }}>
                                   {stop.opponent_team_id
                                     ? getTeamAbbrById(stop.opponent_team_id)
                                     : stop.opponent.replace('vs ', '')}
                                 </span>
                               </div>
                             ) : (
-                              <div style={{ fontSize: 13, color: '#484F58', fontStyle: 'italic' }}>TBD</div>
+                              <div style={{ fontSize: 13, color: '#8B949E', fontStyle: 'italic' }}>TBD</div>
                             )}
                           </div>
                         )}
@@ -937,7 +937,7 @@ export default function TripDetailPage() {
                             marginBottom: 4,
                           }}>
                             <div style={{
-                              fontSize: 11, fontWeight: 700, color: '#F5A623',
+                              fontSize: 13, fontWeight: 700, color: '#F5A623',
                               textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5,
                               display: 'flex', alignItems: 'center', gap: 5,
                             }}>
@@ -959,7 +959,7 @@ export default function TripDetailPage() {
                       {/* Promotions */}
                       {stop.promotions && stop.promotions.length > 0 && (
                         <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(245,166,35,0.15)', backgroundColor: 'rgba(245,166,35,0.04)' }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
                             Promotions
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -975,10 +975,10 @@ export default function TripDetailPage() {
                                       <img src={photoUrl} alt={promoName} style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', display: 'block', cursor: 'pointer' }}
                                         onClick={() => window.open(photoUrl, '_blank')} />
                                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                        <button onClick={() => removePromoPhotoForStop(stop.id, promoName)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#F85149', padding: 0, display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600 }}>
+                                        <button onClick={() => removePromoPhotoForStop(stop.id, promoName)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#F85149', padding: 0, display: 'flex', alignItems: 'center', gap: 3, fontSize: 13, fontWeight: 600 }}>
                                           <X size={12} /> Remove
                                         </button>
-                                        <label style={{ cursor: 'pointer', fontSize: 11, color: '#8B949E', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
+                                        <label style={{ cursor: 'pointer', fontSize: 13, color: '#8B949E', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
                                           <Camera size={11} /> Replace
                                           <input type="file" accept="image/*" style={{ display: 'none' }}
                                             onChange={e => { const f = e.target.files?.[0]; if (f) uploadPromoPhotoForStop(stop.id, promoName, f) }} />
@@ -986,7 +986,7 @@ export default function TripDetailPage() {
                                       </div>
                                     </div>
                                   ) : (
-                                    <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#8B949E', padding: '5px 10px', borderRadius: 6, border: '1px dashed rgba(245,166,35,0.35)', backgroundColor: 'rgba(245,166,35,0.04)', flexShrink: 0 }}>
+                                    <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: '#8B949E', padding: '5px 10px', borderRadius: 6, border: '1px dashed rgba(245,166,35,0.35)', backgroundColor: 'rgba(245,166,35,0.04)', flexShrink: 0 }}>
                                       {uploading ? <Loader2 size={11} className="animate-spin" /> : <Camera size={11} />}
                                       {uploading ? 'Uploading…' : 'Add Photo →'}
                                       <input type="file" accept="image/*" style={{ display: 'none' }}
@@ -1012,14 +1012,14 @@ export default function TripDetailPage() {
                               flex: 1, padding: '10px 12px',
                               borderRight: ci < 2 ? '1px solid #30363D' : 'none',
                             }}>
-                              <div style={{ fontSize: 10, color: '#8B949E', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 3 }}>
+                              <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 3 }}>
                                 <Icon size={10} strokeWidth={2} /> {label}
                               </div>
                               <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>
                                 {formatCurrency(est)}
                               </div>
                               {actual > 0 && (
-                                <div style={{ fontSize: 11, color: actual > est ? '#F85149' : '#3FB950', marginTop: 1 }}>
+                                <div style={{ fontSize: 13, color: actual > est ? '#F85149' : '#3FB950', marginTop: 1 }}>
                                   {formatCurrency(actual)}
                                 </div>
                               )}
@@ -1029,12 +1029,12 @@ export default function TripDetailPage() {
                             padding: '10px 12px', borderLeft: '1px solid #30363D', flexShrink: 0,
                             display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-end',
                           }}>
-                            <div style={{ fontSize: 10, color: '#8B949E', marginBottom: 3 }}>Total</div>
+                            <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 3 }}>Total</div>
                             <div style={{ fontSize: 14, fontWeight: 800, color: '#F5A623' }}>
                               {formatCurrency(stopAct > 0 ? stopAct : stopEst)}
                             </div>
                             {stopAct === 0 && stopEst > 0 && (
-                              <div style={{ fontSize: 10, color: '#8B949E' }}>est</div>
+                              <div style={{ fontSize: 12, color: '#8B949E' }}>est</div>
                             )}
                           </div>
                         </div>
@@ -1043,7 +1043,7 @@ export default function TripDetailPage() {
                           borderTop: '1px solid #30363D', backgroundColor: '#1C2430',
                           padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         }}>
-                          <span style={{ fontSize: 13, color: '#484F58' }}>No budget added</span>
+                          <span style={{ fontSize: 13, color: '#8B949E' }}>No budget added</span>
                           <button
                             type="button"
                             onClick={() => setShowEdit(true)}
@@ -1089,11 +1089,11 @@ export default function TripDetailPage() {
                         <div style={{ width: 2, height: 20, backgroundColor: '#30363D', marginLeft: 14, flexShrink: 0 }} />
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600 }}>
                           {loadingMiles ? (
-                            <span style={{ color: '#484F58' }}>Calculating drive…</span>
+                            <span style={{ color: '#8B949E' }}>Calculating drive…</span>
                           ) : miles ? (
                             <>
                               <span style={{ color: '#F5A623' }}>🚗 {miles.toLocaleString()} mi</span>
-                              <span style={{ color: '#484F58' }}>to {nextStadium.name}</span>
+                              <span style={{ color: '#8B949E' }}>to {nextStadium.name}</span>
                             </>
                           ) : null}
                         </div>
@@ -1153,7 +1153,7 @@ export default function TripDetailPage() {
                       {['Category', 'Est', 'Actual', 'Variance'].map((h, hi) => (
                         <th key={h} style={{
                           textAlign: hi === 0 ? 'left' : 'right',
-                          padding: '10px 16px', fontSize: 11, fontWeight: 700,
+                          padding: '10px 16px', fontSize: 13, fontWeight: 700,
                           color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.06em',
                         }}>{h}</th>
                       ))}
@@ -1184,10 +1184,10 @@ export default function TripDetailPage() {
                           <td style={{ padding: '11px 16px', textAlign: 'right', color: '#E6EDF3', fontWeight: 600 }}>
                             {formatCurrency(est)}
                           </td>
-                          <td style={{ padding: '11px 16px', textAlign: 'right', color: actual > 0 ? '#E6EDF3' : '#484F58' }}>
+                          <td style={{ padding: '11px 16px', textAlign: 'right', color: actual > 0 ? '#E6EDF3' : '#8B949E' }}>
                             {actual > 0 ? formatCurrency(actual) : '—'}
                           </td>
-                          <td style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 600, color: actual > 0 ? (diff > 0 ? '#F85149' : '#3FB950') : '#484F58' }}>
+                          <td style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 600, color: actual > 0 ? (diff > 0 ? '#F85149' : '#3FB950') : '#8B949E' }}>
                             {actual > 0 ? `${diff > 0 ? '+' : ''}${formatCurrency(diff)}` : '—'}
                           </td>
                         </tr>
@@ -1206,10 +1206,10 @@ export default function TripDetailPage() {
                           <td style={{ padding: '11px 16px', textAlign: 'right', color: '#E6EDF3', fontWeight: 600 }}>
                             {formatCurrency(trip.est_travel)}
                           </td>
-                          <td style={{ padding: '11px 16px', textAlign: 'right', color: trip.actual_travel > 0 ? '#E6EDF3' : '#484F58' }}>
+                          <td style={{ padding: '11px 16px', textAlign: 'right', color: trip.actual_travel > 0 ? '#E6EDF3' : '#8B949E' }}>
                             {trip.actual_travel > 0 ? formatCurrency(trip.actual_travel) : '—'}
                           </td>
-                          <td style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 600, color: trip.actual_travel > 0 ? (diff > 0 ? '#F85149' : '#3FB950') : '#484F58' }}>
+                          <td style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 600, color: trip.actual_travel > 0 ? (diff > 0 ? '#F85149' : '#3FB950') : '#8B949E' }}>
                             {trip.actual_travel > 0 ? `${diff > 0 ? '+' : ''}${formatCurrency(diff)}` : '—'}
                           </td>
                         </tr>
@@ -1228,10 +1228,10 @@ export default function TripDetailPage() {
                           <td style={{ padding: '11px 16px', textAlign: 'right', color: '#E6EDF3', fontWeight: 600 }}>
                             {formatCurrency(trip.est_hotel)}
                           </td>
-                          <td style={{ padding: '11px 16px', textAlign: 'right', color: trip.actual_hotel > 0 ? '#E6EDF3' : '#484F58' }}>
+                          <td style={{ padding: '11px 16px', textAlign: 'right', color: trip.actual_hotel > 0 ? '#E6EDF3' : '#8B949E' }}>
                             {trip.actual_hotel > 0 ? formatCurrency(trip.actual_hotel) : '—'}
                           </td>
-                          <td style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 600, color: trip.actual_hotel > 0 ? (diff > 0 ? '#F85149' : '#3FB950') : '#484F58' }}>
+                          <td style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 600, color: trip.actual_hotel > 0 ? (diff > 0 ? '#F85149' : '#3FB950') : '#8B949E' }}>
                             {trip.actual_hotel > 0 ? `${diff > 0 ? '+' : ''}${formatCurrency(diff)}` : '—'}
                           </td>
                         </tr>
@@ -1244,12 +1244,12 @@ export default function TripDetailPage() {
                       <td style={{ padding: '13px 16px', textAlign: 'right', fontWeight: 800, color: '#F5A623', fontSize: 14 }}>
                         {formatCurrency(estTotal)}
                       </td>
-                      <td style={{ padding: '13px 16px', textAlign: 'right', fontWeight: 800, fontSize: 14, color: actualTotal > 0 ? '#E6EDF3' : '#484F58' }}>
+                      <td style={{ padding: '13px 16px', textAlign: 'right', fontWeight: 800, fontSize: 14, color: actualTotal > 0 ? '#E6EDF3' : '#8B949E' }}>
                         {actualTotal > 0 ? formatCurrency(actualTotal) : '—'}
                       </td>
                       <td style={{
                         padding: '13px 16px', textAlign: 'right', fontWeight: 800, fontSize: 14,
-                        color: actualTotal > 0 ? (overBudget ? '#F85149' : '#3FB950') : '#484F58',
+                        color: actualTotal > 0 ? (overBudget ? '#F85149' : '#3FB950') : '#8B949E',
                       }}>
                         {actualTotal > 0 ? `${overBudget ? '+' : ''}${formatCurrency(actualTotal - estTotal)}` : '—'}
                       </td>

@@ -49,7 +49,7 @@ export default function FavoriteTeamPicker({ userId, currentFavAbbr }: Props) {
             <span style={{ fontSize: 12, color: '#8B949E' }}>{currentTeam.name}</span>
           </div>
         ) : (
-          <span style={{ fontSize: 12, color: '#484F58' }}>Not set</span>
+          <span style={{ fontSize: 12, color: '#8B949E' }}>Not set</span>
         )}
         <button
           onClick={() => setOpen(true)}
@@ -124,7 +124,7 @@ export default function FavoriteTeamPicker({ userId, currentFavAbbr }: Props) {
                       <div style={{ minWidth: 0 }}>
                         <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3' }}>{team.abbr}</div>
                         <div style={{
-                          fontSize: 10, color: '#8B949E',
+                          fontSize: 12, color: '#8B949E',
                           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                         }}>{team.name}</div>
                       </div>

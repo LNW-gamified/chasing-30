@@ -460,7 +460,7 @@ export default function StadiumDetailPage() {
             <Share2 size={16} color="#ffffff" />
           </button>
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 16px 18px', zIndex: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.75)', marginBottom: 4 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.75)', marginBottom: 4 }}>
               {stadium.team}
             </div>
             <h1 style={{ margin: '0 0 4px', fontSize: 28, fontWeight: 800, color: '#ffffff', lineHeight: 1.1, textShadow: '0 2px 10px rgba(0,0,0,0.4)' }}>
@@ -489,7 +489,7 @@ export default function StadiumDetailPage() {
                   border: '1px solid #30363D',
                 }}>
                   <Icon size={15} color="#1F6FEB" strokeWidth={2} style={{ marginBottom: 5 }} />
-                  <div style={{ fontSize: 9, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</div>
                   <div style={{ fontWeight: 800, fontSize: 15, color: '#E6EDF3', lineHeight: 1.2, textAlign: 'center' }}>{value}</div>
                 </div>
               ))}
@@ -659,7 +659,7 @@ export default function StadiumDetailPage() {
 
                             {/* Center: date + matchup */}
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 11, color: '#8B949E', marginBottom: 3, fontWeight: 500 }}>
+                              <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 3, fontWeight: 500 }}>
                                 {formatDate(visit.visit_date)}
                               </div>
                               <div style={{
@@ -681,7 +681,7 @@ export default function StadiumDetailPage() {
                               )}
                               <ChevronRight
                                 size={16}
-                                color={isExpanded ? '#E6EDF3' : '#484F58'}
+                                color={isExpanded ? '#E6EDF3' : '#8B949E'}
                                 style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}
                               />
                             </div>
@@ -713,7 +713,7 @@ export default function StadiumDetailPage() {
                               border: '1px solid rgba(245,166,35,0.2)',
                               borderRadius: 12,
                             }}>
-                              <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
                                 Promotions
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -764,7 +764,7 @@ export default function StadiumDetailPage() {
                             }}>
                               <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                                 <div style={{ textAlign: 'center', minWidth: 36 }}>
-                                  <div style={{ fontSize: 10, color: '#8B949E', fontWeight: 600 }}>{dayAbbr}</div>
+                                  <div style={{ fontSize: 12, color: '#8B949E', fontWeight: 600 }}>{dayAbbr}</div>
                                   <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 700 }}>{dateStr}</div>
                                 </div>
                                 <div>
@@ -773,7 +773,7 @@ export default function StadiumDetailPage() {
                                     {g.awayTeam}
                                   </div>
                                   {g.promotions.length > 0 && (
-                                    <div style={{ fontSize: 11, color: '#F5A623', marginTop: 2 }}>
+                                    <div style={{ fontSize: 13, color: '#F5A623', marginTop: 2 }}>
                                       🎁 {g.promotions[0]}{g.promotions.length > 1 ? ` +${g.promotions.length - 1} more` : ''}
                                     </div>
                                   )}
@@ -783,7 +783,7 @@ export default function StadiumDetailPage() {
                                 <div style={{ fontSize: 13, color: '#E6EDF3' }}>{timeStr} PT</div>
                                 <Link
                                   href="/trips"
-                                  style={{ fontSize: 11, fontWeight: 700, color: '#1F6FEB', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                                  style={{ fontSize: 13, fontWeight: 700, color: '#1F6FEB', textDecoration: 'none', whiteSpace: 'nowrap' }}
                                 >
                                   Plan Trip →
                                 </Link>
@@ -846,7 +846,7 @@ export default function StadiumDetailPage() {
                   ) : stadiumNote ? (
                     <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: 16 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: '#E6EDF3', backgroundColor: 'rgba(139,148,158,0.12)', padding: '3px 10px', borderRadius: 20 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', backgroundColor: 'rgba(139,148,158,0.12)', padding: '3px 10px', borderRadius: 20 }}>
                           General
                         </span>
                         <button
@@ -894,7 +894,7 @@ export default function StadiumDetailPage() {
                           )}
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.4, marginBottom: 4 }}>{item.headline}</div>
-                            <div style={{ fontSize: 11, color: '#8B949E' }}>
+                            <div style={{ fontSize: 13, color: '#8B949E' }}>
                               {new Date(item.published).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · ESPN
                             </div>
                           </div>
@@ -975,7 +975,7 @@ export default function StadiumDetailPage() {
                       const classics = trendingFood.filter(f => f.is_classic)
                       const seasonal = trendingFood.filter(f => !f.is_classic && f.active && f.season_year === 2026)
                       if (classics.length === 0 && seasonal.length === 0) return (
-                        <div style={{ textAlign: 'center', padding: '32px 16px', color: '#484F58', fontSize: 13 }}>
+                        <div style={{ textAlign: 'center', padding: '32px 16px', color: '#8B949E', fontSize: 13 }}>
                           No food intel yet for this stadium.
                         </div>
                       )
@@ -983,7 +983,7 @@ export default function StadiumDetailPage() {
                         <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
                           {classics.length > 0 && (
                             <>
-                              <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                              <div style={{ padding: '10px 16px 4px', fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                                 Classics
                               </div>
                               {classics.map((f, i) => (
@@ -1003,7 +1003,7 @@ export default function StadiumDetailPage() {
                           )}
                           {seasonal.length > 0 && (
                             <>
-                              <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                              <div style={{ padding: '10px 16px 4px', fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                                 This Season
                               </div>
                               {seasonal.map((f, i) => (
@@ -1030,7 +1030,7 @@ export default function StadiumDetailPage() {
                       const classics = souvenirs.filter(s => s.is_classic)
                       const seasonal = souvenirs.filter(s => !s.is_classic && s.active && s.season_year === 2026)
                       if (classics.length === 0 && seasonal.length === 0) return (
-                        <div style={{ textAlign: 'center', padding: '32px 16px', color: '#484F58', fontSize: 13 }}>
+                        <div style={{ textAlign: 'center', padding: '32px 16px', color: '#8B949E', fontSize: 13 }}>
                           No souvenir intel yet for this stadium.
                         </div>
                       )
@@ -1038,7 +1038,7 @@ export default function StadiumDetailPage() {
                         <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
                           {classics.length > 0 && (
                             <>
-                              <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                              <div style={{ padding: '10px 16px 4px', fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                                 Classics
                               </div>
                               {classics.map((s, i) => (
@@ -1058,7 +1058,7 @@ export default function StadiumDetailPage() {
                           )}
                           {seasonal.length > 0 && (
                             <>
-                              <div style={{ padding: '10px 16px 4px', fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                              <div style={{ padding: '10px 16px 4px', fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                                 This Season
                               </div>
                               {seasonal.map((s, i) => (
@@ -1094,7 +1094,7 @@ export default function StadiumDetailPage() {
                           <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>Great any time of year</div>
                         </div>
                         <span style={{
-                          marginLeft: 'auto', fontSize: 11, fontWeight: 700,
+                          marginLeft: 'auto', fontSize: 13, fontWeight: 700,
                           color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)',
                           border: '1px solid rgba(63,185,80,0.3)', borderRadius: 20, padding: '3px 10px',
                         }}>🟢 Any Month</span>
@@ -1182,7 +1182,7 @@ export default function StadiumDetailPage() {
                                 <div style={{ height: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
                                   {(isTripMonth || isBest) && (
                                     <div style={{
-                                      fontSize: 10, fontWeight: 800, whiteSpace: 'nowrap',
+                                      fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap',
                                       color: '#fff',
                                       backgroundColor: isTripMonth ? '#F5A623' : '#1F6FEB',
                                       borderRadius: 20, padding: '1px 5px',
@@ -1202,11 +1202,11 @@ export default function StadiumDetailPage() {
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, marginBottom: 2 }}>
                                   <CloudRain size={11} color="#8B949E" strokeWidth={2} />
-                                  <span style={{ fontSize: 11, color: '#8B949E' }}>{w.avg_precip_days.toFixed(0)}d</span>
+                                  <span style={{ fontSize: 13, color: '#8B949E' }}>{w.avg_precip_days.toFixed(0)}d</span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
                                   <Wind size={11} color="#8B949E" strokeWidth={2} />
-                                  <span style={{ fontSize: 11, color: '#8B949E' }}>{Math.round(w.avg_wind_speed)}mph</span>
+                                  <span style={{ fontSize: 13, color: '#8B949E' }}>{Math.round(w.avg_wind_speed)}mph</span>
                                 </div>
                               </div>
                             )
@@ -1216,7 +1216,7 @@ export default function StadiumDetailPage() {
                         {/* Legend */}
                         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 10, paddingLeft: 2 }}>
                           {(['great', 'good', 'fair', 'avoid'] as const).map(r => (
-                            <span key={r} style={{ fontSize: 11, color: '#8B949E' }}>
+                            <span key={r} style={{ fontSize: 13, color: '#8B949E' }}>
                               {RATING_LABEL[r]}
                             </span>
                           ))}
@@ -1224,7 +1224,7 @@ export default function StadiumDetailPage() {
                       </>
                     )
                   })() : (
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '28px 16px', textAlign: 'center', color: '#484F58', fontSize: 13 }}>
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '28px 16px', textAlign: 'center', color: '#8B949E', fontSize: 13 }}>
                       Weather data unavailable.
                     </div>
                   )}
@@ -1257,8 +1257,8 @@ export default function StadiumDetailPage() {
                           padding: '10px 14px', textAlign: 'center', minWidth: 72,
                         }}>
                           <div style={{ fontSize: 24, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{rn.number}</div>
-                          <div style={{ fontSize: 11, color: '#F5A623', marginTop: 4, lineHeight: 1.3 }}>{rn.player_name}</div>
-                          <div style={{ fontSize: 10, color: '#6E7681', marginTop: 2 }}>{rn.year_retired}</div>
+                          <div style={{ fontSize: 13, color: '#F5A623', marginTop: 4, lineHeight: 1.3 }}>{rn.player_name}</div>
+                          <div style={{ fontSize: 12, color: '#6E7681', marginTop: 2 }}>{rn.year_retired}</div>
                         </div>
                       ))}
                     </div>
@@ -1280,8 +1280,8 @@ export default function StadiumDetailPage() {
                           { label: 'Right-Center', value: venueDimensions.rightCenter },
                         ].filter(r => r.value).map(({ label, value }) => (
                           <div key={label} style={{ backgroundColor: '#1C2430', borderRadius: 10, padding: '10px 6px' }}>
-                            <div style={{ fontSize: 20, fontWeight: 900, color: '#3FB950', lineHeight: 1 }}>{value}<span style={{ fontSize: 11, fontWeight: 600, color: '#8B949E' }}>ft</span></div>
-                            <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 600 }}>{label}</div>
+                            <div style={{ fontSize: 20, fontWeight: 900, color: '#3FB950', lineHeight: 1 }}>{value}<span style={{ fontSize: 13, fontWeight: 600, color: '#8B949E' }}>ft</span></div>
+                            <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600 }}>{label}</div>
                           </div>
                         ))}
                       </div>
@@ -1309,37 +1309,37 @@ export default function StadiumDetailPage() {
                       {teamStats.wins !== null && teamStats.losses !== null && (
                         <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
                           <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.wins}–{teamStats.losses}</div>
-                          <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Record</div>
+                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Record</div>
                         </div>
                       )}
                       {teamStats.era && (
                         <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
                           <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.era}</div>
-                          <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Team ERA</div>
+                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Team ERA</div>
                         </div>
                       )}
                       {teamStats.avg && (
                         <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
                           <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.avg}</div>
-                          <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Team AVG</div>
+                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Team AVG</div>
                         </div>
                       )}
                       {teamStats.homeRuns != null && (
                         <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
                           <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.homeRuns}</div>
-                          <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Home Runs</div>
+                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Home Runs</div>
                         </div>
                       )}
                       {teamStats.runsScored != null && (
                         <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
                           <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.runsScored}</div>
-                          <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Runs Scored</div>
+                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Runs Scored</div>
                         </div>
                       )}
                       {teamStats.strikeouts != null && (
                         <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
                           <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.strikeouts}</div>
-                          <div style={{ fontSize: 10, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Strikeouts</div>
+                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Strikeouts</div>
                         </div>
                       )}
                     </div>
@@ -1360,7 +1360,7 @@ export default function StadiumDetailPage() {
                           <div>
                             <span style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{a.name}</span>
                             {a.leagueName && (
-                              <div style={{ fontSize: 11, color: '#8B949E', marginTop: 2 }}>{a.leagueName}</div>
+                              <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>{a.leagueName}</div>
                             )}
                           </div>
                           <span style={{ fontSize: 12, fontWeight: 800, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)', padding: '3px 10px', borderRadius: 10, flexShrink: 0 }}>
@@ -1436,7 +1436,7 @@ export default function StadiumDetailPage() {
                             <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{emoji}</span>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: 13, color: '#E6EDF3', lineHeight: 1.4 }}>{t.description}</div>
-                              {date && <div style={{ fontSize: 11, color: '#8B949E', marginTop: 2 }}>{date}</div>}
+                              {date && <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>{date}</div>}
                             </div>
                           </div>
                         )
@@ -1471,7 +1471,7 @@ export default function StadiumDetailPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                       {groups.map(group => (
                         <div key={group.label}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
                             {group.label}
                           </div>
                           <div style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden' }}>
@@ -1483,13 +1483,13 @@ export default function StadiumDetailPage() {
                               }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                   {p.jerseyNumber && (
-                                    <span style={{ fontSize: 11, fontWeight: 800, color: '#F5A623', width: 24, textAlign: 'right', flexShrink: 0 }}>
+                                    <span style={{ fontSize: 13, fontWeight: 800, color: '#F5A623', width: 24, textAlign: 'right', flexShrink: 0 }}>
                                       #{p.jerseyNumber}
                                     </span>
                                   )}
                                   <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{p.name}</span>
                                 </div>
-                                <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 8px', borderRadius: 10 }}>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 8px', borderRadius: 10 }}>
                                   {p.position}
                                 </span>
                               </div>
