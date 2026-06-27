@@ -793,13 +793,19 @@ export default function MilestoneGrid({
             overflowY: 'auto',
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={lightboxItem.url}
-            alt={lightboxItem.name}
-            onClick={e => e.stopPropagation()}
-            style={{ maxWidth: '100%', maxHeight: '45vh', borderRadius: 12, objectFit: 'contain', marginBottom: 16 }}
-          />
+          {lightboxItem.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={lightboxItem.url}
+              alt={lightboxItem.name}
+              onClick={e => e.stopPropagation()}
+              style={{ maxWidth: '100%', maxHeight: '45vh', borderRadius: 12, objectFit: 'contain', marginBottom: 16 }}
+            />
+          ) : (
+            <div style={{ width: 100, height: 100, borderRadius: '50%', backgroundColor: '#161B22', border: '1px solid #30363D', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, marginBottom: 16 }}>
+              🎁
+            </div>
+          )}
           <div
             onClick={e => e.stopPropagation()}
             style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', padding: '14px 16px', width: '100%', maxWidth: 400, position: 'relative' }}
@@ -1422,20 +1428,23 @@ export default function MilestoneGrid({
                   const milbTeamId    = isMiLB && claim.extra_data?.milb_team_id      ? Number(claim.extra_data.milb_team_id)      : null
                   const milbLogoUrl   = isMiLB && claim.extra_data?.milb_logo_url     ? String(claim.extra_data.milb_logo_url)     : null
                   return (
-                    <div key={claim.id} style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden' }}>
+                    <div
+                      key={claim.id}
+                      onClick={() => {
+                        const currentType = claim.giveaway_type ?? 'other'
+                        setLightboxItem({ url: photoUrl ?? '', name: itemName, claimId: claim.id, currentType })
+                        setLightboxType(currentType)
+                        setLightboxName(itemName)
+                      }}
+                      style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
+                    >
                       <div style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden', backgroundColor: '#1C2430' }}>
                         {photoUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={photoUrl}
                             alt={itemName}
-                            onClick={() => {
-                              const currentType = claim.giveaway_type ?? 'other'
-                              setLightboxItem({ url: photoUrl, name: itemName, claimId: claim.id, currentType })
-                              setLightboxType(currentType)
-                              setLightboxName(itemName)
-                            }}
-                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', cursor: 'pointer' }}
+                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                           />
                         ) : (
                           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
