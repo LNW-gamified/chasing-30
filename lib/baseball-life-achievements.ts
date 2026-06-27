@@ -10,32 +10,6 @@ export interface BaseballLifeAchievement {
 }
 
 export const BASEBALL_LIFE_ACHIEVEMENTS: BaseballLifeAchievement[] = [
-  // ── Minor League ──────────────────────────────────────────────────────────
-  {
-    id: 'bl_minor_league_maven',
-    name: 'Minor League Maven',
-    description: 'Attend your first minor league game',
-    icon: '⚾',
-    category: 'minor_league',
-    check: (e) => e.filter(x => x.category === 'minor_league').length >= 1,
-  },
-  {
-    id: 'bl_double_a_drifter',
-    name: 'Double-A Drifter',
-    description: 'Attend 5 minor league games',
-    icon: '🚌',
-    category: 'minor_league',
-    check: (e) => e.filter(x => x.category === 'minor_league').length >= 5,
-  },
-  {
-    id: 'bl_bush_league_legend',
-    name: 'Bush League Legend',
-    description: 'Attend 25 minor league games',
-    icon: '🏟️',
-    category: 'minor_league',
-    check: (e) => e.filter(x => x.category === 'minor_league').length >= 25,
-  },
-
   // ── MLB Special Events ────────────────────────────────────────────────────
   {
     id: 'bl_midsummer_classic',
