@@ -33,8 +33,15 @@ export default async function StatsPage() {
   const allEvents: SpecialEvent[] = events ?? []
   const allBaseballLife = (bleRows ?? []) as { id: string; category: string; is_game: boolean }[]
 
-  const minorLeagueGamesCount = allBaseballLife.filter(e => e.category === 'minor_league' && e.is_game).length
-  const totalGamesAttended = allVisits.length + minorLeagueGamesCount
+  const mlbGames = allVisits.length
+  const milbGames = allBaseballLife.filter(e => e.category === 'minor_league' && e.is_game).length
+  const totalGames = mlbGames + milbGames
+
+  const bleMinorLeague = allBaseballLife.filter(e => e.category === 'minor_league').length
+  const bleSpecialEvents = allBaseballLife.filter(e => e.category === 'mlb_special_event').length
+  const bleSpringTraining = allBaseballLife.filter(e => e.category === 'spring_training').length
+  const blePilgrimages = allBaseballLife.filter(e => e.category === 'pilgrimage').length
+  const beyondThe30Total = allBaseballLife.length
 
   const visitedIds = new Set(allVisits.map((v) => v.stadium_id))
   const visitedStadiums = allStadiums.filter((s) => visitedIds.has(s.id))
@@ -149,24 +156,22 @@ export default async function StatsPage() {
 
   const statCards = [
     {
-      icon: <BarChart3 size={20} />,
-      label: 'Stadiums Visited',
-      value: `${visitedIds.size} / 30`,
-      sub: `${Math.round((visitedIds.size / 30) * 100)}% complete`,
-      color: '#3FB950',
-    },
-    {
       icon: <TrendingUp size={20} />,
-      label: 'Games Witnessed',
-      value: totalGamesAttended.toString(),
-      sub: `across ${visitedIds.size} stadium${visitedIds.size !== 1 ? 's' : ''}`,
+      label: 'Total Games',
+      value: totalGames.toString(),
+      sub: `${mlbGames} MLB · ${milbGames} MiLB`,
       color: '#1F6FEB',
     },
     {
-      icon: <DollarSign size={20} />,
-      label: 'Total Spent',
-      value: formatCurrency(totalSpent),
-      sub: 'across completed trips',
+      icon: <Star size={20} />,
+      label: 'Beyond the 30',
+      value: beyondThe30Total.toString(),
+      sub: [
+        bleMinorLeague > 0 ? `${bleMinorLeague} MiLB` : null,
+        bleSpecialEvents > 0 ? `${bleSpecialEvents} Events` : null,
+        bleSpringTraining > 0 ? `${bleSpringTraining} Spring` : null,
+        blePilgrimages > 0 ? `${blePilgrimages} Pilgrimages` : null,
+      ].filter(Boolean).join(' · ') || 'Log experiences to see breakdown',
       color: '#F5A623',
     },
     {
@@ -187,7 +192,7 @@ export default async function StatsPage() {
       icon: <MapPin size={20} />,
       label: 'Farthest Trip',
       value: farthestStadium ? farthestStadium.name : visitedStadiums.length < 2 ? 'Visit more stadiums' : 'N/A',
-      sub: farthestStadium ? `~${Math.round(farthestMiles).toLocaleString()} miles from first (as crow flies)` : '',
+      sub: farthestStadium ? `~${Math.round(farthestMiles).toLocaleString()} miles from first` : '',
       color: '#06b6d4',
     },
   ]
@@ -446,42 +451,6 @@ export default async function StatsPage() {
         </div>
       )}
 
-      {/* Special Events + Baseball Life section */}
-      {(allEvents.length > 0 || allBaseballLife.length > 0) && (
-        <div className="mt-6 card p-6">
-          <div className="flex items-center gap-2 font-semibold mb-4" style={{ color: '#E6EDF3' }}>
-            <Star size={18} style={{ color: '#F5A623' }} />
-            Special Events &amp; Baseball Life ({allEvents.length + allBaseballLife.length})
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {(Object.entries(EVENT_LABELS) as [SpecialEventType, string][]).map(([type, label]) => {
-              const count = allEvents.filter((e) => e.event_type === type).length
-              if (count === 0) return null
-              return (
-                <div key={type} className="text-center p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
-                  <div className="text-4xl font-bold" style={{ color: '#F5A623' }}>{count}</div>
-                  <div className="text-xs mt-1" style={{ color: '#8B949E' }}>{label}</div>
-                </div>
-              )
-            })}
-            {([
-              { cat: 'minor_league', label: 'Minor League', emoji: '⚾' },
-              { cat: 'mlb_special_event', label: 'MLB Events', emoji: '🌟' },
-              { cat: 'spring_training', label: 'Spring Training', emoji: '🌞' },
-              { cat: 'pilgrimage', label: 'Pilgrimages', emoji: '🏛️' },
-            ] as const).map(({ cat, label, emoji }) => {
-              const count = allBaseballLife.filter(e => e.category === cat).length
-              if (count === 0) return null
-              return (
-                <div key={cat} className="text-center p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
-                  <div className="text-4xl font-bold" style={{ color: '#F5A623' }}>{count}</div>
-                  <div className="text-xs mt-1" style={{ color: '#8B949E' }}>{emoji} {label}</div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
