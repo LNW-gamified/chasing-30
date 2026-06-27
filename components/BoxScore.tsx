@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { StadiumVisit, Stadium } from '@/types'
+import { getSignedPhotoUrls } from '@/lib/supabase'
 import { GAME_MOMENTS } from '@/lib/moments'
 import { Pencil, Trash2, RefreshCw } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
@@ -198,10 +199,18 @@ export default function BoxScore({
   statsError = null, onEdit, onDelete,
 }: BoxScoreProps) {
   const [tab, setTab]           = useState<'overview' | 'box'>('overview')
+  const [signedPhotoUrls, setSignedPhotoUrls] = useState<string[]>([])
   const [gameContent, setGameContent]   = useState<GameContent | null>(null)
   const [scoringPlays, setScoringPlays] = useState<ScoringPlay[]>([])
   const [weather, setWeather]           = useState<WeatherData | null>(null)
   const [dayNight, setDayNight]         = useState<DayNight>(null)
+
+  useEffect(() => {
+    const paths = visit.photos?.length ? visit.photos : visit.photo_url ? [visit.photo_url] : []
+    if (paths.length > 0) {
+      getSignedPhotoUrls(paths).then(setSignedPhotoUrls)
+    }
+  }, [visit.id])
 
   useEffect(() => {
     if (visit.mlb_game_pk) {
@@ -616,13 +625,54 @@ export default function BoxScore({
               </div>
             )}
 
-            {visit.photo_url && (
-              <div style={{ marginBottom: 14 }}>
-                <div style={LABEL}>Photo</div>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={visit.photo_url} alt="Game photo" style={{ width: '100%', maxHeight: 240, objectFit: 'cover', borderRadius: 10 }} />
-              </div>
-            )}
+            {signedPhotoUrls.length > 0 && (() => {
+              const photos = signedPhotoUrls
+              return (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={LABEL}>{photos.length === 1 ? 'Photo' : `Photos (${photos.length})`}</div>
+                  {photos.length === 1 ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={photos[0]}
+                      alt="Game photo"
+                      style={{ width: '100%', maxHeight: 240, objectFit: 'cover', borderRadius: 10, cursor: 'pointer' }}
+                      onClick={() => window.dispatchEvent(new CustomEvent('open-lightbox', { detail: photos[0] }))}
+                    />
+                  ) : (
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: photos.length === 2 ? '1fr 1fr' : '2fr 1fr',
+                      gridTemplateRows: photos.length >= 3 ? '1fr 1fr' : '1fr',
+                      gap: 4, borderRadius: 10, overflow: 'hidden', maxHeight: 280,
+                    }}>
+                      {photos.slice(0, 4).map((url, idx) => (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          key={idx}
+                          src={url}
+                          alt={`Game photo ${idx + 1}`}
+                          onClick={() => window.dispatchEvent(new CustomEvent('open-lightbox', { detail: url }))}
+                          style={{
+                            width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer', display: 'block',
+                            gridColumn: photos.length >= 3 && idx === 0 ? '1' : 'auto',
+                            gridRow: photos.length >= 3 && idx === 0 ? '1 / 3' : 'auto',
+                          }}
+                        />
+                      ))}
+                      {photos.length > 4 && (
+                        <div style={{ position: 'relative' }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={photos[3]} alt="More" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, color: '#fff' }}>
+                            +{photos.length - 3}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
 
             {visit.notes && (
               <div>
@@ -631,7 +681,7 @@ export default function BoxScore({
               </div>
             )}
 
-            {!visit.moments?.length && !visit.hp_umpire && !visit.photo_url && !visit.notes && !visit.weather && (
+            {!visit.moments?.length && !visit.hp_umpire && !signedPhotoUrls.length && !visit.notes && !visit.weather && (
               <div style={{ fontSize: 13, color: '#8B949E', textAlign: 'center', padding: '12px 0' }}>
                 Edit this game to add notes, photos, and more.
               </div>

@@ -68,6 +68,7 @@ export interface StadiumVisit {
   second_base_umpire: string | null
   third_base_umpire: string | null
   photo_url: string | null
+  photos: string[] | null
   notes: string | null
   additional_seats: { section: string; row: string; number: string }[] | null
   mlb_game_pk: number | null

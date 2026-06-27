@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { createClient } from '@/lib/supabase'
+import { createClient, getSignedPhotoUrls } from '@/lib/supabase'
 import type { Stadium, StadiumVisit, InningScore } from '@/types'
 import { X, Plus, Minus, ImagePlus, Trash2, CloudSun, Loader2 } from 'lucide-react'
 import { GAME_MOMENTS } from '@/lib/moments'
@@ -90,9 +90,19 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
   )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [photoFile, setPhotoFile] = useState<File | null>(null)
-  const [photoPreview, setPhotoPreview] = useState<string | null>(visit?.photo_url ?? null)
+  const [photoFiles, setPhotoFiles] = useState<File[]>([])
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
+  const [photoPathsToKeep, setPhotoPathsToKeep] = useState<string[]>(
+    visit?.photos ?? (visit?.photo_url ? [visit.photo_url] : [])
+  )
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Load signed URLs for existing photos on mount
+  useEffect(() => {
+    if (photoPathsToKeep.length > 0) {
+      getSignedPhotoUrls(photoPathsToKeep).then(urls => setPhotoPreviews(urls))
+    }
+  }, [])
   const [weatherLoading, setWeatherLoading] = useState(false)
   const [weatherNote, setWeatherNote] = useState<string | null>(null)
   const [additionalSeats, setAdditionalSeats] = useState<ExtraSeat[]>(
@@ -239,16 +249,27 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
   }
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setPhotoFile(file)
-    setPhotoPreview(URL.createObjectURL(file))
+    const files = Array.from(e.target.files ?? [])
+    const totalCount = photoPathsToKeep.length + photoFiles.length + files.length
+    if (totalCount > 5) {
+      setError('Maximum 5 photos allowed')
+      return
+    }
+    const newPreviews = files.map(f => URL.createObjectURL(f))
+    setPhotoFiles(prev => [...prev, ...files])
+    setPhotoPreviews(prev => [...prev, ...newPreviews])
   }
 
-  function removePhoto() {
-    setPhotoFile(null)
-    setPhotoPreview(null)
-    if (fileInputRef.current) fileInputRef.current.value = ''
+  function removePhoto(idx: number) {
+    const existingCount = photoPathsToKeep.length
+    if (idx < existingCount) {
+      setPhotoPathsToKeep(prev => prev.filter((_, i) => i !== idx))
+      setPhotoPreviews(prev => prev.filter((_, i) => i !== idx))
+    } else {
+      const fileIdx = idx - existingCount
+      setPhotoFiles(prev => prev.filter((_, i) => i !== fileIdx))
+      setPhotoPreviews(prev => prev.filter((_, i) => i !== idx))
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -259,24 +280,24 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    let uploadedPhotoUrl: string | null = visit?.photo_url ?? null
-
-    if (photoFile) {
-      const ext = photoFile.name.split('.').pop()
-      const path = `${Date.now()}.${ext}`
+    // Upload new files, store paths (not URLs)
+    const newPaths: string[] = []
+    for (const file of photoFiles) {
+      const ext = file.name.split('.').pop()
+      const path = `${stadium.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
       const { data: uploadData, error: uploadErr } = await supabase.storage
         .from('game-photos')
-        .upload(path, photoFile, { contentType: photoFile.type, upsert: false })
+        .upload(path, file, { contentType: file.type, upsert: false })
       if (uploadErr) {
         setError(`Photo upload failed: ${uploadErr.message}`)
         setSaving(false)
         return
       }
-      const { data: urlData } = supabase.storage.from('game-photos').getPublicUrl(uploadData.path)
-      uploadedPhotoUrl = urlData.publicUrl
-    } else if (!photoPreview && visit?.photo_url) {
-      uploadedPhotoUrl = null
+      newPaths.push(uploadData.path)
     }
+
+    const allPhotoPaths = [...photoPathsToKeep, ...newPaths]
+    const uploadedPhotoUrl = allPhotoPaths[0] ?? null
 
     const payload = {
       stadium_id: stadium.id,
@@ -325,6 +346,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
       third_base_umpire: form.third_base_umpire || null,
       notes: form.notes || null,
       photo_url: uploadedPhotoUrl,
+      photos: allPhotoPaths.length > 0 ? allPhotoPaths : null,
       additional_seats: additionalSeats.filter((s) => s.section || s.row || s.number),
       moments: selectedMoments,
       created_by: user?.id ?? null,
@@ -896,46 +918,40 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
           </div>
 
           {sectionHead('Photo')}
-          <div className="mb-2">
-            {photoPreview ? (
-              <div className="relative inline-block">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={photoPreview}
-                  alt="Game photo preview"
-                  className="rounded-lg"
-                  style={{ maxHeight: 180, objectFit: 'cover', maxWidth: '100%' }}
-                />
-                <button
-                  type="button"
-                  onClick={removePhoto}
-                  className="absolute top-2 right-2 p-1 rounded-full"
-                  style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#F85149' }}
-                >
-                  <Trash2 size={14} />
-                </button>
+          <div style={{ marginBottom: 8 }}>
+            {photoPreviews.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 10 }}>
+                {photoPreviews.map((src, idx) => (
+                  <div key={idx} style={{ position: 'relative', paddingBottom: '100%', borderRadius: 10, overflow: 'hidden', backgroundColor: '#1C2430' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt={`Photo ${idx + 1}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(idx)}
+                      style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.7)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Trash2 size={11} color="#F85149" />
+                    </button>
+                  </div>
+                ))}
               </div>
-            ) : (
+            )}
+            {(photoPathsToKeep.length + photoFiles.length) < 5 && (
               <label
-                className="flex flex-col items-center justify-center gap-2 rounded-xl cursor-pointer transition-colors"
                 style={{
-                  border: '2px dashed #30363D',
-                  backgroundColor: '#1a2235',
-                  padding: '2rem 1rem',
-                  color: '#8B949E',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: 6, borderRadius: 12, cursor: 'pointer',
+                  border: '2px dashed #30363D', backgroundColor: '#1a2235',
+                  padding: photoPreviews.length > 0 ? '12px' : '2rem 1rem', color: '#8B949E',
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#1F6FEB')}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#30363D')}
               >
-                <ImagePlus size={28} />
-                <span className="text-sm">Click to upload a game photo</span>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoChange}
-                />
+                <ImagePlus size={22} />
+                <span style={{ fontSize: 12 }}>
+                  {photoPreviews.length === 0 ? 'Add up to 5 photos' : `Add photo (${photoPreviews.length}/5)`}
+                </span>
+                <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoChange} />
               </label>
             )}
           </div>

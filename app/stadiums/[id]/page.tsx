@@ -120,6 +120,14 @@ export default function StadiumDetailPage() {
   const [visitPromos, setVisitPromos]           = useState<Record<string, { promotions: string[]; promotion_photos: Record<string, string> }>>({})
   const [lightboxUrl, setLightboxUrl]           = useState<string | null>(null)
 
+  useEffect(() => {
+    function handleLightbox(e: Event) {
+      setLightboxUrl((e as CustomEvent).detail)
+    }
+    window.addEventListener('open-lightbox', handleLightbox)
+    return () => window.removeEventListener('open-lightbox', handleLightbox)
+  }, [])
+
   const [unlockedMilestones, setUnlockedMilestones] = useState<{ name: string; icon: string }[]>([])
   const prevEarnedIdsRef = useRef<Set<string>>(new Set())
 
