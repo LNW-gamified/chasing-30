@@ -801,8 +801,10 @@ export default function MilestoneGrid({
           style={{
             position: 'fixed', inset: 0, zIndex: 1000,
             backgroundColor: 'rgba(0,0,0,0.92)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            padding: 16,
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'flex-start',
+            padding: '24px 16px 40px',
+            overflowY: 'auto',
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -810,12 +812,16 @@ export default function MilestoneGrid({
             src={lightboxItem.url}
             alt={lightboxItem.name}
             onClick={e => e.stopPropagation()}
-            style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 12, objectFit: 'contain', marginBottom: 16 }}
+            style={{ maxWidth: '100%', maxHeight: '45vh', borderRadius: 12, objectFit: 'contain', marginBottom: 16 }}
           />
           <div
             onClick={e => e.stopPropagation()}
-            style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', padding: '14px 16px', width: '100%', maxWidth: 400 }}
+            style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', padding: '14px 16px', width: '100%', maxWidth: 400, position: 'relative' }}
           >
+            <button
+              onClick={() => setLightboxItem(null)}
+              style={{ position: 'absolute', top: 10, right: 10, background: 'none', border: 'none', color: '#8B949E', fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: '2px 6px' }}
+            >✕</button>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Item Name</div>
             <input
               defaultValue={lightboxItem.name}
@@ -850,17 +856,38 @@ export default function MilestoneGrid({
                   const newType = typeSelect?.value as GiveawayTypeValue
                   if (!newName) return
                   const supabase = createClient()
-                  const claim = claims.find(c => c.id === lightboxItem.claimId)
-                  if (!claim) return
-                  await supabase.from('achievement_claims').update({
-                    extra_data: { ...claim.extra_data, bobblehead_name: newName },
-                    giveaway_type: newType,
-                  }).eq('id', lightboxItem.claimId)
+                  const claimId = lightboxItem.claimId
+
+                  if (claimId.startsWith('ble-')) {
+                    const parts = claimId.split('-')
+                    const entryId = parts.slice(1, parts.length - 1).join('-')
+                    const itemIdx = parseInt(parts[parts.length - 1], 10)
+                    const { data: entry } = await supabase
+                      .from('baseball_life_entries')
+                      .select('giveaway_items')
+                      .eq('id', entryId)
+                      .single()
+                    if (entry?.giveaway_items) {
+                      const items = [...(entry.giveaway_items as Array<{ name: string; photo_url: string | null; type?: string }>)]
+                      if (items[itemIdx]) {
+                        items[itemIdx] = { ...items[itemIdx], name: newName, type: newType }
+                        await supabase.from('baseball_life_entries').update({ giveaway_items: items }).eq('id', entryId)
+                        await fetchBleGiveaways()
+                      }
+                    }
+                  } else {
+                    const claim = claims.find(c => c.id === claimId)
+                    if (!claim) return
+                    await supabase.from('achievement_claims').update({
+                      extra_data: { ...claim.extra_data, bobblehead_name: newName },
+                      giveaway_type: newType,
+                    }).eq('id', claimId)
+                    await fetchClaims()
+                  }
                   setLightboxItem(null)
-                  await fetchClaims()
                 }}
                 style={{ flex: 1, padding: '9px', borderRadius: 8, backgroundColor: '#1F6FEB', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-              >Save Name</button>
+              >Save Changes</button>
               <label style={{ flex: 1, padding: '9px', borderRadius: 8, border: '1px solid #30363D', color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'center' as const }}>
                 Replace Photo
                 <input type="file" accept="image/*" style={{ display: 'none' }}
@@ -883,10 +910,6 @@ export default function MilestoneGrid({
                   }}
                 />
               </label>
-              <button
-                onClick={() => setLightboxItem(null)}
-                style={{ padding: '9px 14px', borderRadius: 8, border: '1px solid #30363D', background: 'none', color: '#8B949E', fontSize: 13, cursor: 'pointer' }}
-              >✕</button>
             </div>
           </div>
         </div>
