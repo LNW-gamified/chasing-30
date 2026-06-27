@@ -1046,7 +1046,6 @@ export default function MilestoneGrid({
                     <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>🏆 Best Games</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {(() => {
-                        const shownIds = new Set<string>()
                         const rows = [
                           personalRecords.firstGame ? {
                             emoji: '⭐', label: 'First Game', v: personalRecords.firstGame,
@@ -1095,8 +1094,6 @@ export default function MilestoneGrid({
 
                         return rows.map((row) => {
                           if (!row) return null
-                          if (shownIds.has(row.v.id)) return null
-                          shownIds.add(row.v.id)
                           const stadium = personalRecords.stadiumFor(row.v)
                           return (
                             <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D' }}>
