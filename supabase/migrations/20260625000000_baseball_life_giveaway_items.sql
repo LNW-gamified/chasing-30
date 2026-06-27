@@ -1,8 +1,6 @@
--- Add giveaway_items column to baseball_life_entries
 ALTER TABLE baseball_life_entries
   ADD COLUMN IF NOT EXISTS giveaway_items JSONB DEFAULT '[]';
 
--- Storage bucket for giveaway photos (minor league game entries)
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
   'giveaway-photos',
@@ -13,14 +11,23 @@ VALUES (
 )
 ON CONFLICT (id) DO NOTHING;
 
-CREATE POLICY IF NOT EXISTS "Authenticated users can upload giveaway photos"
-  ON storage.objects FOR INSERT TO authenticated
-  WITH CHECK (bucket_id = 'giveaway-photos');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Authenticated users can upload giveaway photos' AND tablename = 'objects') THEN
+    CREATE POLICY "Authenticated users can upload giveaway photos"
+      ON storage.objects FOR INSERT TO authenticated
+      WITH CHECK (bucket_id = 'giveaway-photos');
+  END IF;
 
-CREATE POLICY IF NOT EXISTS "Public read for giveaway photos"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'giveaway-photos');
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public read for giveaway photos' AND tablename = 'objects') THEN
+    CREATE POLICY "Public read for giveaway photos"
+      ON storage.objects FOR SELECT
+      USING (bucket_id = 'giveaway-photos');
+  END IF;
 
-CREATE POLICY IF NOT EXISTS "Authenticated users can delete giveaway photos"
-  ON storage.objects FOR DELETE TO authenticated
-  USING (bucket_id = 'giveaway-photos');
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Authenticated users can delete giveaway photos' AND tablename = 'objects') THEN
+    CREATE POLICY "Authenticated users can delete giveaway photos"
+      ON storage.objects FOR DELETE TO authenticated
+      USING (bucket_id = 'giveaway-photos');
+  END IF;
+END $$;
