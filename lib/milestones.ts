@@ -430,4 +430,158 @@ export const MILESTONES: Milestone[] = [
     check: (_v, _s, _e, _sv, destinationVisits) =>
       new Set((destinationVisits ?? []).map((dv: DestinationVisit) => dv.destination_id)).size >= 5,
   },
+
+  // ── Baseball Life achievements (auto-tracked from BLE entries) ──────────────
+  {
+    id: 'bl_derby_day',
+    name: 'Derby Day',
+    description: 'Attend the Home Run Derby',
+    icon: '💥',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'mlb_special_event' && x.event_type?.toLowerCase().includes('home run derby')
+    ),
+  },
+  {
+    id: 'bl_field_of_dreams_game',
+    name: 'Field of Dreams Game',
+    description: 'Attend the Field of Dreams Game in Iowa',
+    icon: '🌽',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'mlb_special_event' && x.event_type?.toLowerCase().includes('field of dreams')
+    ),
+  },
+  {
+    id: 'bl_cactus_league',
+    name: 'Cactus League',
+    description: 'Attend a spring training game in Arizona',
+    icon: '🌵',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'spring_training' && x.state === 'AZ'
+    ),
+  },
+  {
+    id: 'bl_grapefruit_league',
+    name: 'Grapefruit League',
+    description: 'Attend a spring training game in Florida',
+    icon: '🍊',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'spring_training' && x.state === 'FL'
+    ),
+  },
+  {
+    id: 'bl_fenway_tour',
+    name: 'The Green Monster',
+    description: 'Take a tour of Fenway Park',
+    icon: '🏯',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'pilgrimage' && x.venue?.toLowerCase().includes('fenway')
+    ),
+  },
+  {
+    id: 'bl_wrigley_tour',
+    name: 'The Friendly Confines',
+    description: 'Take a tour of Wrigley Field',
+    icon: '🍀',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'pilgrimage' && x.venue?.toLowerCase().includes('wrigley')
+    ),
+  },
+  {
+    id: 'bl_yankee_tour',
+    name: 'The House That Ruth Built',
+    description: 'Take a tour of Yankee Stadium',
+    icon: '🏛️',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'pilgrimage' && x.venue?.toLowerCase().includes('yankee')
+    ),
+  },
+  {
+    id: 'bl_dodger_tour',
+    name: 'Chavez Ravine',
+    description: 'Take a tour of Dodger Stadium',
+    icon: '🌴',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('dodger') || x.venue?.toLowerCase().includes('chavez ravine'))
+    ),
+  },
+  {
+    id: 'bl_oracle_tour',
+    name: 'The Splash Zone',
+    description: 'Take a tour of Oracle Park',
+    icon: '🌉',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'pilgrimage' && x.venue?.toLowerCase().includes('oracle')
+    ),
+  },
+  {
+    id: 'bl_little_league_ws',
+    name: 'Back to Basics',
+    description: 'Attend the Little League World Series in Williamsport, PA',
+    icon: '⚾',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('little league') || x.venue?.toLowerCase().includes('williamsport'))
+    ),
+  },
+  {
+    id: 'bl_cape_cod_league',
+    name: 'Future Stars',
+    description: 'Watch a Cape Cod Baseball League game in Hyannis, MA',
+    icon: '🦞',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('cape cod') || x.venue?.toLowerCase().includes('hyannis'))
+    ),
+  },
+  {
+    id: 'bl_arizona_fall_league',
+    name: 'Fall Prospects',
+    description: 'Attend an Arizona Fall League game in Scottsdale, AZ',
+    icon: '🌵',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('arizona fall') || x.venue?.toLowerCase().includes('scottsdale') || x.event_type?.toLowerCase().includes('arizona fall'))
+    ),
+  },
+  {
+    id: 'bl_college_world_series',
+    name: 'College Classic',
+    description: 'Attend the College World Series in Omaha, NE',
+    icon: '🎓',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('college world series') || x.venue?.toLowerCase().includes('omaha') || x.event_type?.toLowerCase().includes('college world series'))
+    ),
+  },
+  {
+    id: 'bl_grand_tour',
+    name: 'The Grand Tour',
+    description: 'Visit 3 or more baseball pilgrimage sites',
+    icon: '🗺️',
+    check: (_v, _s, _e, ble) => {
+      const venues = new Set(
+        (ble ?? []).filter((x: BaseballLifeEntry) => x.category === 'pilgrimage')
+          .map((x: BaseballLifeEntry) => x.venue?.toLowerCase().trim())
+          .filter(Boolean)
+      )
+      return venues.size >= 3
+    },
+  },
+  {
+    id: 'bl_full_circuit',
+    name: 'The Full Circuit',
+    description: 'Attend an MLB game, a minor league game, and a spring training game',
+    icon: '🔄',
+    check: (_v, _s, _e, ble) => {
+      const cats = new Set((ble ?? []).map((x: BaseballLifeEntry) => x.category))
+      return cats.has('minor_league') && cats.has('spring_training')
+    },
+  },
+  {
+    id: 'bl_baseball_lifer',
+    name: 'Baseball Lifer',
+    description: 'Have entries in all four Baseball Life categories',
+    icon: '🎖️',
+    check: (_v, _s, _e, ble) => {
+      const cats = new Set((ble ?? []).map((x: BaseballLifeEntry) => x.category))
+      return cats.has('minor_league') && cats.has('mlb_special_event') &&
+             cats.has('spring_training') && cats.has('pilgrimage')
+    },
+  },
 ]
