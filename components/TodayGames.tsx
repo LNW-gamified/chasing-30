@@ -244,7 +244,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
                 {/* Away */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 36 }}>
                   <TeamLogo abbreviation={g.awayAbbr} size={40}/>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: awayWin ? '#E6EDF3' : '#8B949E', letterSpacing: '0.03em' }}>{g.awayAbbr}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: awayWin ? '#E6EDF3' : '#8B949E', letterSpacing: '0.03em' }}>{g.awayAbbr}</span>
                 </div>
 
                 {/* Score or time */}
@@ -265,7 +265,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
                 {/* Home */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 36 }}>
                   <TeamLogo abbreviation={g.homeAbbr} size={40}/>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: homeWin ? '#E6EDF3' : '#8B949E', letterSpacing: '0.03em' }}>{g.homeAbbr}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: homeWin ? '#E6EDF3' : '#8B949E', letterSpacing: '0.03em' }}>{g.homeAbbr}</span>
                 </div>
               </div>
 

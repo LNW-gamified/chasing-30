@@ -942,7 +942,7 @@ export default function PassportGrid({ stamps, userName, passportNo, earnedCount
             Stadium Passport
           </div>
           <div style={{
-            fontFamily: 'monospace', fontSize: 11, fontWeight: 700,
+            fontFamily: 'monospace', fontSize: 13, fontWeight: 700,
             color: 'rgba(197,164,126,0.5)', letterSpacing: '0.2em', textTransform: 'uppercase',
           }}>
             United States Baseball Tour · Est. 1869

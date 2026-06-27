@@ -141,7 +141,7 @@ function StadiumCard({ stadium, visited, visitDate, visitCount, nextGame, photo 
         <div style={{ height: 136, position: 'relative', flexShrink: 0, overflow: 'hidden', background: `linear-gradient(to bottom, ${hexToRgba(accent, 0.55)} 0%, ${hexToRgba(accent, 0.2)} 100%)`, borderTop: `3px solid ${accent}` }}>
           {photo && <img src={photo} alt={stadium.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55 }} />}
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)' }} />
-          {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#0B1117', fontWeight: 900 }}>✓</div>}
+          {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#0B1117', fontWeight: 900 }}>✓</div>}
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
             <TeamLogo abbreviation={stadium.abbreviation} size={80} />
           </div>
@@ -190,7 +190,7 @@ function EventCard({ event, attendedCount, onLog }: {
           : <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${hexToRgba(gradColor, 0.35)} 0%, ${hexToRgba(gradColor, 0.12)} 100%)` }} />
         }
         {event.image_url && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.45) 100%)' }} />}
-        {attended && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#0B1117', fontWeight: 900 }}>✓</div>}
+        {attended && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#0B1117', fontWeight: 900 }}>✓</div>}
       </div>
       <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 4 }}>
         <span style={{ fontSize: 12, fontWeight: 700, color: meta.color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{meta.label}</span>
@@ -241,7 +241,7 @@ function ExperienceCard({ exp, visited, onLog }: {
               </div>
             </>
         }
-        {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#0B1117', fontWeight: 900 }}>✓</div>}
+        {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#0B1117', fontWeight: 900 }}>✓</div>}
       </div>
       <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 4 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -288,7 +288,7 @@ function MinorLeagueCard({ stadium, visitCount }: {
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
             <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={48} logoUrl={stadium.logo_url} />
           </div>
-          {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#0B1117', fontWeight: 900 }}>✓</div>}
+          {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#0B1117', fontWeight: 900 }}>✓</div>}
         </div>
         <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 3 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2 }}>{stadium.team}</div>

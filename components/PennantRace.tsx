@@ -230,7 +230,7 @@ function TeamRow({
           margin: '0 12px',
           display: 'flex', alignItems: 'center', gap: 6,
         }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#F85149', letterSpacing: '0.08em', padding: '2px 0' }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#F85149', letterSpacing: '0.08em', padding: '2px 0' }}>
             ── WC LINE ──
           </span>
         </div>
@@ -253,7 +253,7 @@ function TeamRow({
           </span>
           {clinchBadge && (
             <span style={{
-              fontSize: 11, fontWeight: 800, padding: '1px 5px', borderRadius: 20,
+              fontSize: 13, fontWeight: 800, padding: '1px 5px', borderRadius: 20,
               color: clinchBadge.color, backgroundColor: `${clinchBadge.color}18`,
               border: `1px solid ${clinchBadge.color}44`, flexShrink: 0,
             }}>
@@ -262,7 +262,7 @@ function TeamRow({
           )}
           {team.eliminationNumber && !clinchBadge && (
             <span style={{
-              fontSize: 11, fontWeight: 700, padding: '1px 5px', borderRadius: 20, flexShrink: 0,
+              fontSize: 13, fontWeight: 700, padding: '1px 5px', borderRadius: 20, flexShrink: 0,
               color: '#F85149', backgroundColor: 'rgba(248,81,73,0.08)',
               border: '1px solid rgba(248,81,73,0.25)',
             }}>

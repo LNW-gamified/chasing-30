@@ -172,7 +172,7 @@ export default function OnThisDay({ facts }: { facts: HistoryFact[] }) {
                   padding: '2px 7px', borderRadius: 4,
                   background: `${color}18`,
                   border: `1px solid ${color}55`,
-                  fontFamily: 'monospace', fontSize: 11, fontWeight: 700,
+                  fontFamily: 'monospace', fontSize: 13, fontWeight: 700,
                   letterSpacing: '0.16em', color,
                 }}>
                   {label}
@@ -252,7 +252,7 @@ export default function OnThisDay({ facts }: { facts: HistoryFact[] }) {
               />
             ))}
             <span style={{
-              fontFamily: 'monospace', fontSize: 11,
+              fontFamily: 'monospace', fontSize: 13,
               color: 'rgba(245,166,35,0.35)', marginLeft: 4,
             }}>
               {idx + 1}/{facts.length}

@@ -1234,7 +1234,7 @@ export default function MilestoneGrid({
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                       <Zap size={9} color={currentTier ? '#F5A623' : '#8B949E'} />
-                      <span style={{ fontSize: 11, fontWeight: 700, color: currentTier ? '#F5A623' : '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tracked</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: currentTier ? '#F5A623' : '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tracked</span>
                     </div>
                     {totalEarnedPts > 0 && (
                       <div style={{ fontSize: 12, fontWeight: 800, color: '#F5A623', background: 'rgba(245,166,35,0.15)', padding: '2px 8px', borderRadius: 20 }}>
@@ -1259,7 +1259,7 @@ export default function MilestoneGrid({
                         }}>
                           {unlocked && <Check size={10} color={isCurrent ? '#000' : '#F5A623'} strokeWidth={3} />}
                         </div>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: unlocked ? '#F5A623' : '#8B949E', lineHeight: 1 }}>{tier.threshold}</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: unlocked ? '#F5A623' : '#8B949E', lineHeight: 1 }}>{tier.threshold}</span>
                       </div>
                     )
                   })}
@@ -1325,7 +1325,7 @@ export default function MilestoneGrid({
                 {/* Auto-tracked badge */}
                 <div style={{ position: 'absolute', bottom: 10, left: 10, display: 'flex', alignItems: 'center', gap: 3 }}>
                   <Zap size={9} color={isEarned ? '#F5A623' : '#8B949E'} />
-                  <span style={{ fontSize: 11, fontWeight: 700, color: isEarned ? '#F5A623' : '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tracked</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: isEarned ? '#F5A623' : '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tracked</span>
                 </div>
 
                 {/* Icon */}
@@ -1398,7 +1398,7 @@ export default function MilestoneGrid({
 
                 {/* Repeatable count badge */}
                 {isRepeatable && hasClaims && (
-                  <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 11, fontWeight: 800, color: '#F5A623', background: 'rgba(245,166,35,0.18)', padding: '2px 7px', borderRadius: 999 }}>
+                  <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 13, fontWeight: 800, color: '#F5A623', background: 'rgba(245,166,35,0.18)', padding: '2px 7px', borderRadius: 999 }}>
                     {isBobble ? `${count} collected` : `${count}×`}
                   </div>
                 )}
@@ -1406,7 +1406,7 @@ export default function MilestoneGrid({
                 {/* Manual badge */}
                 <div style={{ position: 'absolute', bottom: 10, left: 10, display: 'flex', alignItems: 'center', gap: 3 }}>
                   <Hand size={9} color={hasClaims ? '#F5A623' : '#8B949E'} />
-                  <span style={{ fontSize: 11, fontWeight: 700, color: hasClaims ? '#F5A623' : '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Manual</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: hasClaims ? '#F5A623' : '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Manual</span>
                 </div>
 
                 {/* + Log button for repeatable */}

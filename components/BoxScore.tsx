@@ -321,7 +321,7 @@ export default function BoxScore({
             ) : (
               <div style={{ fontSize: 13, color: '#8B949E' }}>vs</div>
             )}
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', marginTop: 1, letterSpacing: '0.08em' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', marginTop: 1, letterSpacing: '0.08em' }}>
               {hasScore ? `FINAL${innings.length > 9 ? `/${innings.length}` : ''}${isWalkOff ? ' · WO' : ''}` : null}
             </div>
           </div>

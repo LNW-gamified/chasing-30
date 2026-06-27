@@ -489,7 +489,7 @@ export default function StadiumDetailPage() {
                   border: '1px solid #30363D',
                 }}>
                   <Icon size={15} color="#1F6FEB" strokeWidth={2} style={{ marginBottom: 5 }} />
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</div>
                   <div style={{ fontWeight: 800, fontSize: 15, color: '#E6EDF3', lineHeight: 1.2, textAlign: 'center' }}>{value}</div>
                 </div>
               ))}
