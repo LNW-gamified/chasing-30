@@ -4,6 +4,9 @@ import { createClient } from '@/lib/supabase-server'
 import AppShell from '@/components/AppShell'
 import InstallPrompt from '@/components/InstallPrompt'
 import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar'
+import { MILESTONES } from '@/lib/milestones'
+import { RANK_TIERS, MILESTONE_POINTS } from '@/app/milestones/page'
+import type { StadiumVisit, Stadium, SpecialEvent, BaseballLifeEntry } from '@/types'
 
 export const metadata: Metadata = {
   title: 'Chasing 30',
@@ -16,15 +19,6 @@ export const metadata: Metadata = {
   },
 }
 
-const RANK_TIERS = [
-  { name: 'Sandlot Kid',       minPts: 0,    icon: '⚾', description: 'Where every legend begins' },
-  { name: 'Minor Leaguer',     minPts: 75,   icon: '🚌', description: 'Working your way up' },
-  { name: 'September Call-Up', minPts: 200,  icon: '📈', description: 'The bigs are calling' },
-  { name: 'Rotation Ace',      minPts: 400,  icon: '🔥', description: "You're the real deal" },
-  { name: 'All-Star',          minPts: 700,  icon: '⭐', description: 'The fans voted you in' },
-  { name: 'Hall of Famer',     minPts: 1200, icon: '🏆', description: 'Your plaque is waiting' },
-]
-
 function daysUntil(dateStr: string): number {
   const todayLA = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
   const today   = new Date(todayLA + 'T00:00:00')
@@ -32,28 +26,6 @@ function daysUntil(dateStr: string): number {
   return Math.max(0, Math.round((target.getTime() - today.getTime()) / 86400000))
 }
 
-function computeXP(visitedCount: number, gamesCount: number): number {
-  let xp = 0
-  if (gamesCount >= 1)    xp += 25
-  if (visitedCount >= 5)  xp += 50
-  if (visitedCount >= 10) xp += 75
-  if (visitedCount >= 15) xp += 100
-  if (visitedCount >= 20) xp += 125
-  if (visitedCount >= 25) xp += 150
-  if (visitedCount >= 30) xp += 300
-  if (gamesCount >= 5)    xp += 35
-  if (gamesCount >= 10)   xp += 50
-  return xp
-}
-
-function getRank(xp: number) {
-  return [...RANK_TIERS].reverse().find(r => xp >= r.minPts) ?? RANK_TIERS[0]
-}
-
-function getNextRankXp(xp: number): number | null {
-  const next = RANK_TIERS.find(r => r.minPts > xp)
-  return next?.minPts ?? null
-}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -87,22 +59,39 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
 
-  const [{ data: trips }, { data: visits }] = await Promise.all([
+  const [{ data: trips }, { data: visits }, { data: stadiums }, { data: events }, { data: bleEntries }] = await Promise.all([
     supabase.from('trips')
       .select('id, name, start_date, stadium:stadiums(name, abbreviation)')
       .eq('status', 'planned')
       .gte('start_date', today)
       .order('start_date', { ascending: true, nullsFirst: false })
       .limit(1),
-    supabase.from('stadium_visits').select('stadium_id'),
+    supabase.from('stadium_visits').select('*'),
+    supabase.from('stadiums').select('*'),
+    supabase.from('special_events').select('*'),
+    supabase.from('baseball_life_entries').select('id, category'),
   ])
 
-  const allVisits = visits ?? []
-  const visitedCount = new Set(allVisits.map((v: any) => v.stadium_id)).size
+  const allVisits: StadiumVisit[] = visits ?? []
+  const allStadiums: Stadium[] = stadiums ?? []
+  const allEvents: SpecialEvent[] = events ?? []
+  const allBaseballLife: BaseballLifeEntry[] = (bleEntries ?? []) as BaseballLifeEntry[]
+
+  const visitedCount = new Set(allVisits.map(v => v.stadium_id)).size
   const gamesCount = allVisits.length
-  const xp = computeXP(visitedCount, gamesCount)
-  const rank = getRank(xp)
-  const xpNext = getNextRankXp(xp)
+
+  const ladderMilestones = MILESTONES.filter(m => m.tiers != null)
+  const regularMilestones = MILESTONES.filter(m => m.tiers == null)
+  const earned = regularMilestones.filter(m => m.check(allVisits, allStadiums, allEvents, allBaseballLife))
+
+  const ladderPoints = ladderMilestones.reduce((sum, m) => {
+    const val = m.getValue ? m.getValue(allVisits, allStadiums, allEvents, allBaseballLife) : 0
+    return sum + (m.tiers ?? []).filter(t => t.threshold <= val).reduce((s, t) => s + t.points, 0)
+  }, 0)
+  const xp = earned.reduce((sum, m) => sum + (MILESTONE_POINTS[m.id] ?? 25), 0) + ladderPoints
+
+  const rank = [...RANK_TIERS].reverse().find(r => xp >= r.minPts) ?? RANK_TIERS[0]
+  const xpNext = RANK_TIERS.find(r => r.minPts > xp) ?? null
   const xpMin = rank.minPts
 
   const nextTripRaw = trips?.[0] ?? null
@@ -128,7 +117,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           rankIcon={rank.icon}
           rankXp={xp}
           rankXpMin={xpMin}
-          rankXpNext={xpNext}
+          rankXpNext={xpNext?.minPts ?? null}
           userInitial={userInitial}
           userId={user.id}
           userEmail={user.email ?? ''}
