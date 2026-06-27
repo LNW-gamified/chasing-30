@@ -1103,8 +1103,8 @@ export default function MilestoneGrid({
                     <div className="grid grid-cols-3" style={{ gap: 10 }}>
                       {[
                         { label: 'Day Games',    value: personalRecords.dayGames,      emoji: '🌅', color: '#F5A623' },
+                        { label: 'Twilight',     value: personalRecords.twilightGames, emoji: '🌇', color: '#F5A623' },
                         { label: 'Night Games',  value: personalRecords.nightGames,    emoji: '🌙', color: '#58A6FF' },
-                        { label: 'Twilight',     value: personalRecords.twilightGames, emoji: '🌇', color: '#8B949E' },
                       ].map(({ label, value, emoji, color }) => (
                         <div key={label} style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 14, padding: '14px 8px', textAlign: 'center' }}>
                           <div style={{ fontSize: 22, marginBottom: 6 }}>{emoji}</div>
