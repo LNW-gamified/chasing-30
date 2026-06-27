@@ -58,6 +58,14 @@ export const MILESTONES: Milestone[] = [
 
   // ── Division & League achievements ──────────────────────────────────────────
   {
+    id: 'al_west',
+    name: 'AL West Complete',
+    description: 'Visit all 5 AL West stadiums',
+    icon: '🌵',
+    check: (visits, stadiums) =>
+      allVisited(stadiumsInDivision(stadiums, 'AL', 'West'), visitedIds(visits)),
+  },
+  {
     id: 'al_east',
     name: 'AL East Complete',
     description: 'Visit all 5 AL East stadiums',
@@ -72,14 +80,6 @@ export const MILESTONES: Milestone[] = [
     icon: '🌽',
     check: (visits, stadiums) =>
       allVisited(stadiumsInDivision(stadiums, 'AL', 'Central'), visitedIds(visits)),
-  },
-  {
-    id: 'al_west',
-    name: 'AL West Complete',
-    description: 'Visit all 5 AL West stadiums',
-    icon: '🌵',
-    check: (visits, stadiums) =>
-      allVisited(stadiumsInDivision(stadiums, 'AL', 'West'), visitedIds(visits)),
   },
   {
     id: 'nl_east',
@@ -191,6 +191,99 @@ export const MILESTONES: Milestone[] = [
     ],
     getValue: (_v, _s, events, ble) => milbCount(events, ble),
     check:    (_v, _s, events, ble) => milbCount(events, ble) >= 1,
+  },
+
+  // ── Game-event achievements (auto-detected via MLB API) ─────────────────────
+  {
+    id: 'walk_off_witness',
+    name: 'Walk-Off Witness',
+    description: 'Witness a walk-off win in person',
+    icon: '🎉',
+    check: (visits) => visits.some(v => v.game_events?.includes('walk_off')),
+  },
+  {
+    id: 'double_walk_off',
+    name: 'Walk-Off Addict',
+    description: 'Witness 2 walk-off wins in person',
+    icon: '🔁',
+    check: (visits) => visits.filter(v => v.game_events?.includes('walk_off')).length >= 2,
+  },
+  {
+    id: 'no_hit_wonder',
+    name: 'No-Hit Wonder',
+    description: 'Witness a no-hitter (any kind) in person',
+    icon: '🙈',
+    check: (visits) => visits.some(v => v.game_events?.includes('no_hitter')),
+  },
+  {
+    id: 'perfect_day',
+    name: 'Perfect Day',
+    description: 'Witness a perfect game in person',
+    icon: '💎',
+    check: (visits) => visits.some(v => v.game_events?.includes('perfect_game')),
+  },
+  {
+    id: 'committee_work',
+    name: 'Committee Work',
+    description: 'Witness a combined no-hitter in person',
+    icon: '👥',
+    check: (visits) => visits.some(v => v.game_events?.includes('combined_no_hitter')),
+  },
+  {
+    id: 'extra_credit',
+    name: 'Extra Credit',
+    description: 'Attend a game that goes to extra innings',
+    icon: '⏰',
+    check: (visits) => visits.some(v => v.game_events?.includes('extra_innings')),
+  },
+  {
+    id: 'marathon_man',
+    name: 'Marathon Man',
+    description: 'Survive a 12+ inning marathon',
+    icon: '🏃‍♂️',
+    check: (visits) => visits.some(v => v.game_events?.includes('twelve_plus_innings')),
+  },
+  {
+    id: 'lights_out',
+    name: 'Lights Out',
+    description: 'Watch the home team throw a shutout in person',
+    icon: '💡',
+    check: (visits) => visits.some(v => v.game_events?.includes('shutout')),
+  },
+  {
+    id: 'grand_slam_witness',
+    name: 'Grand Salami',
+    description: 'Witness a grand slam in person',
+    icon: '💥',
+    check: (visits) => visits.some(v => v.game_events?.includes('grand_slam')),
+  },
+  {
+    id: 'full_cycle',
+    name: 'Full Cycle',
+    description: 'Witness a hit-for-the-cycle in person',
+    icon: '🔄',
+    check: (visits) => visits.some(v => v.game_events?.includes('cycle')),
+  },
+  {
+    id: 'history_maker',
+    name: 'History Maker',
+    description: 'Witness a milestone career home run in person',
+    icon: '📜',
+    check: (visits) => visits.some(v => v.game_events?.includes('milestone_hr')),
+  },
+  {
+    id: 'run_factory',
+    name: 'Run Factory',
+    description: 'Attend a game where one team scores 15+ runs',
+    icon: '🏭',
+    check: (visits) => visits.some(v => v.game_events?.includes('run_factory')),
+  },
+  {
+    id: 'pitchers_duel',
+    name: "Pitcher's Duel",
+    description: 'Watch a 1-0 masterpiece in person',
+    icon: '🎯',
+    check: (visits) => visits.some(v => v.game_events?.includes('pitchers_duel')),
   },
 
   // ── Destinations & pilgrimages ──────────────────────────────────────────────
@@ -336,98 +429,5 @@ export const MILESTONES: Milestone[] = [
     icon: '🗺️',
     check: (_v, _s, _e, _sv, destinationVisits) =>
       new Set((destinationVisits ?? []).map((dv: DestinationVisit) => dv.destination_id)).size >= 5,
-  },
-
-  // ── Game-event achievements (auto-detected via MLB API) ─────────────────────
-  {
-    id: 'walk_off_witness',
-    name: 'Walk-Off Witness',
-    description: 'Witness a walk-off win in person',
-    icon: '🎉',
-    check: (visits) => visits.some(v => v.game_events?.includes('walk_off')),
-  },
-  {
-    id: 'double_walk_off',
-    name: 'Walk-Off Addict',
-    description: 'Witness 2 walk-off wins in person',
-    icon: '🔁',
-    check: (visits) => visits.filter(v => v.game_events?.includes('walk_off')).length >= 2,
-  },
-  {
-    id: 'no_hit_wonder',
-    name: 'No-Hit Wonder',
-    description: 'Witness a no-hitter (any kind) in person',
-    icon: '🙈',
-    check: (visits) => visits.some(v => v.game_events?.includes('no_hitter')),
-  },
-  {
-    id: 'perfect_day',
-    name: 'Perfect Day',
-    description: 'Witness a perfect game in person',
-    icon: '💎',
-    check: (visits) => visits.some(v => v.game_events?.includes('perfect_game')),
-  },
-  {
-    id: 'committee_work',
-    name: 'Committee Work',
-    description: 'Witness a combined no-hitter in person',
-    icon: '👥',
-    check: (visits) => visits.some(v => v.game_events?.includes('combined_no_hitter')),
-  },
-  {
-    id: 'extra_credit',
-    name: 'Extra Credit',
-    description: 'Attend a game that goes to extra innings',
-    icon: '⏰',
-    check: (visits) => visits.some(v => v.game_events?.includes('extra_innings')),
-  },
-  {
-    id: 'marathon_man',
-    name: 'Marathon Man',
-    description: 'Survive a 12+ inning marathon',
-    icon: '🏃‍♂️',
-    check: (visits) => visits.some(v => v.game_events?.includes('twelve_plus_innings')),
-  },
-  {
-    id: 'lights_out',
-    name: 'Lights Out',
-    description: 'Watch the home team throw a shutout in person',
-    icon: '💡',
-    check: (visits) => visits.some(v => v.game_events?.includes('shutout')),
-  },
-  {
-    id: 'grand_slam_witness',
-    name: 'Grand Salami',
-    description: 'Witness a grand slam in person',
-    icon: '💥',
-    check: (visits) => visits.some(v => v.game_events?.includes('grand_slam')),
-  },
-  {
-    id: 'full_cycle',
-    name: 'Full Cycle',
-    description: 'Witness a hit-for-the-cycle in person',
-    icon: '🔄',
-    check: (visits) => visits.some(v => v.game_events?.includes('cycle')),
-  },
-  {
-    id: 'history_maker',
-    name: 'History Maker',
-    description: 'Witness a milestone career home run in person',
-    icon: '📜',
-    check: (visits) => visits.some(v => v.game_events?.includes('milestone_hr')),
-  },
-  {
-    id: 'run_factory',
-    name: 'Run Factory',
-    description: 'Attend a game where one team scores 15+ runs',
-    icon: '🏭',
-    check: (visits) => visits.some(v => v.game_events?.includes('run_factory')),
-  },
-  {
-    id: 'pitchers_duel',
-    name: "Pitcher's Duel",
-    description: 'Watch a 1-0 masterpiece in person',
-    icon: '🎯',
-    check: (visits) => visits.some(v => v.game_events?.includes('pitchers_duel')),
   },
 ]
