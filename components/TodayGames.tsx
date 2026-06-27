@@ -270,10 +270,10 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
               </div>
 
               {/* Status line */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, marginTop: 4 }}>
+              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
                 <StatusBadge isLive={g.isLive} isFinal={g.isFinal} />
                 {g.isLive && g.inning && (
-                  <span style={{ fontSize: 11, fontWeight: 600, color: '#3FB950', letterSpacing: '0.04em' }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#3FB950', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
                     {g.inning}
                   </span>
                 )}
