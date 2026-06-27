@@ -181,6 +181,13 @@ export default async function DashboardPage() {
   const speCount = allBaseballLife.filter(e => e.category === 'mlb_special_event').length
   const pilgCount = allBaseballLife.filter(e => e.category === 'pilgrimage').length
   const destinationsVisited = new Set((destVisits ?? []).map((dv: any) => dv.destination_id)).size
+  const totalGames = gamesAttended + allBaseballLife.filter(e => e.category === 'minor_league').length
+  const beyondThe30Total = allBaseballLife.length
+  const beyondThe30Sub = [
+    mlCount > 0 ? `${mlCount} MiLB` : null,
+    speCount > 0 ? `${speCount} Events` : null,
+    pilgCount > 0 ? `${pilgCount} Pilgrimages` : null,
+  ].filter(Boolean).join(' · ') || 'Log experiences to see breakdown'
   const totalSpent = allTrips
     .filter((t: any) => t.status === 'completed')
     .reduce((sum, t: any) => sum + t.actual_tickets + t.actual_travel + t.actual_hotel + t.actual_food + t.actual_parking, 0)
@@ -473,13 +480,13 @@ export default async function DashboardPage() {
           <SectionHeader label="Your Scouting Report" />
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {([
-              { Icon: CalendarDays, value: gamesAttended,        label: 'Games Witnessed',      valSize: 48, color: '#1F6FEB' },
-              { Icon: ClipboardList, value: baseballLifeCount,   label: 'Baseball Life',          valSize: 48, color: '#1F6FEB' },
-              { Icon: MapPin,        value: destinationsVisited,  label: 'Destinations',          valSize: 48, color: '#1F6FEB' },
-              { Icon: DollarSign,    value: formatCurrency(totalSpent), label: 'Total Spent',    valSize: 44, color: '#3FB950' },
-              { Icon: Trophy,        value: favDivision,          label: 'Fav Division',          valSize: favDivision.length > 7 ? 22 : 30, color: '#F5A623' },
-              { Icon: Eye,           value: mostSeenTeam,         label: 'Most Seen Team',        valSize: mostSeenTeam.length > 7 ? 22 : 30, color: '#F5A623' },
-            ] as const).map(({ Icon, value, label, valSize, color }) => (
+              { Icon: CalendarDays,  value: totalGames,                label: 'Total Games',     valSize: 48, color: '#1F6FEB', sub: `${gamesAttended} MLB · ${mlCount} MiLB` },
+              { Icon: ClipboardList, value: beyondThe30Total,          label: 'Beyond the 30',   valSize: 48, color: '#F5A623', sub: beyondThe30Sub },
+              { Icon: MapPin,        value: destinationsVisited,       label: 'Destinations',    valSize: 48, color: '#1F6FEB', sub: null },
+              { Icon: DollarSign,    value: formatCurrency(totalSpent),label: 'Total Spent',     valSize: 44, color: '#3FB950', sub: null },
+              { Icon: Trophy,        value: favDivision,               label: 'Fav Division',    valSize: favDivision.length > 7 ? 22 : 30, color: '#F5A623', sub: null },
+              { Icon: Eye,           value: mostSeenTeam,              label: 'Most Seen Team',  valSize: mostSeenTeam.length > 7 ? 22 : 30, color: '#F5A623', sub: null },
+            ]).map(({ Icon, value, label, valSize, color, sub }) => (
               <div
                 key={label}
                 className="dash-card"
@@ -499,33 +506,23 @@ export default async function DashboardPage() {
                 }}>
                   {value.toString()}
                 </div>
-                <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 'auto' }}>
-                  {label}
+                <div style={{ marginTop: 'auto' }}>
+                  <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    {label}
+                  </div>
+                  {sub && (
+                    <div style={{ fontSize: 10, color: '#484F58', marginTop: 3, fontWeight: 500 }}>
+                      {sub}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ── The Baseball Life compact row ────────────────────────────── */}
-        {baseballLifeCount > 0 && (
-          <div className="dash-card" style={{ ...card, padding: '14px 18px', marginBottom: SECTION_GAP, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginRight: 8, flexShrink: 0 }}>The Baseball Life</span>
-            {[
-              { emoji: '⚾', label: 'Minor League', count: mlCount },
-              { emoji: '🌟', label: 'Special Events', count: speCount },
-              { emoji: '🏛️', label: 'Pilgrimages', count: pilgCount },
-            ].map(({ emoji, label, count }) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, backgroundColor: 'rgba(139,148,158,0.08)', border: '1px solid #30363D' }}>
-                <span style={{ fontSize: 13 }}>{emoji}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{count}</span>
-                <span style={{ fontSize: 11, color: '#8B949E' }}>{label}</span>
-              </div>
-            ))}
-          </div>
-        )}
 
-        {/* ── Favorite team picker + Standings ─────────────────────────── */}
+{/* ── Favorite team picker + Standings ─────────────────────────── */}
         <FavoriteTeamPicker userId={userId} currentFavAbbr={favAbbr} />
         <Standings favAbbr={favAbbr} />
 
