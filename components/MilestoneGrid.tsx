@@ -657,13 +657,14 @@ export default function MilestoneGrid({
     const topStadium   = topStadiumId ? allStadiums.find(s => s.id === topStadiumId) : null
     const topStadiumCount = topStadiumId ? stadiumCounts[topStadiumId] : 0
 
-    // Most seen opponent
-    const opponentCounts: Record<string, number> = {}
+    // Most seen team (home + away appearances)
+    const teamSeenCounts: Record<string, number> = {}
     for (const v of allVisits) {
-      const opp = v.visiting_team?.replace(/^vs\.?\s+/i, '').trim()
-      if (opp) opponentCounts[opp] = (opponentCounts[opp] ?? 0) + 1
+      const away = v.visiting_team?.replace(/^vs\.?\s+/i, '').trim()
+      if (v.home_team) teamSeenCounts[v.home_team] = (teamSeenCounts[v.home_team] ?? 0) + 1
+      if (away) teamSeenCounts[away] = (teamSeenCounts[away] ?? 0) + 1
     }
-    const topOpponent      = Object.entries(opponentCounts).sort((a, b) => b[1] - a[1])[0]
+    const topOpponent      = Object.entries(teamSeenCounts).sort((a, b) => b[1] - a[1])[0]
     const topOpponentName  = topOpponent?.[0] ?? null
     const topOpponentCount = topOpponent?.[1] ?? 0
 
@@ -1070,7 +1071,7 @@ export default function MilestoneGrid({
                     )}
                     {personalRecords.topOpponentName && (
                       <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 14, padding: '14px 12px' }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Most Seen Opponent</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Most Seen Team</div>
                         <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', marginBottom: 2 }}>{personalRecords.topOpponentName}</div>
                         <div style={{ fontSize: 11, color: '#F5A623' }}>{personalRecords.topOpponentCount} game{personalRecords.topOpponentCount !== 1 ? 's' : ''}</div>
                       </div>
