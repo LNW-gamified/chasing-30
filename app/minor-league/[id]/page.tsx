@@ -224,6 +224,13 @@ export default function MinorLeagueDetailPage() {
   const [standings,             setStandings]             = useState<StandingTeam[]>([])
   const [affiliateMlbStadiumId, setAffiliateMlbStadiumId] = useState<string | null>(null)
 
+  // Edit giveaways
+  const [editingVisitId, setEditingVisitId] = useState<string | null>(null)
+  const [editGiveaways,  setEditGiveaways]  = useState<Array<{ name: string; photo_url: string | null }>>([])
+  const [editSaving,     setEditSaving]     = useState(false)
+  const [lightboxUrl,    setLightboxUrl]    = useState<string | null>(null)
+  const [uploadingIdx,   setUploadingIdx]   = useState<number | null>(null)
+
   async function load() {
     const supabase = createClient()
     const [{ data: s }, { data: v }] = await Promise.all([
@@ -282,6 +289,39 @@ export default function MinorLeagueDetailPage() {
     await supabase.from('baseball_life_entries').delete().eq('id', entryId)
     setExpandedVisit(null)
     await load()
+  }
+
+  function openEdit(visit: BleEntry) {
+    setEditingVisitId(visit.id)
+    setEditGiveaways(visit.giveaway_items ? visit.giveaway_items.map(g => ({ ...g })) : [])
+  }
+
+  async function saveEdit() {
+    if (!editingVisitId) return
+    setEditSaving(true)
+    const supabase = createClient()
+    await supabase
+      .from('baseball_life_entries')
+      .update({ giveaway_items: editGiveaways })
+      .eq('id', editingVisitId)
+    setEditSaving(false)
+    setEditingVisitId(null)
+    await load()
+  }
+
+  async function uploadGiveawayPhoto(idx: number, file: File) {
+    setUploadingIdx(idx)
+    const supabase = createClient()
+    const ext = file.name.split('.').pop()
+    const path = `${editingVisitId}-${idx}-${Date.now()}.${ext}`
+    const { data, error } = await supabase.storage.from('giveaway-photos').upload(path, file, { upsert: true })
+    if (!error && data) {
+      const { data: urlData } = supabase.storage.from('giveaway-photos').getPublicUrl(data.path)
+      const updated = [...editGiveaways]
+      updated[idx] = { ...updated[idx], photo_url: urlData.publicUrl }
+      setEditGiveaways(updated)
+    }
+    setUploadingIdx(null)
   }
 
   async function handleFetchStats(entryId: string) {
@@ -343,6 +383,129 @@ export default function MinorLeagueDetailPage() {
 
   return (
     <div style={{ color: '#E6EDF3' }}>
+
+      {/* Lightbox */}
+      {lightboxUrl && (
+        <div
+          onClick={() => setLightboxUrl(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            backgroundColor: 'rgba(0,0,0,0.92)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightboxUrl}
+            alt="Giveaway"
+            style={{ maxWidth: '100%', maxHeight: '90vh', borderRadius: 12, objectFit: 'contain' }}
+          />
+          <button
+            onClick={() => setLightboxUrl(null)}
+            style={{
+              position: 'absolute', top: 20, right: 20,
+              background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%',
+              width: 36, height: 36, color: '#fff', fontSize: 18, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >×</button>
+        </div>
+      )}
+
+      {/* Edit giveaways sheet */}
+      {editingVisitId && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 900,
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setEditingVisitId(null) }}
+        >
+          <div style={{
+            backgroundColor: '#161B22', borderRadius: '16px 16px 0 0',
+            border: '1px solid #30363D', padding: '20px 16px 40px',
+            width: '100%', maxWidth: 560, maxHeight: '80vh', overflowY: 'auto',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <span style={{ fontSize: 16, fontWeight: 800, color: '#E6EDF3' }}>Edit Giveaways</span>
+              <button onClick={() => setEditingVisitId(null)} style={{ background: 'none', border: 'none', color: '#8B949E', fontSize: 20, cursor: 'pointer' }}>×</button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
+              {editGiveaways.map((item, idx) => (
+                <div key={idx} style={{ backgroundColor: '#0D1117', borderRadius: 12, border: '1px solid #30363D', padding: '12px 14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <input
+                      value={item.name}
+                      onChange={(e) => {
+                        const updated = [...editGiveaways]
+                        updated[idx] = { ...updated[idx], name: e.target.value }
+                        setEditGiveaways(updated)
+                      }}
+                      style={{
+                        flex: 1, backgroundColor: '#161B22', border: '1px solid #30363D',
+                        borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13,
+                      }}
+                    />
+                    <button
+                      onClick={() => setEditGiveaways(editGiveaways.filter((_, i) => i !== idx))}
+                      style={{ background: 'none', border: 'none', color: '#F85149', fontSize: 16, cursor: 'pointer', padding: '4px 6px' }}
+                    >✕</button>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {item.photo_url && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={item.photo_url}
+                        alt={item.name}
+                        onClick={() => setLightboxUrl(item.photo_url!)}
+                        style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', cursor: 'pointer', flexShrink: 0 }}
+                      />
+                    )}
+                    <label style={{
+                      fontSize: 12, fontWeight: 600, color: '#58A6FF',
+                      border: '1px solid rgba(88,166,255,0.3)', borderRadius: 8,
+                      padding: '6px 12px', cursor: 'pointer',
+                      opacity: uploadingIdx === idx ? 0.5 : 1,
+                    }}>
+                      {uploadingIdx === idx ? 'Uploading…' : item.photo_url ? 'Replace Photo' : '+ Add Photo'}
+                      <input
+                        type="file" accept="image/*" style={{ display: 'none' }}
+                        disabled={uploadingIdx !== null}
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadGiveawayPhoto(idx, f) }}
+                      />
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setEditGiveaways([...editGiveaways, { name: '', photo_url: null }])}
+              style={{
+                width: '100%', padding: '10px', borderRadius: 10,
+                border: '1px dashed #30363D', background: 'none',
+                color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 16,
+              }}
+            >+ Add Giveaway Item</button>
+
+            <button
+              onClick={saveEdit}
+              disabled={editSaving}
+              style={{
+                width: '100%', padding: '12px', borderRadius: 10,
+                backgroundColor: '#1F6FEB', border: 'none',
+                color: '#fff', fontSize: 14, fontWeight: 700,
+                cursor: editSaving ? 'default' : 'pointer',
+                opacity: editSaving ? 0.6 : 1,
+              }}
+            >{editSaving ? 'Saving…' : 'Save Changes'}</button>
+          </div>
+        </div>
+      )}
+
       <main style={{ minHeight: '100vh' }}>
 
         {/* ── HERO ───────────────────────────────────────────────────────── */}
@@ -580,6 +743,9 @@ export default function MinorLeagueDetailPage() {
                               </div>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                              {visit.giveaway_items && visit.giveaway_items.length > 0 && (
+                                <span style={{ fontSize: 13 }}>🎁</span>
+                              )}
                               {hasScore && (
                                 <div style={{
                                   width: 10, height: 10, borderRadius: '50%',
@@ -602,10 +768,10 @@ export default function MinorLeagueDetailPage() {
                             }}>
                               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
                                 <button
-                                  onClick={() => deleteEntry(visit.id)}
-                                  style={{ fontSize: 11, fontWeight: 600, color: '#F85149', background: 'rgba(248,81,73,0.08)', border: '1px solid rgba(248,81,73,0.3)', borderRadius: 8, padding: '4px 10px', cursor: 'pointer' }}
+                                  onClick={() => openEdit(visit)}
+                                  style={{ fontSize: 11, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '4px 10px', cursor: 'pointer', marginRight: 6 }}
                                 >
-                                  Delete
+                                  Edit Giveaways
                                 </button>
                               </div>
                               {hasScore && (
@@ -779,7 +945,7 @@ export default function MinorLeagueDetailPage() {
                                             src={item.photo_url}
                                             alt={item.name}
                                             style={{ width: 72, height: 72, borderRadius: 8, objectFit: 'cover', display: 'block', cursor: 'pointer', flexShrink: 0 }}
-                                            onClick={() => window.open(item.photo_url!, '_blank')}
+                                            onClick={() => setLightboxUrl(item.photo_url!)}
                                           />
                                         )}
                                       </div>
@@ -793,6 +959,15 @@ export default function MinorLeagueDetailPage() {
                                   {visit.notes}
                                 </div>
                               )}
+
+                              <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid #30363D' }}>
+                                <button
+                                  onClick={() => deleteEntry(visit.id)}
+                                  style={{ fontSize: 11, fontWeight: 500, color: '#8B949E', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                                >
+                                  Delete this entry
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>
