@@ -788,7 +788,7 @@ export default function MilestoneGrid({
 
   const pillStyle = (active: boolean): React.CSSProperties => ({
     padding: '6px 13px', borderRadius: 20, border: 'none', cursor: 'pointer',
-    fontSize: 12, fontWeight: 600,
+    fontSize: 13, fontWeight: 600,
     backgroundColor: active ? '#E6EDF3' : 'rgba(139,148,158,0.1)',
     color: active ? '#0B1117' : '#8B949E',
   })
@@ -941,20 +941,20 @@ export default function MilestoneGrid({
               <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
                 <div>
                   <div style={{ fontSize: 18, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{personalRecords.totalGames}</div>
-                  <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>Games</div>
+                  <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>Games</div>
                 </div>
                 {personalRecords.scored > 0 && (
                   <div>
                     <div style={{ fontSize: 18, fontWeight: 900, color: '#3FB950', lineHeight: 1 }}>{personalRecords.wins}–{personalRecords.losses}</div>
-                    <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>W–L Record</div>
+                    <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>W–L Record</div>
                   </div>
                 )}
                 {personalRecords.topStadium && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <TeamLogo abbreviation={personalRecords.topStadium.abbreviation} size={24} />
                     <div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3', lineHeight: 1 }}>{personalRecords.topStadium.name}</div>
-                      <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>Most visited · {personalRecords.topStadiumCount}x</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1 }}>{personalRecords.topStadium.name}</div>
+                      <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>Most visited · {personalRecords.topStadiumCount}x</div>
                     </div>
                   </div>
                 )}
@@ -998,7 +998,7 @@ export default function MilestoneGrid({
                 }}
               >
                 <span style={{ fontSize: 14 }}>{cat.emoji}</span>
-                <span style={{ fontSize: 12, fontWeight: active ? 700 : 500, color: active ? '#ffffff' : '#8B949E', whiteSpace: 'nowrap' }}>{cat.label}</span>
+                <span style={{ fontSize: 13, fontWeight: active ? 700 : 500, color: active ? '#ffffff' : '#8B949E', whiteSpace: 'nowrap' }}>{cat.label}</span>
                 {count !== null && (
                   <span style={{
                     fontSize: 13, fontWeight: 700,
@@ -1023,7 +1023,7 @@ export default function MilestoneGrid({
               <>
                 {/* ── Record Book ── */}
                 <div style={{ marginBottom: 24 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>📖 Your Record Book</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>📖 Your Record Book</div>
                   <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: 10 }}>
                     {[
                       { label: 'Games Attended', value: personalRecords.totalGames, sub: null },
@@ -1034,7 +1034,7 @@ export default function MilestoneGrid({
                       <div key={label} style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 14, padding: '14px 12px', textAlign: 'center' }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{label}</div>
                         <div style={{ fontSize: 18, fontWeight: 900, color: '#E6EDF3', lineHeight: 1.2, marginBottom: sub ? 4 : 0 }}>{value}</div>
-                        {sub && <div style={{ fontSize: 12, color: '#8B949E', lineHeight: 1.3 }}>{sub}</div>}
+                        {sub && <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.3 }}>{sub}</div>}
                       </div>
                     ))}
                   </div>
@@ -1043,7 +1043,7 @@ export default function MilestoneGrid({
                 {/* ── Best Games ── */}
                 {personalRecords.totalGames > 0 && (
                   <div style={{ marginBottom: 24 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>🏆 Best Games</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>🏆 Best Games</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {(() => {
                         const rows = [
@@ -1099,7 +1099,7 @@ export default function MilestoneGrid({
                             <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D' }}>
                               <span style={{ fontSize: 22, flexShrink: 0 }}>{row.emoji}</span>
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', marginBottom: 2 }}>{row.label}</div>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', marginBottom: 2 }}>{row.label}</div>
                                 <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {stadium?.name ?? '—'} · {personalRecords.fmtDate(row.v.visit_date)}
                                 </div>
@@ -1116,7 +1116,7 @@ export default function MilestoneGrid({
 
                 {/* ── Favorites ── */}
                 <div style={{ marginBottom: 24 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>⭐ Favorites</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>⭐ Favorites</div>
                   <div className="grid grid-cols-2" style={{ gap: 10 }}>
                     {personalRecords.topStadium && (
                       <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 14, padding: '14px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -1141,15 +1141,15 @@ export default function MilestoneGrid({
                 {/* ── Games by Year ── */}
                 {personalRecords.byYear.length > 0 && (
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>📅 Games by Season</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>📅 Games by Season</div>
                     <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 14, padding: '16px' }}>
                       {personalRecords.byYear.map(([year, count]) => (
                         <div key={year} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', width: 36, flexShrink: 0 }}>{year}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', width: 36, flexShrink: 0 }}>{year}</div>
                           <div style={{ flex: 1, height: 8, backgroundColor: '#1C2430', borderRadius: 4, overflow: 'hidden' }}>
                             <div style={{ height: '100%', borderRadius: 4, width: `${(count / personalRecords.maxYearCount) * 100}%`, background: 'linear-gradient(90deg, #1F6FEB, #58A6FF)', transition: 'width 0.4s ease' }} />
                           </div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3', width: 24, textAlign: 'right', flexShrink: 0 }}>{count}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', width: 24, textAlign: 'right', flexShrink: 0 }}>{count}</div>
                         </div>
                       ))}
                     </div>
@@ -1159,7 +1159,7 @@ export default function MilestoneGrid({
                 {/* ── Day / Night ── */}
                 {(personalRecords.dayGames + personalRecords.nightGames + personalRecords.twilightGames) > 0 && (
                   <div style={{ marginTop: 24 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>🌙 Day vs Night</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>🌙 Day vs Night</div>
                     <div className="grid grid-cols-3" style={{ gap: 10 }}>
                       {[
                         { label: 'Day Games',    value: personalRecords.dayGames,      emoji: '🌅', color: '#F5A623' },
@@ -1169,7 +1169,7 @@ export default function MilestoneGrid({
                         <div key={label} style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 14, padding: '14px 8px', textAlign: 'center' }}>
                           <div style={{ fontSize: 22, marginBottom: 6 }}>{emoji}</div>
                           <div style={{ fontSize: 22, fontWeight: 900, color, lineHeight: 1 }}>{value}</div>
-                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600 }}>{label}</div>
+                          <div style={{ fontSize: 13, color: '#8B949E', marginTop: 4, fontWeight: 600 }}>{label}</div>
                         </div>
                       ))}
                     </div>
@@ -1229,7 +1229,7 @@ export default function MilestoneGrid({
                   <span style={{ fontSize: 28, lineHeight: 1, filter: currentTier ? 'none' : 'grayscale(60%)' }}>{m.icon}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.2 }}>{m.name}</div>
-                    <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{m.description}</div>
+                    <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>{m.description}</div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -1237,7 +1237,7 @@ export default function MilestoneGrid({
                       <span style={{ fontSize: 13, fontWeight: 700, color: currentTier ? '#F5A623' : '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tracked</span>
                     </div>
                     {totalEarnedPts > 0 && (
-                      <div style={{ fontSize: 12, fontWeight: 800, color: '#F5A623', background: 'rgba(245,166,35,0.15)', padding: '2px 8px', borderRadius: 20 }}>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: '#F5A623', background: 'rgba(245,166,35,0.15)', padding: '2px 8px', borderRadius: 20 }}>
                         +{totalEarnedPts} XP
                       </div>
                     )}
@@ -1271,7 +1271,7 @@ export default function MilestoneGrid({
                     <div style={{ height: 8, background: '#1C2430', borderRadius: 6, overflow: 'hidden', marginBottom: 4 }}>
                       <div style={{ height: '100%', borderRadius: 6, width: `${Math.max(pct, val > 0 ? 4 : 0)}%`, background: 'linear-gradient(90deg, #F5A623, #E8820C)', transition: 'width 0.4s ease' }} />
                     </div>
-                    <div style={{ fontSize: 12, color: '#8B949E' }}>
+                    <div style={{ fontSize: 13, color: '#8B949E' }}>
                       {currentTier
                         ? <><span style={{ color: '#F5A623', fontWeight: 700 }}>{currentTier.label}</span> · {val}/{nextTier?.threshold} toward <span style={{ color: '#C9D1D9' }}>{nextTier?.label}</span></>
                         : <>{val}/{nextTier?.threshold} toward <span style={{ color: '#C9D1D9' }}>{nextTier?.label}</span></>
@@ -1318,7 +1318,7 @@ export default function MilestoneGrid({
                 {isEarned && <div className="earned-card-shine" />}
 
                 {/* Points badge */}
-                <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 12, fontWeight: 800, color: isEarned ? '#F5A623' : '#8B949E', background: isEarned ? 'rgba(245,166,35,0.15)' : 'rgba(48,54,61,0.5)', padding: '2px 7px', borderRadius: 20 }}>
+                <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 13, fontWeight: 800, color: isEarned ? '#F5A623' : '#8B949E', background: isEarned ? 'rgba(245,166,35,0.15)' : 'rgba(48,54,61,0.5)', padding: '2px 7px', borderRadius: 20 }}>
                   +{pts}
                 </div>
 
@@ -1342,7 +1342,7 @@ export default function MilestoneGrid({
                   <div style={{ fontSize: 13, fontWeight: 700, color: isEarned ? '#E6EDF3' : '#C9D1D9', marginBottom: 3, lineHeight: 1.3 }}>{m.name}</div>
                   <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.4, marginBottom: isEarned && m.earnDate ? 4 : (progress && !isEarned ? 8 : 24) }}>{m.description}</div>
                   {isEarned && m.earnDate && (
-                    <div style={{ fontSize: 12, color: 'rgba(245,166,35,0.7)', fontWeight: 600, marginBottom: 20 }}>
+                    <div style={{ fontSize: 13, color: 'rgba(245,166,35,0.7)', fontWeight: 600, marginBottom: 20 }}>
                       Earned {new Date(m.earnDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </div>
                   )}
@@ -1354,7 +1354,7 @@ export default function MilestoneGrid({
                     <div style={{ height: 4, background: '#1C2430', borderRadius: 3, overflow: 'hidden', marginBottom: 3 }}>
                       <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: isDiv ? 'linear-gradient(90deg,#1F6FEB,#58A6FF)' : 'linear-gradient(90deg,#F5A623,#E8820C)', minWidth: 6, transition: 'width 0.4s ease' }} />
                     </div>
-                    <span style={{ fontSize: 12, color: '#8B949E' }}>{progress.current}/{progress.total}</span>
+                    <span style={{ fontSize: 13, color: '#8B949E' }}>{progress.current}/{progress.total}</span>
                   </div>
                 )}
               </button>
@@ -1520,7 +1520,7 @@ export default function MilestoneGrid({
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{itemName}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4, flexWrap: 'wrap' }}>
                           <span style={{ fontSize: 13, fontWeight: 600, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.1)', padding: '2px 7px', borderRadius: 20 }}>{typeInfo?.emoji} {typeInfo?.label}</span>
-                          {isMiLB && <span style={{ fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 6px', borderRadius: 20 }}>MiLB</span>}
+                          {isMiLB && <span style={{ fontSize: 13, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 6px', borderRadius: 20 }}>MiLB</span>}
                         </div>
                         {isMiLB && milbAffiliate && milbStadName ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
@@ -1566,7 +1566,7 @@ export default function MilestoneGrid({
               </div>
 
               {selected.isEarned && (
-                <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.12em', color: '#F5A623', textTransform: 'uppercase', marginBottom: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.12em', color: '#F5A623', textTransform: 'uppercase', marginBottom: 8 }}>
                   Achievement Unlocked!
                 </div>
               )}
@@ -1713,7 +1713,7 @@ export default function MilestoneGrid({
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: claim.notes ? 6 : 0 }}>
                           <TeamLogo abbreviation={stadium.abbreviation} size={22} />
                           <div>
-                            <div style={{ fontSize: 12, color: '#E6EDF3' }}>{stadium.name}</div>
+                            <div style={{ fontSize: 13, color: '#E6EDF3' }}>{stadium.name}</div>
                             {visit && <div style={{ fontSize: 13, color: '#8B949E' }}>{visit.home_team} vs {visit.visiting_team}</div>}
                           </div>
                         </div>
@@ -1722,11 +1722,11 @@ export default function MilestoneGrid({
                       <div style={{ marginTop: 12, display: 'flex', gap: 16, alignItems: 'center' }}>
                         <button
                           onClick={() => openEditClaim(claim, exp)}
-                          style={{ fontSize: 12, color: '#58A6FF', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: 4 }}
+                          style={{ fontSize: 13, color: '#58A6FF', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: 4 }}
                         >
                           <Pencil size={11} /> Edit
                         </button>
-                        <button onClick={() => { removeClaim(claim.id); closeModal() }} style={{ fontSize: 12, color: '#8B949E', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                        <button onClick={() => { removeClaim(claim.id); closeModal() }} style={{ fontSize: 13, color: '#8B949E', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
                           Remove
                         </button>
                       </div>
@@ -1887,26 +1887,26 @@ export default function MilestoneGrid({
                                       : <TeamLogo abbreviation={stadium!.abbreviation} size={24} />
                                     }
                                     <div style={{ minWidth: 0 }}>
-                                      <div style={{ fontSize: 12, color: '#E6EDF3', fontWeight: 600 }}>{isMiLB && milbStadName ? milbStadName : stadium?.name}</div>
+                                      <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 600 }}>{isMiLB && milbStadName ? milbStadName : stadium?.name}</div>
                                       {isMiLB
-                                        ? <div style={{ fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '1px 6px', borderRadius: 20, display: 'inline-block', marginTop: 2 }}>MiLB</div>
+                                        ? <div style={{ fontSize: 13, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '1px 6px', borderRadius: 20, display: 'inline-block', marginTop: 2 }}>MiLB</div>
                                         : visit && <div style={{ fontSize: 13, color: '#8B949E' }}>{visit.home_team} vs {visit.visiting_team}</div>
                                       }
                                     </div>
                                   </div>
                                 )}
                                 {bobble && (
-                                  <div style={{ fontSize: 12, color: '#8B949E', marginBottom: claim.notes ? 4 : 0 }}>
+                                  <div style={{ fontSize: 13, color: '#8B949E', marginBottom: claim.notes ? 4 : 0 }}>
                                     {typeInfo?.emoji ?? '🪆'} {bobble}
                                   </div>
                                 )}
                                 {player && (
-                                  <div style={{ fontSize: 12, color: '#8B949E', marginBottom: claim.notes ? 4 : 0 }}>
+                                  <div style={{ fontSize: 13, color: '#8B949E', marginBottom: claim.notes ? 4 : 0 }}>
                                     {exp.id === 'autograph' ? '✍️' : '🤝'} {player}
                                   </div>
                                 )}
                                 {claim.notes && (
-                                  <div style={{ fontSize: 12, color: '#8B949E', fontStyle: 'italic' }}>&ldquo;{claim.notes}&rdquo;</div>
+                                  <div style={{ fontSize: 13, color: '#8B949E', fontStyle: 'italic' }}>&ldquo;{claim.notes}&rdquo;</div>
                                 )}
                               </div>
 
@@ -2090,13 +2090,13 @@ export default function MilestoneGrid({
                       <div style={{ display: 'flex', gap: 8 }}>
                         <button
                           onClick={() => setEditDeletePhoto(true)}
-                          style={{ flex: 1, padding: '7px 0', borderRadius: 8, border: '1px solid rgba(248,81,73,0.35)', backgroundColor: 'rgba(248,81,73,0.08)', color: '#F85149', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                          style={{ flex: 1, padding: '7px 0', borderRadius: 8, border: '1px solid rgba(248,81,73,0.35)', backgroundColor: 'rgba(248,81,73,0.08)', color: '#F85149', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
                         >
                           Remove photo
                         </button>
                         <label
                           htmlFor="edit-photo-input"
-                          style={{ flex: 1, padding: '7px 0', borderRadius: 8, border: '1px solid #30363D', backgroundColor: 'rgba(139,148,158,0.08)', color: '#8B949E', fontSize: 12, fontWeight: 600, cursor: 'pointer', textAlign: 'center', display: 'block' }}
+                          style={{ flex: 1, padding: '7px 0', borderRadius: 8, border: '1px solid #30363D', backgroundColor: 'rgba(139,148,158,0.08)', color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'center', display: 'block' }}
                         >
                           Replace photo
                         </label>
@@ -2106,8 +2106,8 @@ export default function MilestoneGrid({
 
                   {showDeletedNotice && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 10, backgroundColor: 'rgba(248,81,73,0.08)', border: '1px solid rgba(248,81,73,0.2)' }}>
-                      <span style={{ fontSize: 12, color: '#F85149', flex: 1 }}>Photo will be removed on save</span>
-                      <button onClick={() => setEditDeletePhoto(false)} style={{ fontSize: 12, color: '#58A6FF', background: 'none', border: 'none', cursor: 'pointer' }}>Undo</button>
+                      <span style={{ fontSize: 13, color: '#F85149', flex: 1 }}>Photo will be removed on save</span>
+                      <button onClick={() => setEditDeletePhoto(false)} style={{ fontSize: 13, color: '#58A6FF', background: 'none', border: 'none', cursor: 'pointer' }}>Undo</button>
                     </div>
                   )}
 
