@@ -645,7 +645,11 @@ export default function MilestoneGrid({
     const wins   = withScore.filter(v => v.home_runs! > v.away_runs!)
     const losses = withScore.filter(v => v.home_runs! < v.away_runs!)
 
-    const biggestWin   = wins.reduce<StadiumVisit | null>((best, v) => !best || (v.home_runs! - v.away_runs!) > (best.home_runs! - best.away_runs!) ? v : best, null)
+    const biggestWin   = withScore.reduce<StadiumVisit | null>((best, v) => {
+      const diff     = Math.abs(v.home_runs! - v.away_runs!)
+      const bestDiff = best ? Math.abs(best.home_runs! - best.away_runs!) : -1
+      return diff > bestDiff ? v : best
+    }, null)
     const biggestLoss  = losses.reduce<StadiumVisit | null>((best, v) => !best || (v.away_runs! - v.home_runs!) > (best.away_runs! - best.home_runs!) ? v : best, null)
     const highestScore = withScore.reduce<StadiumVisit | null>((best, v) => !best || (v.home_runs! + v.away_runs!) > (best.home_runs! + best.away_runs!) ? v : best, null)
     const lowestScore  = withScore.filter(v => v.home_runs! + v.away_runs! > 0).reduce<StadiumVisit | null>((best, v) => !best || (v.home_runs! + v.away_runs!) < (best.home_runs! + best.away_runs!) ? v : best, null)
@@ -1053,9 +1057,9 @@ export default function MilestoneGrid({
                             detail2: null,
                           } : null,
                           personalRecords.biggestWin ? {
-                            emoji: '🎉', label: 'Biggest Win', v: personalRecords.biggestWin,
+                            emoji: '🎉', label: 'Biggest Blowout', v: personalRecords.biggestWin,
                             detail: personalRecords.fmtMatchup(personalRecords.biggestWin),
-                            detail2: personalRecords.biggestWin.winning_pitcher ? `W: ${personalRecords.biggestWin.winning_pitcher}` : null,
+                            detail2: `${Math.abs(personalRecords.biggestWin.home_runs! - personalRecords.biggestWin.away_runs!)}-run margin${personalRecords.biggestWin.winning_pitcher ? ` · W: ${personalRecords.biggestWin.winning_pitcher}` : ''}`,
                           } : null,
                           personalRecords.biggestLoss ? {
                             emoji: '😬', label: 'Biggest Loss', v: personalRecords.biggestLoss,
