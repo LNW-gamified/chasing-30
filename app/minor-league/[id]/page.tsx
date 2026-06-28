@@ -224,6 +224,12 @@ export default function MinorLeagueDetailPage() {
   const [standings,             setStandings]             = useState<StandingTeam[]>([])
   const [affiliateMlbStadiumId, setAffiliateMlbStadiumId] = useState<string | null>(null)
 
+  // Ticket flagging
+  const [myTickets,   setMyTickets]   = useState<Set<number>>(new Set())
+  const [ticketGames, setTicketGames] = useState<Array<{
+    game_pk: number; game_date: string; opponent: string; time_str: string | null; promotions: string[]
+  }>>([])
+
   // Edit giveaways
   const [editingVisitId, setEditingVisitId] = useState<string | null>(null)
   const [editGiveaways,  setEditGiveaways]  = useState<Array<{ name: string; photo_url: string | null }>>([])
@@ -260,7 +266,49 @@ export default function MinorLeagueDetailPage() {
     }
   }
 
-  useEffect(() => { load() }, [id])
+  async function loadTickets() {
+    const supabase = createClient()
+    const { data } = await supabase
+      .from('milb_tickets')
+      .select('*')
+      .eq('stadium_id', id)
+      .gte('game_date', new Date().toISOString().split('T')[0])
+      .order('game_date', { ascending: true })
+    if (data) {
+      setMyTickets(new Set(data.map((t: any) => t.game_pk as number)))
+      setTicketGames(data.map((t: any) => ({
+        game_pk:   t.game_pk,
+        game_date: t.game_date,
+        opponent:  t.opponent,
+        time_str:  t.time_str,
+        promotions: t.promotions ?? [],
+      })))
+    }
+  }
+
+  async function toggleTicket(g: MiLBGame) {
+    const supabase = createClient()
+    if (myTickets.has(g.gamePk)) {
+      await supabase.from('milb_tickets').delete()
+        .eq('game_pk', g.gamePk)
+        .eq('stadium_id', id)
+    } else {
+      const timeStr = new Date(g.gameDate).toLocaleTimeString('en-US', {
+        hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles',
+      })
+      await supabase.from('milb_tickets').insert({
+        stadium_id: id,
+        game_pk:    g.gamePk,
+        game_date:  g.gameDate.split('T')[0],
+        opponent:   g.opponent,
+        time_str:   timeStr,
+        promotions: g.promotions,
+      })
+    }
+    await loadTickets()
+  }
+
+  useEffect(() => { load(); loadTickets() }, [id])
 
   // Lazy-load weather when Game Day Intel tab is first opened
   useEffect(() => {
@@ -681,6 +729,43 @@ export default function MinorLeagueDetailPage() {
             {/* ─────────── GAMES WITNESSED ─────────────────────────────── */}
             {activeTab === 'games-witnessed' && (
               <section>
+                {ticketGames.length > 0 && (
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                      🎟️ Your Upcoming Tickets
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {ticketGames.map(t => {
+                        const dt      = new Date(t.game_date + 'T12:00:00')
+                        const dateStr = dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                        const daysAway = Math.round((dt.getTime() - new Date().setHours(0, 0, 0, 0)) / 86400000)
+                        return (
+                          <div key={t.game_pk} style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '12px 14px', borderRadius: 12,
+                            backgroundColor: '#161B22', border: '1px solid rgba(63,185,80,0.2)',
+                          }}>
+                            <div>
+                              <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3' }}>vs {t.opponent}</div>
+                              <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
+                                {dateStr}{t.time_str ? ` · ${t.time_str} PT` : ''}
+                              </div>
+                              {t.promotions.length > 0 && (
+                                <div style={{ fontSize: 13, color: '#F5A623', marginTop: 2 }}>🎁 {t.promotions[0]}</div>
+                              )}
+                            </div>
+                            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                              <div style={{ fontSize: 22, fontWeight: 900, color: '#F5A623', lineHeight: 1 }}>
+                                {daysAway === 0 ? 'Today' : daysAway === 1 ? '1' : daysAway}
+                              </div>
+                              {daysAway > 1 && <div style={{ fontSize: 13, color: '#8B949E' }}>days</div>}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
                 {visits.length === 0 ? (
                   <div style={{
                     background: `linear-gradient(160deg, ${affiliateColors[0]}22 0%, ${affiliateColors[1]}18 100%), #161B22`,
@@ -1021,7 +1106,21 @@ export default function MinorLeagueDetailPage() {
                                   )}
                                 </div>
                               </div>
-                              <div style={{ fontSize: 13, color: '#E6EDF3' }}>{timeStr} PT</div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <div style={{ fontSize: 13, color: '#E6EDF3' }}>{timeStr} PT</div>
+                                <button
+                                  onClick={() => toggleTicket(g)}
+                                  style={{
+                                    background: myTickets.has(g.gamePk) ? 'rgba(63,185,80,0.15)' : 'rgba(139,148,158,0.1)',
+                                    border: `1px solid ${myTickets.has(g.gamePk) ? 'rgba(63,185,80,0.4)' : '#30363D'}`,
+                                    borderRadius: 8, padding: '4px 10px', cursor: 'pointer',
+                                    fontSize: 13, color: myTickets.has(g.gamePk) ? '#3FB950' : '#8B949E',
+                                    fontWeight: 600, whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {myTickets.has(g.gamePk) ? '🎟️ Got it' : '+ Tickets'}
+                                </button>
+                              </div>
                             </div>
                           )
                         })}
