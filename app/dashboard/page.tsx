@@ -189,8 +189,7 @@ export default async function DashboardPage() {
     pilgCount > 0 ? `${pilgCount} Pilgrimages` : null,
   ].filter(Boolean).join(' · ') || 'Log experiences to see breakdown'
   const totalSpent = allTrips
-    .filter((t: any) => t.status === 'completed')
-    .reduce((sum, t: any) => sum + t.actual_tickets + t.actual_travel + t.actual_hotel + t.actual_food + t.actual_parking, 0)
+    .reduce((sum, t: any) => sum + (t.actual_tickets ?? 0) + (t.actual_travel ?? 0) + (t.actual_hotel ?? 0) + (t.actual_food ?? 0) + (t.actual_parking ?? 0), 0)
 
   const divCounts: Record<string, number> = {}
   for (const s of allStadiums) {
