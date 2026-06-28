@@ -267,48 +267,57 @@ export default function MinorLeagueDetailPage() {
   }
 
   async function loadTickets() {
+    if (!stadium) return
     const supabase = createClient()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('milb_tickets')
       .select('*')
-      .eq('stadium_id', id)
+      .eq('stadium_id', stadium.id)
       .gte('game_date', new Date().toISOString().split('T')[0])
       .order('game_date', { ascending: true })
+    if (error) { console.error('loadTickets error:', error); return }
     if (data) {
-      setMyTickets(new Set(data.map((t: any) => t.game_pk as number)))
+      setMyTickets(new Set(data.map((t: any) => t.game_pk)))
       setTicketGames(data.map((t: any) => ({
-        game_pk:   t.game_pk,
-        game_date: t.game_date,
-        opponent:  t.opponent,
-        time_str:  t.time_str,
+        game_pk:    t.game_pk,
+        game_date:  t.game_date,
+        opponent:   t.opponent,
+        time_str:   t.time_str,
         promotions: t.promotions ?? [],
       })))
     }
   }
 
   async function toggleTicket(g: MiLBGame) {
+    if (!stadium) return
     const supabase = createClient()
     if (myTickets.has(g.gamePk)) {
-      await supabase.from('milb_tickets').delete()
+      const { error } = await supabase.from('milb_tickets').delete()
         .eq('game_pk', g.gamePk)
-        .eq('stadium_id', id)
+        .eq('stadium_id', stadium.id)
+      if (error) { console.error('ticket delete error:', error); return }
     } else {
       const timeStr = new Date(g.gameDate).toLocaleTimeString('en-US', {
         hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles',
       })
-      await supabase.from('milb_tickets').insert({
-        stadium_id: id,
+      const { error } = await supabase.from('milb_tickets').insert({
+        stadium_id: stadium.id,
         game_pk:    g.gamePk,
         game_date:  g.gameDate.split('T')[0],
         opponent:   g.opponent,
         time_str:   timeStr,
         promotions: g.promotions,
       })
+      if (error) { console.error('ticket insert error:', error); return }
     }
     await loadTickets()
   }
 
-  useEffect(() => { load(); loadTickets() }, [id])
+  useEffect(() => { load() }, [id])
+
+  useEffect(() => {
+    if (stadium) loadTickets()
+  }, [stadium?.id])
 
   // Lazy-load weather when Game Day Intel tab is first opened
   useEffect(() => {
