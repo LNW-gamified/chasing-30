@@ -300,7 +300,10 @@ export default function MinorLeagueDetailPage() {
       const timeStr = new Date(g.gameDate).toLocaleTimeString('en-US', {
         hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles',
       })
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
       const { error } = await supabase.from('milb_tickets').insert({
+        user_id:    user.id,
         stadium_id: stadium.id,
         game_pk:    g.gamePk,
         game_date:  g.gameDate.split('T')[0],
