@@ -121,7 +121,7 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     supabase.from('stadiums').select('*').order('league').order('division').order('name'),
     supabase.from('stadium_visits').select('*').order('visit_date', { ascending: false }),
-    supabase.from('trips').select('*, stadium:stadiums(*)').order('start_date', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false }),
+    supabase.from('trips').select('*, stadium:stadiums(*), stops:trip_stops(actual_tickets, actual_food, actual_parking)').order('start_date', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false }),
     supabase.auth.getUser(),
     supabase.from('baseball_life_entries').select('id, category'),
     supabase.from('destination_visits').select('destination_id'),
@@ -188,8 +188,12 @@ export default async function DashboardPage() {
     speCount > 0 ? `${speCount} Events` : null,
     pilgCount > 0 ? `${pilgCount} Pilgrimages` : null,
   ].filter(Boolean).join(' · ') || 'Log experiences to see breakdown'
-  const totalSpent = allTrips
-    .reduce((sum, t: any) => sum + Number(t.actual_tickets ?? 0) + Number(t.actual_travel ?? 0) + Number(t.actual_hotel ?? 0) + Number(t.actual_food ?? 0) + Number(t.actual_parking ?? 0), 0)
+  const totalSpent = allTrips.reduce((sum, t: any) => {
+    const tripLevel  = Number(t.actual_travel ?? 0) + Number(t.actual_hotel ?? 0)
+    const stopsLevel = (t.stops ?? []).reduce((s: number, stop: any) =>
+      s + Number(stop.actual_tickets ?? 0) + Number(stop.actual_food ?? 0) + Number(stop.actual_parking ?? 0), 0)
+    return sum + tripLevel + stopsLevel
+  }, 0)
 
   const divCounts: Record<string, number> = {}
   for (const s of allStadiums) {
