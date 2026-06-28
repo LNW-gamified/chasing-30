@@ -1677,11 +1677,11 @@ export default function MilestoneGrid({
 
         return (
           <div
-            style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(4px)' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, backgroundColor: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(4px)' }}
             onClick={closeModal}
           >
             <div
-              style={{ width: '100%', maxWidth: 560, borderRadius: '20px 20px 0 0', backgroundColor: '#161B22', border: '1px solid #30363D', borderBottom: 'none', maxHeight: '88vh', overflowY: 'auto' }}
+              style={{ width: '100%', maxWidth: 560, borderRadius: 20, backgroundColor: '#161B22', border: '1px solid #30363D', maxHeight: '88vh', overflowY: 'auto' }}
               onClick={e => e.stopPropagation()}
             >
               {/* Handle bar + close */}
