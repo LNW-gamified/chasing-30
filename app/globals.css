@@ -188,6 +188,7 @@ select.input { cursor: pointer; }
 /* ── Leaflet overrides ──────────────────────────────────────────────── */
 .leaflet-container { background: var(--color-bg-primary) !important; }
 .leaflet-tile { filter: brightness(0.65) saturate(0.7); }
+.leaflet-div-icon { background: transparent !important; border: none !important; }
 
 .leaflet-popup-content-wrapper {
   background: var(--color-bg-card) !important;
