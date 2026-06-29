@@ -78,6 +78,17 @@ export const DESTINATIONS: CuratedDestination[] = [
     heroColor: ['#1a0000', '#4d0000'],
   },
   {
+    slug: 'babe_ruth_museum',
+    name: 'Babe Ruth Birthplace and Museum',
+    city: 'Baltimore', state: 'MD', country: 'USA',
+    type: 'hall_of_fame' as const,
+    description: 'Birthplace and museum dedicated to Babe Ruth, located two blocks from Camden Yards.',
+    lat: 39.2838, lng: -76.6274,
+    isMlbEvent: false,
+    icon: '👑',
+    heroColor: ['#1a0a00', '#4d1a00'],
+  },
+  {
     slug: 'louisville_slugger',
     name: 'Louisville Slugger Museum & Factory',
     city: 'Louisville', state: 'KY', country: 'USA',
