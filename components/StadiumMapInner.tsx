@@ -39,8 +39,8 @@ function MapInitializer({ mapRef }: { mapRef: React.MutableRefObject<L.Map | nul
 }
 
 // ── Special location pin icon (5-pointed star) ──────────────────────────────
-// Star polygon points centered at (28,28) on a 56×56 canvas,
-// outer radius 24, inner radius 10, starting at top.
+// Star polygon points centered at (20,20) on a 40×40 canvas,
+// outer radius 17, inner radius 7, starting at top.
 
 const STAR_POINTS = '20,3 23.63,13.93 35.31,14.37 26.39,21.62 29.51,32.75 20,27 10.49,32.75 13.61,21.62 4.69,14.37 16.37,13.93'
 
@@ -48,12 +48,12 @@ function makeSpecialLocationIcon(icon: string, visited: boolean): L.DivIcon {
   const stroke = '#F5A623'  // fully opaque gold — visible on light map
   const fill   = visited ? 'rgba(245,166,35,0.55)' : 'rgba(245,166,35,0.35)'
   const badge  = visited
-    ? `<div style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#F5A623;border:2px solid #0B1117;display:flex;align-items:center;justify-content:center;font-size:10px;color:#000;font-weight:900;line-height:1;">✓</div>`
+    ? `<div style="position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:#F5A623;border:2px solid #0B1117;display:flex;align-items:center;justify-content:center;font-size:8px;color:#000;font-weight:900;line-height:1;">✓</div>`
     : ''
   return L.divIcon({
     html: `
-      <div style="position:relative;width:56px;height:56px;">
-        <svg width="56" height="56" viewBox="0 0 56 56" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
+      <div style="position:relative;width:40px;height:40px;">
+        <svg width="40" height="40" viewBox="0 0 40 40" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
           <polygon
             points="${STAR_POINTS}"
             fill="${fill}"
@@ -63,14 +63,14 @@ function makeSpecialLocationIcon(icon: string, visited: boolean): L.DivIcon {
             filter="drop-shadow(0 2px 8px rgba(245,166,35,0.5)) drop-shadow(0 0 14px rgba(245,166,35,0.3))"
           />
         </svg>
-        <div style="position:absolute;top:0;left:0;width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;">
+        <div style="position:absolute;top:0;left:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;">
           ${icon}
         </div>
         ${badge}
       </div>`,
     className: '',
-    iconSize:   [56, 56],
-    iconAnchor: [28, 28],
+    iconSize:   [40, 40],
+    iconAnchor: [20, 20],
   })
 }
 
