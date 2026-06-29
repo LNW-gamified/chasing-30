@@ -45,22 +45,29 @@ function MapInitializer({ mapRef }: { mapRef: React.MutableRefObject<L.Map | nul
 const STAR_POINTS = '20,3 23.63,13.93 35.31,14.37 26.39,21.62 29.51,32.75 20,27 10.49,32.75 13.61,21.62 4.69,14.37 16.37,13.93'
 
 function makeSpecialLocationIcon(icon: string, visited: boolean): L.DivIcon {
-  const stroke = '#CC7A00'  // deep amber — higher contrast on dimmed grey map
-  const fill   = visited ? 'rgba(245,166,35,0.55)' : 'rgba(245,166,35,0.35)'
-  const badge  = visited
-    ? `<div style="position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:#F5A623;border:2px solid #0B1117;display:flex;align-items:center;justify-content:center;font-size:8px;color:#000;font-weight:900;line-height:1;">✓</div>`
+  const fillColor = visited ? '#F5A623' : '#FFD166'
+  const badge = visited
+    ? `<div style="position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:#3FB950;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:900;line-height:1;">✓</div>`
     : ''
   return L.divIcon({
     html: `
       <div style="position:relative;width:40px;height:40px;">
         <svg width="40" height="40" viewBox="0 0 40 40" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
+          <!-- White backing for contrast -->
           <polygon
             points="${STAR_POINTS}"
-            fill="${fill}"
-            stroke="${stroke}"
-            stroke-width="3"
+            fill="white"
+            stroke="white"
+            stroke-width="6"
             stroke-linejoin="round"
-            filter="drop-shadow(0 2px 8px rgba(245,166,35,0.5)) drop-shadow(0 0 14px rgba(245,166,35,0.3))"
+          />
+          <!-- Colored star on top -->
+          <polygon
+            points="${STAR_POINTS}"
+            fill="${fillColor}"
+            stroke="#B85C00"
+            stroke-width="1.5"
+            stroke-linejoin="round"
           />
         </svg>
         <div style="position:absolute;top:0;left:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;">
