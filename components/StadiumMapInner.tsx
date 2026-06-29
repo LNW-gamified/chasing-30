@@ -45,7 +45,7 @@ function MapInitializer({ mapRef }: { mapRef: React.MutableRefObject<L.Map | nul
 const STAR_POINTS = '28,4 33.88,19.91 50.83,20.58 37.51,31.09 42.11,47.43 28,38 13.89,47.43 18.49,31.09 5.17,20.58 22.12,19.91'
 
 function makeSpecialLocationIcon(icon: string, visited: boolean): L.DivIcon {
-  const stroke = '#F5A623'  // fully opaque gold on both states — visible on dark map
+  const stroke = '#F5A623'  // fully opaque gold — visible on light map
   const fill   = visited ? 'rgba(245,166,35,0.28)' : 'rgba(245,166,35,0.10)'
   const badge  = visited
     ? `<div style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#F5A623;border:2px solid #0B1117;display:flex;align-items:center;justify-content:center;font-size:10px;color:#000;font-weight:900;line-height:1;">✓</div>`
@@ -77,7 +77,8 @@ function makeSpecialLocationIcon(icon: string, visited: boolean): L.DivIcon {
 // ── Stadium pin icon factory ────────────────────────────────────────────────
 
 function makeStadiumIcon(logoUrl: string, visited: boolean, abbr: string): L.DivIcon {
-  const ring  = visited ? '#3FB950' : 'rgba(255,255,255,0.25)'
+  const teamColor = TEAM_PRIMARY[abbr] ?? '#8B949E'
+  const ring  = visited ? '#3FB950' : teamColor
   const badge = visited
     ? `<div style="position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:#3FB950;border:2px solid #0B1117;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:900;line-height:1;">✓</div>`
     : ''
@@ -85,7 +86,7 @@ function makeStadiumIcon(logoUrl: string, visited: boolean, abbr: string): L.Div
   const lightBg = LIGHT_BG_LOGO_TEAMS.has(abbr)
   const bgStyle = lightBg
     ? 'background:rgba(255,255,255,0.90);'
-    : 'background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);'
+    : `background:${teamColor}20;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);`
 
   // background-image is used instead of <img> because Leaflet's innerHTML
   // injection path can suppress img load events in certain browser/CSP contexts;
@@ -204,9 +205,9 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
       >
-        {/* CartoDB Dark Matter — dark mode base map */}
+        {/* CartoDB Positron — light mode base map */}
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
 

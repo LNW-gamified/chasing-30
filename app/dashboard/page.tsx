@@ -526,7 +526,7 @@ export default async function DashboardPage() {
 
         <div style={{ textAlign: 'right', marginTop: -12, marginBottom: SECTION_GAP }}>
           <Link
-            href="/stats"
+            href="/milestones"
             style={{ fontSize: 12, fontWeight: 600, color: '#58A6FF', textDecoration: 'none' }}
           >
             View full stats →

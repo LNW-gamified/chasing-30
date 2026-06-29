@@ -59,6 +59,14 @@ export default function TripDetailPage() {
     setVisitedStadiumIds(new Set((sv ?? []).map((r: any) => r.stadium_id)))
     const loadedStops = (st as unknown as TripStop[]) ?? []
     setStops(loadedStops)
+    // Assign sort_order to any stops that don't have one
+    const stopsNeedingOrder = loadedStops.filter((s, i) => s.sort_order === 0 && i > 0)
+    if (stopsNeedingOrder.length > 0) {
+      const supabase = createClient()
+      await Promise.all(loadedStops.map((s, i) =>
+        supabase.from('trip_stops').update({ sort_order: i }).eq('id', s.id)
+      ))
+    }
     if (loadedStops.length > 0) {
       const stopIds = loadedStops.map(s => s.id)
       const { data: cl } = await supabase
@@ -131,6 +139,27 @@ export default function TripDetailPage() {
     delete newPhotos[promoName]
     await createClient().from('trip_stops').update({ promotion_photos: Object.keys(newPhotos).length > 0 ? newPhotos : null }).eq('id', stopId)
     setStops(prev => prev.map(s => s.id !== stopId ? s : { ...s, promotion_photos: Object.keys(newPhotos).length > 0 ? newPhotos : null }))
+  }
+
+  async function moveStop(stopId: string, direction: 'up' | 'down') {
+    const idx = stops.findIndex(s => s.id === stopId)
+    if (idx === -1) return
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= stops.length) return
+
+    const current  = stops[idx]
+    const swapWith = stops[swapIdx]
+
+    const supabase = createClient()
+    await Promise.all([
+      supabase.from('trip_stops').update({ sort_order: swapIdx }).eq('id', current.id),
+      supabase.from('trip_stops').update({ sort_order: idx }).eq('id', swapWith.id),
+    ])
+
+    const newStops = [...stops]
+    newStops[idx]     = { ...swapWith, sort_order: idx }
+    newStops[swapIdx] = { ...current,  sort_order: swapIdx }
+    setStops(newStops)
   }
 
   useEffect(() => { load() }, [id])
@@ -684,13 +713,27 @@ export default function TripDetailPage() {
                                 <span style={{ fontSize: 36, lineHeight: 1 }}>{destInfo?.icon ?? '📍'}</span>
                               )}
                             </div>
-                            {(dest as any)?.is_mlb_event && (
-                              <span style={{
-                                fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 20,
-                                color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)',
-                                border: '1px solid rgba(245,166,35,0.35)',
-                              }}>⭐ MLB Event</span>
-                            )}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <div style={{ display: 'flex', gap: 4 }}>
+                                <button
+                                  onClick={() => moveStop(stop.id, 'up')}
+                                  disabled={stops.indexOf(stop) === 0}
+                                  style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: stops.indexOf(stop) === 0 ? 'default' : 'pointer', color: stops.indexOf(stop) === 0 ? '#30363D' : '#8B949E', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >↑</button>
+                                <button
+                                  onClick={() => moveStop(stop.id, 'down')}
+                                  disabled={stops.indexOf(stop) === stops.length - 1}
+                                  style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: stops.indexOf(stop) === stops.length - 1 ? 'default' : 'pointer', color: stops.indexOf(stop) === stops.length - 1 ? '#30363D' : '#8B949E', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >↓</button>
+                              </div>
+                              {(dest as any)?.is_mlb_event && (
+                                <span style={{
+                                  fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 20,
+                                  color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)',
+                                  border: '1px solid rgba(245,166,35,0.35)',
+                                }}>⭐ MLB Event</span>
+                              )}
+                            </div>
                           </div>
 
                           <div style={{ fontWeight: 800, fontSize: 20, color: '#E6EDF3', lineHeight: 1.2, marginBottom: 2 }}>
@@ -809,23 +852,37 @@ export default function TripDetailPage() {
                           }}>
                             {i + 1}
                           </div>
-                          {/* Get tickets link */}
-                          {stop.game_date && (
-                            <a
-                              href={seatGeekUrl}
-                              target="_blank" rel="noopener noreferrer"
-                              style={{
-                                display: 'inline-flex', alignItems: 'center', gap: 5,
-                                fontSize: 12, fontWeight: 600, color: accentColor,
-                                textDecoration: 'none',
-                                padding: '5px 10px', borderRadius: 8,
-                                backgroundColor: `${accentColor}18`,
-                                border: `1px solid ${accentColor}40`,
-                              }}
-                            >
-                              <Ticket size={12} /> Buy Tickets
-                            </a>
-                          )}
+                          {/* Get tickets link + reorder buttons */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <div style={{ display: 'flex', gap: 4 }}>
+                              <button
+                                onClick={() => moveStop(stop.id, 'up')}
+                                disabled={stops.indexOf(stop) === 0}
+                                style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: stops.indexOf(stop) === 0 ? 'default' : 'pointer', color: stops.indexOf(stop) === 0 ? '#30363D' : '#8B949E', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              >↑</button>
+                              <button
+                                onClick={() => moveStop(stop.id, 'down')}
+                                disabled={stops.indexOf(stop) === stops.length - 1}
+                                style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: stops.indexOf(stop) === stops.length - 1 ? 'default' : 'pointer', color: stops.indexOf(stop) === stops.length - 1 ? '#30363D' : '#8B949E', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              >↓</button>
+                            </div>
+                            {stop.game_date && (
+                              <a
+                                href={seatGeekUrl}
+                                target="_blank" rel="noopener noreferrer"
+                                style={{
+                                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                                  fontSize: 12, fontWeight: 600, color: accentColor,
+                                  textDecoration: 'none',
+                                  padding: '5px 10px', borderRadius: 8,
+                                  backgroundColor: `${accentColor}18`,
+                                  border: `1px solid ${accentColor}40`,
+                                }}
+                              >
+                                <Ticket size={12} /> Buy Tickets
+                              </a>
+                            )}
+                          </div>
                         </div>
 
                         {/* Stadium name */}

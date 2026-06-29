@@ -225,7 +225,7 @@ export default function MinorLeagueDetailPage() {
   const [affiliateMlbStadiumId, setAffiliateMlbStadiumId] = useState<string | null>(null)
 
   // Ticket flagging
-  const [myTickets,   setMyTickets]   = useState<Set<number>>(new Set())
+  const [myTickets,   setMyTickets]   = useState<Set<string>>(new Set())
   const [ticketGames, setTicketGames] = useState<Array<{
     game_pk: number; game_date: string; opponent: string; time_str: string | null; promotions: string[]
   }>>([])
@@ -277,7 +277,7 @@ export default function MinorLeagueDetailPage() {
       .order('game_date', { ascending: true })
     if (error) { console.error('loadTickets error:', error); return }
     if (data) {
-      setMyTickets(new Set(data.map((t: any) => t.game_pk)))
+      setMyTickets(new Set(data.map((t: any) => String(t.game_pk))))
       setTicketGames(data.map((t: any) => ({
         game_pk:    t.game_pk,
         game_date:  t.game_date,
@@ -291,7 +291,7 @@ export default function MinorLeagueDetailPage() {
   async function toggleTicket(g: MiLBGame) {
     if (!stadium) return
     const supabase = createClient()
-    if (myTickets.has(g.gamePk)) {
+    if (myTickets.has(String(g.gamePk))) {
       const { error } = await supabase.from('milb_tickets').delete()
         .eq('game_pk', g.gamePk)
         .eq('stadium_id', stadium.id)
@@ -437,7 +437,7 @@ export default function MinorLeagueDetailPage() {
 
   const TABS: { key: ActiveTab; label: string }[] = [
     { key: 'games-witnessed', label: 'Games Attended' },
-    { key: 'game-day-intel',  label: 'Upcoming Games'  },
+    { key: 'game-day-intel',  label: 'Schedule'         },
     { key: 'stadium-info',    label: 'Stadium Info'    },
   ]
 
@@ -1081,7 +1081,7 @@ export default function MinorLeagueDetailPage() {
               <>
                 {/* Upcoming Games */}
                 <section style={{ marginBottom: 32 }}>
-                  <SectionTitle Icon={CalendarDays}>Upcoming Games</SectionTitle>
+                  <SectionTitle Icon={CalendarDays}>Schedule</SectionTitle>
                   {upcomingGames.length > 0 ? (
                     <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #30363D' }}>
                       <div style={{ backgroundColor: '#0B1117', maxHeight: 360, overflowY: 'auto' }}>
@@ -1123,14 +1123,14 @@ export default function MinorLeagueDetailPage() {
                                 <button
                                   onClick={() => toggleTicket(g)}
                                   style={{
-                                    background: myTickets.has(g.gamePk) ? 'rgba(63,185,80,0.15)' : 'rgba(139,148,158,0.1)',
-                                    border: `1px solid ${myTickets.has(g.gamePk) ? 'rgba(63,185,80,0.4)' : '#30363D'}`,
+                                    background: myTickets.has(String(g.gamePk)) ? 'rgba(63,185,80,0.15)' : 'rgba(139,148,158,0.1)',
+                                    border: `1px solid ${myTickets.has(String(g.gamePk)) ? 'rgba(63,185,80,0.4)' : '#30363D'}`,
                                     borderRadius: 8, padding: '4px 10px', cursor: 'pointer',
-                                    fontSize: 13, color: myTickets.has(g.gamePk) ? '#3FB950' : '#8B949E',
+                                    fontSize: 13, color: myTickets.has(String(g.gamePk)) ? '#3FB950' : '#8B949E',
                                     fontWeight: 600, whiteSpace: 'nowrap',
                                   }}
                                 >
-                                  {myTickets.has(g.gamePk) ? '🎟️ Got it' : '+ Tickets'}
+                                  {myTickets.has(String(g.gamePk)) ? '🎟️ Got it' : '+ Tickets'}
                                 </button>
                               </div>
                             </div>

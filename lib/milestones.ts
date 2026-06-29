@@ -514,6 +514,19 @@ export const MILESTONES: Milestone[] = [
     ),
   },
   {
+    id: 'bl_babe_ruth_museum',
+    name: 'The Bambino',
+    description: 'Visit the Babe Ruth Birthplace and Museum in Baltimore',
+    icon: '👑',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'pilgrimage' && (
+        x.venue?.toLowerCase().includes('babe ruth') ||
+        x.venue?.toLowerCase().includes('ruth') ||
+        x.event_type?.toLowerCase().includes('babe ruth')
+      )
+    ),
+  },
+  {
     id: 'bl_little_league_ws',
     name: 'Back to Basics',
     description: 'Attend the Little League World Series in Williamsport, PA',

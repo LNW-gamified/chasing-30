@@ -426,7 +426,14 @@ export default function TripsPage() {
                                       </div>
                                     ))}
                                     <span style={{ marginLeft: 10, fontSize: 13, color: '#8B949E' }}>
-                                      {stadCount} stadium{stadCount !== 1 ? 's' : ''}
+                                      {(() => {
+                                        const totalStopCount = trip.trip_stops.length
+                                        const hasDestinations = trip.trip_stops.some((s: any) => !s.stadium_id)
+                                        const hasStadiums = trip.trip_stops.some((s: any) => s.stadium_id)
+                                        if (totalStopCount === 0) return `${stadCount} stadium${stadCount !== 1 ? 's' : ''}`
+                                        if (hasDestinations && hasStadiums) return `${totalStopCount} stop${totalStopCount !== 1 ? 's' : ''}`
+                                        return `${totalStopCount} stadium${totalStopCount !== 1 ? 's' : ''}`
+                                      })()}
                                       {days ? ` · ${days} day${days !== 1 ? 's' : ''}` : ''}
                                     </span>
                                   </div>
