@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import TeamLogo from '@/components/TeamLogo'
+import { getUserTimezone } from '@/lib/user-timezone'
+
+const userTz = getUserTimezone()
 
 export interface TodayGame {
   gamePk:     number
@@ -43,7 +46,7 @@ function sortGames(games: TodayGame[]): TodayGame[] {
 }
 
 function inPollWindow(): boolean {
-  const ptDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }))
+  const ptDate = new Date(new Date().toLocaleString('en-US', { timeZone: userTz }))
   return ptDate.getHours() >= 9
 }
 
@@ -51,7 +54,7 @@ function fmtTime(iso: string): string {
   try {
     return new Date(iso).toLocaleTimeString('en-US', {
       hour: 'numeric', minute: '2-digit',
-      timeZone: 'America/Los_Angeles', hour12: true,
+      timeZone: userTz, hour12: true,
     }) + ' PT'
   } catch { return '' }
 }

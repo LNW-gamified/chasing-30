@@ -13,6 +13,9 @@ import MiLBLogo from '@/components/MiLBLogo'
 import BaseballLifeForm from '@/components/BaseballLifeForm'
 import { TEAM_BTN_COLOR, TEAM_GRADIENTS } from '@/lib/team-colors'
 import { formatDate } from '@/lib/utils'
+import { getUserTimezone } from '@/lib/user-timezone'
+
+const userTz = getUserTimezone()
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -298,7 +301,7 @@ export default function MinorLeagueDetailPage() {
       if (error) { console.error('ticket delete error:', error); return }
     } else {
       const timeStr = new Date(g.gameDate).toLocaleTimeString('en-US', {
-        hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles',
+        hour: 'numeric', minute: '2-digit', timeZone: userTz,
       })
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
@@ -306,7 +309,7 @@ export default function MinorLeagueDetailPage() {
         user_id:    user.id,
         stadium_id: stadium.id,
         game_pk:    g.gamePk,
-        game_date:  g.gameDate.split('T')[0],
+        game_date: new Date(g.gameDate).toLocaleDateString('en-CA', { timeZone: userTz }),
         opponent:   g.opponent,
         time_str:   timeStr,
         promotions: g.promotions,
@@ -1087,9 +1090,9 @@ export default function MinorLeagueDetailPage() {
                       <div style={{ backgroundColor: '#0B1117', maxHeight: 360, overflowY: 'auto' }}>
                         {upcomingGames.map((g, i) => {
                           const dt      = new Date(g.gameDate)
-                          const dayAbbr = dt.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/Los_Angeles' })
-                          const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })
-                          const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
+                          const dayAbbr = dt.toLocaleDateString('en-US', { weekday: 'short', timeZone: userTz })
+                          const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: userTz })
+                          const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: userTz })
                           const prefix  = g.isHome ? 'vs' : '@'
                           return (
                             <div key={g.gamePk} style={{

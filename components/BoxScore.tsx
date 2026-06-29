@@ -8,6 +8,7 @@ import { Pencil, Trash2, RefreshCw } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { fetchGameContent, fetchScoringPlays, type GameContent, type ScoringPlay } from '@/lib/mlb-api'
 import { fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
+import { getTodayLocal } from '@/lib/user-timezone'
 import { classifyDayNight, type DayNight } from '@/lib/sunrise-sunset'
 
 interface BoxScoreProps {
@@ -221,7 +222,7 @@ export default function BoxScore({
 
   useEffect(() => {
     if (visit.temperature != null) return
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+    const today = getTodayLocal()
     if (visit.visit_date >= today) return
     fetchHistoricalWeather(stadium.lat, stadium.lng, visit.visit_date).then(setWeather)
   }, [visit.id, visit.temperature, visit.visit_date, stadium.lat, stadium.lng])

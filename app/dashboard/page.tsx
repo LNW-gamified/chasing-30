@@ -19,7 +19,7 @@ import { getTeamAbbrById } from '@/lib/team-logos'
 
 async function fetchTodayGames(favAbbr: string | null): Promise<TodayGame[]> {
   try {
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'UTC' })
     const res = await fetch(
       `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&gameType=R&hydrate=linescore`,
       { next: { revalidate: 300 } }
@@ -76,7 +76,7 @@ function fmtDate(d: string | null | undefined): string {
 }
 
 function daysUntil(dateStr: string): number {
-  const todayLA  = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+  const todayLA  = new Date().toLocaleDateString('en-CA', { timeZone: 'UTC' })
   const today    = new Date(todayLA + 'T00:00:00')
   const target   = new Date(dateStr  + 'T00:00:00')
   return Math.max(0, Math.round((target.getTime() - today.getTime()) / 86400000))
@@ -105,7 +105,7 @@ function SectionHeader({ label, right }: { label: string; right?: React.ReactNod
 export default async function DashboardPage() {
   const supabase = await createClient()
 
-  const todayISO   = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+  const todayISO   = new Date().toLocaleDateString('en-CA', { timeZone: 'UTC' })
   const [, todayMonthStr, todayDayStr] = todayISO.split('-')
   const todayMonth = parseInt(todayMonthStr, 10)
   const todayDay   = parseInt(todayDayStr,   10)
