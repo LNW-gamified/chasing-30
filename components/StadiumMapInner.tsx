@@ -96,8 +96,10 @@ function makeStadiumIcon(logoUrl: string, visited: boolean, abbr: string): L.Div
       <div style="position:relative;width:40px;height:40px;">
         <div style="
           width:40px;height:40px;border-radius:50%;
-          border:2.5px solid ${ring};
-          box-shadow:0 2px 12px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.08);
+          border:3px solid ${ring};
+          outline:2px solid white;
+          outline-offset:-5px;
+          box-shadow:0 2px 12px rgba(0,0,0,0.25), 0 0 0 2px white;
           ${bgStyle}
           background-image:url('${logoUrl}');
           background-size:72%;
