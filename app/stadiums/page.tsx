@@ -71,6 +71,7 @@ const EVENT_META: Record<string, { emoji: string; color: string; label: string }
   world_series:   { emoji: '🏆', color: '#C41E3A', label: 'World Series'   },
   field_of_dreams:{ emoji: '🌽', color: '#3FB950', label: 'Field of Dreams'},
   spring_training:{ emoji: '🌞', color: '#1F6FEB', label: 'Spring Training'},
+  amateur:        { emoji: '🎓', color: '#58A6FF', label: 'Amateur & Collegiate' },
 }
 
 // Gradient base colors for event card backgrounds (distinct from badge accent colors)
@@ -568,7 +569,7 @@ export default function StadiumsPage() {
               )}
 
               {/* Remaining sections */}
-              {(['playoffs','field_of_dreams','spring_training'] as const).map(cat => {
+              {(['playoffs','field_of_dreams','spring_training','amateur'] as const).map(cat => {
                 const catEvents = baseballEvents.filter(e => e.category === cat)
                 if (catEvents.length === 0) return null
                 const meta = EVENT_META[cat]
@@ -583,7 +584,12 @@ export default function StadiumsPage() {
                           key={ev.id}
                           event={ev}
                           attendedCount={eventAttendedCount(ev.slug)}
-                          onLog={() => openLog(ev.category === 'spring_training' ? 'spring_training' : 'mlb_special_event', eventDefaultType(ev.slug))}
+                          onLog={() => openLog(
+                            ev.category === 'spring_training' ? 'spring_training' :
+                            ev.category === 'amateur' ? 'pilgrimage' :
+                            'mlb_special_event',
+                            eventDefaultType(ev.slug)
+                          )}
                         />
                       ))}
                     </div>
