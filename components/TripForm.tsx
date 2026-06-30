@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import type { Stadium, Trip, TripStop, Destination } from '@/types'
-import { X, Plus, Trash2, Loader2, MapPin, Ticket, DollarSign, FileText, CalendarDays, Camera } from 'lucide-react'
+import { X, Plus, Trash2, Loader2, MapPin, Ticket, DollarSign, FileText, CalendarDays, ChevronDown } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 import { DESTINATION_BY_SLUG, EXPERIENCE_TYPES } from '@/lib/destinations'
 import { MLB_TEAM_IDS as ABBR_TO_MLB_ID } from '@/lib/mlb-api'
@@ -205,7 +205,8 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
   const [saving, setSaving]           = useState(false)
   const [error,  setError]            = useState('')
   const [destinations, setDestinations] = useState<Destination[]>([])
-  const [promoUploading, setPromoUploading] = useState<Record<string, boolean>>({})
+  const [expandedStop, setExpandedStop]       = useState<number | null>(0)
+  const [expandedDetails, setExpandedDetails] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     createClient().from('destinations').select('id, slug, name, city, state, type, is_mlb_event')
@@ -389,6 +390,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       setStopSchedules(prev => [...prev, emptySchedule()])
       setSeatInputs(prev => [...prev, ''])
     }
+    setExpandedStop(newIdx)
   }
 
   function changeStopType(i: number, type: 'stadium' | 'destination') {
@@ -418,39 +420,6 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     setStops(prev => prev.filter((_, idx) => idx !== i))
     setStopSchedules(prev => prev.filter((_, idx) => idx !== i))
     setSeatInputs(prev => prev.filter((_, idx) => idx !== i))
-  }
-
-  async function uploadPromoPhoto(stopIdx: number, promoName: string, file: File) {
-    const key = `${stopIdx}:${promoName}`
-    setPromoUploading(prev => ({ ...prev, [key]: true }))
-    try {
-      const supabase = createClient()
-      const ext  = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
-      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      const { error } = await supabase.storage.from('promo-photos').upload(path, file)
-      if (!error) {
-        const { data: { publicUrl } } = supabase.storage.from('promo-photos').getPublicUrl(path)
-        setStops(prev => prev.map((s, i) => i !== stopIdx ? s : {
-          ...s, promotion_photos: { ...s.promotion_photos, [promoName]: publicUrl },
-        }))
-      }
-    } finally {
-      setPromoUploading(prev => { const n = { ...prev }; delete n[key]; return n })
-    }
-  }
-
-  function removePromoPhoto(stopIdx: number, promoName: string) {
-    const url = stops[stopIdx]?.promotion_photos[promoName]
-    if (url) {
-      const match = url.match(/\/promo-photos\/(.+)$/)
-      if (match?.[1]) createClient().storage.from('promo-photos').remove([match[1]])
-    }
-    setStops(prev => prev.map((s, i) => {
-      if (i !== stopIdx) return s
-      const photos = { ...s.promotion_photos }
-      delete photos[promoName]
-      return { ...s, promotion_photos: photos }
-    }))
   }
 
   const stopEst     = stops.reduce((sum, s) =>
@@ -737,24 +706,41 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                     overflow: 'hidden',
                   }}>
                     {/* Stop header bar */}
-                    <div style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '12px 16px', backgroundColor: '#161B22',
-                      borderBottom: '1px solid #30363D',
-                    }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>
-                        Stop {i + 1}
-                      </span>
-                      {stops.length > 1 && (
-                        <button type="button" onClick={() => removeStop(i)} style={{
-                          background: 'none', border: 'none', cursor: 'pointer',
-                          color: '#F85149', display: 'flex', alignItems: 'center', padding: 4,
-                        }}>
-                          <Trash2 size={14} />
-                        </button>
-                      )}
+                    <div
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '12px 16px', backgroundColor: '#161B22',
+                        borderBottom: expandedStop === i ? '1px solid #30363D' : 'none',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => setExpandedStop(expandedStop === i ? null : i)}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', flexShrink: 0 }}>
+                          Stop {i + 1}
+                        </span>
+                        {expandedStop !== i && (
+                          <span style={{ fontSize: 12, color: '#8B949E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {stop.stop_type === 'destination'
+                              ? destinations.find(d => d.id === stop.destination_id)?.name ?? 'Destination'
+                              : stadiums.find(s => s.id === stop.stadium_id)?.name ?? 'Stadium'}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {stops.length > 1 && (
+                          <button type="button" onClick={e => { e.stopPropagation(); removeStop(i) }} style={{
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            color: '#F85149', display: 'flex', alignItems: 'center', padding: 4,
+                          }}>
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                        <ChevronDown size={14} style={{ color: '#8B949E', transition: 'transform 0.15s', transform: expandedStop === i ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
+                      </div>
                     </div>
 
+                    {expandedStop === i && (
                     <div style={{ padding: '16px' }}>
                       {/* Stop type toggle */}
                       <div style={{
@@ -995,52 +981,20 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                           </div>
                         )}
 
-                        {/* Promotions */}
+                        {/* Promotions — read-only chip summary */}
                         {stop.promotions.length > 0 && (
-                          <div style={{
-                            marginTop: 10, padding: '10px 14px', borderRadius: 10,
-                            backgroundColor: 'rgba(245,166,35,0.06)',
-                            border: '1px solid rgba(245,166,35,0.25)',
-                          }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.7)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
-                              Game Day Promotions
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                              {stop.promotions.map(promoName => {
-                                const photoUrl = stop.promotion_photos[promoName]
-                                const uploading = promoUploading[`${i}:${promoName}`]
-                                return (
-                                  <div key={promoName} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                                    <span style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, flex: 1, minWidth: 0 }}>🎁 {promoName}</span>
-                                    {photoUrl ? (
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={photoUrl} alt={promoName} style={{ width: 48, height: 48, borderRadius: 6, objectFit: 'cover', display: 'block' }} />
-                                        <button type="button" onClick={() => removePromoPhoto(i, promoName)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#F85149', padding: 2, display: 'flex' }}>
-                                          <X size={14} />
-                                        </button>
-                                        <label style={{ cursor: 'pointer', fontSize: 13, color: '#8B949E', fontWeight: 600 }}>
-                                          Replace
-                                          <input type="file" accept="image/*" style={{ display: 'none' }}
-                                            onChange={e => { const f = e.target.files?.[0]; if (f) uploadPromoPhoto(i, promoName, f) }} />
-                                        </label>
-                                      </div>
-                                    ) : (
-                                      <label style={{
-                                        cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4,
-                                        fontSize: 13, fontWeight: 600, color: '#8B949E',
-                                        padding: '4px 8px', borderRadius: 6, border: '1px dashed #30363D', flexShrink: 0,
-                                      }}>
-                                        {uploading ? <Loader2 size={11} className="animate-spin" /> : <Camera size={11} />}
-                                        {uploading ? 'Uploading…' : 'Add Photo'}
-                                        <input type="file" accept="image/*" style={{ display: 'none' }}
-                                          onChange={e => { const f = e.target.files?.[0]; if (f) uploadPromoPhoto(i, promoName, f) }} />
-                                      </label>
-                                    )}
-                                  </div>
-                                )
-                              })}
-                            </div>
+                          <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {stop.promotions.map(promoName => (
+                              <span key={promoName} style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 4,
+                                padding: '4px 10px', borderRadius: 20,
+                                backgroundColor: 'rgba(245,166,35,0.1)',
+                                border: '1px solid rgba(245,166,35,0.3)',
+                                fontSize: 12, fontWeight: 600, color: '#F5A623',
+                              }}>
+                                🎁 {promoName}
+                              </span>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -1052,14 +1006,27 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                           onChange={e => setStop(i, 'game_date', e.target.value)} />
                       </div>
 
-                      {/* ── Tickets & Seats subsection ────────────────── */}
-                      <div style={{ borderTop: '1px solid #30363D', paddingTop: 16, marginBottom: 16 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14 }}>
-                          <Ticket size={13} style={{ color: '#F5A623' }} />
-                          <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                            Tickets &amp; Seats
-                          </span>
-                        </div>
+                      {/* ── Tickets, Seats & Budget (collapsible) ──────── */}
+                      <div style={{ borderTop: '1px solid #30363D', paddingTop: 12 }}>
+                        <button
+                          type="button"
+                          onClick={() => setExpandedDetails(prev => ({ ...prev, [String(i)]: !prev[String(i)] }))}
+                          style={{
+                            display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'space-between',
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            padding: '4px 0 12px', gap: 8,
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                            <Ticket size={13} style={{ color: '#F5A623' }} />
+                            <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                              Tickets, Seats &amp; Budget
+                            </span>
+                          </div>
+                          <ChevronDown size={14} style={{ color: '#8B949E', transition: 'transform 0.15s', transform: expandedDetails[String(i)] ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
+                        </button>
+                        {expandedDetails[String(i)] && (
+                        <>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
                           <div>
@@ -1142,10 +1109,14 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                             value={stop.ticket_confirmation}
                             onChange={e => setStop(i, 'ticket_confirmation', e.target.value)} />
                         </div>
+                        </>
+                        )}
                       </div>
                       </>
                       )}
 
+                      {expandedDetails[String(i)] && (
+                      <>
                       {/* ── Budget subsection ─────────────────────────── */}
                       <div style={{ borderTop: '1px solid #30363D', paddingTop: 16 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12 }}>
@@ -1183,7 +1154,10 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                           ))}
                         </div>
                       </div>
+                      </>
+                      )}
                     </div>
+                    )}
                   </div>
                 )
               })}
@@ -1209,9 +1183,27 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
               </button>
             </div>
 
-            {/* ═══ TRIP COSTS ══════════════════════════════════════ */}
-            <SectionHeader icon={<DollarSign size={15} />} label="Trip Costs" />
-
+            {/* ═══ TRAVEL COSTS & NOTES (collapsible) ═════════════ */}
+            <div style={{ borderTop: '1px solid #30363D', paddingTop: 16 }}>
+              <button
+                type="button"
+                onClick={() => setExpandedDetails(prev => ({ ...prev, tripLevel: !prev['tripLevel'] }))}
+                style={{
+                  display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'space-between',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  padding: '4px 0 12px', gap: 8,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <DollarSign size={13} style={{ color: '#3FB950' }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    Travel Costs &amp; Notes
+                  </span>
+                </div>
+                <ChevronDown size={14} style={{ color: '#8B949E', transition: 'transform 0.15s', transform: expandedDetails['tripLevel'] ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
+              </button>
+              {expandedDetails['tripLevel'] && (
+              <>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {([
                 { key: 'travel', label: 'Travel', icon: '✈️' },
@@ -1260,16 +1252,16 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
               </div>
             </div>
 
-            {/* ═══ NOTES ═══════════════════════════════════════════ */}
-            <SectionHeader icon={<FileText size={15} />} label="Notes" />
-
             <textarea
-              style={{ ...inputStyle, resize: 'vertical', minHeight: 88 }}
+              style={{ ...inputStyle, resize: 'vertical', minHeight: 88, marginTop: 12 }}
               rows={3}
               placeholder="Hotel name, flight info, car rental…"
               value={form.notes}
               onChange={e => setField('notes', e.target.value)}
             />
+              </>
+              )}
+            </div>
 
             {error && (
               <div style={{
