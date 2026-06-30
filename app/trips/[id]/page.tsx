@@ -76,15 +76,23 @@ export default function TripDetailPage() {
     }
     setLoading(false)
 
-    // Driving distance between consecutive stops
-    const withStadium = loadedStops.filter(s => (s.stadium as Stadium | null)?.lat)
-    if (withStadium.length >= 2) {
+    // Driving distance between consecutive stops — includes both stadium and destination locations
+    interface GeoPoint { lat: number; lng: number }
+    const withLocation: GeoPoint[] = loadedStops
+      .map(s => {
+        const stadium = s.stadium as Stadium | null
+        const destination = s.destination as { lat: number | null; lng: number | null } | null
+        if (stadium?.lat != null && stadium?.lng != null) return { lat: stadium.lat, lng: stadium.lng }
+        if (destination?.lat != null && destination?.lng != null) return { lat: destination.lat, lng: destination.lng }
+        return null
+      })
+      .filter((p): p is GeoPoint => p !== null)
+
+    if (withLocation.length >= 2) {
       setLoadingMiles(true)
-      const pairs: [Stadium, Stadium][] = []
-      for (let i = 0; i < withStadium.length - 1; i++) {
-        const a = withStadium[i].stadium as Stadium
-        const b = withStadium[i + 1].stadium as Stadium
-        pairs.push([a, b])
+      const pairs: [GeoPoint, GeoPoint][] = []
+      for (let i = 0; i < withLocation.length - 1; i++) {
+        pairs.push([withLocation[i], withLocation[i + 1]])
       }
       Promise.all(
         pairs.map(([a, b]) =>
