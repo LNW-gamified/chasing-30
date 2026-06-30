@@ -8,7 +8,7 @@ import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip } from '@/types'
 import Link from 'next/link'
 import { Plus, ChevronRight, Building2, MapPin, Map, Plane } from 'lucide-react'
-import { getTeamLogoUrl, LIGHT_BG_LOGO_TEAMS } from '@/lib/team-logos'
+import { getTeamLogoUrl, LIGHT_BG_LOGO_TEAMS, getTeamAbbrById } from '@/lib/team-logos'
 import TeamLogo from '@/components/TeamLogo'
 import { TEAM_GRADIENTS as TEAM_COLORS, TEAM_BTN_COLOR, TEAM_LOGO_BG } from '@/lib/team-colors'
 import { DESTINATION_BY_SLUG } from '@/lib/destinations'
@@ -21,6 +21,7 @@ type StopMini = {
   destination_id: string | null
   stop_type: 'stadium' | 'destination' | null
   experience_type: string | null
+  opponent_team_id: number | null
   stadium: { id: string; abbreviation: string; name: string } | null
 }
 
@@ -54,8 +55,14 @@ function daysUntil(dateStr: string | null): number | null {
 }
 
 function tripAbbrs(trip: TripWithExtras): string[] {
-  if (trip.trip_stops.length > 0)
-    return trip.trip_stops.map(s => s.stadium?.abbreviation).filter((a): a is string => Boolean(a)).slice(0, 4)
+  if (trip.trip_stops.length > 0) {
+    const fromStadiums = trip.trip_stops.map(s => s.stadium?.abbreviation).filter((a): a is string => Boolean(a))
+    const fromEvents = trip.trip_stops
+      .filter(s => s.stop_type === 'destination' && s.opponent_team_id != null)
+      .map(s => getTeamAbbrById(s.opponent_team_id as number))
+      .filter((a): a is string => Boolean(a))
+    return [...new Set([...fromStadiums, ...fromEvents])].slice(0, 6)
+  }
   if (trip.stadium) return [trip.stadium.abbreviation]
   return []
 }
@@ -119,7 +126,7 @@ export default function TripsPage() {
     const supabase = createClient()
     const [{ data: t }, { data: s }, { data: v }, { data: dv }] = await Promise.all([
       supabase.from('trips')
-        .select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, is_mlb_event), trip_stops(id, stadium_id, destination_id, stop_type, experience_type, stadium:stadiums(id, abbreviation, name))')
+        .select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, is_mlb_event), trip_stops(id, stadium_id, destination_id, stop_type, experience_type, opponent_team_id, stadium:stadiums(id, abbreviation, name))')
         .order('start_date', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false }),
       supabase.from('stadiums').select('*').order('name'),
@@ -351,20 +358,11 @@ export default function TripsPage() {
                               position: 'absolute', inset: 0, pointerEvents: 'none',
                               background: 'linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.52) 100%)',
                             }} />
-                            {isDestination && destInfo ? (
+                            {isDestination && destInfo && (
                               <div style={{
                                 position: 'absolute', right: 14, top: '50%',
                                 transform: 'translateY(-50%)', fontSize: 48, opacity: 0.8,
                               }}>{destInfo.icon}</div>
-                            ) : (
-                              <div style={{
-                                position: 'absolute', right: 14, top: '50%',
-                                transform: 'translateY(-50%)', display: 'flex', gap: 8,
-                              }}>
-                                {abbrs.slice(0, 2).map(abbr => (
-                                  <TeamLogo key={abbr} abbreviation={abbr} size={52} />
-                                ))}
-                              </div>
                             )}
                             <div style={{
                               position: 'absolute', bottom: 13, left: 16,
@@ -434,7 +432,7 @@ export default function TripsPage() {
                                           style={{ objectFit: 'contain', display: 'block' }} />
                                       </div>
                                     ))}
-                                    <span style={{ marginLeft: 10, fontSize: 13, color: '#8B949E' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 10, flexWrap: 'wrap' }}>
                                       {(() => {
                                         const stadiumStops = trip.trip_stops.filter((s: any) => s.stop_type === 'stadium')
                                         const eventStops = trip.trip_stops.filter((s: any) =>
@@ -443,14 +441,18 @@ export default function TripsPage() {
                                         const experienceStops = trip.trip_stops.filter((s: any) =>
                                           s.stop_type === 'destination' && s.experience_type !== 'game' && s.experience_type !== 'festival'
                                         )
-                                        const parts: string[] = []
-                                        if (stadiumStops.length > 0) parts.push(`${stadiumStops.length} stadium${stadiumStops.length !== 1 ? 's' : ''}`)
-                                        if (experienceStops.length > 0) parts.push(`${experienceStops.length} experience${experienceStops.length !== 1 ? 's' : ''}`)
-                                        if (eventStops.length > 0) parts.push(`${eventStops.length} event${eventStops.length !== 1 ? 's' : ''}`)
-                                        return parts.length > 0 ? parts.join(' · ') : '0 stops'
+                                        const badges = [
+                                          stadiumStops.length > 0 ? { emoji: '⚾', count: stadiumStops.length } : null,
+                                          experienceStops.length > 0 ? { emoji: '🏛️', count: experienceStops.length } : null,
+                                          eventStops.length > 0 ? { emoji: '🎟️', count: eventStops.length } : null,
+                                        ].filter(Boolean)
+                                        return badges.map((b, i) => (
+                                          <span key={i} style={{ fontSize: 13, color: '#8B949E', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                                            {b!.emoji} {b!.count}
+                                          </span>
+                                        ))
                                       })()}
-                                      {days ? ` · ${days} day${days !== 1 ? 's' : ''}` : ''}
-                                    </span>
+                                    </div>
                                   </div>
                                   {totalStops > 0 && (
                                     <div>
