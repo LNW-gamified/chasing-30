@@ -398,7 +398,7 @@ export default function TripsPage() {
                                   fontWeight: 500, marginTop: 4,
                                   textShadow: '0 1px 4px rgba(0,0,0,0.4)',
                                 }}>
-                                  {dateRange}
+                                  {dateRange}{days ? ` (${days} day${days !== 1 ? 's' : ''})` : ''}
                                 </div>
                               )}
                             </div>
