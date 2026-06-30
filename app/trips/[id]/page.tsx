@@ -922,43 +922,39 @@ export default function TripDetailPage() {
                           </div>
                         )}
 
-                        {/* Game date + time + weather */}
-                        {stop.game_date && (
-                          <div style={{ marginBottom: 16 }}>
-                            <div style={{ fontSize: 17, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2 }}>
-                              {new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', {
-                                weekday: 'long', month: 'long', day: 'numeric',
-                              })}
-                            </div>
-                            {stop.game_time && (
-                              <div style={{ fontSize: 15, fontWeight: 700, color: '#F5A623', marginTop: 3 }}>
-                                {stop.game_time}
+                        {/* Full content row: left = date + matchup, right = promotions */}
+                        <div style={{ display: 'flex', gap: 0, marginBottom: 0, alignItems: 'flex-start' }}>
+
+                          {/* Left column — date, time, weather, then matchup logos */}
+                          <div style={{ flexShrink: 0, width: 180, display: 'flex', flexDirection: 'column', paddingBottom: 14 }}>
+                            {stop.game_date && (
+                              <div style={{ marginBottom: 12 }}>
+                                <div style={{ fontSize: 17, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2 }}>
+                                  {new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', {
+                                    weekday: 'long', month: 'long', day: 'numeric',
+                                  })}
+                                </div>
+                                {stop.game_time && (
+                                  <div style={{ fontSize: 15, fontWeight: 700, color: '#F5A623', marginTop: 3 }}>
+                                    {stop.game_time}
+                                  </div>
+                                )}
+                                {stopWeather[stop.id] && (() => {
+                                  const w = stopWeather[stop.id]
+                                  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+                                  const isFuture = stop.game_date >= today
+                                  return (
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6, padding: '4px 10px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                      <span style={{ fontSize: 14 }}>{w.emoji}</span>
+                                      <span style={{ fontSize: 12, fontWeight: 600, color: '#C9D1D9' }}>
+                                        {w.tempF}°F · {w.condition}
+                                        {isFuture && w.rainChance != null && w.rainChance > 20 ? ` · ${w.rainChance}% rain` : ''}
+                                      </span>
+                                    </div>
+                                  )
+                                })()}
                               </div>
                             )}
-                            {stopWeather[stop.id] && (() => {
-                              const w = stopWeather[stop.id]
-                              const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
-                              const isFuture = stop.game_date >= today
-                              return (
-                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6, padding: '4px 10px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                  <span style={{ fontSize: 14 }}>{w.emoji}</span>
-                                  <span style={{ fontSize: 12, fontWeight: 600, color: '#C9D1D9' }}>
-                                    {w.tempF}°F · {w.condition}
-                                    {isFuture && w.rainChance != null && w.rainChance > 20
-                                      ? ` · ${w.rainChance}% rain`
-                                      : ''}
-                                  </span>
-                                </div>
-                              )
-                            })()}
-                          </div>
-                        )}
-
-                        {/* Two-column layout: left = matchup, right = promotions */}
-                        <div style={{ display: 'flex', gap: 0, marginBottom: 0 }}>
-
-                          {/* Left column — matchup */}
-                          <div style={{ flexShrink: 0, width: 160, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', paddingBottom: 14 }}>
                             {stadium && (
                               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
@@ -984,7 +980,6 @@ export default function TripDetailPage() {
                                 )}
                               </div>
                             )}
-                            {/* Ticket info below logos */}
                             {hasTickets && (
                               <div style={{ marginTop: 10 }}>
                                 <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', marginBottom: 2 }}>🎟 Your Seats</div>
