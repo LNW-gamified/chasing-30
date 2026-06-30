@@ -408,7 +408,7 @@ export default function TripDetailPage() {
 
           {/* Trip info — bottom */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 22px', zIndex: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start', gap: 12, marginBottom: 8 }}>
               <h1 style={{
                 margin: 0, fontSize: 32, fontWeight: 900, color: '#ffffff',
                 lineHeight: 1.15, textShadow: '0 2px 14px rgba(0,0,0,0.6)',
@@ -417,10 +417,10 @@ export default function TripDetailPage() {
                 {trip.name}
               </h1>
               {heroAbbrs.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, maxWidth: 220, justifyContent: 'flex-end', flexShrink: 0 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, maxWidth: 220, justifyContent: 'flex-start', flexShrink: 0 }}>
                   {heroAbbrs.map(abbr => (
                     <div key={abbr} style={{
-                      width: 56, height: 56, borderRadius: 14,
+                      width: 42, height: 42, borderRadius: 10,
                       backgroundColor: LIGHT_BG_LOGO_TEAMS.has(abbr)
                         ? 'rgba(255,255,255,0.95)'
                         : (TEAM_LOGO_BG[abbr] ?? TEAM_BTN_COLOR[abbr] ?? '#1F3C6E'),
@@ -428,7 +428,7 @@ export default function TripDetailPage() {
                       boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
                     }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={getTeamLogoUrl(abbr)} alt={abbr} width={40} height={40} style={{ objectFit: 'contain' }} />
+                      <img src={getTeamLogoUrl(abbr)} alt={abbr} width={30} height={30} style={{ objectFit: 'contain' }} />
                     </div>
                   ))}
                 </div>
