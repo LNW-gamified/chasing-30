@@ -411,6 +411,11 @@ export default function TripDetailPage() {
                   fontSize: 13, color: 'rgba(255,255,255,0.85)', fontWeight: 500,
                 }}>
                   <Calendar size={13} /> {dr}
+                  {countdownDays !== null && countdownDays >= 0 && (
+                    <span style={{ color: countdownDays === 0 ? '#3FB950' : '#F5A623', fontWeight: 700, marginLeft: 4 }}>
+                      · {countdownDays === 0 ? "Today!" : countdownDays === 1 ? '1 day away' : `${countdownDays} days away`}
+                    </span>
+                  )}
                 </span>
               )}
               {stops.length > 0 && (
@@ -428,46 +433,6 @@ export default function TripDetailPage() {
 
         {/* ── CONTENT AREA ────────────────────────────────────────── */}
         <div style={{ maxWidth: 800, margin: '0 auto', padding: '20px 16px' }}>
-
-          {/* ── Countdown banner ──────────────────────────────────── */}
-          {countdownDays !== null && countdownDays >= 0 && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 14,
-              padding: '16px 20px', borderRadius: 16, marginBottom: 16,
-              backgroundColor: countdownDays === 0
-                ? 'rgba(63,185,80,0.12)' : 'rgba(245,166,35,0.12)',
-              border: `1px solid ${countdownDays === 0
-                ? 'rgba(63,185,80,0.35)' : 'rgba(245,166,35,0.3)'}`,
-            }}>
-              <span style={{ flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
-                {countdownDays === 0
-                  ? <span style={{ fontSize: 32 }}>🎉</span>
-                  : countdownDays === 1
-                    ? <span style={{ fontSize: 32 }}>🌟</span>
-                    : <Calendar size={32} color="#F5A623" strokeWidth={1.8} />}
-              </span>
-              <div>
-                <div style={{
-                  fontWeight: 800, fontSize: 17,
-                  color: countdownDays === 0 ? '#3FB950' : '#F5A623',
-                  marginBottom: 3,
-                }}>
-                  {countdownDays === 0
-                    ? "It's game day — let's go!"
-                    : countdownDays === 1
-                      ? 'Trip starts tomorrow!'
-                      : `${countdownDays} days until your trip`}
-                </div>
-                {trip.start_date && countdownDays > 0 && (
-                  <div style={{ fontSize: 13, color: '#8B949E' }}>
-                    {formatDate(trip.start_date)}
-                    {trip.end_date && trip.end_date !== trip.start_date
-                      && ` – ${formatDate(trip.end_date)}`}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* ── Destination info ───────────────────────────────────── */}
           {isDestinationTrip && destInfo && (
@@ -643,6 +608,16 @@ export default function TripDetailPage() {
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>
                     {stops.length}
+                  </div>
+                </div>
+              )}
+              {trip.start_date && trip.end_date && (
+                <div style={{ flexShrink: 0 }}>
+                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
+                    Days
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>
+                    {Math.ceil((new Date(trip.end_date + 'T12:00:00').getTime() - new Date(trip.start_date + 'T12:00:00').getTime()) / 86400000) + 1}
                   </div>
                 </div>
               )}
@@ -1032,28 +1007,40 @@ export default function TripDetailPage() {
                               const photoUrl = stop.promotion_photos?.[promoName] ?? null
                               const uploading = promoUploading[`${stop.id}:${promoName}`]
                               return (
-                                <div key={promoName} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                                  <span style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, flex: 1, minWidth: 0 }}>🎁 {promoName}</span>
-                                  {photoUrl ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                                      <img src={photoUrl} alt={promoName} style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', display: 'block', cursor: 'pointer' }}
+                                <div key={promoName} style={{
+                                  display: 'flex', alignItems: 'center', gap: 12,
+                                  padding: '8px 0', minHeight: 48,
+                                }}>
+                                  <div style={{
+                                    width: 44, height: 44, borderRadius: 8, flexShrink: 0,
+                                    backgroundColor: photoUrl ? 'transparent' : 'rgba(245,166,35,0.08)',
+                                    border: photoUrl ? 'none' : '1px dashed rgba(245,166,35,0.3)',
+                                    overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  }}>
+                                    {photoUrl ? (
+                                      /* eslint-disable-next-line @next/next/no-img-element */
+                                      <img src={photoUrl} alt={promoName} style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
                                         onClick={() => window.open(photoUrl, '_blank')} />
-                                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                        <button onClick={() => removePromoPhotoForStop(stop.id, promoName)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#F85149', padding: 0, display: 'flex', alignItems: 'center', gap: 3, fontSize: 13, fontWeight: 600 }}>
-                                          <X size={12} /> Remove
-                                        </button>
-                                        <label style={{ cursor: 'pointer', fontSize: 13, color: '#8B949E', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
-                                          <Camera size={11} /> Replace
-                                          <input type="file" accept="image/*" style={{ display: 'none' }}
-                                            onChange={e => { const f = e.target.files?.[0]; if (f) uploadPromoPhotoForStop(stop.id, promoName, f) }} />
-                                        </label>
-                                      </div>
+                                    ) : (
+                                      <span style={{ fontSize: 18 }}>🎁</span>
+                                    )}
+                                  </div>
+                                  <span style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, flex: 1, minWidth: 0 }}>{promoName}</span>
+                                  {photoUrl ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                                      <label style={{ cursor: 'pointer', fontSize: 13, color: '#8B949E', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
+                                        <Camera size={11} /> Replace
+                                        <input type="file" accept="image/*" style={{ display: 'none' }}
+                                          onChange={e => { const f = e.target.files?.[0]; if (f) uploadPromoPhotoForStop(stop.id, promoName, f) }} />
+                                      </label>
+                                      <button onClick={() => removePromoPhotoForStop(stop.id, promoName)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#F85149', padding: 0, display: 'flex', alignItems: 'center', gap: 3, fontSize: 13, fontWeight: 600 }}>
+                                        <X size={12} /> Remove
+                                      </button>
                                     </div>
                                   ) : (
                                     <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: '#8B949E', padding: '5px 10px', borderRadius: 6, border: '1px dashed rgba(245,166,35,0.35)', backgroundColor: 'rgba(245,166,35,0.04)', flexShrink: 0 }}>
                                       {uploading ? <Loader2 size={11} className="animate-spin" /> : <Camera size={11} />}
-                                      {uploading ? 'Uploading…' : 'Add Photo →'}
+                                      {uploading ? 'Uploading…' : 'Add Photo'}
                                       <input type="file" accept="image/*" style={{ display: 'none' }}
                                         onChange={e => { const f = e.target.files?.[0]; if (f) uploadPromoPhotoForStop(stop.id, promoName, f) }} />
                                     </label>
@@ -1113,11 +1100,9 @@ export default function TripDetailPage() {
                             type="button"
                             onClick={() => setShowEdit(true)}
                             style={{
-                              display: 'inline-flex', alignItems: 'center', gap: 5,
-                              padding: '6px 12px', borderRadius: 8,
-                              border: '1px solid rgba(245,166,35,0.3)',
-                              backgroundColor: 'rgba(245,166,35,0.08)', color: '#F5A623',
-                              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                              display: 'inline-flex', alignItems: 'center', gap: 4,
+                              background: 'none', border: 'none', padding: 0,
+                              color: '#58A6FF', fontSize: 13, fontWeight: 600, cursor: 'pointer',
                             }}
                           >
                             <Plus size={12} /> Add Budget
