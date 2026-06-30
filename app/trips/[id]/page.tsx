@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import TripForm from '@/components/TripForm'
 import TeamLogo from '@/components/TeamLogo'
-import { getTeamLogoUrlById, getTeamAbbrById } from '@/lib/team-logos'
+import { getTeamLogoUrlById, getTeamLogoUrl, getTeamAbbrById, LIGHT_BG_LOGO_TEAMS } from '@/lib/team-logos'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip, TripStop, StopChecklistItem } from '@/types'
 import Link from 'next/link'
@@ -13,9 +13,12 @@ import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar
 import StopChecklist from '@/components/StopChecklist'
 import { DESTINATION_BY_SLUG, destinationLocation, EXPERIENCE_TYPES } from '@/lib/destinations'
 import { fetchForecastWeather, fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
-import { TEAM_PRIMARY, TEAM_GRADIENTS as TEAM_COLORS } from '@/lib/team-colors'
+import { TEAM_PRIMARY, TEAM_GRADIENTS as TEAM_COLORS, TEAM_BTN_COLOR, TEAM_LOGO_BG } from '@/lib/team-colors'
 
 type TripWithStadium = Trip & { stadium: Stadium | null }
+
+const MONTH_ABBR = ['Jan.', 'Feb.', 'March', 'April', 'May', 'June', 'July', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.']
+function fmtDate(d: Date): string { return `${MONTH_ABBR[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}` }
 
 export default function TripDetailPage() {
   const params = useParams()
@@ -289,9 +292,15 @@ export default function TripDetailPage() {
   }
 
   function dateRange() {
-    if (trip!.start_date && trip!.end_date) return `${formatDate(trip!.start_date)} – ${formatDate(trip!.end_date)}`
-    if (trip!.start_date) return `From ${formatDate(trip!.start_date)}`
-    if (trip!.trip_date)  return formatDate(trip!.trip_date)
+    if (trip!.start_date && trip!.end_date) {
+      const s = new Date(trip!.start_date + 'T12:00:00')
+      const e = new Date(trip!.end_date   + 'T12:00:00')
+      if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear())
+        return `${MONTH_ABBR[s.getMonth()]} ${s.getDate()} – ${e.getDate()}, ${s.getFullYear()}`
+      return `${fmtDate(s)} – ${fmtDate(e)}`
+    }
+    if (trip!.start_date) return `From ${fmtDate(new Date(trip!.start_date + 'T12:00:00'))}`
+    if (trip!.trip_date)  return fmtDate(new Date(trip!.trip_date + 'T12:00:00'))
     return null
   }
 
@@ -321,6 +330,17 @@ export default function TripDetailPage() {
     heroGradient = `linear-gradient(135deg, ${h1} 0%, ${h2} 100%)`
   }
 
+  // Team logo tiles for hero (same logic as trip cards)
+  const heroAbbrs: string[] = !isDestinationTrip
+    ? [...new Set([
+        ...sortedStops.map((s: any) => s.stadium?.abbreviation).filter(Boolean),
+        ...sortedStops
+          .filter((s: any) => s.stop_type === 'destination' && s.opponent_team_id != null)
+          .map((s: any) => getTeamAbbrById(s.opponent_team_id as number))
+          .filter(Boolean),
+      ])].slice(0, 6) as string[]
+    : []
+
   return (
     <div>
       <main style={{ minHeight: '100vh' }}>
@@ -345,6 +365,25 @@ export default function TripDetailPage() {
               <ArrowLeft size={14} /> Trips
             </Link>
           </div>
+
+          {/* Team logo tiles — top right, same style as trip cards */}
+          {heroAbbrs.length > 0 && (
+            <div style={{ position: 'absolute', top: 60, right: 16, zIndex: 10, display: 'flex', flexWrap: 'wrap', gap: 5, maxWidth: 160, justifyContent: 'flex-end' }}>
+              {heroAbbrs.map(abbr => (
+                <div key={abbr} style={{
+                  width: 48, height: 48, borderRadius: 13,
+                  backgroundColor: LIGHT_BG_LOGO_TEAMS.has(abbr)
+                    ? 'rgba(255,255,255,0.95)'
+                    : (TEAM_LOGO_BG[abbr] ?? TEAM_BTN_COLOR[abbr] ?? '#1F3C6E'),
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={getTeamLogoUrl(abbr)} alt={abbr} width={34} height={34} style={{ objectFit: 'contain' }} />
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Ellipsis menu — top right only */}
           <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
