@@ -62,14 +62,10 @@ export default function TripDetailPage() {
     setVisitedStadiumIds(new Set((sv ?? []).map((r: any) => r.stadium_id)))
     const loadedStops = (st as unknown as TripStop[]) ?? []
     setStops(loadedStops)
-    // Assign sort_order to any stops that don't have one
-    const stopsNeedingOrder = loadedStops.filter((s, i) => s.sort_order === 0 && i > 0)
-    if (stopsNeedingOrder.length > 0) {
-      const supabase = createClient()
-      await Promise.all(loadedStops.map((s, i) =>
-        supabase.from('trip_stops').update({ sort_order: i }).eq('id', s.id)
-      ))
-    }
+    // Always assign sort_order based on array position to ensure they're unique
+    await Promise.all(loadedStops.map((s, i) =>
+      supabase.from('trip_stops').update({ sort_order: i }).eq('id', s.id)
+    ))
     if (loadedStops.length > 0) {
       const stopIds = loadedStops.map(s => s.id)
       const { data: cl } = await supabase
@@ -79,9 +75,12 @@ export default function TripDetailPage() {
     }
     setLoading(false)
 
-    // Driving distance between consecutive stops — includes both stadium and destination locations
+    await calculateDrivingDistance(loadedStops)
+  }
+
+  async function calculateDrivingDistance(stopsToCalc: typeof stops) {
     interface GeoPoint { lat: number; lng: number }
-    const withLocation: GeoPoint[] = loadedStops
+    const withLocation: GeoPoint[] = stopsToCalc
       .map(s => {
         const stadium = s.stadium as Stadium | null
         const destination = s.destination as { lat: number | null; lng: number | null } | null
@@ -91,24 +90,23 @@ export default function TripDetailPage() {
       })
       .filter((p): p is GeoPoint => p !== null)
 
-    if (withLocation.length >= 2) {
-      setLoadingMiles(true)
-      const pairs: [GeoPoint, GeoPoint][] = []
-      for (let i = 0; i < withLocation.length - 1; i++) {
-        pairs.push([withLocation[i], withLocation[i + 1]])
-      }
-      Promise.all(
-        pairs.map(([a, b]) =>
-          fetch(`/api/driving-distance?fromLat=${a.lat}&fromLng=${a.lng}&toLat=${b.lat}&toLng=${b.lng}`)
-            .then(r => r.json()).then(d => d.miles as number | null).catch(() => null)
-        )
-      ).then(results => {
-        setSegmentMiles(results.map(r => r ?? 0))
-        const valid = results.filter((r): r is number => r !== null)
-        if (valid.length > 0) setTotalDrivingMiles(valid.reduce((s, m) => s + m, 0))
-        setLoadingMiles(false)
-      })
+    if (withLocation.length < 2) return
+
+    setLoadingMiles(true)
+    const pairs: [GeoPoint, GeoPoint][] = []
+    for (let i = 0; i < withLocation.length - 1; i++) {
+      pairs.push([withLocation[i], withLocation[i + 1]])
     }
+    const results = await Promise.all(
+      pairs.map(([a, b]) =>
+        fetch(`/api/driving-distance?fromLat=${a.lat}&fromLng=${a.lng}&toLat=${b.lat}&toLng=${b.lng}`)
+          .then(r => r.json()).then(d => d.miles as number | null).catch(() => null)
+      )
+    )
+    setSegmentMiles(results.map(r => r ?? 0))
+    const valid = results.filter((r): r is number => r !== null)
+    if (valid.length > 0) setTotalDrivingMiles(valid.reduce((s, m) => s + m, 0))
+    setLoadingMiles(false)
   }
 
   async function reloadChecklist() {
@@ -171,6 +169,9 @@ export default function TripDetailPage() {
     newStops[idx]     = { ...swapWith, sort_order: idx }
     newStops[swapIdx] = { ...current,  sort_order: swapIdx }
     setStops(newStops)
+
+    // Recalculate driving distance with new order
+    await calculateDrivingDistance(newStops)
   }
 
   useEffect(() => { load() }, [id])
