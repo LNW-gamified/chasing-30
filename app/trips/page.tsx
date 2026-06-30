@@ -78,20 +78,19 @@ function tripDays(trip: TripWithExtras): number | null {
   ) + 1
 }
 
+const MONTH_ABBR = ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.']
+function fmtDate(d: Date): string { return `${MONTH_ABBR[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}` }
+
 function tripDateRange(trip: TripWithExtras): string | null {
   if (trip.start_date && trip.end_date) {
     const s = new Date(trip.start_date + 'T12:00:00')
     const e = new Date(trip.end_date   + 'T12:00:00')
     const sameMonth = s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()
-    if (sameMonth) {
-      const month = s.toLocaleString('en-US', { month: 'long' })
-      const year  = s.getFullYear()
-      return `${month} ${s.getDate()} – ${e.getDate()}, ${year}`
-    }
-    return `${formatDate(trip.start_date)} – ${formatDate(trip.end_date)}`
+    if (sameMonth) return `${MONTH_ABBR[s.getMonth()]} ${s.getDate()} – ${e.getDate()}, ${s.getFullYear()}`
+    return `${fmtDate(s)} – ${fmtDate(e)}`
   }
-  if (trip.start_date) return `From ${formatDate(trip.start_date)}`
-  if (trip.trip_date) return formatDate(trip.trip_date)
+  if (trip.start_date) return `From ${fmtDate(new Date(trip.start_date + 'T12:00:00'))}`
+  if (trip.trip_date)  return fmtDate(new Date(trip.trip_date + 'T12:00:00'))
   return null
 }
 
