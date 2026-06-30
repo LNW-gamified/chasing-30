@@ -588,4 +588,122 @@ export const MILESTONES: Milestone[] = [
              cats.has('spring_training') && cats.has('pilgrimage')
     },
   },
+
+  // ── Milestone achievements ────────────────────────────────────────────────
+  {
+    id: 'opening_day_attendance',
+    name: 'First Pitch of the Year',
+    description: 'Attend Opening Day at any MLB stadium',
+    icon: '🌸',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'mlb_special_event' && x.event_type?.toLowerCase().includes('opening day')
+    ),
+  },
+  {
+    id: 'double_header_day',
+    name: 'Two-Park Day',
+    description: 'Attend games at two different stadiums in one day',
+    icon: '🎫',
+    check: (visits) => {
+      const byDate: Record<string, Set<string>> = {}
+      for (const v of visits ?? []) {
+        if (!byDate[v.visit_date]) byDate[v.visit_date] = new Set()
+        byDate[v.visit_date].add(v.stadium_id)
+      }
+      return Object.values(byDate).some(stadiums => stadiums.size >= 2)
+    },
+  },
+  {
+    id: 'hat_trick',
+    name: 'Hat Trick',
+    description: 'Visit 3 different stadiums on a single road trip',
+    icon: '🎩',
+    check: (_v, _s, _e, _b, destVisits) => {
+      // Checked via trip stops -- if any trip has 3+ stadium stops
+      // Falls back to checking visits within a 7-day window
+      const visits = _v ?? []
+      const sorted = [...visits].sort((a, b) => a.visit_date.localeCompare(b.visit_date))
+      for (let i = 0; i < sorted.length; i++) {
+        const start = new Date(sorted[i].visit_date)
+        const window = sorted.filter(v => {
+          const d = new Date(v.visit_date)
+          const diff = (d.getTime() - start.getTime()) / 86400000
+          return diff >= 0 && diff <= 7
+        })
+        const unique = new Set(window.map(v => v.stadium_id))
+        if (unique.size >= 3) return true
+      }
+      return false
+    },
+  },
+  {
+    id: 'rain_delay_survivor',
+    name: 'Rain Delay Survivor',
+    description: 'Sit through a rain delay at the ballpark',
+    icon: '🌧️',
+    check: (visits) => (visits ?? []).some(v =>
+      Array.isArray(v.moments) && v.moments.includes('rain_delay')
+    ),
+  },
+  {
+    id: 'bl_rickwood_field',
+    name: 'The Oldest Park',
+    description: 'Visit Rickwood Field in Birmingham, AL -- the oldest professional baseball park in America',
+    icon: '🏚️',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'pilgrimage' && (
+        x.venue?.toLowerCase().includes('rickwood') ||
+        x.event_type?.toLowerCase().includes('rickwood')
+      )
+    ),
+  },
+  {
+    id: 'bl_jackie_robinson_museum',
+    name: 'Breaking Barriers',
+    description: 'Visit the Jackie Robinson Museum in New York City',
+    icon: '✊',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'pilgrimage' && (
+        x.venue?.toLowerCase().includes('jackie robinson') ||
+        x.event_type?.toLowerCase().includes('jackie robinson')
+      )
+    ),
+  },
+  {
+    id: 'bl_london_series',
+    name: 'Baseball Abroad',
+    description: 'Attend an MLB game in London',
+    icon: '🇬🇧',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'mlb_special_event' && (
+        x.venue?.toLowerCase().includes('london') ||
+        x.event_type?.toLowerCase().includes('london')
+      )
+    ),
+  },
+  {
+    id: 'bl_mexico_series',
+    name: 'Béisbol',
+    description: 'Attend an MLB game in Mexico City',
+    icon: '🇲🇽',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'mlb_special_event' && (
+        x.venue?.toLowerCase().includes('mexico') ||
+        x.event_type?.toLowerCase().includes('mexico')
+      )
+    ),
+  },
+  {
+    id: 'bl_puerto_rico_series',
+    name: 'La Isla del Béisbol',
+    description: 'Attend an MLB game in Puerto Rico',
+    icon: '🇵🇷',
+    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
+      x.category === 'mlb_special_event' && (
+        x.venue?.toLowerCase().includes('puerto rico') ||
+        x.venue?.toLowerCase().includes('san juan') ||
+        x.event_type?.toLowerCase().includes('puerto rico')
+      )
+    ),
+  },
 ]

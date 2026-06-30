@@ -30,6 +30,9 @@ export const MILESTONE_POINTS: Record<string, number> = {
   bl_cape_cod_league: 75,
   bl_arizona_fall_league: 75, bl_college_world_series: 75,
   bl_grand_tour: 100, bl_full_circuit: 100, bl_baseball_lifer: 150,
+  opening_day_attendance: 75, double_header_day: 100, hat_trick: 100,
+  rain_delay_survivor: 50, bl_rickwood_field: 75, bl_jackie_robinson_museum: 75,
+  bl_london_series: 150, bl_mexico_series: 150, bl_puerto_rico_series: 150,
 }
 
 export function getRank(pts: number) {
