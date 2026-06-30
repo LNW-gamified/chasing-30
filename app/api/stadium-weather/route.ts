@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 
+export const revalidate = 1800
+
 const BASEBALL_MONTHS = [4, 5, 6, 7, 8, 9, 10]
 
 // Fetch 3 complete calendar years of historical data

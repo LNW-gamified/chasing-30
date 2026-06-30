@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, LogOut, Download, ChevronRight, Check } from 'lucide-react'
+import Link from 'next/link'
+import { X, LogOut, Download, ChevronRight, Check, Sparkles, Settings, Activity } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import TeamLogo from '@/components/TeamLogo'
 import { MLB_TEAMS as TEAMS } from '@/lib/teams'
@@ -355,6 +356,27 @@ export default function ProfilePanel({
         {/* Section 5 — Account */}
         <SectionHeader title="Account" />
         <div style={{ padding: '0 12px 24px' }}>
+          <Link
+            href="/settings"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '11px 12px', backgroundColor: '#0D1117', border: '1px solid #21262D', borderRadius: 10, color: '#8B949E', fontSize: 13, fontWeight: 600, marginBottom: 8, textDecoration: 'none' }}
+          >
+            <Settings size={15} />
+            Settings
+          </Link>
+          <Link
+            href="/changelog"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '11px 12px', backgroundColor: '#0D1117', border: '1px solid #21262D', borderRadius: 10, color: '#8B949E', fontSize: 13, fontWeight: 600, marginBottom: 8, textDecoration: 'none' }}
+          >
+            <Sparkles size={15} />
+            What&apos;s New
+          </Link>
+          <Link
+            href="/admin/data-health"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '11px 12px', backgroundColor: '#0D1117', border: '1px solid #21262D', borderRadius: 10, color: '#8B949E', fontSize: 13, fontWeight: 600, marginBottom: 8, textDecoration: 'none' }}
+          >
+            <Activity size={15} />
+            Data Health
+          </Link>
           <button
             onClick={handleExport}
             disabled={exporting}

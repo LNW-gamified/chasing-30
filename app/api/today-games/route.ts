@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+export const revalidate = 3600
+
 const MLB_ID_TO_ABBR: Record<number, string> = {
   109: 'ARI', 144: 'ATL', 110: 'BAL', 111: 'BOS', 112: 'CHC',
   145: 'CWS', 113: 'CIN', 114: 'CLE', 115: 'COL', 116: 'DET',

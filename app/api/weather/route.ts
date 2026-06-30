@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+export const revalidate = 1800
+
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
   const lat = searchParams.get('lat')
