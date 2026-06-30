@@ -60,7 +60,7 @@ export default function StopChecklist({ stopId, items, onReload }: Props) {
         onClick={() => setExpanded(v => !v)}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '13px 16px', background: expanded ? 'rgba(0,0,0,0.12)' : 'none',
+          padding: '10px 16px', background: expanded ? 'rgba(0,0,0,0.12)' : 'none',
           border: 'none', cursor: 'pointer', textAlign: 'left',
         }}
       >

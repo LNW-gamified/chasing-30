@@ -823,7 +823,7 @@ export default function TripDetailPage() {
                     }}>
 
                       {/* Card body */}
-                      <div style={{ padding: '20px 20px 16px' }}>
+                      <div style={{ padding: '18px 20px 14px' }}>
 
                         {/* Stop # badge */}
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -917,7 +917,7 @@ export default function TripDetailPage() {
 
                         {/* Matchup row */}
                         {stadium && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}>
                             {/* Home team */}
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
                               <TeamLogo
@@ -998,7 +998,7 @@ export default function TripDetailPage() {
 
                       {/* Promotions */}
                       {stop.promotions && stop.promotions.length > 0 && (
-                        <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(245,166,35,0.15)', backgroundColor: 'rgba(245,166,35,0.04)' }}>
+                        <div style={{ padding: '10px 20px', borderTop: '1px solid rgba(245,166,35,0.15)', backgroundColor: 'rgba(245,166,35,0.04)' }}>
                           <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
                             Promotions
                           </div>
