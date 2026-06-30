@@ -446,9 +446,11 @@ export const MILESTONES: Milestone[] = [
     name: 'Field of Dreams Game',
     description: 'Attend the Field of Dreams Game in Iowa',
     icon: '🌽',
-    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
-      x.category === 'mlb_special_event' && x.event_type?.toLowerCase().includes('field of dreams')
-    ),
+    check: (_v, _s, _e, ble, destinationVisits) =>
+      (ble ?? []).some((x: BaseballLifeEntry) =>
+        x.category === 'mlb_special_event' && x.event_type?.toLowerCase().includes('field of dreams')
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'dreams_game'),
   },
   {
     id: 'bl_cactus_league',
@@ -473,85 +475,103 @@ export const MILESTONES: Milestone[] = [
     name: 'The Green Monster',
     description: 'Take a tour of Fenway Park',
     icon: '🏯',
-    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
-      x.category === 'pilgrimage' && x.venue?.toLowerCase().includes('fenway')
-    ),
+    check: (_v, _s, _e, ble, destinationVisits) =>
+      (ble ?? []).some((x: BaseballLifeEntry) =>
+        x.category === 'pilgrimage' && x.venue?.toLowerCase().includes('fenway')
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'fenway_tour'),
   },
   {
     id: 'bl_wrigley_tour',
     name: 'The Friendly Confines',
     description: 'Take a tour of Wrigley Field',
     icon: '🍀',
-    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
-      x.category === 'pilgrimage' && x.venue?.toLowerCase().includes('wrigley')
-    ),
+    check: (_v, _s, _e, ble, destinationVisits) =>
+      (ble ?? []).some((x: BaseballLifeEntry) =>
+        x.category === 'pilgrimage' && x.venue?.toLowerCase().includes('wrigley')
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'wrigley_tour'),
   },
   {
     id: 'bl_yankee_tour',
     name: 'The House That Ruth Built',
     description: 'Take a tour of Yankee Stadium',
     icon: '🏛️',
-    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
-      x.category === 'pilgrimage' && x.venue?.toLowerCase().includes('yankee')
-    ),
+    check: (_v, _s, _e, ble, destinationVisits) =>
+      (ble ?? []).some((x: BaseballLifeEntry) =>
+        x.category === 'pilgrimage' && x.venue?.toLowerCase().includes('yankee')
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'yankee_tour'),
   },
   {
     id: 'bl_dodger_tour',
     name: 'Chavez Ravine',
     description: 'Take a tour of Dodger Stadium',
     icon: '🌴',
-    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
-      x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('dodger') || x.venue?.toLowerCase().includes('chavez ravine'))
-    ),
+    check: (_v, _s, _e, ble, destinationVisits) =>
+      (ble ?? []).some((x: BaseballLifeEntry) =>
+        x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('dodger') || x.venue?.toLowerCase().includes('chavez ravine'))
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'dodger_tour'),
   },
   {
     id: 'bl_oracle_tour',
     name: 'The Splash Zone',
     description: 'Take a tour of Oracle Park',
     icon: '🌉',
-    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
-      x.category === 'pilgrimage' && x.venue?.toLowerCase().includes('oracle')
-    ),
+    check: (_v, _s, _e, ble, destinationVisits) =>
+      (ble ?? []).some((x: BaseballLifeEntry) =>
+        x.category === 'pilgrimage' && x.venue?.toLowerCase().includes('oracle')
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'oracle_tour'),
   },
   {
     id: 'bl_babe_ruth_museum',
     name: 'The Bambino',
     description: 'Visit the Babe Ruth Birthplace and Museum in Baltimore',
     icon: '👑',
-    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
-      x.category === 'pilgrimage' && (
-        x.venue?.toLowerCase().includes('babe ruth') ||
-        x.venue?.toLowerCase().includes('ruth') ||
-        x.event_type?.toLowerCase().includes('babe ruth')
-      )
-    ),
+    check: (_v, _s, _e, ble, destinationVisits) =>
+      (ble ?? []).some((x: BaseballLifeEntry) =>
+        x.category === 'pilgrimage' && (
+          x.venue?.toLowerCase().includes('babe ruth') ||
+          x.venue?.toLowerCase().includes('ruth') ||
+          x.event_type?.toLowerCase().includes('babe ruth')
+        )
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'babe_ruth_museum'),
   },
   {
     id: 'bl_cape_cod_league',
     name: 'Future Stars',
     description: 'Watch a Cape Cod Baseball League game in Hyannis, MA',
     icon: '🦞',
-    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
-      x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('cape cod') || x.venue?.toLowerCase().includes('hyannis'))
-    ),
+    check: (_v, _s, _e, ble, destinationVisits) =>
+      (ble ?? []).some((x: BaseballLifeEntry) =>
+        x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('cape cod') || x.venue?.toLowerCase().includes('hyannis'))
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'cape_cod_league'),
   },
   {
     id: 'bl_arizona_fall_league',
     name: 'Fall Prospects',
     description: 'Attend an Arizona Fall League game in Scottsdale, AZ',
     icon: '🌵',
-    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
-      x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('arizona fall') || x.venue?.toLowerCase().includes('scottsdale') || x.event_type?.toLowerCase().includes('arizona fall'))
-    ),
+    check: (_v, _s, _e, ble, destinationVisits) =>
+      (ble ?? []).some((x: BaseballLifeEntry) =>
+        x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('arizona fall') || x.venue?.toLowerCase().includes('scottsdale') || x.event_type?.toLowerCase().includes('arizona fall'))
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'arizona_fall'),
   },
   {
     id: 'bl_college_world_series',
     name: 'College Classic',
     description: 'Attend the College World Series in Omaha, NE',
     icon: '🎓',
-    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
-      x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('college world series') || x.venue?.toLowerCase().includes('omaha') || x.event_type?.toLowerCase().includes('college world series'))
-    ),
+    check: (_v, _s, _e, ble, destinationVisits) =>
+      (ble ?? []).some((x: BaseballLifeEntry) =>
+        x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('college world series') || x.venue?.toLowerCase().includes('omaha') || x.event_type?.toLowerCase().includes('college world series'))
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'college_ws'),
   },
   {
     id: 'bl_grand_tour',
@@ -650,60 +670,70 @@ export const MILESTONES: Milestone[] = [
     name: 'The Oldest Park',
     description: 'Visit Rickwood Field in Birmingham, AL -- the oldest professional baseball park in America',
     icon: '🏚️',
-    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
-      x.category === 'pilgrimage' && (
-        x.venue?.toLowerCase().includes('rickwood') ||
-        x.event_type?.toLowerCase().includes('rickwood')
-      )
-    ),
+    check: (_v, _s, _e, ble, destinationVisits) =>
+      (ble ?? []).some((x: BaseballLifeEntry) =>
+        x.category === 'pilgrimage' && (
+          x.venue?.toLowerCase().includes('rickwood') ||
+          x.event_type?.toLowerCase().includes('rickwood')
+        )
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'rickwood_field'),
   },
   {
     id: 'bl_jackie_robinson_museum',
     name: 'Breaking Barriers',
     description: 'Visit the Jackie Robinson Museum in New York City',
     icon: '✊',
-    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
-      x.category === 'pilgrimage' && (
-        x.venue?.toLowerCase().includes('jackie robinson') ||
-        x.event_type?.toLowerCase().includes('jackie robinson')
-      )
-    ),
+    check: (_v, _s, _e, ble, destinationVisits) =>
+      (ble ?? []).some((x: BaseballLifeEntry) =>
+        x.category === 'pilgrimage' && (
+          x.venue?.toLowerCase().includes('jackie robinson') ||
+          x.event_type?.toLowerCase().includes('jackie robinson')
+        )
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'jackie_robinson_museum'),
   },
   {
     id: 'bl_london_series',
     name: 'Baseball Abroad',
     description: 'Attend an MLB game in London',
     icon: '🇬🇧',
-    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
-      x.category === 'mlb_special_event' && (
-        x.venue?.toLowerCase().includes('london') ||
-        x.event_type?.toLowerCase().includes('london')
-      )
-    ),
+    check: (_v, _s, _e, ble, destinationVisits) =>
+      (ble ?? []).some((x: BaseballLifeEntry) =>
+        x.category === 'mlb_special_event' && (
+          x.venue?.toLowerCase().includes('london') ||
+          x.event_type?.toLowerCase().includes('london')
+        )
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'london_series'),
   },
   {
     id: 'bl_mexico_series',
     name: 'Béisbol',
     description: 'Attend an MLB game in Mexico City',
     icon: '🇲🇽',
-    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
-      x.category === 'mlb_special_event' && (
-        x.venue?.toLowerCase().includes('mexico') ||
-        x.event_type?.toLowerCase().includes('mexico')
-      )
-    ),
+    check: (_v, _s, _e, ble, destinationVisits) =>
+      (ble ?? []).some((x: BaseballLifeEntry) =>
+        x.category === 'mlb_special_event' && (
+          x.venue?.toLowerCase().includes('mexico') ||
+          x.event_type?.toLowerCase().includes('mexico')
+        )
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'mexico_series'),
   },
   {
     id: 'bl_puerto_rico_series',
     name: 'La Isla del Béisbol',
     description: 'Attend an MLB game in Puerto Rico',
     icon: '🇵🇷',
-    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
-      x.category === 'mlb_special_event' && (
-        x.venue?.toLowerCase().includes('puerto rico') ||
-        x.venue?.toLowerCase().includes('san juan') ||
-        x.event_type?.toLowerCase().includes('puerto rico')
-      )
-    ),
+    check: (_v, _s, _e, ble, destinationVisits) =>
+      (ble ?? []).some((x: BaseballLifeEntry) =>
+        x.category === 'mlb_special_event' && (
+          x.venue?.toLowerCase().includes('puerto rico') ||
+          x.venue?.toLowerCase().includes('san juan') ||
+          x.event_type?.toLowerCase().includes('puerto rico')
+        )
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'puerto_rico_series'),
   },
 ]
