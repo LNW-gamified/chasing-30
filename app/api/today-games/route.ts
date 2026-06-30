@@ -13,7 +13,7 @@ const MLB_ID_TO_ABBR: Record<number, string> = {
 
 export async function GET() {
   try {
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'UTC' })
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
     const res = await fetch(
       `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&gameType=R&hydrate=linescore`,
       { next: { revalidate: 60 } }
