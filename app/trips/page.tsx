@@ -17,7 +17,10 @@ import { DESTINATION_BY_SLUG } from '@/lib/destinations'
 
 type StopMini = {
   id: string
-  stadium_id: string
+  stadium_id: string | null
+  destination_id: string | null
+  stop_type: 'stadium' | 'destination' | null
+  experience_type: string | null
   stadium: { id: string; abbreviation: string; name: string } | null
 }
 
@@ -106,6 +109,7 @@ export default function TripsPage() {
   const [trips,        setTrips]        = useState<TripWithExtras[]>([])
   const [stadiums,     setStadiums]     = useState<Stadium[]>([])
   const [visitedIds,   setVisitedIds]   = useState<Set<string>>(new Set())
+  const [visitedDestinationIds, setVisitedDestinationIds] = useState<Set<string>>(new Set())
   const [loading,      setLoading]      = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [showTypePicker, setShowTypePicker] = useState(false)
@@ -113,17 +117,19 @@ export default function TripsPage() {
 
   async function load() {
     const supabase = createClient()
-    const [{ data: t }, { data: s }, { data: v }] = await Promise.all([
+    const [{ data: t }, { data: s }, { data: v }, { data: dv }] = await Promise.all([
       supabase.from('trips')
-        .select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, is_mlb_event), trip_stops(id, stadium_id, stadium:stadiums(id, abbreviation, name))')
+        .select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, is_mlb_event), trip_stops(id, stadium_id, destination_id, stop_type, experience_type, stadium:stadiums(id, abbreviation, name))')
         .order('start_date', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false }),
       supabase.from('stadiums').select('*').order('name'),
       supabase.from('stadium_visits').select('stadium_id'),
+      supabase.from('destination_visits').select('destination_id'),
     ])
     setTrips((t as TripWithExtras[]) ?? [])
     setStadiums(s ?? [])
     setVisitedIds(new Set((v ?? []).map((r: any) => r.stadium_id)))
+    setVisitedDestinationIds(new Set((dv ?? []).map((r: any) => r.destination_id)))
     setLoading(false)
   }
 
@@ -400,9 +406,10 @@ export default function TripsPage() {
 
                             {/* Stadium logos */}
                             {!isDestination && abbrs.length > 0 && (() => {
-                              const stopIds = trip.trip_stops.map(s => s.stadium_id).filter(Boolean)
-                              const stopsVisited = stopIds.filter(id => visitedIds.has(id)).length
-                              const totalStops = stopIds.length
+                              const allStopIds = trip.trip_stops.map(s => s.stadium_id ?? s.destination_id).filter(Boolean)
+                              const visitedAllIds = new Set([...visitedIds, ...visitedDestinationIds])
+                              const stopsVisited = allStopIds.filter(id => visitedAllIds.has(id)).length
+                              const totalStops = allStopIds.length
                               const allVisited = totalStops > 0 && stopsVisited === totalStops
                               return (
                                 <div style={{ marginBottom: 10 }}>
@@ -427,12 +434,18 @@ export default function TripsPage() {
                                     ))}
                                     <span style={{ marginLeft: 10, fontSize: 13, color: '#8B949E' }}>
                                       {(() => {
-                                        const totalStopCount = trip.trip_stops.length
-                                        const hasDestinations = trip.trip_stops.some((s: any) => !s.stadium_id)
-                                        const hasStadiums = trip.trip_stops.some((s: any) => s.stadium_id)
-                                        if (totalStopCount === 0) return `${stadCount} stadium${stadCount !== 1 ? 's' : ''}`
-                                        if (hasDestinations && hasStadiums) return `${totalStopCount} stop${totalStopCount !== 1 ? 's' : ''}`
-                                        return `${totalStopCount} stadium${totalStopCount !== 1 ? 's' : ''}`
+                                        const stadiumStops = trip.trip_stops.filter((s: any) => s.stop_type === 'stadium')
+                                        const eventStops = trip.trip_stops.filter((s: any) =>
+                                          s.stop_type === 'destination' && (s.experience_type === 'game' || s.experience_type === 'festival')
+                                        )
+                                        const experienceStops = trip.trip_stops.filter((s: any) =>
+                                          s.stop_type === 'destination' && s.experience_type !== 'game' && s.experience_type !== 'festival'
+                                        )
+                                        const parts: string[] = []
+                                        if (stadiumStops.length > 0) parts.push(`${stadiumStops.length} stadium${stadiumStops.length !== 1 ? 's' : ''}`)
+                                        if (experienceStops.length > 0) parts.push(`${experienceStops.length} experience${experienceStops.length !== 1 ? 's' : ''}`)
+                                        if (eventStops.length > 0) parts.push(`${eventStops.length} event${eventStops.length !== 1 ? 's' : ''}`)
+                                        return parts.length > 0 ? parts.join(' · ') : '0 stops'
                                       })()}
                                       {days ? ` · ${days} day${days !== 1 ? 's' : ''}` : ''}
                                     </span>
