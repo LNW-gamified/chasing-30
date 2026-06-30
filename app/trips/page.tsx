@@ -44,7 +44,7 @@ function heroGradient(status: Trip['status'], abbrs: string[]): string {
 
 function daysUntil(dateStr: string | null): number | null {
   if (!dateStr) return null
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'UTC' })
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
   return Math.ceil(
     (new Date(dateStr + 'T12:00:00').getTime() - new Date(today + 'T12:00:00').getTime()) / 86400000
   )

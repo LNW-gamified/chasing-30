@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 }
 
 function daysUntil(dateStr: string): number {
-  const todayLA = new Date().toLocaleDateString('en-CA', { timeZone: 'UTC' })
+  const todayLA = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
   const today   = new Date(todayLA + 'T00:00:00')
   const target  = new Date(dateStr  + 'T00:00:00')
   return Math.max(0, Math.round((target.getTime() - today.getTime()) / 86400000))
@@ -57,7 +57,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     )
   }
 
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'UTC' })
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
 
   const [{ data: trips }, { data: visits }, { data: stadiums }, { data: bleEntries }] = await Promise.all([
     supabase.from('trips')
