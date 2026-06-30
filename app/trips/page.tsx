@@ -406,7 +406,9 @@ export default function TripsPage() {
 
                             {/* Stadium logos */}
                             {!isDestination && abbrs.length > 0 && (() => {
-                              const allStopIds = trip.trip_stops.map(s => s.stadium_id ?? s.destination_id).filter(Boolean)
+                              const allStopIds: string[] = trip.trip_stops
+                                .map(s => s.stadium_id ?? s.destination_id)
+                                .filter((id): id is string => id !== null)
                               const visitedAllIds = new Set([...visitedIds, ...visitedDestinationIds])
                               const stopsVisited = allStopIds.filter(id => visitedAllIds.has(id)).length
                               const totalStops = allStopIds.length
