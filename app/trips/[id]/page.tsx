@@ -954,152 +954,102 @@ export default function TripDetailPage() {
                           </div>
                         )}
 
-                        {/* Matchup row */}
-                        {stadium && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8, width: '100%' }}>
-                            {/* Home team */}
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-                              <TeamLogo
-                                abbreviation={stadium.abbreviation}
-                                size={56}
-                                style={{ borderRadius: '50%', border: '2px solid rgba(255,255,255,0.12)' }}
-                              />
-                              <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', letterSpacing: '0.06em' }}>
-                                {stadium.abbreviation}
-                              </span>
-                            </div>
+                        {/* Two-column layout: left = matchup, right = promotions */}
+                        <div style={{ display: 'flex', gap: 0, marginBottom: 0 }}>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                              <span style={{
-                                fontSize: 18, fontWeight: 900, color: '#8B949E',
-                                letterSpacing: '-0.02em', lineHeight: 1,
-                              }}>VS</span>
-                            </div>
-
-                            {/* Opponent */}
-                            {stop.opponent ? (
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-                                {stop.opponent_team_id ? (
-                                  <TeamLogo
-                                    abbreviation={getTeamAbbrById(stop.opponent_team_id) || 'MLB'}
-                                    size={56}
-                                    style={{ borderRadius: '50%', border: '2px solid rgba(255,255,255,0.12)' }}
-                                  />
-                                ) : (
-                                  <div style={{
-                                    width: 56, height: 56, borderRadius: '50%', flexShrink: 0,
-                                    background: 'rgba(255,255,255,0.1)',
-                                    border: '2px solid rgba(255,255,255,0.12)',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  }}>
-                                    <span style={{ fontSize: 24 }}>⚾</span>
-                                  </div>
-                                )}
-                                <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', letterSpacing: '0.06em' }}>
-                                  {stop.opponent_team_id
-                                    ? getTeamAbbrById(stop.opponent_team_id)
-                                    : stop.opponent.replace('vs ', '')}
-                                </span>
-                              </div>
-                            ) : (
-                              <div style={{ fontSize: 13, color: '#8B949E', fontStyle: 'italic' }}>TBD</div>
-                            )}
-
-                            {/* Right side info panel — fills dead space */}
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, paddingLeft: 12 }}>
-                              {/* Ticket info if logged */}
-                              {hasTickets && (
-                                <div style={{ textAlign: 'right' }}>
-                                  <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', marginBottom: 2 }}>
-                                    🎟 Your Seats
-                                  </div>
-                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>
-                                    {ticketParts.join(' · ')}
-                                  </div>
-                                  {stop.ticket_confirmation && (
-                                    <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
-                                      #{stop.ticket_confirmation}
-                                    </div>
-                                  )}
+                          {/* Left column — matchup */}
+                          <div style={{ flexShrink: 0, width: 160, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', paddingBottom: 14 }}>
+                            {stadium && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                                  <TeamLogo abbreviation={stadium.abbreviation} size={48} style={{ borderRadius: '50%', border: '2px solid rgba(255,255,255,0.12)' }} />
+                                  <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', letterSpacing: '0.06em' }}>{stadium.abbreviation}</span>
                                 </div>
-                              )}
-                              {/* Promotions count if any */}
-                              {stop.promotions && stop.promotions.length > 0 && (
-                                <div style={{ textAlign: 'right' }}>
-                                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.7)', marginBottom: 2 }}>
-                                    🎁 {stop.promotions.length} Promotion{stop.promotions.length !== 1 ? 's' : ''}
-                                  </div>
-                                  <div style={{ fontSize: 13, color: '#8B949E' }}>
-                                    {stop.promotions[0]}{stop.promotions.length > 1 ? ` +${stop.promotions.length - 1} more` : ''}
-                                  </div>
-                                </div>
-                              )}
-                              {/* Fallback if nothing logged yet */}
-                              {!hasTickets && (!stop.promotions || stop.promotions.length === 0) && (
-                                <div style={{ textAlign: 'right', fontSize: 13, color: '#30363D' }}>
-                                  No tickets logged yet
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Promotions */}
-                      {stop.promotions && stop.promotions.length > 0 && (
-                        <div style={{ padding: '10px 20px', borderTop: '1px solid rgba(245,166,35,0.15)', backgroundColor: 'rgba(245,166,35,0.04)' }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                            Promotions
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                            {stop.promotions.map(promoName => {
-                              const photoUrl = stop.promotion_photos?.[promoName] ?? null
-                              const uploading = promoUploading[`${stop.id}:${promoName}`]
-                              return (
-                                <div key={promoName} style={{
-                                  display: 'flex', alignItems: 'center', gap: 12,
-                                  padding: '8px 0', minHeight: 48,
-                                }}>
-                                  <div style={{
-                                    width: 44, height: 44, borderRadius: 8, flexShrink: 0,
-                                    backgroundColor: photoUrl ? 'transparent' : 'rgba(245,166,35,0.08)',
-                                    border: photoUrl ? 'none' : '1px dashed rgba(245,166,35,0.3)',
-                                    overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  }}>
-                                    {photoUrl ? (
-                                      /* eslint-disable-next-line @next/next/no-img-element */
-                                      <img src={photoUrl} alt={promoName} style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
-                                        onClick={() => window.open(photoUrl, '_blank')} />
+                                <span style={{ fontSize: 16, fontWeight: 900, color: '#8B949E' }}>VS</span>
+                                {stop.opponent ? (
+                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                                    {stop.opponent_team_id ? (
+                                      <TeamLogo abbreviation={getTeamAbbrById(stop.opponent_team_id) || 'MLB'} size={48} style={{ borderRadius: '50%', border: '2px solid rgba(255,255,255,0.12)' }} />
                                     ) : (
-                                      <span style={{ fontSize: 18 }}>🎁</span>
+                                      <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <span style={{ fontSize: 22 }}>⚾</span>
+                                      </div>
                                     )}
+                                    <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', letterSpacing: '0.06em' }}>
+                                      {stop.opponent_team_id ? getTeamAbbrById(stop.opponent_team_id) : stop.opponent.replace('vs ', '')}
+                                    </span>
                                   </div>
-                                  <span style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, flex: 1, minWidth: 0 }}>{promoName}</span>
-                                  {photoUrl ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                                      <label style={{ cursor: 'pointer', fontSize: 13, color: '#8B949E', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
-                                        <Camera size={11} /> Replace
-                                        <input type="file" accept="image/*" style={{ display: 'none' }}
-                                          onChange={e => { const f = e.target.files?.[0]; if (f) uploadPromoPhotoForStop(stop.id, promoName, f) }} />
-                                      </label>
-                                      <button onClick={() => removePromoPhotoForStop(stop.id, promoName)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#F85149', padding: 0, display: 'flex', alignItems: 'center', gap: 3, fontSize: 13, fontWeight: 600 }}>
-                                        <X size={12} /> Remove
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: '#8B949E', padding: '5px 10px', borderRadius: 6, border: '1px dashed rgba(245,166,35,0.35)', backgroundColor: 'rgba(245,166,35,0.04)', flexShrink: 0 }}>
-                                      {uploading ? <Loader2 size={11} className="animate-spin" /> : <Camera size={11} />}
-                                      {uploading ? 'Uploading…' : 'Add Photo'}
-                                      <input type="file" accept="image/*" style={{ display: 'none' }}
-                                        onChange={e => { const f = e.target.files?.[0]; if (f) uploadPromoPhotoForStop(stop.id, promoName, f) }} />
-                                    </label>
-                                  )}
-                                </div>
-                              )
-                            })}
+                                ) : (
+                                  <div style={{ fontSize: 13, color: '#8B949E', fontStyle: 'italic' }}>TBD</div>
+                                )}
+                              </div>
+                            )}
+                            {/* Ticket info below logos */}
+                            {hasTickets && (
+                              <div style={{ marginTop: 10 }}>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', marginBottom: 2 }}>🎟 Your Seats</div>
+                                <div style={{ fontSize: 13, color: '#E6EDF3' }}>{ticketParts.join(' · ')}</div>
+                                {stop.ticket_confirmation && (
+                                  <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>#{stop.ticket_confirmation}</div>
+                                )}
+                              </div>
+                            )}
                           </div>
+
+                          {/* Right column — promotions */}
+                          {stop.promotions && stop.promotions.length > 0 && (
+                            <div style={{ flex: 1, borderLeft: '1px solid rgba(245,166,35,0.15)', paddingLeft: 16, paddingBottom: 14, backgroundColor: 'rgba(245,166,35,0.02)' }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                                Promotions
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                {stop.promotions.map(promoName => {
+                                  const photoUrl = stop.promotion_photos?.[promoName] ?? null
+                                  const uploading = promoUploading[`${stop.id}:${promoName}`]
+                                  return (
+                                    <div key={promoName} style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 40 }}>
+                                      <div style={{ width: 36, height: 36, borderRadius: 6, flexShrink: 0, backgroundColor: photoUrl ? 'transparent' : 'rgba(245,166,35,0.08)', border: photoUrl ? 'none' : '1px dashed rgba(245,166,35,0.3)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        {photoUrl ? (
+                                          /* eslint-disable-next-line @next/next/no-img-element */
+                                          <img src={photoUrl} alt={promoName} style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }} onClick={() => window.open(photoUrl, '_blank')} />
+                                        ) : (
+                                          <span style={{ fontSize: 16 }}>🎁</span>
+                                        )}
+                                      </div>
+                                      <span style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{promoName}</span>
+                                      {photoUrl ? (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                                          <label style={{ cursor: 'pointer', fontSize: 13, color: '#8B949E', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
+                                            <Camera size={11} /> Replace
+                                            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadPromoPhotoForStop(stop.id, promoName, f) }} />
+                                          </label>
+                                          <button onClick={() => removePromoPhotoForStop(stop.id, promoName)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#F85149', padding: 0, display: 'flex', alignItems: 'center', gap: 3, fontSize: 13, fontWeight: 600 }}>
+                                            <X size={12} /> Remove
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: '#8B949E', padding: '4px 8px', borderRadius: 6, border: '1px dashed rgba(245,166,35,0.35)', backgroundColor: 'rgba(245,166,35,0.04)', flexShrink: 0 }}>
+                                          {uploading ? <Loader2 size={11} className="animate-spin" /> : <Camera size={11} />}
+                                          {uploading ? 'Uploading…' : 'Add Photo'}
+                                          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadPromoPhotoForStop(stop.id, promoName, f) }} />
+                                        </label>
+                                      )}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Right column fallback — no promotions */}
+                          {(!stop.promotions || stop.promotions.length === 0) && (
+                            <div style={{ flex: 1, borderLeft: '1px solid #21262D', paddingLeft: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <span style={{ fontSize: 13, color: '#30363D' }}>No promotions for this game</span>
+                            </div>
+                          )}
+
                         </div>
-                      )}
+                      </div>
 
                       {/* Budget strip */}
                       {hasBudget ? (
