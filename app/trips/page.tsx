@@ -364,6 +364,23 @@ export default function TripsPage() {
                                 transform: 'translateY(-50%)', fontSize: 48, opacity: 0.8,
                               }}>{destInfo.icon}</div>
                             )}
+                            {!isDestination && abbrs.length > 0 && (
+                              <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 6 }}>
+                                {abbrs.slice(0, 2).map(abbr => (
+                                  <div key={abbr} style={{
+                                    width: 52, height: 52, borderRadius: 14,
+                                    backgroundColor: LIGHT_BG_LOGO_TEAMS.has(abbr)
+                                      ? 'rgba(255,255,255,0.95)'
+                                      : (TEAM_LOGO_BG[abbr] ?? TEAM_BTN_COLOR[abbr] ?? '#1F3C6E'),
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                                  }}>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={getTeamLogoUrl(abbr)} alt={abbr} width={36} height={36} style={{ objectFit: 'contain' }} />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                             <div style={{
                               position: 'absolute', bottom: 13, left: 16,
                               right: (isDestination || abbrs.length > 0) ? 80 : 16,
@@ -413,26 +430,8 @@ export default function TripsPage() {
                               const allVisited = totalStops > 0 && stopsVisited === totalStops
                               return (
                                 <div style={{ marginBottom: 10 }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: totalStops > 0 ? 8 : 0 }}>
-                                    {abbrs.map((abbr, i) => (
-                                      <div key={abbr} style={{
-                                        width: 36, height: 36, borderRadius: '50%',
-                                        border: '2px solid #161B22',
-                                        backgroundColor: LIGHT_BG_LOGO_TEAMS.has(abbr)
-                                          ? 'rgba(255,255,255,0.9)'
-                                          : (TEAM_LOGO_BG[abbr] ?? TEAM_BTN_COLOR[abbr] ?? '#1F3C6E'),
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        overflow: 'hidden',
-                                        marginLeft: i === 0 ? 0 : -10,
-                                        zIndex: abbrs.length - i,
-                                        position: 'relative',
-                                      }}>
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={getTeamLogoUrl(abbr)} alt={abbr} width={26} height={26}
-                                          style={{ objectFit: 'contain', display: 'block' }} />
-                                      </div>
-                                    ))}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 10, flexWrap: 'wrap' }}>
+                                  <div style={{ marginBottom: totalStops > 0 ? 8 : 0 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                                       {(() => {
                                         const stadiumStops = trip.trip_stops.filter((s: any) => s.stop_type === 'stadium')
                                         const eventStops = trip.trip_stops.filter((s: any) =>

@@ -534,7 +534,9 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
         game_date:           stop.game_date || null,
         game_time:           isStadium ? (stop.game_time || null) : null,
         opponent:            isStadium ? (stop.opponent  || null) : null,
-        opponent_team_id:    isStadium ? (parseInt(stop.opponent_team_id) || null) : null,
+        opponent_team_id:    (isStadium || stop.experience_type === 'game' || stop.experience_type === 'festival')
+          ? (parseInt(stop.opponent_team_id) || null)
+          : null,
         sort_order:          i,
         est_tickets:         parseFloat(stop.est_tickets)    || 0,
         est_food:            parseFloat(stop.est_food)       || 0,
@@ -815,6 +817,40 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                               ))}
                             </select>
                           </div>
+
+                          {/* Host/Featured Team — for game and festival destination stops */}
+                          {(stop.experience_type === 'game' || stop.experience_type === 'festival') && (
+                            <div style={{ marginBottom: 14 }}>
+                              <label style={labelStyle}>Host / Featured Team</label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                {stop.opponent_team_id && (
+                                  <TeamLogo
+                                    abbreviation={stadiums.find(s => ABBR_TO_MLB_ID[s.abbreviation]?.toString() === stop.opponent_team_id)?.abbreviation ?? ''}
+                                    size={32}
+                                    style={{ flexShrink: 0 }}
+                                  />
+                                )}
+                                <select
+                                  style={{ ...inputStyle, flex: 1 }}
+                                  value={stop.opponent_team_id}
+                                  onChange={e => setStop(i, 'opponent_team_id', e.target.value)}
+                                >
+                                  <option value="">— Select team (optional) —</option>
+                                  {[...stadiums]
+                                    .sort((a, b) => a.team.localeCompare(b.team))
+                                    .map(s => {
+                                      const mlbId = ABBR_TO_MLB_ID[s.abbreviation]
+                                      if (!mlbId) return null
+                                      return (
+                                        <option key={s.id} value={mlbId.toString()}>
+                                          {s.team}
+                                        </option>
+                                      )
+                                    })}
+                                </select>
+                              </div>
+                            </div>
+                          )}
 
                           {/* Hosting stadium — required for MLB special events */}
                           {(() => {
