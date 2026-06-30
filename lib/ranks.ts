@@ -27,7 +27,7 @@ export const MILESTONE_POINTS: Record<string, number> = {
   bl_cactus_league: 50, bl_grapefruit_league: 50,
   bl_fenway_tour: 50, bl_wrigley_tour: 50, bl_yankee_tour: 50,
   bl_dodger_tour: 50, bl_oracle_tour: 50, bl_babe_ruth_museum: 75,
-  bl_little_league_ws: 75, bl_cape_cod_league: 75,
+  bl_cape_cod_league: 75,
   bl_arizona_fall_league: 75, bl_college_world_series: 75,
   bl_grand_tour: 100, bl_full_circuit: 100, bl_baseball_lifer: 150,
 }

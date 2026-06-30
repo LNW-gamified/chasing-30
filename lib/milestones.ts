@@ -527,15 +527,6 @@ export const MILESTONES: Milestone[] = [
     ),
   },
   {
-    id: 'bl_little_league_ws',
-    name: 'Back to Basics',
-    description: 'Attend the Little League World Series in Williamsport, PA',
-    icon: '⚾',
-    check: (_v, _s, _e, ble) => (ble ?? []).some((x: BaseballLifeEntry) =>
-      x.category === 'pilgrimage' && (x.venue?.toLowerCase().includes('little league') || x.venue?.toLowerCase().includes('williamsport'))
-    ),
-  },
-  {
     id: 'bl_cape_cod_league',
     name: 'Future Stars',
     description: 'Watch a Cape Cod Baseball League game in Hyannis, MA',

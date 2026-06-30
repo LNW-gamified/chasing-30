@@ -200,17 +200,6 @@ export const DESTINATIONS: CuratedDestination[] = [
     icon: '🌽',
     heroColor: ['#0a1a00', '#2d5200'],
   },
-  {
-    slug: 'llws',
-    name: 'Little League World Series',
-    city: 'Williamsport', state: 'PA', country: 'USA',
-    type: 'special_event',
-    description: 'Where young players from around the world chase their baseball dreams.',
-    lat: 41.2412, lng: -77.0011,
-    isMlbEvent: false,
-    icon: '👦',
-    heroColor: ['#001a33', '#00336b'],
-  },
 
   // ── Historic Stadium Tours ───────────────────────────────────────────────
   {
