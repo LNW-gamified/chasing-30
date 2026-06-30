@@ -917,7 +917,7 @@ export default function TripDetailPage() {
 
                         {/* Matchup row */}
                         {stadium && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8, width: '100%' }}>
                             {/* Home team */}
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
                               <TeamLogo
@@ -965,33 +965,43 @@ export default function TripDetailPage() {
                             ) : (
                               <div style={{ fontSize: 13, color: '#8B949E', fontStyle: 'italic' }}>TBD</div>
                             )}
-                          </div>
-                        )}
 
-                        {/* Your Tickets row */}
-                        {hasTickets && (
-                          <div style={{
-                            padding: '12px 14px', borderRadius: 10,
-                            backgroundColor: 'rgba(245,166,35,0.07)',
-                            border: '1px solid rgba(245,166,35,0.2)',
-                            marginBottom: 4,
-                          }}>
-                            <div style={{
-                              fontSize: 13, fontWeight: 700, color: '#F5A623',
-                              textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5,
-                              display: 'flex', alignItems: 'center', gap: 5,
-                            }}>
-                              <Ticket size={12} /> Your Tickets
+                            {/* Right side info panel — fills dead space */}
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, paddingLeft: 12 }}>
+                              {/* Ticket info if logged */}
+                              {hasTickets && (
+                                <div style={{ textAlign: 'right' }}>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', marginBottom: 2 }}>
+                                    🎟 Your Seats
+                                  </div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>
+                                    {ticketParts.join(' · ')}
+                                  </div>
+                                  {stop.ticket_confirmation && (
+                                    <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
+                                      #{stop.ticket_confirmation}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              {/* Promotions count if any */}
+                              {stop.promotions && stop.promotions.length > 0 && (
+                                <div style={{ textAlign: 'right' }}>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.7)', marginBottom: 2 }}>
+                                    🎁 {stop.promotions.length} Promotion{stop.promotions.length !== 1 ? 's' : ''}
+                                  </div>
+                                  <div style={{ fontSize: 13, color: '#8B949E' }}>
+                                    {stop.promotions[0]}{stop.promotions.length > 1 ? ` +${stop.promotions.length - 1} more` : ''}
+                                  </div>
+                                </div>
+                              )}
+                              {/* Fallback if nothing logged yet */}
+                              {!hasTickets && (!stop.promotions || stop.promotions.length === 0) && (
+                                <div style={{ textAlign: 'right', fontSize: 13, color: '#30363D' }}>
+                                  No tickets logged yet
+                                </div>
+                              )}
                             </div>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>
-                              {ticketParts.join(' · ')}
-                            </div>
-                            {stop.ticket_confirmation && (
-                              <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4 }}>
-                                Conf: {stop.ticket_confirmation}
-                              </div>
-
-                            )}
                           </div>
                         )}
                       </div>
