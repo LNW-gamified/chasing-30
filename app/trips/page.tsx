@@ -79,7 +79,17 @@ function tripDays(trip: TripWithExtras): number | null {
 }
 
 function tripDateRange(trip: TripWithExtras): string | null {
-  if (trip.start_date && trip.end_date) return `${formatDate(trip.start_date)} – ${formatDate(trip.end_date)}`
+  if (trip.start_date && trip.end_date) {
+    const s = new Date(trip.start_date + 'T12:00:00')
+    const e = new Date(trip.end_date   + 'T12:00:00')
+    const sameMonth = s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()
+    if (sameMonth) {
+      const month = s.toLocaleString('en-US', { month: 'long' })
+      const year  = s.getFullYear()
+      return `${month} ${s.getDate()} – ${e.getDate()}, ${year}`
+    }
+    return `${formatDate(trip.start_date)} – ${formatDate(trip.end_date)}`
+  }
   if (trip.start_date) return `From ${formatDate(trip.start_date)}`
   if (trip.trip_date) return formatDate(trip.trip_date)
   return null
