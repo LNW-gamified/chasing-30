@@ -78,7 +78,7 @@ function tripDays(trip: TripWithExtras): number | null {
   ) + 1
 }
 
-const MONTH_ABBR = ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.']
+const MONTH_ABBR = ['Jan.', 'Feb.', 'March', 'April', 'May', 'June', 'July', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.']
 function fmtDate(d: Date): string { return `${MONTH_ABBR[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}` }
 
 function tripDateRange(trip: TripWithExtras): string | null {
