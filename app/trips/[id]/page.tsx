@@ -366,25 +366,6 @@ export default function TripDetailPage() {
             </Link>
           </div>
 
-          {/* Team logo tiles — top right, same style as trip cards */}
-          {heroAbbrs.length > 0 && (
-            <div style={{ position: 'absolute', top: 60, right: 16, zIndex: 10, display: 'flex', flexWrap: 'wrap', gap: 5, maxWidth: 160, justifyContent: 'flex-end' }}>
-              {heroAbbrs.map(abbr => (
-                <div key={abbr} style={{
-                  width: 48, height: 48, borderRadius: 13,
-                  backgroundColor: LIGHT_BG_LOGO_TEAMS.has(abbr)
-                    ? 'rgba(255,255,255,0.95)'
-                    : (TEAM_LOGO_BG[abbr] ?? TEAM_BTN_COLOR[abbr] ?? '#1F3C6E'),
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={getTeamLogoUrl(abbr)} alt={abbr} width={34} height={34} style={{ objectFit: 'contain' }} />
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Ellipsis menu — top right only */}
           <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ position: 'relative' }}>
@@ -426,12 +407,32 @@ export default function TripDetailPage() {
 
           {/* Trip info — bottom */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 22px', zIndex: 10 }}>
-            <h1 style={{
-              margin: '0 0 8px', fontSize: 32, fontWeight: 900, color: '#ffffff',
-              lineHeight: 1.15, textShadow: '0 2px 14px rgba(0,0,0,0.6)',
-            }}>
-              {trip.name}
-            </h1>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
+              <h1 style={{
+                margin: 0, fontSize: 32, fontWeight: 900, color: '#ffffff',
+                lineHeight: 1.15, textShadow: '0 2px 14px rgba(0,0,0,0.6)',
+                flex: 1, minWidth: 0,
+              }}>
+                {trip.name}
+              </h1>
+              {heroAbbrs.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, maxWidth: 220, justifyContent: 'flex-end', flexShrink: 0 }}>
+                  {heroAbbrs.map(abbr => (
+                    <div key={abbr} style={{
+                      width: 56, height: 56, borderRadius: 14,
+                      backgroundColor: LIGHT_BG_LOGO_TEAMS.has(abbr)
+                        ? 'rgba(255,255,255,0.95)'
+                        : (TEAM_LOGO_BG[abbr] ?? TEAM_BTN_COLOR[abbr] ?? '#1F3C6E'),
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                    }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={getTeamLogoUrl(abbr)} alt={abbr} width={40} height={40} style={{ objectFit: 'contain' }} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             {/* Status badge — directly below title */}
             <span style={{
               display: 'inline-flex', alignItems: 'center',
