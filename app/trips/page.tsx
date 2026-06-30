@@ -365,10 +365,10 @@ export default function TripsPage() {
                               }}>{destInfo.icon}</div>
                             )}
                             {!isDestination && abbrs.length > 0 && (
-                              <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 6 }}>
-                                {abbrs.slice(0, 2).map(abbr => (
+                              <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', flexWrap: 'wrap', gap: 5, maxWidth: 160, justifyContent: 'flex-end' }}>
+                                {abbrs.slice(0, 6).map(abbr => (
                                   <div key={abbr} style={{
-                                    width: 52, height: 52, borderRadius: 14,
+                                    width: 42, height: 42, borderRadius: 12,
                                     backgroundColor: LIGHT_BG_LOGO_TEAMS.has(abbr)
                                       ? 'rgba(255,255,255,0.95)'
                                       : (TEAM_LOGO_BG[abbr] ?? TEAM_BTN_COLOR[abbr] ?? '#1F3C6E'),
@@ -376,7 +376,7 @@ export default function TripsPage() {
                                     boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
                                   }}>
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={getTeamLogoUrl(abbr)} alt={abbr} width={36} height={36} style={{ objectFit: 'contain' }} />
+                                    <img src={getTeamLogoUrl(abbr)} alt={abbr} width={28} height={28} style={{ objectFit: 'contain' }} />
                                   </div>
                                 ))}
                               </div>
