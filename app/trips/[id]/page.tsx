@@ -412,7 +412,7 @@ export default function TripDetailPage() {
               <h1 style={{
                 margin: 0, fontSize: 32, fontWeight: 900, color: '#ffffff',
                 lineHeight: 1.15, textShadow: '0 2px 14px rgba(0,0,0,0.6)',
-                flex: 1, minWidth: 0,
+                minWidth: 0,
               }}>
                 {trip.name}
               </h1>
