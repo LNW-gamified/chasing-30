@@ -924,11 +924,11 @@ export default function TripDetailPage() {
                           </div>
                         )}
 
-                        {/* Full content row: left = date + matchup, right = promotions */}
-                        <div style={{ display: 'flex', gap: 0, marginBottom: 0, alignItems: 'flex-start' }}>
+                        {/* Full content row: left = date + matchup, right = promotions — stacks on mobile */}
+                        <div className="trip-stop-content-row" style={{ display: 'flex', gap: 0, marginBottom: 0, alignItems: 'flex-start' }}>
 
                           {/* Left column — date, time, weather, then matchup logos */}
-                          <div style={{ flexShrink: 0, width: 180, display: 'flex', flexDirection: 'column', paddingBottom: 14 }}>
+                          <div className="trip-stop-left-col" style={{ flexShrink: 0, width: 180, display: 'flex', flexDirection: 'column', paddingBottom: 14 }}>
                             {stop.game_date && (
                               <div style={{ marginBottom: 12 }}>
                                 <div style={{ fontSize: 17, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2 }}>
@@ -995,7 +995,7 @@ export default function TripDetailPage() {
 
                           {/* Right column — promotions */}
                           {stop.promotions && stop.promotions.length > 0 && (
-                            <div style={{ flex: 1, borderLeft: '1px solid rgba(245,166,35,0.15)', paddingLeft: 16, paddingBottom: 14, backgroundColor: 'rgba(245,166,35,0.02)' }}>
+                            <div className="trip-stop-right-col" style={{ flex: 1, borderLeft: '1px solid rgba(245,166,35,0.15)', paddingLeft: 16, paddingBottom: 14, backgroundColor: 'rgba(245,166,35,0.02)' }}>
                               <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
                                 Promotions
                               </div>
@@ -1040,7 +1040,7 @@ export default function TripDetailPage() {
 
                           {/* Right column fallback — no promotions */}
                           {(!stop.promotions || stop.promotions.length === 0) && (
-                            <div style={{ flex: 1, borderLeft: '1px solid #21262D', paddingLeft: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div className="trip-stop-right-col" style={{ flex: 1, borderLeft: '1px solid #21262D', paddingLeft: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <span style={{ fontSize: 13, color: '#30363D' }}>No promotions for this game</span>
                             </div>
                           )}
