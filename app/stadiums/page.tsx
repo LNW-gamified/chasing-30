@@ -551,13 +551,13 @@ export default function StadiumsPage() {
               </div>
 
               {/* Marquee Events — All-Star, Home Run Derby, World Series */}
-              {(['all_star','home_run_derby','world_series'] as const).some(cat => baseballEvents.some(e => e.category === cat)) && (
+              {(['world_series','all_star','home_run_derby','opening_day'] as const).some(cat => baseballEvents.some(e => e.category === cat)) && (
                 <div style={{ marginBottom: 32 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     🏆 Marquee Events
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {(['all_star','home_run_derby','world_series'] as const).flatMap(cat =>
+                    {(['world_series','all_star','home_run_derby','opening_day'] as const).flatMap(cat =>
                       baseballEvents.filter(e => e.category === cat).map(ev => (
                         <EventCard
                           key={ev.id}
@@ -572,8 +572,14 @@ export default function StadiumsPage() {
               )}
 
               {/* Remaining sections */}
-              {(['playoffs','opening_day','field_of_dreams','spring_training','amateur','international','exhibition'] as const).map(cat => {
-                const catEvents = baseballEvents.filter(e => e.category === cat)
+              {(['playoffs','field_of_dreams'] as const).map(cat => {
+                const PLAYOFF_ORDER = ['championship-series-alcs', 'championship-series-nlcs', 'division-series-alds', 'division-series-nlds', 'wild-card-game']
+                const catEvents = baseballEvents
+                  .filter(e => e.category === cat)
+                  .sort((a, b) => {
+                    if (cat !== 'playoffs') return 0
+                    return PLAYOFF_ORDER.indexOf(a.slug) - PLAYOFF_ORDER.indexOf(b.slug)
+                  })
                 if (catEvents.length === 0) return null
                 const meta = EVENT_META[cat]
                 return (
@@ -599,6 +605,32 @@ export default function StadiumsPage() {
                   </div>
                 )
               })}
+
+              {/* The Extended Season — spring training, amateur leagues, international, exhibition */}
+              {(['spring_training','amateur','international','exhibition'] as const).some(cat => baseballEvents.some(e => e.category === cat)) && (
+                <div style={{ marginBottom: 32 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#58A6FF', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    🌎 The Extended Season
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {(['spring_training','amateur','international','exhibition'] as const).flatMap(cat =>
+                      baseballEvents.filter(e => e.category === cat).map(ev => (
+                        <EventCard
+                          key={ev.id}
+                          event={ev}
+                          attendedCount={eventAttendedCount(ev.slug)}
+                          onLog={() => openLog(
+                            ev.category === 'spring_training' ? 'spring_training' :
+                            ev.category === 'amateur' ? 'pilgrimage' :
+                            'mlb_special_event',
+                            eventDefaultType(ev.slug)
+                          )}
+                        />
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </>
 
           ) : activeTab === 'experiences' ? (
