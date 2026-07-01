@@ -184,6 +184,8 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
   // Giveaway items (minor_league only)
   const [giveawayItems,   setGiveawayItems]   = useState<Array<{ name: string; photo_url: string | null }>>([])
   const [foodItems, setFoodItems] = useState<Array<{ name: string; category: string; rating: number | null; photoFile: File | null; photoPreview: string | null }>>([])
+  const [companions, setCompanions] = useState<string[]>([])
+  const [companionInput, setCompanionInput] = useState('')
   const [giveawayInput,   setGiveawayInput]   = useState('')
   const [uploadingIdx,    setUploadingIdx]    = useState<Record<number, boolean>>({})
 
@@ -344,6 +346,7 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
       ticket_confirmation:   confirmation.trim() || null,
       moments:               selectedMoments.length > 0 ? selectedMoments : null,
       notes:                 notes.trim() || null,
+      companions:            companions.length > 0 ? companions : null,
       giveaway_items:        giveawayItems.length > 0 ? giveawayItems : null,
     }
 
@@ -689,6 +692,41 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
                 rows={4}
                 placeholder="Memories, observations, anything you want to remember…"
                 style={{ ...inp, resize: 'vertical' }}
+              />
+            </div>
+
+            <div>
+              <FieldLabel>Who Was There</FieldLabel>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                {companions.map((name, idx) => (
+                  <span key={idx} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '5px 10px', borderRadius: 20,
+                    backgroundColor: 'rgba(31,111,235,0.1)', border: '1px solid rgba(31,111,235,0.3)',
+                    fontSize: 13, color: '#58A6FF', fontWeight: 600,
+                  }}>
+                    {name}
+                    <button type="button" onClick={() => setCompanions(companions.filter((_, i) => i !== idx))}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#58A6FF', padding: 0, display: 'flex' }}>
+                      <X size={13} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <input
+                value={companionInput}
+                onChange={e => setCompanionInput(e.target.value)}
+                onKeyDown={e => {
+                  if ((e.key === 'Enter' || e.key === ',') && companionInput.trim()) {
+                    e.preventDefault()
+                    if (!companions.includes(companionInput.trim())) {
+                      setCompanions([...companions, companionInput.trim()])
+                    }
+                    setCompanionInput('')
+                  }
+                }}
+                placeholder="Type a name and press Enter"
+                style={{ ...inp }}
               />
             </div>
 

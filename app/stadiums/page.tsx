@@ -74,6 +74,7 @@ const EVENT_META: Record<string, { emoji: string; color: string; label: string }
   international:  { emoji: '🌍', color: '#58A6FF', label: 'International Games' },
   spring_training:{ emoji: '🌞', color: '#1F6FEB', label: 'Spring Training'},
   amateur:        { emoji: '🎓', color: '#58A6FF', label: 'Amateur & Collegiate' },
+  exhibition:     { label: 'Banana Ball & Exhibition', emoji: '🍌', color: '#F5A623' },
 }
 
 // Gradient base colors for event card backgrounds (distinct from badge accent colors)
@@ -571,7 +572,7 @@ export default function StadiumsPage() {
               )}
 
               {/* Remaining sections */}
-              {(['opening_day','playoffs','field_of_dreams','spring_training','amateur','international'] as const).map(cat => {
+              {(['opening_day','playoffs','field_of_dreams','spring_training','amateur','international','exhibition'] as const).map(cat => {
                 const catEvents = baseballEvents.filter(e => e.category === cat)
                 if (catEvents.length === 0) return null
                 const meta = EVENT_META[cat]

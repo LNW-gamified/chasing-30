@@ -736,4 +736,18 @@ export const MILESTONES: Milestone[] = [
       ) ||
       (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'puerto_rico_series'),
   },
+  {
+    id: 'bl_banana_ball',
+    name: 'Bananamonium',
+    description: 'Attend a Banana Ball / Savannah Bananas game',
+    icon: '🍌',
+    check: (_v, _s, _e, ble, destinationVisits) =>
+      (ble ?? []).some((x: BaseballLifeEntry) =>
+        x.category === 'mlb_special_event' && (
+          x.venue?.toLowerCase().includes('banana') ||
+          x.event_type?.toLowerCase().includes('banana')
+        )
+      ) ||
+      (destinationVisits ?? []).some((dv: DestinationVisit) => (dv.destination as any)?.slug === 'banana-ball'),
+  },
 ]

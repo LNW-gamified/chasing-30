@@ -74,6 +74,7 @@ export interface StadiumVisit {
   mlb_game_pk: number | null
   stats_auto_populated: boolean
   moments: string[] | null
+  companions: string[] | null
   game_events: string[] | null
   boxscore_data: Record<string, unknown> | null
   trip_id: string | null

@@ -675,6 +675,23 @@ export default function BoxScore({
               )
             })()}
 
+            {visit.companions && visit.companions.length > 0 && (
+              <>
+                <div style={LABEL}>Went With</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {visit.companions.map((name, i) => (
+                    <span key={i} style={{
+                      fontSize: 13, fontWeight: 600, color: '#58A6FF',
+                      padding: '4px 10px', borderRadius: 20,
+                      backgroundColor: 'rgba(31,111,235,0.1)', border: '1px solid rgba(31,111,235,0.25)',
+                    }}>
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
+
             {visit.notes && (
               <div>
                 <div style={LABEL}>Notes</div>

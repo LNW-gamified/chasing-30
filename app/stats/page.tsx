@@ -61,6 +61,14 @@ export default async function StatsPage() {
   const topTeamSeen =
     Object.entries(teamSeenCounts).sort((a, b) => b[1] - a[1])[0] ?? ['N/A', 0]
 
+  const companionCounts: Record<string, number> = {}
+  for (const v of allVisits) {
+    for (const name of v.companions ?? []) {
+      companionCounts[name] = (companionCounts[name] ?? 0) + 1
+    }
+  }
+  const topCompanion = Object.entries(companionCounts).sort((a, b) => b[1] - a[1])[0]
+
   // Farthest trip — from chronologically first visited stadium to all others
   let farthestStadium: Stadium | null = null
   let farthestMiles = 0
@@ -174,6 +182,13 @@ export default async function StatsPage() {
       value: topTeamSeen[0] as string,
       sub: topTeamSeen[1] ? `${topTeamSeen[1]} game${(topTeamSeen[1] as number) !== 1 ? 's' : ''}` : 'No games yet',
       color: '#F5A623',
+    },
+    {
+      icon: <Users size={20} />,
+      label: 'Most Games With',
+      value: topCompanion ? topCompanion[0] : 'No companions logged',
+      sub: topCompanion ? `${topCompanion[1]} game${topCompanion[1] !== 1 ? 's' : ''} together` : '',
+      color: '#58A6FF',
     },
     {
       icon: <MapPin size={20} />,

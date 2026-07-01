@@ -118,6 +118,8 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
   const [selectedGame, setSelectedGame] = useState<SeasonGame | null>(null)
   const [enterManually, setEnterManually] = useState(!!visit)
   const [duplicateWarning, setDuplicateWarning] = useState(false)
+  const [companions, setCompanions] = useState<string[]>(visit?.companions ?? [])
+  const [companionInput, setCompanionInput] = useState('')
   const [foodItems, setFoodItems] = useState<Array<{ name: string; category: string; rating: number | null; photoFile: File | null; photoPreview: string | null }>>([])
 
   const tz      = STADIUM_TZ[stadium.abbreviation] ?? 'America/Los_Angeles'
@@ -350,6 +352,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
       photos: allPhotoPaths.length > 0 ? allPhotoPaths : null,
       additional_seats: additionalSeats.filter((s) => s.section || s.row || s.number),
       moments: selectedMoments,
+      companions,
       created_by: user?.id ?? null,
     }
 
@@ -1082,6 +1085,41 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
               value={form.notes}
               onChange={(e) => set('notes', e.target.value)}
               style={{ resize: 'vertical' }}
+            />
+          </div>
+
+          {sectionHead('Who Was There')}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+              {companions.map((name, idx) => (
+                <span key={idx} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '5px 10px', borderRadius: 20,
+                  backgroundColor: 'rgba(31,111,235,0.1)', border: '1px solid rgba(31,111,235,0.3)',
+                  fontSize: 13, color: '#58A6FF', fontWeight: 600,
+                }}>
+                  {name}
+                  <button type="button" onClick={() => setCompanions(companions.filter((_, i) => i !== idx))}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#58A6FF', padding: 0, display: 'flex' }}>
+                    <X size={11} />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <input
+              value={companionInput}
+              onChange={e => setCompanionInput(e.target.value)}
+              onKeyDown={e => {
+                if ((e.key === 'Enter' || e.key === ',') && companionInput.trim()) {
+                  e.preventDefault()
+                  if (!companions.includes(companionInput.trim())) {
+                    setCompanions([...companions, companionInput.trim()])
+                  }
+                  setCompanionInput('')
+                }
+              }}
+              placeholder="Type a name and press Enter"
+              style={{ width: '100%', backgroundColor: '#1a2235', border: '1px solid #30363D', borderRadius: 10, padding: '10px 12px', color: '#E6EDF3', fontSize: 13 }}
             />
           </div>
 
