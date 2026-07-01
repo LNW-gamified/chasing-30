@@ -572,7 +572,7 @@ export default function StadiumsPage() {
               )}
 
               {/* Remaining sections */}
-              {(['opening_day','playoffs','field_of_dreams','spring_training','amateur','international','exhibition'] as const).map(cat => {
+              {(['playoffs','opening_day','field_of_dreams','spring_training','amateur','international','exhibition'] as const).map(cat => {
                 const catEvents = baseballEvents.filter(e => e.category === cat)
                 if (catEvents.length === 0) return null
                 const meta = EVENT_META[cat]
