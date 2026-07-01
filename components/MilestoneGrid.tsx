@@ -307,6 +307,8 @@ export default function MilestoneGrid({
   // Giveaway type inline update
   const [updatingClaimId, setUpdatingClaimId] = useState<string | null>(null)
 
+  const [foodLog, setFoodLog] = useState<Array<{ id: string; name: string; category: string; rating: number | null; photo_url: string | null; created_at: string }>>([])
+
   // BLE giveaway items from minor league game entries
   const [bleGiveaways,   setBleGiveaways]   = useState<Array<{
     entry_id: string
@@ -357,8 +359,15 @@ export default function MilestoneGrid({
     })))
   }, [])
 
+  const fetchFoodLog = useCallback(async () => {
+    const supabase = createClient()
+    const { data } = await supabase.from('food_log').select('*').order('created_at', { ascending: false })
+    if (data) setFoodLog(data)
+  }, [])
+
   useEffect(() => { fetchClaims() }, [fetchClaims])
   useEffect(() => { fetchBleGiveaways() }, [fetchBleGiveaways])
+  useEffect(() => { fetchFoodLog() }, [fetchFoodLog])
 
   // ── Modal helpers ─────────────────────────────────────────────────────────
 
@@ -1542,6 +1551,44 @@ export default function MilestoneGrid({
                     </div>
                   )
                 })}
+            </div>
+          </div>
+        )}
+
+        {foodLog.length > 0 && (
+          <div style={{ marginTop: 28 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+              🍔 Food &amp; Drink Log
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12 }}>
+              {foodLog.map(item => {
+                const categoryEmoji: Record<string, string> = {
+                  hot_dog: '🌭', specialty: '🍔', dessert: '🍦', drink: '🥤', other: '🍽️',
+                }
+                return (
+                  <div key={item.id} style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden' }}>
+                    <div style={{ position: 'relative', paddingBottom: '75%', backgroundColor: '#1C2430' }}>
+                      {item.photo_url ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={item.photo_url} alt={item.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
+                          {categoryEmoji[item.category] ?? '🍽️'}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ padding: '10px 12px' }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', marginBottom: 2 }}>{item.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <span style={{ fontSize: 13 }}>{categoryEmoji[item.category] ?? '🍽️'}</span>
+                        {item.rating && (
+                          <span style={{ fontSize: 13, color: '#F5A623' }}>{'⭐'.repeat(item.rating)}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

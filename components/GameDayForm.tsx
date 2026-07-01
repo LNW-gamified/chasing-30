@@ -118,6 +118,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
   const [selectedGame, setSelectedGame] = useState<SeasonGame | null>(null)
   const [enterManually, setEnterManually] = useState(!!visit)
   const [duplicateWarning, setDuplicateWarning] = useState(false)
+  const [foodItems, setFoodItems] = useState<Array<{ name: string; category: string; rating: number | null; photoFile: File | null; photoPreview: string | null }>>([])
 
   const tz      = STADIUM_TZ[stadium.abbreviation] ?? 'America/Los_Angeles'
   const tzLabel = TZ_LABEL[tz] ?? 'PT'
@@ -370,12 +371,38 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
       newVisitId = insertData?.id ?? null
     }
 
-    setSaving(false)
     if (err) {
+      setSaving(false)
       setError(err.message)
-    } else {
-      onSaved(selectedMoments, newVisitId)
+      return
     }
+
+    const visitId = newVisitId ?? visit?.id ?? null
+    for (const item of foodItems) {
+      if (!item.name.trim()) continue
+      let photoUrl: string | null = null
+      if (item.photoFile) {
+        const ext = item.photoFile.name.split('.').pop()
+        const path = `${visitId}-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+        const { data: uploadData } = await supabase.storage.from('food-photos').upload(path, item.photoFile)
+        if (uploadData) {
+          const { data: urlData } = supabase.storage.from('food-photos').getPublicUrl(uploadData.path)
+          photoUrl = urlData.publicUrl
+        }
+      }
+      const { data: { user } } = await supabase.auth.getUser()
+      await supabase.from('food_log').insert({
+        user_id: user?.id,
+        stadium_visit_id: visitId,
+        name: item.name.trim(),
+        category: item.category,
+        rating: item.rating,
+        photo_url: photoUrl,
+      })
+    }
+
+    setSaving(false)
+    onSaved(selectedMoments, newVisitId)
   }
 
   const sectionHead = (label: string) => (
@@ -988,6 +1015,61 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                 )
               })}
             </div>
+          </div>
+
+          {sectionHead('Food & Drink')}
+          <div style={{ marginBottom: 8 }}>
+            {foodItems.map((item, idx) => (
+              <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px', borderRadius: 10, backgroundColor: '#1a2235', marginBottom: 8 }}>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    value={item.name}
+                    onChange={e => { const u = [...foodItems]; u[idx] = { ...u[idx], name: e.target.value }; setFoodItems(u) }}
+                    placeholder="e.g. Garlic Fries"
+                    style={{ flex: 1, backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
+                  />
+                  <select
+                    value={item.category}
+                    onChange={e => { const u = [...foodItems]; u[idx] = { ...u[idx], category: e.target.value }; setFoodItems(u) }}
+                    style={{ backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
+                  >
+                    <option value="hot_dog">🌭 Hot Dog</option>
+                    <option value="specialty">🍔 Specialty</option>
+                    <option value="dessert">🍦 Dessert</option>
+                    <option value="drink">🥤 Drink</option>
+                    <option value="other">🍽️ Other</option>
+                  </select>
+                  <button type="button" onClick={() => setFoodItems(foodItems.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', color: '#F85149', cursor: 'pointer', padding: '0 6px' }}>✕</button>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {[1,2,3,4,5].map(n => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => { const u = [...foodItems]; u[idx] = { ...u[idx], rating: item.rating === n ? null : n }; setFoodItems(u) }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, padding: 0, opacity: item.rating != null && n <= item.rating ? 1 : 0.25 }}
+                    >⭐</button>
+                  ))}
+                  <label style={{ marginLeft: 'auto', cursor: 'pointer', fontSize: 13, color: '#8B949E', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <ImagePlus size={14} /> {item.photoPreview ? 'Change' : 'Photo'}
+                    <input type="file" accept="image/*" style={{ display: 'none' }}
+                      onChange={e => {
+                        const f = e.target.files?.[0]; if (!f) return
+                        const u = [...foodItems]; u[idx] = { ...u[idx], photoFile: f, photoPreview: URL.createObjectURL(f) }; setFoodItems(u)
+                      }} />
+                  </label>
+                </div>
+                {item.photoPreview && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={item.photoPreview} alt={item.name} style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover' }} />
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setFoodItems([...foodItems, { name: '', category: 'other', rating: null, photoFile: null, photoPreview: null }])}
+              style={{ width: '100%', padding: '10px', borderRadius: 10, border: '1px dashed #30363D', background: 'none', color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >+ Add Food or Drink</button>
           </div>
 
           {sectionHead('Story & Notes')}

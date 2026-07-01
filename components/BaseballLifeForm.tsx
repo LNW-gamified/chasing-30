@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Loader2, Check, ChevronDown, Camera, Plus } from 'lucide-react'
+import { X, Loader2, Check, ChevronDown, Camera, Plus, ImagePlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import type { BaseballLifeCategory } from '@/types'
 import { GAME_MOMENTS } from '@/lib/moments'
@@ -183,6 +183,7 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
 
   // Giveaway items (minor_league only)
   const [giveawayItems,   setGiveawayItems]   = useState<Array<{ name: string; photo_url: string | null }>>([])
+  const [foodItems, setFoodItems] = useState<Array<{ name: string; category: string; rating: number | null; photoFile: File | null; photoPreview: string | null }>>([])
   const [giveawayInput,   setGiveawayInput]   = useState('')
   const [uploadingIdx,    setUploadingIdx]    = useState<Record<number, boolean>>({})
 
@@ -366,6 +367,28 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
         visiting_team:  opponent.trim() || 'Opponent',
         notes:          `Logged from Baseball Life: ${resolvedEventType}`,
         created_by:     user.id,
+      })
+    }
+
+    for (const item of foodItems) {
+      if (!item.name.trim()) continue
+      let photoUrl: string | null = null
+      if (item.photoFile) {
+        const ext = item.photoFile.name.split('.').pop()
+        const path = `${savedEntry.id}-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+        const { data: uploadData } = await supabase.storage.from('food-photos').upload(path, item.photoFile)
+        if (uploadData) {
+          const { data: urlData } = supabase.storage.from('food-photos').getPublicUrl(uploadData.path)
+          photoUrl = urlData.publicUrl
+        }
+      }
+      await supabase.from('food_log').insert({
+        user_id: user.id,
+        baseball_life_entry_id: savedEntry.id,
+        name: item.name.trim(),
+        category: item.category,
+        rating: item.rating,
+        photo_url: photoUrl,
       })
     }
 
@@ -720,6 +743,61 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
                 )}
               </div>
             )}
+
+            <div style={{ marginTop: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Food &amp; Drink</div>
+              {foodItems.map((item, idx) => (
+                <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px', borderRadius: 10, backgroundColor: '#1a2235', marginBottom: 8 }}>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      value={item.name}
+                      onChange={e => { const u = [...foodItems]; u[idx] = { ...u[idx], name: e.target.value }; setFoodItems(u) }}
+                      placeholder="e.g. Garlic Fries"
+                      style={{ flex: 1, backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
+                    />
+                    <select
+                      value={item.category}
+                      onChange={e => { const u = [...foodItems]; u[idx] = { ...u[idx], category: e.target.value }; setFoodItems(u) }}
+                      style={{ backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
+                    >
+                      <option value="hot_dog">🌭 Hot Dog</option>
+                      <option value="specialty">🍔 Specialty</option>
+                      <option value="dessert">🍦 Dessert</option>
+                      <option value="drink">🥤 Drink</option>
+                      <option value="other">🍽️ Other</option>
+                    </select>
+                    <button type="button" onClick={() => setFoodItems(foodItems.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', color: '#F85149', cursor: 'pointer', padding: '0 6px' }}>✕</button>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {[1,2,3,4,5].map(n => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => { const u = [...foodItems]; u[idx] = { ...u[idx], rating: item.rating === n ? null : n }; setFoodItems(u) }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, padding: 0, opacity: item.rating != null && n <= item.rating ? 1 : 0.25 }}
+                      >⭐</button>
+                    ))}
+                    <label style={{ marginLeft: 'auto', cursor: 'pointer', fontSize: 13, color: '#8B949E', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <ImagePlus size={14} /> {item.photoPreview ? 'Change' : 'Photo'}
+                      <input type="file" accept="image/*" style={{ display: 'none' }}
+                        onChange={e => {
+                          const f = e.target.files?.[0]; if (!f) return
+                          const u = [...foodItems]; u[idx] = { ...u[idx], photoFile: f, photoPreview: URL.createObjectURL(f) }; setFoodItems(u)
+                        }} />
+                    </label>
+                  </div>
+                  {item.photoPreview && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={item.photoPreview} alt={item.name} style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover' }} />
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setFoodItems([...foodItems, { name: '', category: 'other', rating: null, photoFile: null, photoPreview: null }])}
+                style={{ width: '100%', padding: '10px', borderRadius: 10, border: '1px dashed #30363D', background: 'none', color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+              >+ Add Food or Drink</button>
+            </div>
 
             {error && <div style={{ fontSize: 13, color: '#F85149', padding: '8px 12px', background: 'rgba(248,81,73,0.08)', borderRadius: 8 }}>{error}</div>}
             <button
