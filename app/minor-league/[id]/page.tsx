@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
@@ -14,6 +14,7 @@ import BaseballLifeForm from '@/components/BaseballLifeForm'
 import { TEAM_BTN_COLOR, TEAM_GRADIENTS } from '@/lib/team-colors'
 import { formatDate } from '@/lib/utils'
 import { getUserTimezone } from '@/lib/user-timezone'
+import GiveawayFoodEditor, { type EditorItem } from '@/components/GiveawayFoodEditor'
 
 const userTz = getUserTimezone()
 
@@ -251,6 +252,7 @@ export default function MinorLeagueDetailPage() {
   const [lightboxUrl,    setLightboxUrl]    = useState<string | null>(null)
   const [uploadingIdx,   setUploadingIdx]   = useState<number | null>(null)
   const [stadiumFood, setStadiumFood] = useState<Array<{ id: string; name: string; category: string; rating: number | null; photo_url: string | null }>>([])
+  const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
 
   async function load() {
     const supabase = createClient()
@@ -333,17 +335,20 @@ export default function MinorLeagueDetailPage() {
 
   useEffect(() => { load() }, [id])
 
-  useEffect(() => {
+  const fetchFood = useCallback(async () => {
     if (visits.length === 0) return
     const entryIds = visits.map(e => e.id)
     const supabase = createClient()
-    supabase.from('food_log').select('id, name, category, rating, photo_url')
+    const { data } = await supabase.from('food_log').select('id, name, category, rating, photo_url')
       .in('baseball_life_entry_id', entryIds)
-      .then(({ data }) => { if (data) setStadiumFood(data) })
+    if (data) setStadiumFood(data)
   }, [visits])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { fetchFood() }, [fetchFood])
+
   const allGiveaways = visits.flatMap(e =>
-    (e.giveaway_items ?? []).map(g => ({ ...g, entryId: e.id }))
+    (e.giveaway_items ?? []).map((g, itemIndex) => ({ ...g, entryId: e.id, itemIndex }))
   )
 
   const visitsByYear = visits.reduce<Record<string, typeof visits>>((acc, v) => {
@@ -1128,7 +1133,18 @@ export default function MinorLeagueDetailPage() {
                         </div>
                         <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
                           {allGiveaways.map((g, i) => (
-                            <div key={`${g.entryId}-${i}`} style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden' }}>
+                            <div
+                              key={`${g.entryId}-${i}`}
+                              onClick={() => setEditingItem({
+                                id: g.entryId,
+                                itemType: 'milb_giveaway',
+                                name: g.name,
+                                category: '',
+                                photoUrl: g.photo_url,
+                                itemIndex: g.itemIndex,
+                              })}
+                              style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
+                            >
                               <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
                                 {g.photo_url ? (
                                   /* eslint-disable-next-line @next/next/no-img-element */
@@ -1155,7 +1171,18 @@ export default function MinorLeagueDetailPage() {
                           {stadiumFood.map(item => {
                             const categoryEmoji: Record<string, string> = { hot_dog: '🌭', specialty: '🍔', dessert: '🍦', drink: '🥤', other: '🍽️' }
                             return (
-                              <div key={item.id} style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden' }}>
+                              <div
+                                key={item.id}
+                                onClick={() => setEditingItem({
+                                  id: item.id,
+                                  itemType: 'food',
+                                  name: item.name,
+                                  category: item.category,
+                                  photoUrl: item.photo_url,
+                                  rating: item.rating,
+                                })}
+                                style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
+                              >
                                 <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
                                   {item.photo_url ? (
                                     /* eslint-disable-next-line @next/next/no-img-element */
@@ -1525,6 +1552,15 @@ export default function MinorLeagueDetailPage() {
           defaultMinorLeagueStadiumId={stadium.id}
           onClose={() => setShowForm(false)}
           onSaved={() => { setShowForm(false); load() }}
+        />
+      )}
+
+      {editingItem && (
+        <GiveawayFoodEditor
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+          onSaved={() => { setEditingItem(null); load(); fetchFood() }}
+          onDeleted={() => { setEditingItem(null); load(); fetchFood() }}
         />
       )}
     </div>

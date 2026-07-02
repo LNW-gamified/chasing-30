@@ -10,6 +10,7 @@ import { STATIC_EXPERIENCES, type StaticExperience } from '@/lib/static-experien
 import SpecialVisitButton from '@/components/SpecialVisitButton'
 import { classifyDayNightHeuristic } from '@/lib/sunrise-sunset'
 import { MILESTONE_POINTS } from '@/lib/ranks'
+import GiveawayFoodEditor, { type EditorItem } from '@/components/GiveawayFoodEditor'
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -303,6 +304,9 @@ export default function MilestoneGrid({
   const [lightboxItem, setLightboxItem] = useState<{ url: string; name: string; claimId: string; currentType: GiveawayTypeValue } | null>(null)
   const [lightboxType, setLightboxType] = useState<GiveawayTypeValue>('other')
   const [lightboxName, setLightboxName] = useState<string>('')
+
+  // Shared giveaway/food editor
+  const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
 
   // Giveaway type inline update
   const [updatingClaimId, setUpdatingClaimId] = useState<string | null>(null)
@@ -1504,10 +1508,13 @@ export default function MilestoneGrid({
                     <div
                       key={claim.id}
                       onClick={() => {
-                        const currentType = claim.giveaway_type ?? 'other'
-                        setLightboxItem({ url: photoUrl ?? '', name: itemName, claimId: claim.id, currentType })
-                        setLightboxType(currentType)
-                        setLightboxName(itemName)
+                        setEditingItem({
+                          id: claim.id,
+                          itemType: 'giveaway',
+                          name: claim.extra_data?.bobblehead_name ? String(claim.extra_data.bobblehead_name) : '',
+                          category: claim.giveaway_type ?? 'other',
+                          photoUrl,
+                        })
                       }}
                       style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
                     >
@@ -1566,7 +1573,20 @@ export default function MilestoneGrid({
                   hot_dog: '🌭', specialty: '🍔', dessert: '🍦', drink: '🥤', other: '🍽️',
                 }
                 return (
-                  <div key={item.id} style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden' }}>
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      setEditingItem({
+                        id: item.id,
+                        itemType: 'food',
+                        name: item.name,
+                        category: item.category,
+                        photoUrl: item.photo_url,
+                        rating: item.rating,
+                      })
+                    }}
+                    style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
+                  >
                     <div style={{ position: 'relative', paddingBottom: '75%', backgroundColor: '#1C2430' }}>
                       {item.photo_url ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
@@ -2210,6 +2230,15 @@ export default function MilestoneGrid({
           </div>
         )
       })()}
+
+      {editingItem && (
+        <GiveawayFoodEditor
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+          onSaved={() => { setEditingItem(null); fetchClaims(); fetchFoodLog() }}
+          onDeleted={() => { setEditingItem(null); fetchClaims(); fetchFoodLog() }}
+        />
+      )}
     </>
   )
 }

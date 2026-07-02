@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import GameDayForm from '@/components/GameDayForm'
@@ -15,6 +15,7 @@ import Link from 'next/link'
 import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy, Share2, MessageSquare, Hash, Building2, Map, ChevronRight, CloudRain, Wind } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 import { TEAM_BTN_COLOR, TEAM_GRADIENTS } from '@/lib/team-colors'
+import GiveawayFoodEditor, { type EditorItem } from '@/components/GiveawayFoodEditor'
 
 const MLB_SCHEDULE_SLUG: Record<string, string> = {
   ARI: 'dbacks',       ATL: 'braves',      BAL: 'orioles',    BOS: 'red-sox',
@@ -108,8 +109,6 @@ export default function StadiumDetailPage() {
     { phase: 'error'; msg: string }
   >(null)
   const [stadiumPhoto, setStadiumPhoto] = useState<string | null>(null)
-  const [allVisitedIds, setAllVisitedIds] = useState<Set<string>>(new Set())
-  const [allStadiums, setAllStadiums] = useState<MiniStadium[]>([])
   const [allGlobalMoments, setAllGlobalMoments] = useState<Set<string>>(new Set())
   const [firstTimeMoments, setFirstTimeMoments] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<ActiveTab>('games-attended')
@@ -132,6 +131,7 @@ export default function StadiumDetailPage() {
   const [lightboxUrl, setLightboxUrl]           = useState<string | null>(null)
   const [stadiumClaims, setStadiumClaims] = useState<Array<{ id: string; achievement_id: string; giveaway_type: string | null; extra_data: Record<string, unknown> }>>([])
   const [stadiumFood, setStadiumFood] = useState<Array<{ id: string; name: string; category: string; rating: number | null; photo_url: string | null }>>([])
+  const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
 
   useEffect(() => {
     function handleLightbox(e: Event) {
@@ -166,7 +166,7 @@ export default function StadiumDetailPage() {
     setVisits(v ?? [])
 
     // Fetch promo data for visits that came from a trip stop
-    const tripIds = (v ?? []).map((vis: any) => vis.trip_id).filter(Boolean) as string[]
+    const tripIds = (v ?? []).map(vis => vis.trip_id).filter(Boolean) as string[]
     if (tripIds.length > 0) {
       const { data: promoStops } = await supabase
         .from('trip_stops')
@@ -177,8 +177,8 @@ export default function StadiumDetailPage() {
       if (promoStops && promoStops.length > 0) {
         const map: Record<string, { promotions: string[]; promotion_photos: Record<string, string> }> = {}
         for (const ps of promoStops) {
-          const visit = (v ?? []).find((vis: any) => vis.trip_id === ps.trip_id)
-          if (visit) map[(visit as any).id] = {
+          const visit = (v ?? []).find(vis => vis.trip_id === ps.trip_id)
+          if (visit) map[visit.id] = {
             promotions: ps.promotions ?? [],
             promotion_photos: (ps.promotion_photos ?? {}) as Record<string, string>,
           }
@@ -190,11 +190,8 @@ export default function StadiumDetailPage() {
     setStadiumNote(note)
     setNoteInput(note)
     const avRows = (av ?? []) as { stadium_id: string; moments: string[] | null }[]
-    const newVisitedIds = new Set(avRows.map(r => r.stadium_id))
-    setAllVisitedIds(newVisitedIds)
     setAllGlobalMoments(new Set(avRows.flatMap(r => r.moments ?? [])))
     const stadiumList = (as_ ?? []) as MiniStadium[]
-    setAllStadiums(stadiumList)
     setRetiredNumbers((rn ?? []) as RetiredNumber[])
     setTrendingFood((tf ?? []) as StadiumTrendingFood[])
     setSouvenirs((sv ?? []) as StadiumSouvenir[])
@@ -204,7 +201,7 @@ export default function StadiumDetailPage() {
 
     if (checkMilestones) {
       const allVisitsFull = (v ?? []) as StadiumVisit[]
-      const newEarned = MILESTONES.filter(m => m.check(allVisitsFull, stadiumList as any, [], [], []))
+      const newEarned = MILESTONES.filter(m => m.check(allVisitsFull, stadiumList as unknown as Stadium[], [], [], []))
       const newEarnedIds = new Set(newEarned.map(m => m.id))
       const newly = newEarned.filter(m => !prevEarnedIdsRef.current.has(m.id))
       if (newly.length > 0) {
@@ -214,25 +211,31 @@ export default function StadiumDetailPage() {
       prevEarnedIdsRef.current = newEarnedIds
     } else {
       const allVisitsFull = (v ?? []) as StadiumVisit[]
-      const earned = MILESTONES.filter(m => m.check(allVisitsFull, stadiumList as any, [], [], []))
+      const earned = MILESTONES.filter(m => m.check(allVisitsFull, stadiumList as unknown as Stadium[], [], [], []))
       prevEarnedIdsRef.current = new Set(earned.map(m => m.id))
     }
   }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
   useEffect(() => { load() }, [id])
 
-  useEffect(() => {
+  const fetchCollection = useCallback(async () => {
     if (visits.length === 0) return
     const visitIds = visits.map(v => v.id)
     const supabase = createClient()
-    supabase.from('achievement_claims').select('id, achievement_id, giveaway_type, extra_data')
-      .in('stadium_visit_id', visitIds)
-      .not('giveaway_type', 'is', null)
-      .then(({ data }) => { if (data) setStadiumClaims(data) })
-    supabase.from('food_log').select('id, name, category, rating, photo_url')
-      .in('stadium_visit_id', visitIds)
-      .then(({ data }) => { if (data) setStadiumFood(data) })
+    const [{ data: claims }, { data: food }] = await Promise.all([
+      supabase.from('achievement_claims').select('id, achievement_id, giveaway_type, extra_data')
+        .in('stadium_visit_id', visitIds)
+        .not('giveaway_type', 'is', null),
+      supabase.from('food_log').select('id, name, category, rating, photo_url')
+        .in('stadium_visit_id', visitIds),
+    ])
+    if (claims) setStadiumClaims(claims)
+    if (food) setStadiumFood(food)
   }, [visits])
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { fetchCollection() }, [fetchCollection])
 
   const visitsByYear = visits.reduce<Record<string, typeof visits>>((acc, v) => {
     const year = v.visit_date.slice(0, 4)
@@ -243,12 +246,14 @@ export default function StadiumDetailPage() {
   const sortedYears = Object.keys(visitsByYear).sort((a, b) => Number(b) - Number(a))
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (activeTab === 'stadium-info') setIntelSubTab('food')
   }, [activeTab])
 
   // Lazy-load weather when the stadium-info tab is first opened
   useEffect(() => {
     if (activeTab !== 'stadium-info' || !stadium || weather !== null) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setWeatherLoading(true)
     fetch(`/api/stadium-weather?stadiumId=${stadium.id}`)
       .then(r => r.json())
@@ -280,6 +285,7 @@ export default function StadiumDetailPage() {
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
     if (visit.visit_date >= today) return
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFetchingStats(expandedVisit)
     fetch('/api/autofill-game', {
       method: 'POST',
@@ -749,6 +755,7 @@ export default function StadiumDetailPage() {
                             fetchingStats={fetchingStats === visit.id}
                             statsError={statsError[visit.id] ?? null}
                             onEdit={() => openEdit(visit)}
+                            // eslint-disable-next-line react-hooks/refs -- deleteVisit only reads prevEarnedIdsRef inside load(), invoked from this click handler, never during render
                             onDelete={() => { deleteVisit(visit.id) }}
                           />
                           {promos && promos.promotions.length > 0 && (
@@ -801,7 +808,17 @@ export default function StadiumDetailPage() {
                             const photoUrl = claim.extra_data?.photo_url ? String(claim.extra_data.photo_url) : null
                             const name = claim.extra_data?.bobblehead_name ? String(claim.extra_data.bobblehead_name) : (claim.giveaway_type ?? 'Item')
                             return (
-                              <div key={claim.id} style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden' }}>
+                              <div
+                                key={claim.id}
+                                onClick={() => setEditingItem({
+                                  id: claim.id,
+                                  itemType: 'giveaway',
+                                  name: claim.extra_data?.bobblehead_name ? String(claim.extra_data.bobblehead_name) : '',
+                                  category: claim.giveaway_type ?? 'other',
+                                  photoUrl,
+                                })}
+                                style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
+                              >
                                 <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
                                   {photoUrl ? (
                                     /* eslint-disable-next-line @next/next/no-img-element */
@@ -829,7 +846,18 @@ export default function StadiumDetailPage() {
                           {stadiumFood.map(item => {
                             const categoryEmoji: Record<string, string> = { hot_dog: '🌭', specialty: '🍔', dessert: '🍦', drink: '🥤', other: '🍽️' }
                             return (
-                              <div key={item.id} style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden' }}>
+                              <div
+                                key={item.id}
+                                onClick={() => setEditingItem({
+                                  id: item.id,
+                                  itemType: 'food',
+                                  name: item.name,
+                                  category: item.category,
+                                  photoUrl: item.photo_url,
+                                  rating: item.rating,
+                                })}
+                                style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
+                              >
                                 <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
                                   {item.photo_url ? (
                                     /* eslint-disable-next-line @next/next/no-img-element */
@@ -1714,6 +1742,15 @@ export default function StadiumDetailPage() {
             load(true)
             if (newVisitId) triggerAutofill(newVisitId)
           }}
+        />
+      )}
+
+      {editingItem && (
+        <GiveawayFoodEditor
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+          onSaved={() => { setEditingItem(null); fetchCollection() }}
+          onDeleted={() => { setEditingItem(null); fetchCollection() }}
         />
       )}
     </div>
