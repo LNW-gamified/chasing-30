@@ -129,8 +129,8 @@ export default function StadiumDetailPage() {
   const [tripMonths, setTripMonths]             = useState<Set<number>>(new Set())
   const [visitPromos, setVisitPromos]           = useState<Record<string, { promotions: string[]; promotion_photos: Record<string, string> }>>({})
   const [lightboxUrl, setLightboxUrl]           = useState<string | null>(null)
-  const [stadiumClaims, setStadiumClaims] = useState<Array<{ id: string; achievement_id: string; giveaway_type: string | null; extra_data: Record<string, unknown> }>>([])
-  const [stadiumFood, setStadiumFood] = useState<Array<{ id: string; name: string; category: string; rating: number | null; photo_url: string | null }>>([])
+  const [stadiumClaims, setStadiumClaims] = useState<Array<{ id: string; achievement_id: string; giveaway_type: string | null; extra_data: Record<string, unknown>; stadium_visit_id: string | null }>>([])
+  const [stadiumFood, setStadiumFood] = useState<Array<{ id: string; name: string; category: string; rating: number | null; photo_url: string | null; stadium_visit_id: string | null }>>([])
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
 
   useEffect(() => {
@@ -224,10 +224,10 @@ export default function StadiumDetailPage() {
     const visitIds = visits.map(v => v.id)
     const supabase = createClient()
     const [{ data: claims }, { data: food }] = await Promise.all([
-      supabase.from('achievement_claims').select('id, achievement_id, giveaway_type, extra_data')
+      supabase.from('achievement_claims').select('id, achievement_id, giveaway_type, extra_data, stadium_visit_id')
         .in('stadium_visit_id', visitIds)
         .not('giveaway_type', 'is', null),
-      supabase.from('food_log').select('id, name, category, rating, photo_url')
+      supabase.from('food_log').select('id, name, category, rating, photo_url, stadium_visit_id')
         .in('stadium_visit_id', visitIds),
     ])
     if (claims) setStadiumClaims(claims)
@@ -418,6 +418,11 @@ export default function StadiumDetailPage() {
     { key: 'stadium-info',    label: 'Stadium Detail'   },
     { key: 'roster',          label: 'Roster'           },
   ]
+
+  function visitLookup(visitId: string | null) {
+    if (!visitId) return null
+    return visits.find(v => v.id === visitId) ?? null
+  }
 
   return (
     <div style={{ color: '#E6EDF3' }}>
@@ -827,6 +832,16 @@ export default function StadiumDetailPage() {
                                     <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🎁</div>
                                   )}
                                 </div>
+                                {(() => {
+                                  const v = visitLookup(claim.stadium_visit_id)
+                                  if (!v) return null
+                                  return (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px 0' }}>
+                                      <TeamLogo abbreviation={stadium.abbreviation} size={14} />
+                                      <span style={{ fontSize: 11, color: '#8B949E' }}>{formatDate(v.visit_date)}</span>
+                                    </div>
+                                  )
+                                })()}
                                 <div style={{ padding: '6px 8px', fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {name}
                                 </div>
@@ -866,6 +881,16 @@ export default function StadiumDetailPage() {
                                     <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>{categoryEmoji[item.category] ?? '🍽️'}</div>
                                   )}
                                 </div>
+                                {(() => {
+                                  const v = visitLookup(item.stadium_visit_id)
+                                  if (!v) return null
+                                  return (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px 0' }}>
+                                      <TeamLogo abbreviation={stadium.abbreviation} size={14} />
+                                      <span style={{ fontSize: 11, color: '#8B949E' }}>{formatDate(v.visit_date)}</span>
+                                    </div>
+                                  )
+                                })()}
                                 <div style={{ padding: '6px 8px' }}>
                                   <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
                                   {item.rating && <div style={{ fontSize: 13, color: '#F5A623' }}>{'⭐'.repeat(item.rating)}</div>}
