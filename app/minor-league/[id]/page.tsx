@@ -109,6 +109,17 @@ type ActiveTab = 'games-witnessed' | 'game-day-intel' | 'stadium-info'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
+function guessGiveawayEmoji(name: string): string {
+  const n = name.toLowerCase()
+  if (n.includes('bobblehead') || n.includes('bobble')) return '🪆'
+  if (n.includes('jersey')) return '👕'
+  if (n.includes('t-shirt') || n.includes('tshirt') || n.includes('shirt')) return '👔'
+  if (n.includes('hat') || n.includes('cap')) return '🎩'
+  if (n.includes('poster')) return '📋'
+  if (n.includes('bingo') || n.includes('card')) return '🎫'
+  return '🎁'
+}
+
 function SectionTitle({ Icon, children }: {
   Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
   children: React.ReactNode
@@ -334,6 +345,14 @@ export default function MinorLeagueDetailPage() {
   const allGiveaways = visits.flatMap(e =>
     (e.giveaway_items ?? []).map(g => ({ ...g, entryId: e.id }))
   )
+
+  const visitsByYear = visits.reduce<Record<string, typeof visits>>((acc, v) => {
+    const year = v.visit_date.slice(0, 4)
+    if (!acc[year]) acc[year] = []
+    acc[year].push(v)
+    return acc
+  }, {})
+  const sortedYears = Object.keys(visitsByYear).sort((a, b) => Number(b) - Number(a))
 
   useEffect(() => {
     if (stadium) loadTickets()
@@ -784,7 +803,7 @@ export default function MinorLeagueDetailPage() {
                               )}
                             </div>
                             <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                              <div style={{ fontSize: 22, fontWeight: 900, color: '#F5A623', lineHeight: 1 }}>
+                              <div style={{ fontSize: 16, fontWeight: 800, color: '#F5A623', lineHeight: 1 }}>
                                 {daysAway === 0 ? 'Today' : daysAway === 1 ? '1' : daysAway}
                               </div>
                               {daysAway > 1 && <div style={{ fontSize: 13, color: '#8B949E' }}>days</div>}
@@ -823,271 +842,276 @@ export default function MinorLeagueDetailPage() {
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {visits.map(visit => {
-                      const isExpanded  = expandedVisit === visit.id
-                      const hasScore    = visit.final_score_home != null && visit.final_score_away != null
-                      const homeWon     = hasScore && (visit.final_score_home! > visit.final_score_away!)
-                      const borderColor = hasScore ? (homeWon ? '#3FB950' : '#F85149') : teamColor
-                      const opponent    = visit.opponent ?? visit.away_team ?? '—'
+                    {sortedYears.map(year => (
+                      <div key={year}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '18px 0 10px' }}>
+                          {year} Season · {visitsByYear[year].length} game{visitsByYear[year].length !== 1 ? 's' : ''}
+                        </div>
+                        {visitsByYear[year].map(visit => {
+                        const isExpanded  = expandedVisit === visit.id
+                        const hasScore    = visit.final_score_home != null && visit.final_score_away != null
+                        const homeWon     = hasScore && (visit.final_score_home! > visit.final_score_away!)
+                        const borderColor = hasScore ? (homeWon ? '#3FB950' : '#F85149') : teamColor
+                        const opponent    = visit.opponent ?? visit.away_team ?? '—'
 
-                      return (
-                        <div key={visit.id}>
-                          <button
-                            onClick={() => setExpandedVisit(isExpanded ? null : visit.id)}
-                            style={{
-                              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                              padding: '12px 14px',
-                              backgroundColor: isExpanded ? '#1C2430' : '#161B22',
-                              border: '1px solid #30363D',
-                              borderLeft: `3px solid ${borderColor}`,
-                              borderRadius: isExpanded ? '12px 12px 0 0' : 12,
-                              cursor: 'pointer', textAlign: 'left',
-                            }}
-                          >
-                            <div style={{ width: 40, height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={36} logoUrl={stadium.logo_url} />
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 3, fontWeight: 500 }}>
-                                {formatDate(visit.visit_date)}
+                        return (
+                          <div key={visit.id}>
+                            <button
+                              onClick={() => setExpandedVisit(isExpanded ? null : visit.id)}
+                              style={{
+                                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                                padding: '12px 14px',
+                                backgroundColor: isExpanded ? '#1C2430' : '#161B22',
+                                border: '1px solid #30363D',
+                                borderLeft: `3px solid ${borderColor}`,
+                                borderRadius: isExpanded ? '12px 12px 0 0' : 12,
+                                cursor: 'pointer', textAlign: 'left',
+                              }}
+                            >
+                              <div style={{ width: 40, height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={36} logoUrl={stadium.logo_url} />
                               </div>
-                              <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                vs {opponent}
-                                {hasScore && ` · ${visit.final_score_away}–${visit.final_score_home}`}
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 3, fontWeight: 500 }}>
+                                  {formatDate(visit.visit_date)}
+                                </div>
+                                <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <span>vs {opponent}{hasScore && ` · ${visit.final_score_away}–${visit.final_score_home}`}</span>
+                                  {hasScore && (
+                                    <span style={{
+                                      width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                                      backgroundColor: homeWon ? '#3FB950' : '#F85149',
+                                    }} />
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                              {visit.giveaway_items && visit.giveaway_items.length > 0 && (
-                                <span style={{ fontSize: 13 }}>🎁</span>
-                              )}
-                              {hasScore && (
-                                <div style={{
-                                  width: 10, height: 10, borderRadius: '50%',
-                                  backgroundColor: homeWon ? '#3FB950' : '#F85149',
-                                  boxShadow: homeWon ? '0 0 5px #3FB95088' : '0 0 5px #F8514988',
-                                }} />
-                              )}
-                              <ChevronRight
-                                size={16}
-                                color={isExpanded ? '#E6EDF3' : '#8B949E'}
-                                style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}
-                              />
-                            </div>
-                          </button>
-
-                          {isExpanded && (
-                            <div style={{
-                              backgroundColor: '#1C2430', border: '1px solid #30363D',
-                              borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '16px',
-                            }}>
-                                {hasScore && (
-                                <div style={{
-                                  background: `linear-gradient(135deg, ${affiliateColors[0]}CC 0%, ${affiliateColors[1]}CC 100%)`,
-                                  borderRadius: 10, padding: '14px 16px', marginBottom: 14,
-                                  border: '1px solid rgba(255,255,255,0.1)',
-                                  display: 'flex', alignItems: 'center', gap: 12,
-                                }}>
-                                  <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', fontWeight: 600, marginBottom: 3 }}>
-                                      {visit.home_team ?? stadium.team} vs {visit.away_team ?? opponent}
-                                    </div>
-                                    <div style={{ fontSize: 28, fontWeight: 900, color: '#ffffff', lineHeight: 1 }}>
-                                      {visit.final_score_home} – {visit.final_score_away}
-                                    </div>
-                                  </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                                {visit.giveaway_items && visit.giveaway_items.length > 0 && (
+                                  <span style={{ fontSize: 13 }}>{guessGiveawayEmoji(visit.giveaway_items[0].name)}</span>
+                                )}
+                                <ChevronRight
+                                  size={16}
+                                  color={isExpanded ? '#E6EDF3' : '#8B949E'}
+                                  style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}
+                                />
+                              </div>
+                            </button>
+  
+                            {isExpanded && (
+                              <div style={{
+                                backgroundColor: '#1C2430', border: '1px solid #30363D',
+                                borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '16px',
+                              }}>
+                                  {hasScore && (
                                   <div style={{
-                                    width: 40, height: 40, borderRadius: '50%',
-                                    backgroundColor: homeWon ? 'rgba(63,185,80,0.25)' : 'rgba(248,81,73,0.25)',
-                                    border: `2px solid ${homeWon ? '#3FB950' : '#F85149'}`,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontSize: 13, fontWeight: 900, color: homeWon ? '#3FB950' : '#F85149',
+                                    background: `linear-gradient(135deg, ${affiliateColors[0]}CC 0%, ${affiliateColors[1]}CC 100%)`,
+                                    borderRadius: 10, padding: '14px 16px', marginBottom: 14,
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    display: 'flex', alignItems: 'center', gap: 12,
                                   }}>
-                                    {homeWon ? 'W' : 'L'}
-                                  </div>
-                                </div>
-                              )}
-
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-                                {[
-                                  { label: 'Date', value: formatDate(visit.visit_date) },
-                                  visit.ticket_section ? {
-                                    label: 'Seats',
-                                    value: `Section ${visit.ticket_section}${visit.ticket_row ? ` · Row ${visit.ticket_row}` : ''}${visit.ticket_seats?.length ? ` · Seat${visit.ticket_seats.length > 1 ? 's' : ''} ${visit.ticket_seats.join(', ')}` : ''}`,
-                                  } : null,
-                                  (visit.weather_temp || visit.weather_conditions) ? {
-                                    label: 'Weather',
-                                    value: [visit.weather_temp, visit.weather_conditions].filter(Boolean).join(' · '),
-                                  } : null,
-                                ].filter(Boolean).map(row => (
-                                  <div key={row!.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-                                    <span style={{ fontSize: 12, color: '#8B949E', flexShrink: 0 }}>{row!.label}</span>
-                                    <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3', textAlign: 'right' }}>{row!.value}</span>
-                                  </div>
-                                ))}
-                              </div>
-
-                              {visit.moments && visit.moments.length > 0 && (
-                                <div style={{ marginBottom: 12 }}>
-                                  <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Moments</div>
-                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                                    {visit.moments.map(m => (
-                                      <span key={m} style={{ fontSize: 13, padding: '3px 8px', borderRadius: 12, backgroundColor: 'rgba(31,111,235,0.1)', border: '1px solid rgba(31,111,235,0.2)', color: '#58A6FF' }}>{m}</span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* MiLB Box Score */}
-                              {visit.game_data && (() => {
-                                const gd = visit.game_data as any
-                                const innings: Array<{inning: number; home: number|null; away: number|null}> = gd.inningScores ?? []
-                                const awayTeam = visit.away_team ?? gd.awayTeamName ?? 'Away'
-                                const homeTeam = visit.home_team ?? gd.homeTeamName ?? 'Home'
-                                const homeWon = (gd.homeRuns ?? 0) > (gd.awayRuns ?? 0)
-                                return (
-                                  <div style={{ marginTop: 12, backgroundColor: '#0B1117', borderRadius: 10, overflow: 'hidden', border: '1px solid #30363D' }}>
-                                    <div style={{ padding: '5px 10px', borderBottom: '1px solid #30363D', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                      <span style={{ fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.1)', borderRadius: 10, padding: '2px 8px' }}>⚾ Stats from MiLB</span>
-                                      {gd.attendance && <span style={{ fontSize: 13, color: '#8B949E' }}>{Number(gd.attendance).toLocaleString()} fans</span>}
-                                    </div>
-                                    {innings.length > 0 && (
-                                      <div style={{ overflowX: 'auto' }}>
-                                        <table style={{ borderCollapse: 'collapse', fontSize: 13, minWidth: '100%' }}>
-                                          <thead>
-                                            <tr style={{ borderBottom: '1px solid #30363D' }}>
-                                              <th style={{ textAlign: 'left', padding: '4px 8px', color: '#8B949E', fontWeight: 600, minWidth: 48 }}>Team</th>
-                                              {innings.map((inn: any) => (
-                                                <th key={inn.inning} style={{ textAlign: 'center', padding: '4px 4px', color: '#8B949E', fontWeight: 600, minWidth: 18 }}>{inn.inning}</th>
-                                              ))}
-                                              <th style={{ textAlign: 'center', padding: '4px 5px', color: '#E6EDF3', fontWeight: 700, borderLeft: '1px solid #30363D', minWidth: 20 }}>R</th>
-                                              <th style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontWeight: 600, minWidth: 20 }}>H</th>
-                                              <th style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontWeight: 600, minWidth: 20 }}>E</th>
-                                            </tr>
-                                          </thead>
-                                          <tbody>
-                                            {(['away', 'home'] as const).map(side => {
-                                              const name   = side === 'away' ? awayTeam : homeTeam
-                                              const totalR = side === 'away' ? gd.awayRuns   : gd.homeRuns
-                                              const totalH = side === 'away' ? gd.awayHits   : gd.homeHits
-                                              const totalE = side === 'away' ? gd.awayErrors : gd.homeErrors
-                                              const wins   = side === 'home' ? homeWon : !homeWon
-                                              return (
-                                                <tr key={side}>
-                                                  <td style={{ padding: '4px 8px', fontWeight: wins ? 700 : 500, fontSize: 13, color: wins ? '#E6EDF3' : '#8B949E' }}>{name}</td>
-                                                  {innings.map((inn: any) => {
-                                                    const val = inn[side]
-                                                    return (
-                                                      <td key={inn.inning} style={{ textAlign: 'center', padding: '4px 4px', color: (val != null && val > 0) ? '#E6EDF3' : '#8B949E', fontWeight: (val != null && val > 0) ? 700 : 400, fontSize: 13 }}>
-                                                        {val ?? '—'}
-                                                      </td>
-                                                    )
-                                                  })}
-                                                  <td style={{ textAlign: 'center', padding: '4px 5px', fontWeight: 800, fontSize: 12, color: wins ? '#E6EDF3' : '#8B949E', borderLeft: '1px solid #30363D' }}>{totalR ?? '—'}</td>
-                                                  <td style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontSize: 13 }}>{totalH ?? '—'}</td>
-                                                  <td style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontSize: 13 }}>{totalE ?? '—'}</td>
-                                                </tr>
-                                              )
-                                            })}
-                                          </tbody>
-                                        </table>
+                                    <div style={{ flex: 1 }}>
+                                      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', fontWeight: 600, marginBottom: 3 }}>
+                                        {visit.home_team ?? stadium.team} vs {visit.away_team ?? opponent}
                                       </div>
-                                    )}
-                                    <div style={{ padding: '8px 10px', borderTop: '1px solid rgba(48,54,61,0.6)' }}>
-                                      {(gd.winningPitcher || gd.losingPitcher) && (
-                                        <div style={{ fontSize: 13, color: '#8B949E', display: 'flex', flexWrap: 'wrap', gap: '2px 10px', marginBottom: 6 }}>
-                                          {gd.winningPitcher && <span><span style={{ color: '#3FB950', fontWeight: 600 }}>W</span> {gd.winningPitcher}</span>}
-                                          {gd.losingPitcher  && <span><span style={{ color: '#F85149', fontWeight: 600 }}>L</span> {gd.losingPitcher}</span>}
-                                          {gd.savePitcher    && <span><span style={{ color: '#F5A623', fontWeight: 600 }}>S</span> {gd.savePitcher}</span>}
-                                        </div>
-                                      )}
-                                      {(gd.homeSP || gd.awaySP) && (
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                                          {[{ label: awayTeam, sp: gd.awaySP }, { label: homeTeam, sp: gd.homeSP }].map(({ label, sp }) =>
-                                            sp ? (
-                                              <div key={label} style={{ backgroundColor: '#161B22', borderRadius: 8, padding: '7px 10px' }}>
-                                                <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 1 }}>{label} SP</div>
-                                                <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3' }}>{sp.name}</div>
-                                                <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
-                                                  {[sp.ip && `${sp.ip} IP`, sp.h != null && `${sp.h} H`, sp.er != null && `${sp.er} ER`, sp.k != null && `${sp.k} K`].filter(Boolean).join(' · ')}
-                                                </div>
-                                              </div>
-                                            ) : null
-                                          )}
-                                        </div>
-                                      )}
+                                      <div style={{ fontSize: 28, fontWeight: 900, color: '#ffffff', lineHeight: 1 }}>
+                                        {visit.final_score_home} – {visit.final_score_away}
+                                      </div>
+                                    </div>
+                                    <div style={{
+                                      width: 40, height: 40, borderRadius: '50%',
+                                      backgroundColor: homeWon ? 'rgba(63,185,80,0.25)' : 'rgba(248,81,73,0.25)',
+                                      border: `2px solid ${homeWon ? '#3FB950' : '#F85149'}`,
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      fontSize: 13, fontWeight: 900, color: homeWon ? '#3FB950' : '#F85149',
+                                    }}>
+                                      {homeWon ? 'W' : 'L'}
                                     </div>
                                   </div>
-                                )
-                              })()}
-
-                              {!visit.game_data && (
-                                <button
-                                  onClick={() => handleFetchStats(visit.id)}
-                                  disabled={fetchingStatsIds.has(visit.id)}
-                                  style={{
-                                    marginTop: 10, width: '100%', padding: '8px', borderRadius: 8,
-                                    fontSize: 12, fontWeight: 600, backgroundColor: 'transparent',
-                                    color: '#58A6FF', border: '1px solid rgba(88,166,255,0.3)',
-                                    cursor: fetchingStatsIds.has(visit.id) ? 'default' : 'pointer',
-                                    opacity: fetchingStatsIds.has(visit.id) ? 0.5 : 1,
-                                  }}
-                                >
-                                  {fetchingStatsIds.has(visit.id) ? '⏳ Fetching stats…' : '⚾ Fetch MiLB Stats'}
-                                </button>
-                              )}
-
-                              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
-                                <button
-                                  onClick={() => openEdit(visit)}
-                                  style={{ fontSize: 13, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '4px 10px', cursor: 'pointer' }}
-                                >
-                                  Edit Giveaways
-                                </button>
-                              </div>
-
-                              {visit.giveaway_items && visit.giveaway_items.length > 0 && (
-                                <div style={{ marginTop: 8, padding: '12px 14px', borderRadius: 10, backgroundColor: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.2)' }}>
-                                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                                    Giveaways &amp; Promotions
+                                )}
+  
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+                                  {[
+                                    { label: 'Date', value: formatDate(visit.visit_date) },
+                                    visit.ticket_section ? {
+                                      label: 'Seats',
+                                      value: `Section ${visit.ticket_section}${visit.ticket_row ? ` · Row ${visit.ticket_row}` : ''}${visit.ticket_seats?.length ? ` · Seat${visit.ticket_seats.length > 1 ? 's' : ''} ${visit.ticket_seats.join(', ')}` : ''}`,
+                                    } : null,
+                                    (visit.weather_temp || visit.weather_conditions) ? {
+                                      label: 'Weather',
+                                      value: [visit.weather_temp, visit.weather_conditions].filter(Boolean).join(' · '),
+                                    } : null,
+                                  ].filter(Boolean).map(row => (
+                                    <div key={row!.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+                                      <span style={{ fontSize: 12, color: '#8B949E', flexShrink: 0 }}>{row!.label}</span>
+                                      <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3', textAlign: 'right' }}>{row!.value}</span>
+                                    </div>
+                                  ))}
+                                </div>
+  
+                                {visit.moments && visit.moments.length > 0 && (
+                                  <div style={{ marginBottom: 12 }}>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Moments</div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                      {visit.moments.map(m => (
+                                        <span key={m} style={{ fontSize: 13, padding: '3px 8px', borderRadius: 12, backgroundColor: 'rgba(31,111,235,0.1)', border: '1px solid rgba(31,111,235,0.2)', color: '#58A6FF' }}>{m}</span>
+                                      ))}
+                                    </div>
                                   </div>
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                    {visit.giveaway_items.map((item, i) => (
-                                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                        <span style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, flex: 1, minWidth: 0 }}>🎁 {item.name}</span>
-                                        {item.photo_url && (
-                                          // eslint-disable-next-line @next/next/no-img-element
-                                          <img
-                                            src={item.photo_url}
-                                            alt={item.name}
-                                            style={{ width: 72, height: 72, borderRadius: 8, objectFit: 'cover', display: 'block', cursor: 'pointer', flexShrink: 0 }}
-                                            onClick={() => setLightboxUrl(item.photo_url!)}
-                                          />
+                                )}
+  
+                                {/* MiLB Box Score */}
+                                {visit.game_data && (() => {
+                                  const gd = visit.game_data as any
+                                  const innings: Array<{inning: number; home: number|null; away: number|null}> = gd.inningScores ?? []
+                                  const awayTeam = visit.away_team ?? gd.awayTeamName ?? 'Away'
+                                  const homeTeam = visit.home_team ?? gd.homeTeamName ?? 'Home'
+                                  const homeWon = (gd.homeRuns ?? 0) > (gd.awayRuns ?? 0)
+                                  return (
+                                    <div style={{ marginTop: 12, backgroundColor: '#0B1117', borderRadius: 10, overflow: 'hidden', border: '1px solid #30363D' }}>
+                                      <div style={{ padding: '5px 10px', borderBottom: '1px solid #30363D', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.1)', borderRadius: 10, padding: '2px 8px' }}>⚾ Stats from MiLB</span>
+                                        {gd.attendance && <span style={{ fontSize: 13, color: '#8B949E' }}>{Number(gd.attendance).toLocaleString()} fans</span>}
+                                      </div>
+                                      {innings.length > 0 && (
+                                        <div style={{ overflowX: 'auto' }}>
+                                          <table style={{ borderCollapse: 'collapse', fontSize: 13, minWidth: '100%' }}>
+                                            <thead>
+                                              <tr style={{ borderBottom: '1px solid #30363D' }}>
+                                                <th style={{ textAlign: 'left', padding: '4px 8px', color: '#8B949E', fontWeight: 600, minWidth: 48 }}>Team</th>
+                                                {innings.map((inn: any) => (
+                                                  <th key={inn.inning} style={{ textAlign: 'center', padding: '4px 4px', color: '#8B949E', fontWeight: 600, minWidth: 18 }}>{inn.inning}</th>
+                                                ))}
+                                                <th style={{ textAlign: 'center', padding: '4px 5px', color: '#E6EDF3', fontWeight: 700, borderLeft: '1px solid #30363D', minWidth: 20 }}>R</th>
+                                                <th style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontWeight: 600, minWidth: 20 }}>H</th>
+                                                <th style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontWeight: 600, minWidth: 20 }}>E</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              {(['away', 'home'] as const).map(side => {
+                                                const name   = side === 'away' ? awayTeam : homeTeam
+                                                const totalR = side === 'away' ? gd.awayRuns   : gd.homeRuns
+                                                const totalH = side === 'away' ? gd.awayHits   : gd.homeHits
+                                                const totalE = side === 'away' ? gd.awayErrors : gd.homeErrors
+                                                const wins   = side === 'home' ? homeWon : !homeWon
+                                                return (
+                                                  <tr key={side}>
+                                                    <td style={{ padding: '4px 8px', fontWeight: wins ? 700 : 500, fontSize: 13, color: wins ? '#E6EDF3' : '#8B949E' }}>{name}</td>
+                                                    {innings.map((inn: any) => {
+                                                      const val = inn[side]
+                                                      return (
+                                                        <td key={inn.inning} style={{ textAlign: 'center', padding: '4px 4px', color: (val != null && val > 0) ? '#E6EDF3' : '#8B949E', fontWeight: (val != null && val > 0) ? 700 : 400, fontSize: 13 }}>
+                                                          {val ?? '—'}
+                                                        </td>
+                                                      )
+                                                    })}
+                                                    <td style={{ textAlign: 'center', padding: '4px 5px', fontWeight: 800, fontSize: 12, color: wins ? '#E6EDF3' : '#8B949E', borderLeft: '1px solid #30363D' }}>{totalR ?? '—'}</td>
+                                                    <td style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontSize: 13 }}>{totalH ?? '—'}</td>
+                                                    <td style={{ textAlign: 'center', padding: '4px 5px', color: '#8B949E', fontSize: 13 }}>{totalE ?? '—'}</td>
+                                                  </tr>
+                                                )
+                                              })}
+                                            </tbody>
+                                          </table>
+                                        </div>
+                                      )}
+                                      <div style={{ padding: '8px 10px', borderTop: '1px solid rgba(48,54,61,0.6)' }}>
+                                        {(gd.winningPitcher || gd.losingPitcher) && (
+                                          <div style={{ fontSize: 13, color: '#8B949E', display: 'flex', flexWrap: 'wrap', gap: '2px 10px', marginBottom: 6 }}>
+                                            {gd.winningPitcher && <span><span style={{ color: '#3FB950', fontWeight: 600 }}>W</span> {gd.winningPitcher}</span>}
+                                            {gd.losingPitcher  && <span><span style={{ color: '#F85149', fontWeight: 600 }}>L</span> {gd.losingPitcher}</span>}
+                                            {gd.savePitcher    && <span><span style={{ color: '#F5A623', fontWeight: 600 }}>S</span> {gd.savePitcher}</span>}
+                                          </div>
+                                        )}
+                                        {(gd.homeSP || gd.awaySP) && (
+                                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                                            {[{ label: awayTeam, sp: gd.awaySP }, { label: homeTeam, sp: gd.homeSP }].map(({ label, sp }) =>
+                                              sp ? (
+                                                <div key={label} style={{ backgroundColor: '#161B22', borderRadius: 8, padding: '7px 10px' }}>
+                                                  <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 1 }}>{label} SP</div>
+                                                  <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3' }}>{sp.name}</div>
+                                                  <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
+                                                    {[sp.ip && `${sp.ip} IP`, sp.h != null && `${sp.h} H`, sp.er != null && `${sp.er} ER`, sp.k != null && `${sp.k} K`].filter(Boolean).join(' · ')}
+                                                  </div>
+                                                </div>
+                                              ) : null
+                                            )}
+                                          </div>
                                         )}
                                       </div>
-                                    ))}
+                                    </div>
+                                  )
+                                })()}
+  
+                                {!visit.game_data && (
+                                  <button
+                                    onClick={() => handleFetchStats(visit.id)}
+                                    disabled={fetchingStatsIds.has(visit.id)}
+                                    style={{
+                                      marginTop: 10, width: '100%', padding: '8px', borderRadius: 8,
+                                      fontSize: 12, fontWeight: 600, backgroundColor: 'transparent',
+                                      color: '#58A6FF', border: '1px solid rgba(88,166,255,0.3)',
+                                      cursor: fetchingStatsIds.has(visit.id) ? 'default' : 'pointer',
+                                      opacity: fetchingStatsIds.has(visit.id) ? 0.5 : 1,
+                                    }}
+                                  >
+                                    {fetchingStatsIds.has(visit.id) ? '⏳ Fetching stats…' : '⚾ Fetch MiLB Stats'}
+                                  </button>
+                                )}
+  
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+                                  <button
+                                    onClick={() => openEdit(visit)}
+                                    style={{ fontSize: 13, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '4px 10px', cursor: 'pointer' }}
+                                  >
+                                    Edit Giveaways
+                                  </button>
+                                </div>
+  
+                                {visit.giveaway_items && visit.giveaway_items.length > 0 && (
+                                  <div style={{ marginTop: 8, padding: '12px 14px', borderRadius: 10, backgroundColor: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.2)' }}>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                                      Giveaways &amp; Promotions
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                      {visit.giveaway_items.map((item, i) => (
+                                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                          <span style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, flex: 1, minWidth: 0 }}>🎁 {item.name}</span>
+                                          {item.photo_url && (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img
+                                              src={item.photo_url}
+                                              alt={item.name}
+                                              style={{ width: 72, height: 72, borderRadius: 8, objectFit: 'cover', display: 'block', cursor: 'pointer', flexShrink: 0 }}
+                                              onClick={() => setLightboxUrl(item.photo_url!)}
+                                            />
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
+                                )}
+  
+                                {visit.notes && (
+                                  <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.5, paddingTop: 10, borderTop: '1px solid #30363D', marginTop: 4 }}>
+                                    {visit.notes}
+                                  </div>
+                                )}
+  
+                                <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid #30363D' }}>
+                                  <button
+                                    onClick={() => deleteEntry(visit.id)}
+                                    style={{ fontSize: 13, fontWeight: 500, color: '#8B949E', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                                  >
+                                    Delete this entry
+                                  </button>
                                 </div>
-                              )}
-
-                              {visit.notes && (
-                                <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.5, paddingTop: 10, borderTop: '1px solid #30363D', marginTop: 4 }}>
-                                  {visit.notes}
-                                </div>
-                              )}
-
-                              <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid #30363D' }}>
-                                <button
-                                  onClick={() => deleteEntry(visit.id)}
-                                  style={{ fontSize: 13, fontWeight: 500, color: '#8B949E', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                                >
-                                  Delete this entry
-                                </button>
                               </div>
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
+                            )}
+                          </div>
+                        )
+                      })}
+                      </div>
+                    ))}
                   </div>
                 )}
 
