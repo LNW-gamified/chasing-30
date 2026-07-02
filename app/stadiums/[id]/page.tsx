@@ -495,7 +495,7 @@ export default function StadiumDetailPage() {
             <div style={{ display: 'flex', gap: 8 }}>
               {[
                 { Icon: Users,       value: stadium.capacity ? stadium.capacity.toLocaleString() : '—', label: 'Capacity'    },
-                { Icon: CalendarDays, value: stadium.opened ? String(stadium.opened) : '—',              label: 'Year Opened' },
+                { Icon: CalendarDays, value: stadium.opened ? String(stadium.opened) : '—',              label: 'Opened'      },
                 { Icon: Trophy,      value: `${stadium.league} ${stadium.division}`,                    label: 'Division'    },
               ].map(({ Icon, value, label }) => (
                 <div key={label} style={{
