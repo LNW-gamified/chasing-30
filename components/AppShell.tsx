@@ -71,17 +71,12 @@ export default function AppShell({ children, nextTrip, visitedCount, rankName, r
         position: 'fixed', top: 0, left: 0, bottom: 0, width: 256, zIndex: 40,
         backgroundColor: '#0B1117', borderRight: '1px solid #30363D', overflowY: 'auto',
       }}>
-        {/* Logo + Rank + Avatar */}
+        {/* Logo + Avatar */}
         <div style={{ padding: '1.25rem 1.25rem 1rem', borderBottom: '1px solid #30363D' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#E6EDF3', lineHeight: 1.2 }}>⚾ Chasing 30</div>
               <div style={{ fontSize: '0.75rem', color: '#8B949E', marginTop: 2 }}>MLB Stadium Tracker</div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 8, padding: '3px 10px', borderRadius: 999, backgroundColor: 'rgba(245,166,35,0.1)', border: '1px solid rgba(245,166,35,0.25)' }}>
-                <span style={{ fontSize: 12 }}>{rankIcon}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#F5A623' }}>{rankName}</span>
-                <span style={{ fontSize: 12, color: '#8B949E', fontWeight: 600 }}>· {rankXp} pts</span>
-              </div>
             </div>
             <button
               onClick={() => setProfileOpen(v => !v)}
