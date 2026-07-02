@@ -64,6 +64,17 @@ const RATING_PRIORITY: Record<string, number> = {
 type MiniStadium = { id: string; league: string; division: string }
 type ActiveTab = 'games-attended' | 'upcoming-games' | 'stadium-info' | 'roster'
 
+function guessGiveawayEmoji(name: string): string {
+  const n = name.toLowerCase()
+  if (n.includes('bobblehead') || n.includes('bobble')) return '🪆'
+  if (n.includes('jersey')) return '👕'
+  if (n.includes('t-shirt') || n.includes('tshirt') || n.includes('shirt')) return '👔'
+  if (n.includes('hat') || n.includes('cap')) return '🎩'
+  if (n.includes('poster')) return '📋'
+  if (n.includes('bingo') || n.includes('card')) return '🎫'
+  return '🎁'
+}
+
 function SectionTitle({ Icon, children }: { Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
@@ -216,12 +227,20 @@ export default function StadiumDetailPage() {
     const supabase = createClient()
     supabase.from('achievement_claims').select('id, achievement_id, giveaway_type, extra_data')
       .in('stadium_visit_id', visitIds)
-      .not('achievement_id', 'is', null)
+      .not('giveaway_type', 'is', null)
       .then(({ data }) => { if (data) setStadiumClaims(data) })
     supabase.from('food_log').select('id, name, category, rating, photo_url')
       .in('stadium_visit_id', visitIds)
       .then(({ data }) => { if (data) setStadiumFood(data) })
   }, [visits])
+
+  const visitsByYear = visits.reduce<Record<string, typeof visits>>((acc, v) => {
+    const year = v.visit_date.slice(0, 4)
+    if (!acc[year]) acc[year] = []
+    acc[year].push(v)
+    return acc
+  }, {})
+  const sortedYears = Object.keys(visitsByYear).sort((a, b) => Number(b) - Number(a))
 
   useEffect(() => {
     if (activeTab === 'stadium-info') setIntelSubTab('food')
@@ -643,66 +662,77 @@ export default function StadiumDetailPage() {
                   <>
                     {/* Compact game list */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-                      {visits.map((visit) => {
-                        const isExpanded = expandedVisit === visit.id
-                        const hasScore = visit.home_runs != null && visit.away_runs != null
-                        const homeWon = hasScore && (visit.home_runs! > visit.away_runs!)
-                        const borderColor = hasScore
-                          ? (homeWon ? '#3FB950' : '#F85149')
-                          : '#30363D'
-                        const opponent = (visit.visiting_team ?? '—').replace(/^vs\.?\s+/i, '')
-                        const scoreStr = hasScore
-                          ? ` · ${visit.away_runs}–${visit.home_runs}`
-                          : ''
-                        return (
-                          <button
-                            key={visit.id}
-                            onClick={() => setExpandedVisit(isExpanded ? null : visit.id)}
-                            style={{
-                              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                              padding: '12px 14px',
-                              backgroundColor: isExpanded ? '#1C2430' : '#161B22',
-                              border: '1px solid #30363D',
-                              borderLeft: `3px solid ${borderColor}`,
-                              borderRadius: 12, cursor: 'pointer', textAlign: 'left',
-                            }}
-                          >
-                            {/* Team logo — always show logo on collapsed row */}
-                            <div style={{ width: 40, height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <TeamLogo abbreviation={stadium.abbreviation} size={40} />
-                            </div>
-
-                            {/* Center: date + matchup */}
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 3, fontWeight: 500 }}>
-                                {formatDate(visit.visit_date)}
+                      {sortedYears.map(year => (
+                        <div key={year}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '18px 0 10px' }}>
+                            {year} Season · {visitsByYear[year].length} game{visitsByYear[year].length !== 1 ? 's' : ''}
+                          </div>
+                          {visitsByYear[year].map((visit) => {
+                          const isExpanded = expandedVisit === visit.id
+                          const hasScore = visit.home_runs != null && visit.away_runs != null
+                          const homeWon = hasScore && (visit.home_runs! > visit.away_runs!)
+                          const borderColor = hasScore
+                            ? (homeWon ? '#3FB950' : '#F85149')
+                            : '#30363D'
+                          const opponent = (visit.visiting_team ?? '—').replace(/^vs\.?\s+/i, '')
+                          const scoreStr = hasScore
+                            ? ` · ${visit.away_runs}–${visit.home_runs}`
+                            : ''
+                          const giveawayName = visitPromos[visit.id]?.promotions?.[0]
+                          return (
+                            <button
+                              key={visit.id}
+                              onClick={() => setExpandedVisit(isExpanded ? null : visit.id)}
+                              style={{
+                                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                                padding: '12px 14px',
+                                backgroundColor: isExpanded ? '#1C2430' : '#161B22',
+                                border: '1px solid #30363D',
+                                borderLeft: `3px solid ${borderColor}`,
+                                borderRadius: 12, cursor: 'pointer', textAlign: 'left',
+                              }}
+                            >
+                              {/* Team logo — always show logo on collapsed row */}
+                              <div style={{ width: 40, height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <TeamLogo abbreviation={stadium.abbreviation} size={40} />
                               </div>
-                              <div style={{
-                                fontSize: 14, fontWeight: 700, color: '#E6EDF3',
-                                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                              }}>
-                                vs {opponent}{scoreStr}
-                              </div>
-                            </div>
 
-                            {/* Right: win/loss dot + chevron */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                              {hasScore && (
+                              {/* Center: date + matchup */}
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 3, fontWeight: 500 }}>
+                                  {formatDate(visit.visit_date)}
+                                </div>
                                 <div style={{
-                                  width: 10, height: 10, borderRadius: '50%',
-                                  backgroundColor: homeWon ? '#3FB950' : '#F85149',
-                                  boxShadow: homeWon ? '0 0 5px #3FB95088' : '0 0 5px #F8514988',
-                                }} />
-                              )}
-                              <ChevronRight
-                                size={16}
-                                color={isExpanded ? '#E6EDF3' : '#8B949E'}
-                                style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}
-                              />
-                            </div>
-                          </button>
-                        )
-                      })}
+                                  fontSize: 14, fontWeight: 700, color: '#E6EDF3',
+                                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                  display: 'flex', alignItems: 'center', gap: 6,
+                                }}>
+                                  <span>vs {opponent}{scoreStr}</span>
+                                  {hasScore && (
+                                    <span style={{
+                                      width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                                      backgroundColor: homeWon ? '#3FB950' : '#F85149',
+                                    }} />
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Right: giveaway icon + chevron */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                                {giveawayName && (
+                                  <span style={{ fontSize: 13 }}>{guessGiveawayEmoji(giveawayName)}</span>
+                                )}
+                                <ChevronRight
+                                  size={16}
+                                  color={isExpanded ? '#E6EDF3' : '#8B949E'}
+                                  style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}
+                                />
+                              </div>
+                            </button>
+                          )
+                        })}
+                        </div>
+                      ))}
                     </div>
 
                     {/* Expanded BoxScore */}
