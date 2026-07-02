@@ -119,6 +119,8 @@ export default function StadiumDetailPage() {
   const [tripMonths, setTripMonths]             = useState<Set<number>>(new Set())
   const [visitPromos, setVisitPromos]           = useState<Record<string, { promotions: string[]; promotion_photos: Record<string, string> }>>({})
   const [lightboxUrl, setLightboxUrl]           = useState<string | null>(null)
+  const [stadiumClaims, setStadiumClaims] = useState<Array<{ id: string; achievement_id: string; giveaway_type: string | null; extra_data: Record<string, unknown> }>>([])
+  const [stadiumFood, setStadiumFood] = useState<Array<{ id: string; name: string; category: string; rating: number | null; photo_url: string | null }>>([])
 
   useEffect(() => {
     function handleLightbox(e: Event) {
@@ -207,6 +209,19 @@ export default function StadiumDetailPage() {
   }
 
   useEffect(() => { load() }, [id])
+
+  useEffect(() => {
+    if (visits.length === 0) return
+    const visitIds = visits.map(v => v.id)
+    const supabase = createClient()
+    supabase.from('achievement_claims').select('id, achievement_id, giveaway_type, extra_data')
+      .in('stadium_visit_id', visitIds)
+      .not('achievement_id', 'is', null)
+      .then(({ data }) => { if (data) setStadiumClaims(data) })
+    supabase.from('food_log').select('id, name, category, rating, photo_url')
+      .in('stadium_visit_id', visitIds)
+      .then(({ data }) => { if (data) setStadiumFood(data) })
+  }, [visits])
 
   useEffect(() => {
     if (activeTab === 'stadium-info') setIntelSubTab('food')
@@ -738,6 +753,72 @@ export default function StadiumDetailPage() {
                       )
                     })()}
                   </>
+                )}
+
+                {(stadiumClaims.length > 0 || stadiumFood.length > 0) && (
+                  <div style={{ marginTop: 24 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3', marginBottom: 14 }}>
+                      Your Collection at {stadium.name}
+                    </div>
+
+                    {stadiumClaims.length > 0 && (
+                      <div style={{ marginBottom: 20 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                          🎁 Giveaways ({stadiumClaims.length})
+                        </div>
+                        <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
+                          {stadiumClaims.map(claim => {
+                            const photoUrl = claim.extra_data?.photo_url ? String(claim.extra_data.photo_url) : null
+                            const name = claim.extra_data?.bobblehead_name ? String(claim.extra_data.bobblehead_name) : (claim.giveaway_type ?? 'Item')
+                            return (
+                              <div key={claim.id} style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden' }}>
+                                <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
+                                  {photoUrl ? (
+                                    /* eslint-disable-next-line @next/next/no-img-element */
+                                    <img src={photoUrl} alt={name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  ) : (
+                                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🎁</div>
+                                  )}
+                                </div>
+                                <div style={{ padding: '6px 8px', fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {name}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {stadiumFood.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                          🍔 Food & Drink ({stadiumFood.length})
+                        </div>
+                        <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
+                          {stadiumFood.map(item => {
+                            const categoryEmoji: Record<string, string> = { hot_dog: '🌭', specialty: '🍔', dessert: '🍦', drink: '🥤', other: '🍽️' }
+                            return (
+                              <div key={item.id} style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden' }}>
+                                <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
+                                  {item.photo_url ? (
+                                    /* eslint-disable-next-line @next/next/no-img-element */
+                                    <img src={item.photo_url} alt={item.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  ) : (
+                                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>{categoryEmoji[item.category] ?? '🍽️'}</div>
+                                  )}
+                                </div>
+                                <div style={{ padding: '6px 8px' }}>
+                                  <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+                                  {item.rating && <div style={{ fontSize: 13, color: '#F5A623' }}>{'⭐'.repeat(item.rating)}</div>}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </section>
             )}

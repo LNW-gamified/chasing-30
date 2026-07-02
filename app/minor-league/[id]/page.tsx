@@ -239,6 +239,7 @@ export default function MinorLeagueDetailPage() {
   const [editSaving,     setEditSaving]     = useState(false)
   const [lightboxUrl,    setLightboxUrl]    = useState<string | null>(null)
   const [uploadingIdx,   setUploadingIdx]   = useState<number | null>(null)
+  const [stadiumFood, setStadiumFood] = useState<Array<{ id: string; name: string; category: string; rating: number | null; photo_url: string | null }>>([])
 
   async function load() {
     const supabase = createClient()
@@ -320,6 +321,19 @@ export default function MinorLeagueDetailPage() {
   }
 
   useEffect(() => { load() }, [id])
+
+  useEffect(() => {
+    if (visits.length === 0) return
+    const entryIds = visits.map(e => e.id)
+    const supabase = createClient()
+    supabase.from('food_log').select('id, name, category, rating, photo_url')
+      .in('baseball_life_entry_id', entryIds)
+      .then(({ data }) => { if (data) setStadiumFood(data) })
+  }, [visits])
+
+  const allGiveaways = visits.flatMap(e =>
+    (e.giveaway_items ?? []).map(g => ({ ...g, entryId: e.id }))
+  )
 
   useEffect(() => {
     if (stadium) loadTickets()
@@ -1074,6 +1088,68 @@ export default function MinorLeagueDetailPage() {
                         </div>
                       )
                     })}
+                  </div>
+                )}
+
+                {(allGiveaways.length > 0 || stadiumFood.length > 0) && (
+                  <div style={{ marginTop: 24 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3', marginBottom: 14 }}>
+                      Your Collection at {stadium.name}
+                    </div>
+
+                    {allGiveaways.length > 0 && (
+                      <div style={{ marginBottom: 20 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                          🎁 Giveaways ({allGiveaways.length})
+                        </div>
+                        <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
+                          {allGiveaways.map((g, i) => (
+                            <div key={`${g.entryId}-${i}`} style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden' }}>
+                              <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
+                                {g.photo_url ? (
+                                  /* eslint-disable-next-line @next/next/no-img-element */
+                                  <img src={g.photo_url} alt={g.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🎁</div>
+                                )}
+                              </div>
+                              <div style={{ padding: '6px 8px', fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {g.name}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {stadiumFood.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                          🍔 Food & Drink ({stadiumFood.length})
+                        </div>
+                        <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
+                          {stadiumFood.map(item => {
+                            const categoryEmoji: Record<string, string> = { hot_dog: '🌭', specialty: '🍔', dessert: '🍦', drink: '🥤', other: '🍽️' }
+                            return (
+                              <div key={item.id} style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden' }}>
+                                <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
+                                  {item.photo_url ? (
+                                    /* eslint-disable-next-line @next/next/no-img-element */
+                                    <img src={item.photo_url} alt={item.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  ) : (
+                                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>{categoryEmoji[item.category] ?? '🍽️'}</div>
+                                  )}
+                                </div>
+                                <div style={{ padding: '6px 8px' }}>
+                                  <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+                                  {item.rating && <div style={{ fontSize: 13, color: '#F5A623' }}>{'⭐'.repeat(item.rating)}</div>}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </section>
