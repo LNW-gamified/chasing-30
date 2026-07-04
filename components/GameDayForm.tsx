@@ -121,7 +121,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
   const [companions, setCompanions] = useState<string[]>(visit?.companions ?? [])
   const [companionInput, setCompanionInput] = useState('')
   const [foodItems, setFoodItems] = useState<Array<{ name: string; category: string; rating: number | null; photoFile: File | null; photoPreview: string | null }>>([])
-  const [giveawayItems, setGiveawayItems] = useState<Array<{ name: string; photo_url: string | null }>>([])
+  const [giveawayItems, setGiveawayItems] = useState<Array<{ name: string; category: string; photo_url: string | null }>>([])
   const [uploadingIdx, setUploadingIdx] = useState<Record<number, boolean>>({})
 
   function removeGiveawayItem(idx: number) {
@@ -433,7 +433,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
         user_id: user?.id,
         stadium_visit_id: visitId,
         name: item.name.trim(),
-        category: 'giveaway',
+        category: item.category,
         photo_url: item.photo_url,
       })
     }
@@ -1064,6 +1064,15 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                   placeholder="e.g. Bobblehead"
                   style={{ flex: 1, backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
                 />
+                <select
+                  value={item.category}
+                  onChange={e => setGiveawayItems(prev => prev.map((it, i) => i === idx ? { ...it, category: e.target.value } : it))}
+                  style={{ backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
+                >
+                  <option value="giveaway">🎁 Giveaway</option>
+                  <option value="souvenir">🛍️ Souvenir</option>
+                  <option value="memorabilia">✍️ Memorabilia</option>
+                </select>
                 {item.photo_url ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1084,7 +1093,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
             ))}
             <button
               type="button"
-              onClick={() => setGiveawayItems([...giveawayItems, { name: '', photo_url: null }])}
+              onClick={() => setGiveawayItems([...giveawayItems, { name: '', category: 'giveaway', photo_url: null }])}
               style={{ width: '100%', padding: '10px', borderRadius: 10, border: '1px dashed #30363D', background: 'none', color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
             >+ Add Giveaway or Collectible</button>
           </div>
