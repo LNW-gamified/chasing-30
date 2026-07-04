@@ -1178,7 +1178,7 @@ export default function MilestoneGrid({
                 }}
                 style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
               >
-                <div style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden', backgroundColor: '#1C2430' }}>
+                <div style={{ position: 'relative', paddingBottom: '100%', overflow: 'hidden', backgroundColor: '#1C2430' }}>
                   {c.photo_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={c.photo_url} alt={c.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
@@ -1238,7 +1238,7 @@ export default function MilestoneGrid({
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
                     🎁 Collectibles ({nonFood.length})
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12 }}>
+                  <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
                     {nonFood.map(renderCard)}
                   </div>
                 </div>
@@ -1249,7 +1249,7 @@ export default function MilestoneGrid({
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
                     🍔 Food & Drink ({food.length})
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12 }}>
+                  <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
                     {food.map(renderCard)}
                   </div>
                 </div>
