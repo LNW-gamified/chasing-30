@@ -235,7 +235,7 @@ export default function MinorLeagueDetailPage() {
   }>>([])
 
   const [lightboxUrl,    setLightboxUrl]    = useState<string | null>(null)
-  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; baseball_life_entry_id: string | null }>>([])
+  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; giveaway_type: string | null; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; baseball_life_entry_id: string | null }>>([])
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
 
   const [editingCompanionsId, setEditingCompanionsId] = useState<string | null>(null)
@@ -348,7 +348,7 @@ export default function MinorLeagueDetailPage() {
     const supabase = createClient()
     const { data: collectibles } = await supabase
       .from('collectible_log')
-      .select('id, name, category, photo_url, signed_by, acquired_from, rating, price, baseball_life_entry_id')
+      .select('id, name, category, giveaway_type, photo_url, signed_by, acquired_from, rating, price, baseball_life_entry_id')
       .in('baseball_life_entry_id', entryIds)
       .order('created_at', { ascending: false })
     if (collectibles) setStadiumCollectibles(collectibles)
@@ -1083,6 +1083,7 @@ export default function MinorLeagueDetailPage() {
                                 id: c.id,
                                 name: c.name,
                                 category: c.category,
+                                giveawayType: c.giveaway_type,
                                 photoUrl: c.photo_url,
                                 signedBy: c.signed_by,
                                 acquiredFrom: c.acquired_from,

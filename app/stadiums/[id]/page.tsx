@@ -129,7 +129,7 @@ export default function StadiumDetailPage() {
   const [tripMonths, setTripMonths]             = useState<Set<number>>(new Set())
   const [visitPromos, setVisitPromos]           = useState<Record<string, { promotions: string[]; promotion_photos: Record<string, string> }>>({})
   const [lightboxUrl, setLightboxUrl]           = useState<string | null>(null)
-  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; stadium_visit_id: string | null }>>([])
+  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; giveaway_type: string | null; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; stadium_visit_id: string | null }>>([])
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
 
   useEffect(() => {
@@ -224,7 +224,7 @@ export default function StadiumDetailPage() {
     const supabase = createClient()
     const { data: collectibles } = await supabase
       .from('collectible_log')
-      .select('id, name, category, photo_url, signed_by, acquired_from, rating, price, stadium_visit_id')
+      .select('id, name, category, giveaway_type, photo_url, signed_by, acquired_from, rating, price, stadium_visit_id')
       .in('stadium_visit_id', visitIds)
       .order('created_at', { ascending: false })
     if (collectibles) setStadiumCollectibles(collectibles)
@@ -825,6 +825,7 @@ export default function StadiumDetailPage() {
                                 id: c.id,
                                 name: c.name,
                                 category: c.category,
+                                giveawayType: c.giveaway_type,
                                 photoUrl: c.photo_url,
                                 signedBy: c.signed_by,
                                 acquiredFrom: c.acquired_from,

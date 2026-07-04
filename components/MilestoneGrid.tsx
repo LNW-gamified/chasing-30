@@ -277,7 +277,7 @@ export default function MilestoneGrid({
   // Shared giveaway/food editor
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
 
-  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; stadium_visit_id: string | null; baseball_life_entry_id: string | null }>>([])
+  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; giveaway_type: string | null; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; stadium_visit_id: string | null; baseball_life_entry_id: string | null }>>([])
 
   const [milbStadiums, setMilbStadiums] = useState<Array<{ id: string; milb_team_id: number | null; affiliate: string; logo_url: string | null }>>([])
 
@@ -293,7 +293,7 @@ export default function MilestoneGrid({
 
   const fetchCollectibles = useCallback(async () => {
     const supabase = createClient()
-    const { data } = await supabase.from('collectible_log').select('id, name, category, photo_url, signed_by, acquired_from, rating, price, stadium_visit_id, baseball_life_entry_id').order('created_at', { ascending: false })
+    const { data } = await supabase.from('collectible_log').select('id, name, category, giveaway_type, photo_url, signed_by, acquired_from, rating, price, stadium_visit_id, baseball_life_entry_id').order('created_at', { ascending: false })
     if (data) setStadiumCollectibles(data)
   }, [])
 
@@ -1172,7 +1172,7 @@ export default function MilestoneGrid({
                 key={c.id}
                 onClick={() => {
                   setEditingItem({
-                    id: c.id, name: c.name, category: c.category, photoUrl: c.photo_url,
+                    id: c.id, name: c.name, category: c.category, giveawayType: c.giveaway_type, photoUrl: c.photo_url,
                     signedBy: c.signed_by, acquiredFrom: c.acquired_from, rating: c.rating, price: c.price,
                   })
                 }}
