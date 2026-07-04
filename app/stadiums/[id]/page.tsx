@@ -796,8 +796,7 @@ export default function StadiumDetailPage() {
                   </>
                 )}
 
-                {(stadiumCollectibles.length > 0 || stadiumFood.length > 0) && (
-                  <div style={{ marginTop: 24 }}>
+                <div style={{ marginTop: 24 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                       <div style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3' }}>
                         Your Collection at {stadium.name}
@@ -809,6 +808,12 @@ export default function StadiumDetailPage() {
                         + Add Item
                       </button>
                     </div>
+
+                    {stadiumCollectibles.length === 0 && stadiumFood.length === 0 && (
+                      <div style={{ fontSize: 13, color: '#8B949E', padding: '4px 0 4px' }}>
+                        Nothing logged yet — tap &ldquo;+ Add Item&rdquo; to start your collection at this stadium.
+                      </div>
+                    )}
 
                     {stadiumCollectibles.length > 0 && (
                       <div style={{ marginBottom: 20 }}>
@@ -908,8 +913,7 @@ export default function StadiumDetailPage() {
                         </div>
                       </div>
                     )}
-                  </div>
-                )}
+                </div>
               </section>
             )}
 
