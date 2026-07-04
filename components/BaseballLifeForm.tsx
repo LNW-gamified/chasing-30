@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Loader2, Check, ChevronDown, Camera, Plus, ImagePlus } from 'lucide-react'
+import { X, Loader2, Check, ChevronDown, Camera, ImagePlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import type { BaseballLifeCategory } from '@/types'
 import { GAME_MOMENTS } from '@/lib/moments'
@@ -182,11 +182,10 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
   const [notes, setNotes] = useState('')
 
   // Giveaway items (minor_league only)
-  const [giveawayItems,   setGiveawayItems]   = useState<Array<{ name: string; photo_url: string | null }>>([])
+  const [giveawayItems,   setGiveawayItems]   = useState<Array<{ name: string; category: string; giveaway_type: string; photo_url: string | null }>>([])
   const [foodItems, setFoodItems] = useState<Array<{ name: string; category: string; rating: number | null; photoFile: File | null; photoPreview: string | null }>>([])
   const [companions, setCompanions] = useState<string[]>([])
   const [companionInput, setCompanionInput] = useState('')
-  const [giveawayInput,   setGiveawayInput]   = useState('')
   const [uploadingIdx,    setUploadingIdx]    = useState<Record<number, boolean>>({})
 
   // MiLB past-game picker (minor_league only)
@@ -224,13 +223,6 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
 
   function toggleMoment(m: string) {
     setSelectedMoments(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m])
-  }
-
-  function addGiveawayItem() {
-    const name = giveawayInput.trim()
-    if (!name) return
-    setGiveawayItems(prev => [...prev, { name, photo_url: null }])
-    setGiveawayInput('')
   }
 
   function removeGiveawayItem(idx: number) {
@@ -400,7 +392,8 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
         user_id: user.id,
         baseball_life_entry_id: savedEntry.id,
         name: item.name.trim(),
-        category: 'giveaway',
+        category: item.category,
+        giveaway_type: item.category === 'giveaway' ? item.giveaway_type : null,
         photo_url: item.photo_url,
       })
     }
@@ -742,53 +735,65 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
 
             {category === 'minor_league' && (
               <div>
-                <FieldLabel>Giveaways &amp; Promotions (optional)</FieldLabel>
-                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                  <input
-                    type="text"
-                    value={giveawayInput}
-                    onChange={e => setGiveawayInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addGiveawayItem() } }}
-                    placeholder="e.g. Bobblehead, T-Shirt, Hat…"
-                    style={{ ...inp, flex: 1 }}
-                  />
-                  <button
-                    type="button"
-                    onClick={addGiveawayItem}
-                    disabled={!giveawayInput.trim()}
-                    style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid #30363D', backgroundColor: giveawayInput.trim() ? '#1F6FEB' : '#1C2430', color: giveawayInput.trim() ? '#fff' : '#8B949E', cursor: giveawayInput.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, fontWeight: 600, fontSize: 13 }}
-                  >
-                    <Plus size={13} /> Add
-                  </button>
-                </div>
-                {giveawayItems.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 14px', borderRadius: 10, backgroundColor: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.2)' }}>
-                    {giveawayItems.map((item, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, flex: 1, minWidth: 0 }}>🎁 {item.name}</span>
-                        {item.photo_url ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={item.photo_url} alt={item.name} style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover', display: 'block' }} />
-                            <label style={{ cursor: 'pointer', fontSize: 13, color: '#8B949E', fontWeight: 600 }}>
-                              Replace
-                              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadGiveawayPhoto(idx, f) }} />
-                            </label>
-                          </div>
-                        ) : (
-                          <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: '#8B949E', padding: '4px 8px', borderRadius: 6, border: '1px dashed #30363D', flexShrink: 0 }}>
-                            {uploadingIdx[idx] ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} /> : <Camera size={11} />}
-                            {uploadingIdx[idx] ? 'Uploading…' : 'Photo'}
+                <FieldLabel>Giveaways &amp; Collectibles (optional)</FieldLabel>
+                <div style={{ marginBottom: 8 }}>
+                  {giveawayItems.map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, backgroundColor: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.2)', marginBottom: 8 }}>
+                      <input
+                        value={item.name}
+                        onChange={e => setGiveawayItems(prev => prev.map((it, i) => i === idx ? { ...it, name: e.target.value } : it))}
+                        placeholder="e.g. Bobblehead"
+                        style={{ flex: 1, backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
+                      />
+                      <select
+                        value={item.category}
+                        onChange={e => setGiveawayItems(prev => prev.map((it, i) => i === idx ? { ...it, category: e.target.value } : it))}
+                        style={{ backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
+                      >
+                        <option value="giveaway">🎁 Giveaway</option>
+                        <option value="souvenir">🛍️ Souvenir</option>
+                        <option value="memorabilia">✍️ Memorabilia</option>
+                      </select>
+                      {item.category === 'giveaway' && (
+                        <select
+                          value={item.giveaway_type}
+                          onChange={e => setGiveawayItems(prev => prev.map((it, i) => i === idx ? { ...it, giveaway_type: e.target.value } : it))}
+                          style={{ backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
+                        >
+                          <option value="bobblehead">🪆 Bobblehead</option>
+                          <option value="jersey">👕 Jersey</option>
+                          <option value="tshirt">👔 T-Shirt</option>
+                          <option value="hat">🧢 Hat</option>
+                          <option value="other">🎁 Other</option>
+                        </select>
+                      )}
+                      {item.photo_url ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={item.photo_url} alt={item.name} style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover', display: 'block' }} />
+                          <label style={{ cursor: 'pointer', fontSize: 13, color: '#8B949E', fontWeight: 600 }}>
+                            Replace
                             <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadGiveawayPhoto(idx, f) }} />
                           </label>
-                        )}
-                        <button type="button" onClick={() => removeGiveawayItem(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8B949E', padding: 2, display: 'flex', flexShrink: 0 }}>
-                          <X size={13} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                        </div>
+                      ) : (
+                        <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: '#8B949E', padding: '4px 8px', borderRadius: 6, border: '1px dashed #30363D', flexShrink: 0 }}>
+                          {uploadingIdx[idx] ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} /> : <Camera size={11} />}
+                          {uploadingIdx[idx] ? 'Uploading…' : 'Photo'}
+                          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadGiveawayPhoto(idx, f) }} />
+                        </label>
+                      )}
+                      <button type="button" onClick={() => removeGiveawayItem(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8B949E', padding: 2, display: 'flex', flexShrink: 0 }}>
+                        <X size={13} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setGiveawayItems([...giveawayItems, { name: '', category: 'giveaway', giveaway_type: 'other', photo_url: null }])}
+                    style={{ width: '100%', padding: '10px', borderRadius: 10, border: '1px dashed #30363D', background: 'none', color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                  >+ Add Giveaway or Collectible</button>
+                </div>
               </div>
             )}
 
