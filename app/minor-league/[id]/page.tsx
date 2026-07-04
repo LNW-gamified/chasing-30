@@ -1100,13 +1100,21 @@ export default function MinorLeagueDetailPage() {
                                   </div>
                                 )}
                               </div>
-                              <div style={{ padding: '10px 12px 12px' }}>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
+                              <div style={{ padding: '8px 10px' }}>
+                                <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
                                   {c.name}
                                 </div>
-                                <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize' }}>
+                                <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize', marginBottom: 6 }}>
                                   {c.category}
                                 </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                                  <TeamLogo abbreviation={stadium.abbreviation} size={14} />
+                                  <span style={{ fontSize: 12, color: '#8B949E' }}>{stadium.name}</span>
+                                </div>
+                                {(() => {
+                                  const v = visits.find(vi => vi.id === c.baseball_life_entry_id)
+                                  return v ? <div style={{ fontSize: 12, color: '#8B949E' }}>{formatDate(v.visit_date)}</div> : null
+                                })()}
                               </div>
                             </div>
                           ))}
@@ -1141,13 +1149,21 @@ export default function MinorLeagueDetailPage() {
                                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🍽️</div>
                                 )}
                               </div>
-                              <div style={{ padding: '10px 12px 12px' }}>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
+                              <div style={{ padding: '8px 10px' }}>
+                                <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
                                   {item.name}
                                 </div>
-                                <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize' }}>
+                                <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize', marginBottom: 6 }}>
                                   {item.category}
                                 </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                                  <TeamLogo abbreviation={stadium.abbreviation} size={14} />
+                                  <span style={{ fontSize: 12, color: '#8B949E' }}>{stadium.name}</span>
+                                </div>
+                                {(() => {
+                                  const v = visits.find(vi => vi.id === item.baseball_life_entry_id)
+                                  return v ? <div style={{ fontSize: 12, color: '#8B949E' }}>{formatDate(v.visit_date)}</div> : null
+                                })()}
                                 {item.rating && <div style={{ fontSize: 13, color: '#F5A623', marginTop: 4 }}>{'⭐'.repeat(item.rating)}</div>}
                               </div>
                             </div>
