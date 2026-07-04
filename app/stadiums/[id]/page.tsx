@@ -850,11 +850,11 @@ export default function StadiumDetailPage() {
                                   </div>
                                 )
                               })()}
-                              <div style={{ padding: '6px 8px' }}>
-                                <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <div style={{ padding: '10px 12px 12px' }}>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
                                   {c.name}
                                 </div>
-                                <div style={{ fontSize: 11, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize' }}>
+                                <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize' }}>
                                   {c.category}
                                 </div>
                               </div>
@@ -901,9 +901,14 @@ export default function StadiumDetailPage() {
                                   </div>
                                 )
                               })()}
-                              <div style={{ padding: '6px 8px' }}>
-                                <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
-                                {item.rating && <div style={{ fontSize: 13, color: '#F5A623' }}>{'⭐'.repeat(item.rating)}</div>}
+                              <div style={{ padding: '10px 12px 12px' }}>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
+                                  {item.name}
+                                </div>
+                                <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize' }}>
+                                  {item.category}
+                                </div>
+                                {item.rating && <div style={{ fontSize: 13, color: '#F5A623', marginTop: 4 }}>{'⭐'.repeat(item.rating)}</div>}
                               </div>
                             </div>
                           ))}
