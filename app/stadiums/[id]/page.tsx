@@ -129,7 +129,7 @@ export default function StadiumDetailPage() {
   const [tripMonths, setTripMonths]             = useState<Set<number>>(new Set())
   const [visitPromos, setVisitPromos]           = useState<Record<string, { promotions: string[]; promotion_photos: Record<string, string> }>>({})
   const [lightboxUrl, setLightboxUrl]           = useState<string | null>(null)
-  const [stadiumClaims, setStadiumClaims] = useState<Array<{ id: string; achievement_id: string; giveaway_type: string | null; extra_data: Record<string, unknown>; stadium_visit_id: string | null }>>([])
+  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; photo_url: string | null; signed_by: string | null; acquired_from: string | null; stadium_visit_id: string | null }>>([])
   const [stadiumFood, setStadiumFood] = useState<Array<{ id: string; name: string; category: string; rating: number | null; photo_url: string | null; stadium_visit_id: string | null }>>([])
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
 
@@ -223,14 +223,13 @@ export default function StadiumDetailPage() {
     if (visits.length === 0) return
     const visitIds = visits.map(v => v.id)
     const supabase = createClient()
-    const [{ data: claims }, { data: food }] = await Promise.all([
-      supabase.from('achievement_claims').select('id, achievement_id, giveaway_type, extra_data, stadium_visit_id')
-        .in('stadium_visit_id', visitIds)
-        .not('giveaway_type', 'is', null),
+    const [{ data: collectibles }, { data: food }] = await Promise.all([
+      supabase.from('collectible_log').select('id, name, category, photo_url, signed_by, acquired_from, stadium_visit_id')
+        .in('stadium_visit_id', visitIds),
       supabase.from('food_log').select('id, name, category, rating, photo_url, stadium_visit_id')
         .in('stadium_visit_id', visitIds),
     ])
-    if (claims) setStadiumClaims(claims)
+    if (collectibles) setStadiumCollectibles(collectibles)
     if (food) setStadiumFood(food)
   }, [visits])
 
@@ -797,57 +796,65 @@ export default function StadiumDetailPage() {
                   </>
                 )}
 
-                {(stadiumClaims.length > 0 || stadiumFood.length > 0) && (
+                {(stadiumCollectibles.length > 0 || stadiumFood.length > 0) && (
                   <div style={{ marginTop: 24 }}>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3', marginBottom: 14 }}>
-                      Your Collection at {stadium.name}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3' }}>
+                        Your Collection at {stadium.name}
+                      </div>
+                      <button
+                        onClick={() => setEditingItem({ id: 'new', itemType: 'collectible', name: '', category: 'giveaway', photoUrl: null, stadiumVisitId: visits[0]?.id ?? null })}
+                        style={{ fontSize: 13, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}
+                      >
+                        + Add Item
+                      </button>
                     </div>
 
-                    {stadiumClaims.length > 0 && (
+                    {stadiumCollectibles.length > 0 && (
                       <div style={{ marginBottom: 20 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                          🎁 Giveaways ({stadiumClaims.length})
+                          🎁 Collectibles ({stadiumCollectibles.length})
                         </div>
                         <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
-                          {stadiumClaims.map(claim => {
-                            const photoUrl = claim.extra_data?.photo_url ? String(claim.extra_data.photo_url) : null
-                            const name = claim.extra_data?.bobblehead_name ? String(claim.extra_data.bobblehead_name) : (claim.giveaway_type ?? 'Item')
-                            return (
-                              <div
-                                key={claim.id}
-                                onClick={() => setEditingItem({
-                                  id: claim.id,
-                                  itemType: 'giveaway',
-                                  name: claim.extra_data?.bobblehead_name ? String(claim.extra_data.bobblehead_name) : '',
-                                  category: claim.giveaway_type ?? 'other',
-                                  photoUrl,
-                                })}
-                                style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
-                              >
-                                <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
-                                  {photoUrl ? (
-                                    /* eslint-disable-next-line @next/next/no-img-element */
-                                    <img src={photoUrl} alt={name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                                  ) : (
-                                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🎁</div>
-                                  )}
-                                </div>
-                                {(() => {
-                                  const v = visitLookup(claim.stadium_visit_id)
-                                  if (!v) return null
-                                  return (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px 0' }}>
-                                      <TeamLogo abbreviation={stadium.abbreviation} size={14} />
-                                      <span style={{ fontSize: 11, color: '#8B949E' }}>{formatDate(v.visit_date)}</span>
-                                    </div>
-                                  )
-                                })()}
-                                <div style={{ padding: '6px 8px', fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  {name}
-                                </div>
+                          {stadiumCollectibles.map(c => (
+                            <div
+                              key={c.id}
+                              onClick={() => setEditingItem({
+                                id: c.id,
+                                itemType: 'collectible',
+                                name: c.name,
+                                category: c.category,
+                                photoUrl: c.photo_url,
+                                signedBy: c.signed_by,
+                                acquiredFrom: c.acquired_from,
+                              })}
+                              style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
+                            >
+                              <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
+                                {c.photo_url ? (
+                                  /* eslint-disable-next-line @next/next/no-img-element */
+                                  <img src={c.photo_url} alt={c.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+                                    {c.category === 'memorabilia' ? '✍️' : c.category === 'souvenir' ? '🛍️' : '🎁'}
+                                  </div>
+                                )}
                               </div>
-                            )
-                          })}
+                              {(() => {
+                                const v = visitLookup(c.stadium_visit_id)
+                                if (!v) return null
+                                return (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px 0' }}>
+                                    <TeamLogo abbreviation={stadium.abbreviation} size={14} />
+                                    <span style={{ fontSize: 11, color: '#8B949E' }}>{formatDate(v.visit_date)}</span>
+                                  </div>
+                                )
+                              })()}
+                              <div style={{ padding: '6px 8px', fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {c.name}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}

@@ -60,7 +60,6 @@ interface BleEntry {
   weather_conditions: string | null
   game_pk: number | null
   game_data: Record<string, unknown> | null
-  giveaway_items: Array<{ name: string; photo_url: string | null }> | null
 }
 
 interface MiLBGame {
@@ -109,17 +108,6 @@ const RATING_PRIORITY: Record<string, number> = { great: 4, good: 3, fair: 2, av
 type ActiveTab = 'games-witnessed' | 'game-day-intel' | 'stadium-info'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-
-function guessGiveawayEmoji(name: string): string {
-  const n = name.toLowerCase()
-  if (n.includes('bobblehead') || n.includes('bobble')) return '🪆'
-  if (n.includes('jersey')) return '👕'
-  if (n.includes('t-shirt') || n.includes('tshirt') || n.includes('shirt')) return '👔'
-  if (n.includes('hat') || n.includes('cap')) return '🎩'
-  if (n.includes('poster')) return '📋'
-  if (n.includes('bingo') || n.includes('card')) return '🎫'
-  return '🎁'
-}
 
 function SectionTitle({ Icon, children }: {
   Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
@@ -245,13 +233,9 @@ export default function MinorLeagueDetailPage() {
     game_pk: number; game_date: string; opponent: string; time_str: string | null; promotions: string[]
   }>>([])
 
-  // Edit giveaways
-  const [editingVisitId, setEditingVisitId] = useState<string | null>(null)
-  const [editGiveaways,  setEditGiveaways]  = useState<Array<{ name: string; photo_url: string | null }>>([])
-  const [editSaving,     setEditSaving]     = useState(false)
   const [lightboxUrl,    setLightboxUrl]    = useState<string | null>(null)
-  const [uploadingIdx,   setUploadingIdx]   = useState<number | null>(null)
   const [stadiumFood, setStadiumFood] = useState<Array<{ id: string; name: string; category: string; rating: number | null; photo_url: string | null }>>([])
+  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; photo_url: string | null; signed_by: string | null; acquired_from: string | null; baseball_life_entry_id: string | null }>>([])
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
 
   async function load() {
@@ -259,7 +243,7 @@ export default function MinorLeagueDetailPage() {
     const [{ data: s }, { data: v }] = await Promise.all([
       supabase.from('minor_league_stadiums').select('*').eq('id', id).single(),
       supabase.from('baseball_life_entries')
-        .select('id,visit_date,opponent,home_team,away_team,final_score_home,final_score_away,ticket_section,ticket_row,ticket_seats,notes,moments,weather_temp,weather_conditions,game_pk,game_data,giveaway_items')
+        .select('id,visit_date,opponent,home_team,away_team,final_score_home,final_score_away,ticket_section,ticket_row,ticket_seats,notes,moments,weather_temp,weather_conditions,game_pk,game_data')
         .eq('category', 'minor_league')
         .eq('minor_league_stadium_id', id)
         .order('visit_date', { ascending: false }),
@@ -339,17 +323,18 @@ export default function MinorLeagueDetailPage() {
     if (visits.length === 0) return
     const entryIds = visits.map(e => e.id)
     const supabase = createClient()
-    const { data } = await supabase.from('food_log').select('id, name, category, rating, photo_url')
-      .in('baseball_life_entry_id', entryIds)
-    if (data) setStadiumFood(data)
+    const [{ data: food }, { data: collectibles }] = await Promise.all([
+      supabase.from('food_log').select('id, name, category, rating, photo_url, baseball_life_entry_id')
+        .in('baseball_life_entry_id', entryIds),
+      supabase.from('collectible_log').select('id, name, category, photo_url, signed_by, acquired_from, baseball_life_entry_id')
+        .in('baseball_life_entry_id', entryIds),
+    ])
+    if (food) setStadiumFood(food)
+    if (collectibles) setStadiumCollectibles(collectibles)
   }, [visits])
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchFood() }, [fetchFood])
-
-  const allGiveaways = visits.flatMap(e =>
-    (e.giveaway_items ?? []).map((g, itemIndex) => ({ ...g, entryId: e.id, itemIndex }))
-  )
 
   const visitsByYear = visits.reduce<Record<string, typeof visits>>((acc, v) => {
     const year = v.visit_date.slice(0, 4)
@@ -390,39 +375,6 @@ export default function MinorLeagueDetailPage() {
     await supabase.from('baseball_life_entries').delete().eq('id', entryId)
     setExpandedVisit(null)
     await load()
-  }
-
-  function openEdit(visit: BleEntry) {
-    setEditingVisitId(visit.id)
-    setEditGiveaways(visit.giveaway_items ? visit.giveaway_items.map(g => ({ ...g })) : [])
-  }
-
-  async function saveEdit() {
-    if (!editingVisitId) return
-    setEditSaving(true)
-    const supabase = createClient()
-    await supabase
-      .from('baseball_life_entries')
-      .update({ giveaway_items: editGiveaways })
-      .eq('id', editingVisitId)
-    setEditSaving(false)
-    setEditingVisitId(null)
-    await load()
-  }
-
-  async function uploadGiveawayPhoto(idx: number, file: File) {
-    setUploadingIdx(idx)
-    const supabase = createClient()
-    const ext = file.name.split('.').pop()
-    const path = `${editingVisitId}-${idx}-${Date.now()}.${ext}`
-    const { data, error } = await supabase.storage.from('giveaway-photos').upload(path, file, { upsert: true })
-    if (!error && data) {
-      const { data: urlData } = supabase.storage.from('giveaway-photos').getPublicUrl(data.path)
-      const updated = [...editGiveaways]
-      updated[idx] = { ...updated[idx], photo_url: urlData.publicUrl }
-      setEditGiveaways(updated)
-    }
-    setUploadingIdx(null)
   }
 
   async function handleFetchStats(entryId: string) {
@@ -514,98 +466,6 @@ export default function MinorLeagueDetailPage() {
         </div>
       )}
 
-      {/* Edit giveaways sheet */}
-      {editingVisitId && (
-        <div
-          style={{
-            position: 'fixed', inset: 0, zIndex: 900,
-            backgroundColor: 'rgba(0,0,0,0.7)',
-            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-          }}
-          onClick={(e) => { if (e.target === e.currentTarget) setEditingVisitId(null) }}
-        >
-          <div style={{
-            backgroundColor: '#161B22', borderRadius: '16px 16px 0 0',
-            border: '1px solid #30363D', padding: '20px 16px 40px',
-            width: '100%', maxWidth: 560, maxHeight: '80vh', overflowY: 'auto',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <span style={{ fontSize: 16, fontWeight: 800, color: '#E6EDF3' }}>Edit Giveaways</span>
-              <button onClick={() => setEditingVisitId(null)} style={{ background: 'none', border: 'none', color: '#8B949E', fontSize: 20, cursor: 'pointer' }}>×</button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
-              {editGiveaways.map((item, idx) => (
-                <div key={idx} style={{ backgroundColor: '#0D1117', borderRadius: 12, border: '1px solid #30363D', padding: '12px 14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                    <input
-                      value={item.name}
-                      onChange={(e) => {
-                        const updated = [...editGiveaways]
-                        updated[idx] = { ...updated[idx], name: e.target.value }
-                        setEditGiveaways(updated)
-                      }}
-                      style={{
-                        flex: 1, backgroundColor: '#161B22', border: '1px solid #30363D',
-                        borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13,
-                      }}
-                    />
-                    <button
-                      onClick={() => setEditGiveaways(editGiveaways.filter((_, i) => i !== idx))}
-                      style={{ background: 'none', border: 'none', color: '#F85149', fontSize: 16, cursor: 'pointer', padding: '4px 6px' }}
-                    >✕</button>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    {item.photo_url && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={item.photo_url}
-                        alt={item.name}
-                        onClick={() => setLightboxUrl(item.photo_url!)}
-                        style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', cursor: 'pointer', flexShrink: 0 }}
-                      />
-                    )}
-                    <label style={{
-                      fontSize: 12, fontWeight: 600, color: '#58A6FF',
-                      border: '1px solid rgba(88,166,255,0.3)', borderRadius: 8,
-                      padding: '6px 12px', cursor: 'pointer',
-                      opacity: uploadingIdx === idx ? 0.5 : 1,
-                    }}>
-                      {uploadingIdx === idx ? 'Uploading…' : item.photo_url ? 'Replace Photo' : '+ Add Photo'}
-                      <input
-                        type="file" accept="image/*" style={{ display: 'none' }}
-                        disabled={uploadingIdx !== null}
-                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadGiveawayPhoto(idx, f) }}
-                      />
-                    </label>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={() => setEditGiveaways([...editGiveaways, { name: '', photo_url: null }])}
-              style={{
-                width: '100%', padding: '10px', borderRadius: 10,
-                border: '1px dashed #30363D', background: 'none',
-                color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 16,
-              }}
-            >+ Add Giveaway Item</button>
-
-            <button
-              onClick={saveEdit}
-              disabled={editSaving}
-              style={{
-                width: '100%', padding: '12px', borderRadius: 10,
-                backgroundColor: '#1F6FEB', border: 'none',
-                color: '#fff', fontSize: 14, fontWeight: 700,
-                cursor: editSaving ? 'default' : 'pointer',
-                opacity: editSaving ? 0.6 : 1,
-              }}
-            >{editSaving ? 'Saving…' : 'Save Changes'}</button>
-          </div>
-        </div>
-      )}
 
       <main style={{ minHeight: '100vh' }}>
 
@@ -891,9 +751,6 @@ export default function MinorLeagueDetailPage() {
                                 </div>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                                {visit.giveaway_items && visit.giveaway_items.length > 0 && (
-                                  <span style={{ fontSize: 13 }}>{guessGiveawayEmoji(visit.giveaway_items[0].name)}</span>
-                                )}
                                 <ChevronRight
                                   size={16}
                                   color={isExpanded ? '#E6EDF3' : '#8B949E'}
@@ -1063,39 +920,6 @@ export default function MinorLeagueDetailPage() {
                                   </button>
                                 )}
   
-                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
-                                  <button
-                                    onClick={() => openEdit(visit)}
-                                    style={{ fontSize: 13, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '4px 10px', cursor: 'pointer' }}
-                                  >
-                                    Edit Giveaways
-                                  </button>
-                                </div>
-  
-                                {visit.giveaway_items && visit.giveaway_items.length > 0 && (
-                                  <div style={{ marginTop: 8, padding: '12px 14px', borderRadius: 10, backgroundColor: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.2)' }}>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                                      Giveaways &amp; Promotions
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                      {visit.giveaway_items.map((item, i) => (
-                                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                          <span style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, flex: 1, minWidth: 0 }}>🎁 {item.name}</span>
-                                          {item.photo_url && (
-                                            // eslint-disable-next-line @next/next/no-img-element
-                                            <img
-                                              src={item.photo_url}
-                                              alt={item.name}
-                                              style={{ width: 72, height: 72, borderRadius: 8, objectFit: 'cover', display: 'block', cursor: 'pointer', flexShrink: 0 }}
-                                              onClick={() => setLightboxUrl(item.photo_url!)}
-                                            />
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-  
                                 {visit.notes && (
                                   <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.5, paddingTop: 10, borderTop: '1px solid #30363D', marginTop: 4 }}>
                                     {visit.notes}
@@ -1120,41 +944,52 @@ export default function MinorLeagueDetailPage() {
                   </div>
                 )}
 
-                {(allGiveaways.length > 0 || stadiumFood.length > 0) && (
+                {(stadiumCollectibles.length > 0 || stadiumFood.length > 0) && (
                   <div style={{ marginTop: 24 }}>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3', marginBottom: 14 }}>
-                      Your Collection at {stadium.name}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3' }}>
+                        Your Collection at {stadium.name}
+                      </div>
+                      <button
+                        onClick={() => setEditingItem({ id: 'new', itemType: 'collectible', name: '', category: 'giveaway', photoUrl: null, baseballLifeEntryId: visits[0]?.id ?? null })}
+                        style={{ fontSize: 13, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}
+                      >
+                        + Add Item
+                      </button>
                     </div>
 
-                    {allGiveaways.length > 0 && (
+                    {stadiumCollectibles.length > 0 && (
                       <div style={{ marginBottom: 20 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                          🎁 Giveaways ({allGiveaways.length})
+                          🎁 Collectibles ({stadiumCollectibles.length})
                         </div>
                         <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
-                          {allGiveaways.map((g, i) => (
+                          {stadiumCollectibles.map(c => (
                             <div
-                              key={`${g.entryId}-${i}`}
+                              key={c.id}
                               onClick={() => setEditingItem({
-                                id: g.entryId,
-                                itemType: 'milb_giveaway',
-                                name: g.name,
-                                category: '',
-                                photoUrl: g.photo_url,
-                                itemIndex: g.itemIndex,
+                                id: c.id,
+                                itemType: 'collectible',
+                                name: c.name,
+                                category: c.category,
+                                photoUrl: c.photo_url,
+                                signedBy: c.signed_by,
+                                acquiredFrom: c.acquired_from,
                               })}
                               style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
                             >
                               <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
-                                {g.photo_url ? (
+                                {c.photo_url ? (
                                   /* eslint-disable-next-line @next/next/no-img-element */
-                                  <img src={g.photo_url} alt={g.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  <img src={c.photo_url} alt={c.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                                 ) : (
-                                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🎁</div>
+                                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+                                    {c.category === 'memorabilia' ? '✍️' : c.category === 'souvenir' ? '🛍️' : '🎁'}
+                                  </div>
                                 )}
                               </div>
                               <div style={{ padding: '6px 8px', fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {g.name}
+                                {c.name}
                               </div>
                             </div>
                           ))}

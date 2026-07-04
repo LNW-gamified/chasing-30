@@ -168,23 +168,6 @@ function visitLabel(v: StadiumVisit, stadiums: Stadium[]): string {
   return `${v.visit_date} · ${s?.name ?? '?'} (${v.home_team} vs ${v.visiting_team})`
 }
 
-function getItemDisplayName(claim: AchievementClaim): string {
-  const name = claim.extra_data?.bobblehead_name ? String(claim.extra_data.bobblehead_name) : null
-  if (name) return name
-  if (claim.notes) return claim.notes.length > 36 ? claim.notes.slice(0, 36) + '…' : claim.notes
-  return GIVEAWAY_TYPES.find(t => t.value === claim.giveaway_type)?.label ?? 'Item'
-}
-
-function guessGiveawayType(name: string): GiveawayTypeValue {
-  const n = name.toLowerCase()
-  if (n.includes('bobblehead') || n.includes('bobble')) return 'bobblehead'
-  if (n.includes('figurine') || n.includes('statue')) return 'figurine'
-  if (n.includes('jersey')) return 'jersey'
-  if (n.includes('t-shirt') || n.includes('tshirt') || n.includes('t shirt')) return 'tshirt'
-  if (n === 'hat' || n.includes(' hat') || n.includes('cap')) return 'hat'
-  if (n.includes('poster')) return 'poster'
-  return 'other'
-}
 
 // ── Category definitions ───────────────────────────────────────────────────
 
@@ -276,22 +259,15 @@ export default function MilestoneGrid({
 
   // Claim form fields
   const [claimVisitId,        setClaimVisitId]        = useState('')
-  const [claimGiveawayType,   setClaimGiveawayType]   = useState<GiveawayTypeValue>('bobblehead')
   const [claimBobbleheadName, setClaimBobbleheadName] = useState('')
   const [claimPlayerName,     setClaimPlayerName]     = useState('')
   const [claimNotes,          setClaimNotes]          = useState('')
-  const [claimPhotoFile,      setClaimPhotoFile]      = useState<File | null>(null)
   const [claimSaving,         setClaimSaving]         = useState(false)
-
-  // Collection filter state
-  const [collectionTypeFilter, setCollectionTypeFilter] = useState<string>('all')
-  const [collectionTeamFilter, setCollectionTeamFilter] = useState<string>('all')
 
   // Edit claim state
   const [editingClaim,       setEditingClaim]      = useState<AchievementClaim | null>(null)
   const [editingExp,         setEditingExp]         = useState<StaticExperience | null>(null)
   const [editVisitId,        setEditVisitId]        = useState('')
-  const [editGiveawayType,   setEditGiveawayType]   = useState<GiveawayTypeValue>('bobblehead')
   const [editBobbleheadName, setEditBobbleheadName] = useState('')
   const [editPlayerName,     setEditPlayerName]     = useState('')
   const [editNotes,          setEditNotes]          = useState('')
@@ -300,29 +276,14 @@ export default function MilestoneGrid({
   const [editDeletePhoto,    setEditDeletePhoto]    = useState(false)
   const [editSaving,         setEditSaving]         = useState(false)
 
-  // Photo lightbox
-  const [lightboxItem, setLightboxItem] = useState<{ url: string; name: string; claimId: string; currentType: GiveawayTypeValue } | null>(null)
-  const [lightboxType, setLightboxType] = useState<GiveawayTypeValue>('other')
-  const [lightboxName, setLightboxName] = useState<string>('')
-
   // Shared giveaway/food editor
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
 
-  // Giveaway type inline update
-  const [updatingClaimId, setUpdatingClaimId] = useState<string | null>(null)
-
   const [foodLog, setFoodLog] = useState<Array<{ id: string; name: string; category: string; rating: number | null; photo_url: string | null; created_at: string }>>([])
 
-  // BLE giveaway items from minor league game entries
-  const [bleGiveaways,   setBleGiveaways]   = useState<Array<{
-    entry_id: string
-    visit_date: string
-    items: Array<{ name: string; photo_url: string | null }>
-    milb_stadium_name: string | null
-    milb_affiliate: string | null
-    milb_team_id: number | null
-    milb_logo_url: string | null
-  }>>([])
+  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; photo_url: string | null; signed_by: string | null; acquired_from: string | null }>>([])
+
+  const [hasBobbleheadGiveaway, setHasBobbleheadGiveaway] = useState(false)
 
   // ── Data loading ──────────────────────────────────────────────────────────
 
@@ -332,78 +293,45 @@ export default function MilestoneGrid({
     if (data) setClaims(data as AchievementClaim[])
   }, [])
 
-  const fetchBleGiveaways = useCallback(async () => {
-    const supabase = createClient()
-    const { data: entries } = await supabase
-      .from('baseball_life_entries')
-      .select('id, visit_date, giveaway_items, minor_league_stadium_id')
-      .not('giveaway_items', 'is', null)
-    if (!entries) return
-    const valid = entries.filter(e => Array.isArray(e.giveaway_items) && (e.giveaway_items as any[]).length > 0)
-    if (valid.length === 0) return
-
-    const stadiumIds = [...new Set(valid.map(e => e.minor_league_stadium_id).filter(Boolean))] as string[]
-    const stadiumMap: Record<string, { name: string; affiliate: string; milb_team_id: number | null; logo_url: string | null }> = {}
-    if (stadiumIds.length > 0) {
-      const { data: stadiums } = await supabase
-        .from('minor_league_stadiums')
-        .select('id, name, affiliate, milb_team_id, logo_url')
-        .in('id', stadiumIds)
-      for (const s of stadiums ?? []) stadiumMap[s.id] = { name: s.name, affiliate: s.affiliate, milb_team_id: s.milb_team_id ?? null, logo_url: (s as any).logo_url ?? null }
-    }
-
-    setBleGiveaways(valid.map(e => ({
-      entry_id:          e.id,
-      visit_date:        e.visit_date,
-      items:             e.giveaway_items as Array<{ name: string; photo_url: string | null }>,
-      milb_stadium_name: e.minor_league_stadium_id ? (stadiumMap[e.minor_league_stadium_id]?.name ?? null) : null,
-      milb_affiliate:    e.minor_league_stadium_id ? (stadiumMap[e.minor_league_stadium_id]?.affiliate ?? null) : null,
-      milb_team_id:      e.minor_league_stadium_id ? (stadiumMap[e.minor_league_stadium_id]?.milb_team_id ?? null) : null,
-      milb_logo_url:     e.minor_league_stadium_id ? (stadiumMap[e.minor_league_stadium_id]?.logo_url ?? null) : null,
-    })))
-  }, [])
-
   const fetchFoodLog = useCallback(async () => {
     const supabase = createClient()
     const { data } = await supabase.from('food_log').select('*').order('created_at', { ascending: false })
     if (data) setFoodLog(data)
   }, [])
 
+  const fetchCollectibles = useCallback(async () => {
+    const supabase = createClient()
+    const { data } = await supabase.from('collectible_log').select('id, name, category, photo_url, signed_by, acquired_from').order('created_at', { ascending: false })
+    if (data) setStadiumCollectibles(data)
+  }, [])
+
   useEffect(() => { fetchClaims() }, [fetchClaims])
-  useEffect(() => { fetchBleGiveaways() }, [fetchBleGiveaways])
   useEffect(() => { fetchFoodLog() }, [fetchFoodLog])
+  useEffect(() => { fetchCollectibles() }, [fetchCollectibles])
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('collectible_log')
+      .select('id', { count: 'exact', head: true })
+      .eq('category', 'giveaway')
+      .eq('giveaway_type', 'bobblehead')
+      .then(({ count }) => setHasBobbleheadGiveaway((count ?? 0) > 0))
+  }, [])
 
   // ── Modal helpers ─────────────────────────────────────────────────────────
 
   function closeModal() {
     setSelected(null)
     setClaimVisitId('')
-    setClaimGiveawayType('bobblehead')
     setClaimBobbleheadName('')
     setClaimPlayerName('')
     setClaimNotes('')
-    setClaimPhotoFile(null)
   }
 
   async function saveClaim(exp: StaticExperience) {
     setClaimSaving(true)
     const supabase = createClient()
     const extra: Record<string, string> = {}
-
-    // Upload photo first (bobblehead only)
-    if (exp.id === 'bobblehead' && claimPhotoFile) {
-      const ext  = claimPhotoFile.name.split('.').pop() ?? 'jpg'
-      const path = `bobblehead/${Date.now()}.${ext}`
-      const { data: up } = await supabase.storage
-        .from('achievement-photos')
-        .upload(path, claimPhotoFile, { cacheControl: '3600', upsert: false })
-      if (up) {
-        const { data: { publicUrl } } = supabase.storage
-          .from('achievement-photos')
-          .getPublicUrl(up.path)
-        extra.photo_url = publicUrl
-      }
-    }
 
     if (exp.id === 'bobblehead' && claimBobbleheadName.trim()) {
       extra.bobblehead_name = claimBobbleheadName.trim()
@@ -424,52 +352,18 @@ export default function MilestoneGrid({
         claim_date:       claimDate,
         notes:            claimNotes.trim() || null,
         extra_data:       extra,
-        giveaway_type:    exp.id === 'bobblehead' ? claimGiveawayType : null,
       })
 
     // Bug 2 fix: re-fetch all claims so counts update immediately
     await fetchClaims()
 
     setClaimVisitId('')
-    setClaimGiveawayType('bobblehead')
     setClaimBobbleheadName('')
     setClaimPlayerName('')
     setClaimNotes('')
-    setClaimPhotoFile(null)
     setClaimSaving(false)
 
     if (exp.tracking_type === 'manual_once') closeModal()
-  }
-
-  async function updateGiveawayType(claimId: string, newType: GiveawayTypeValue) {
-    setUpdatingClaimId(claimId)
-    const supabase = createClient()
-
-    if (claimId.startsWith('ble-')) {
-      const parts = claimId.split('-')
-      const entryId = parts.slice(1, parts.length - 1).join('-')
-      const itemIdx = parseInt(parts[parts.length - 1], 10)
-      const { data: entry } = await supabase
-        .from('baseball_life_entries')
-        .select('giveaway_items')
-        .eq('id', entryId)
-        .single()
-      if (entry?.giveaway_items) {
-        const items = [...(entry.giveaway_items as Array<{ name: string; photo_url: string | null; type?: string }>)]
-        if (items[itemIdx]) {
-          items[itemIdx] = { ...items[itemIdx], type: newType }
-          await supabase.from('baseball_life_entries').update({ giveaway_items: items }).eq('id', entryId)
-          await fetchBleGiveaways()
-        }
-      }
-    } else {
-      const claim = claims.find(c => c.id === claimId)
-      if (claim) {
-        await supabase.from('achievement_claims').update({ giveaway_type: newType }).eq('id', claimId)
-        await fetchClaims()
-      }
-    }
-    setUpdatingClaimId(null)
   }
 
   async function removeClaim(claimId: string) {
@@ -482,7 +376,6 @@ export default function MilestoneGrid({
     setEditingClaim(claim)
     setEditingExp(exp)
     setEditVisitId(claim.stadium_visit_id ?? '')
-    setEditGiveawayType((claim.giveaway_type as GiveawayTypeValue) ?? 'bobblehead')
     setEditBobbleheadName(claim.extra_data?.bobblehead_name ? String(claim.extra_data.bobblehead_name) : '')
     setEditPlayerName(claim.extra_data?.player_name ? String(claim.extra_data.player_name) : '')
     setEditNotes(claim.notes ?? '')
@@ -547,7 +440,6 @@ export default function MilestoneGrid({
         claim_date:       claimDate,
         notes:            editNotes.trim() || null,
         extra_data:       extra,
-        giveaway_type:    editingExp.id === 'bobblehead' ? editGiveawayType : editingClaim.giveaway_type,
       })
       .eq('id', editingClaim.id)
 
@@ -563,8 +455,8 @@ export default function MilestoneGrid({
 
   const earnedStaticCount = useMemo(() => {
     const claimedIds = new Set(claims.map(c => c.achievement_id))
-    return STATIC_EXPERIENCES.filter(s => claimedIds.has(s.id)).length
-  }, [claims])
+    return STATIC_EXPERIENCES.filter(s => s.id === 'bobblehead' ? hasBobbleheadGiveaway : claimedIds.has(s.id)).length
+  }, [claims, hasBobbleheadGiveaway])
 
   const earnedLadderCount = useMemo(
     () => ladders.filter(m => (m.currentValue ?? 0) >= (m.tiers?.[0]?.threshold ?? 1)).length,
@@ -636,6 +528,7 @@ export default function MilestoneGrid({
     if (!showStatics) return []
     return STATIC_EXPERIENCES.filter(s => {
       if (filter === 'earned') {
+        if (s.id === 'bobblehead') return hasBobbleheadGiveaway
         const claimedIds = new Set(claims.map(c => c.achievement_id))
         return claimedIds.has(s.id)
       }
@@ -644,7 +537,7 @@ export default function MilestoneGrid({
       const q = search.toLowerCase()
       return s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
     })
-  }, [showStatics, filter, search, claims])
+  }, [showStatics, filter, search, claims, hasBobbleheadGiveaway])
 
   const milestoneContext = selected?.type === 'milestone' && selected.isEarned
     ? getSerializableMilestoneContext(selected.milestone, allVisits, allStadiums, allEvents)
@@ -734,56 +627,6 @@ export default function MilestoneGrid({
     }
   }, [allVisits, allStadiums])
 
-  const syntheticBleItems = useMemo<AchievementClaim[]>(() =>
-    bleGiveaways.flatMap(entry =>
-      entry.items.map((item, idx) => ({
-        id:               `ble-${entry.entry_id}-${idx}`,
-        achievement_id:   'collection',
-        stadium_visit_id: null,
-        claim_date:       entry.visit_date,
-        notes:            null,
-        giveaway_type:    ((item as any).type as GiveawayTypeValue) ?? guessGiveawayType(item.name),
-        created_at:       entry.visit_date,
-        extra_data: {
-          bobblehead_name:   item.name,
-          photo_url:         item.photo_url ?? undefined,
-          milb_stadium_name: entry.milb_stadium_name ?? undefined,
-          milb_affiliate:    entry.milb_affiliate ?? undefined,
-          milb_team_id:      entry.milb_team_id ?? undefined,
-          milb_logo_url:     entry.milb_logo_url ?? undefined,
-          is_milb:           true,
-        },
-      }))
-    ),
-  [bleGiveaways])
-
-  const giveawayClaims = useMemo(
-    () => [...claims.filter(c => c.giveaway_type != null), ...syntheticBleItems],
-    [claims, syntheticBleItems]
-  )
-
-  const collectionTeams = useMemo(() => {
-    const teams = new Set<string>()
-    for (const claim of giveawayClaims) {
-      const visit = allVisits.find(v => v.id === claim.stadium_visit_id)
-      const stadium = visit ? allStadiums.find(s => s.id === visit.stadium_id) : null
-      if (stadium) teams.add(stadium.abbreviation)
-    }
-    return [...teams].sort()
-  }, [giveawayClaims, allVisits, allStadiums])
-
-  const filteredCollection = useMemo(() => {
-    return giveawayClaims
-      .filter(c => collectionTypeFilter === 'all' || c.giveaway_type === collectionTypeFilter)
-      .filter(c => {
-        if (collectionTeamFilter === 'all') return true
-        const visit = allVisits.find(v => v.id === c.stadium_visit_id)
-        const stadium = visit ? allStadiums.find(s => s.id === visit.stadium_id) : null
-        return stadium?.abbreviation === collectionTeamFilter
-      })
-      .sort((a, b) => b.claim_date.localeCompare(a.claim_date))
-  }, [giveawayClaims, collectionTypeFilter, collectionTeamFilter, allVisits, allStadiums])
-
   function fireConfetti() {
     const pieces = Array.from({ length: 55 }, (_, i) => ({
       id: ++confettiIdRef.current * 100 + i,
@@ -803,140 +646,10 @@ export default function MilestoneGrid({
     fontFamily: 'inherit',
   }
 
-  const pillStyle = (active: boolean): React.CSSProperties => ({
-    padding: '6px 13px', borderRadius: 20, border: 'none', cursor: 'pointer',
-    fontSize: 13, fontWeight: 600,
-    backgroundColor: active ? '#E6EDF3' : 'rgba(139,148,158,0.1)',
-    color: active ? '#0B1117' : '#8B949E',
-  })
-
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
     <>
-      {lightboxItem && (
-        <div
-          onClick={() => setLightboxItem(null)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 1000,
-            backgroundColor: 'rgba(0,0,0,0.92)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            justifyContent: 'flex-start',
-            padding: '24px 16px 40px',
-            overflowY: 'auto',
-          }}
-        >
-          {lightboxItem.url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={lightboxItem.url}
-              alt={lightboxItem.name}
-              onClick={e => e.stopPropagation()}
-              style={{ maxWidth: '100%', maxHeight: '45vh', borderRadius: 12, objectFit: 'contain', marginBottom: 16 }}
-            />
-          ) : (
-            <div style={{ width: 100, height: 100, borderRadius: '50%', backgroundColor: '#161B22', border: '1px solid #30363D', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, marginBottom: 16 }}>
-              🎁
-            </div>
-          )}
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', padding: '14px 16px', width: '100%', maxWidth: 400, position: 'relative' }}
-          >
-            <button
-              onClick={() => setLightboxItem(null)}
-              style={{ position: 'absolute', top: 10, right: 10, background: 'none', border: 'none', color: '#8B949E', fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: '2px 6px' }}
-            >✕</button>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Item Name</div>
-            <input
-              value={lightboxName}
-              onChange={(e) => setLightboxName(e.target.value)}
-              id="lightbox-name-input"
-              style={{ width: '100%', backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 14, marginBottom: 12, boxSizing: 'border-box' }}
-            />
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Category</div>
-              <select
-                id="lightbox-type-select"
-                value={lightboxType}
-                onChange={(e) => setLightboxType(e.target.value as GiveawayTypeValue)}
-                style={{
-                  width: '100%', backgroundColor: '#0D1117', border: '1px solid #30363D',
-                  borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13,
-                  fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box' as const,
-                }}
-              >
-                {GIVEAWAY_TYPES.map(t => (
-                  <option key={t.value} value={t.value}>{t.emoji} {t.label}</option>
-                ))}
-              </select>
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                onClick={async () => {
-                  const newName = lightboxName.trim()
-                  const newType = lightboxType
-                  if (!newName) return
-                  const supabase = createClient()
-                  const claimId = lightboxItem.claimId
-
-                  if (claimId.startsWith('ble-')) {
-                    const parts = claimId.split('-')
-                    const entryId = parts.slice(1, parts.length - 1).join('-')
-                    const itemIdx = parseInt(parts[parts.length - 1], 10)
-                    const { data: entry } = await supabase
-                      .from('baseball_life_entries')
-                      .select('giveaway_items')
-                      .eq('id', entryId)
-                      .single()
-                    if (entry?.giveaway_items) {
-                      const items = [...(entry.giveaway_items as Array<{ name: string; photo_url: string | null; type?: string }>)]
-                      if (items[itemIdx]) {
-                        items[itemIdx] = { ...items[itemIdx], name: newName, type: newType }
-                        await supabase.from('baseball_life_entries').update({ giveaway_items: items }).eq('id', entryId)
-                        await fetchBleGiveaways()
-                      }
-                    }
-                  } else {
-                    const claim = claims.find(c => c.id === claimId)
-                    if (!claim) return
-                    await supabase.from('achievement_claims').update({
-                      extra_data: { ...claim.extra_data, bobblehead_name: newName },
-                      giveaway_type: newType,
-                    }).eq('id', claimId)
-                    await fetchClaims()
-                  }
-                  setLightboxItem(null)
-                }}
-                style={{ flex: 1, padding: '9px', borderRadius: 8, backgroundColor: '#1F6FEB', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-              >Save Changes</button>
-              <label style={{ flex: 1, padding: '9px', borderRadius: 8, border: '1px solid #30363D', color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'center' as const }}>
-                Replace Photo
-                <input type="file" accept="image/*" style={{ display: 'none' }}
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
-                    const supabase = createClient()
-                    const ext = file.name.split('.').pop()
-                    const path = `${lightboxItem.claimId}-${Date.now()}.${ext}`
-                    const { data, error } = await supabase.storage.from('achievement-photos').upload(path, file, { upsert: true })
-                    if (!error && data) {
-                      const { data: urlData } = supabase.storage.from('achievement-photos').getPublicUrl(data.path)
-                      const claim = claims.find(c => c.id === lightboxItem.claimId)
-                      await supabase.from('achievement_claims').update({
-                        extra_data: { ...claim?.extra_data, photo_url: urlData.publicUrl }
-                      }).eq('id', lightboxItem.claimId)
-                      setLightboxItem(null)
-                      await fetchClaims()
-                    }
-                  }}
-                />
-              </label>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Confetti layer */}
       {confetti.map(p => (
         <ConfettiPiece key={p.id} color={p.color} left={p.left} delay={p.delay} size={p.size} />
@@ -1383,9 +1096,8 @@ export default function MilestoneGrid({
             const expClaims    = claims.filter(c => c.achievement_id === s.id)
             const isRepeatable = s.tracking_type === 'manual_repeatable'
             const isBobble     = s.id === 'bobblehead'
-            const bleCount     = isBobble ? syntheticBleItems.filter(c => c.giveaway_type === 'bobblehead').length : 0
-            const count        = expClaims.length + bleCount
-            const hasClaims    = count > 0
+            const count        = expClaims.length
+            const hasClaims    = isBobble ? hasBobbleheadGiveaway : count > 0
 
             return (
               <button
@@ -1455,109 +1167,57 @@ export default function MilestoneGrid({
         </div>}
 
         {/* ── My Collection section ───────────────────────────────────────── */}
-        {giveawayClaims.length > 0 && filter === 'all' && (
+        {stadiumCollectibles.length > 0 && filter === 'all' && (
           <div style={{ marginBottom: 48 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#E6EDF3', marginBottom: 2 }}>🎁 My Collection</h2>
-                <div style={{ fontSize: 13, color: '#8B949E' }}>{giveawayClaims.length} item{giveawayClaims.length !== 1 ? 's' : ''} collected</div>
+                <div style={{ fontSize: 13, color: '#8B949E' }}>{stadiumCollectibles.length} item{stadiumCollectibles.length !== 1 ? 's' : ''} collected</div>
               </div>
+              <button
+                onClick={() => setEditingItem({ id: 'new', itemType: 'collectible', name: '', category: 'giveaway', photoUrl: null })}
+                style={{ fontSize: 13, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}
+              >
+                + Add Item
+              </button>
             </div>
-
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-              <button onClick={() => setCollectionTypeFilter('all')} style={pillStyle(collectionTypeFilter === 'all')}>All ({giveawayClaims.length})</button>
-              {GIVEAWAY_TYPES.filter(t => giveawayClaims.some(c => c.giveaway_type === t.value)).map(t => (
-                <button key={t.value} onClick={() => setCollectionTypeFilter(t.value)} style={pillStyle(collectionTypeFilter === t.value)}>
-                  {t.emoji} {t.label} ({giveawayClaims.filter(c => c.giveaway_type === t.value).length})
-                </button>
-              ))}
-            </div>
-
-            {collectionTeams.length > 1 && (
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
-                <button onClick={() => setCollectionTeamFilter('all')} style={pillStyle(collectionTeamFilter === 'all')}>All Teams</button>
-                {collectionTeams.map(abbr => (
-                  <button key={abbr} onClick={() => setCollectionTeamFilter(abbr)} title={abbr} style={{ padding: '3px', borderRadius: 8, border: `2px solid ${collectionTeamFilter === abbr ? '#1F6FEB' : 'transparent'}`, background: 'none', cursor: 'pointer' }}>
-                    <TeamLogo abbreviation={abbr} size={28} />
-                  </button>
-                ))}
-              </div>
-            )}
-            {collectionTeams.length === 1 && <div style={{ marginBottom: 16 }} />}
 
             <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12 }}>
-                {filteredCollection.length === 0 && (
-                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '48px 16px' }}>
-                    <div style={{ fontSize: 40, marginBottom: 12 }}>🎁</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3', marginBottom: 6 }}>Nothing in the collection yet</div>
-                    <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.5 }}>Log giveaways from your game entries to start building your collection.</div>
-                  </div>
-                )}
-                {filteredCollection.map(claim => {
-                  const visit    = allVisits.find(v => v.id === claim.stadium_visit_id)
-                  const stadium  = visit ? allStadiums.find(s => s.id === visit.stadium_id) : null
-                  const photoUrl = claim.extra_data?.photo_url ? String(claim.extra_data.photo_url) : null
-                  const itemName = getItemDisplayName(claim)
-                  const typeInfo = GIVEAWAY_TYPES.find(t => t.value === claim.giveaway_type)
-                  const isMiLB        = claim.extra_data?.is_milb === true
-                  const milbAffiliate = isMiLB && claim.extra_data?.milb_affiliate    ? String(claim.extra_data.milb_affiliate)    : null
-                  const milbStadName  = isMiLB && claim.extra_data?.milb_stadium_name ? String(claim.extra_data.milb_stadium_name) : null
-                  const milbTeamId    = isMiLB && claim.extra_data?.milb_team_id      ? Number(claim.extra_data.milb_team_id)      : null
-                  const milbLogoUrl   = isMiLB && claim.extra_data?.milb_logo_url     ? String(claim.extra_data.milb_logo_url)     : null
-                  return (
-                    <div
-                      key={claim.id}
-                      onClick={() => {
-                        setEditingItem({
-                          id: claim.id,
-                          itemType: 'giveaway',
-                          name: claim.extra_data?.bobblehead_name ? String(claim.extra_data.bobblehead_name) : '',
-                          category: claim.giveaway_type ?? 'other',
-                          photoUrl,
-                        })
-                      }}
-                      style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
-                    >
-                      <div style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden', backgroundColor: '#1C2430' }}>
-                        {photoUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={photoUrl}
-                            alt={itemName}
-                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                          />
-                        ) : (
-                          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {isMiLB && milbAffiliate
-                              ? <MiLBLogo milbTeamId={milbTeamId} fallbackAbbr={milbAffiliate} size={60} logoUrl={milbLogoUrl} />
-                              : stadium
-                                ? <TeamLogo abbreviation={stadium.abbreviation} size={60} />
-                                : <span style={{ fontSize: 40 }}>{typeInfo?.emoji ?? '🎁'}</span>}
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ padding: '10px 12px 12px' }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{itemName}</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4, flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.1)', padding: '2px 7px', borderRadius: 20 }}>{typeInfo?.emoji} {typeInfo?.label}</span>
-                          {isMiLB && <span style={{ fontSize: 13, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 6px', borderRadius: 20 }}>MiLB</span>}
+                {stadiumCollectibles.map(c => (
+                  <div
+                    key={c.id}
+                    onClick={() => {
+                      setEditingItem({
+                        id: c.id,
+                        itemType: 'collectible',
+                        name: c.name,
+                        category: c.category,
+                        photoUrl: c.photo_url,
+                        signedBy: c.signed_by,
+                        acquiredFrom: c.acquired_from,
+                      })
+                    }}
+                    style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
+                  >
+                    <div style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden', backgroundColor: '#1C2430' }}>
+                      {c.photo_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={c.photo_url}
+                          alt={c.name}
+                          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        />
+                      ) : (
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>
+                          {c.category === 'memorabilia' ? '✍️' : c.category === 'souvenir' ? '🛍️' : '🎁'}
                         </div>
-                        {isMiLB && milbAffiliate && milbStadName ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-                            <MiLBLogo milbTeamId={milbTeamId} fallbackAbbr={milbAffiliate} size={26} logoUrl={milbLogoUrl} />
-                            <span style={{ fontSize: 13, fontWeight: 600, color: '#C9D1D9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{milbStadName}</span>
-                          </div>
-                        ) : stadium ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-                            <TeamLogo abbreviation={stadium.abbreviation} size={26} />
-                            <span style={{ fontSize: 13, fontWeight: 600, color: '#C9D1D9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stadium.name}</span>
-                          </div>
-                        ) : null}
-                        <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 500 }}>{formatDate(claim.claim_date)}</div>
-                      </div>
+                      )}
                     </div>
-                  )
-                })}
+                    <div style={{ padding: '10px 12px 12px' }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
         )}
@@ -1727,20 +1387,13 @@ export default function MilestoneGrid({
       {selected?.type === 'static' && (() => {
         const exp          = selected.experience
         const isBobble     = exp.id === 'bobblehead'
-        const bleBobbles   = isBobble ? syntheticBleItems.filter(c => c.giveaway_type === 'bobblehead') : []
-        const expClaims    = [...claims.filter(c => c.achievement_id === exp.id), ...bleBobbles].sort((a, b) => b.claim_date.localeCompare(a.claim_date))
+        const expClaims    = claims.filter(c => c.achievement_id === exp.id).sort((a, b) => b.claim_date.localeCompare(a.claim_date))
         const hasClaims    = expClaims.length > 0
         const isRepeatable = exp.tracking_type === 'manual_repeatable'
         const showsPlayer  = PLAYER_NAME_EXP.has(exp.id)
         const showForm     = isRepeatable || !hasClaims
 
-        const itemNamePlaceholder =
-          claimGiveawayType === 'bobblehead' ? 'Item name (e.g. Josh Naylor Bobblehead)' :
-          claimGiveawayType === 'jersey'     ? 'Item name (e.g. Home White Jersey)' :
-          claimGiveawayType === 'hat'        ? 'Item name (e.g. Summer Bucket Hat)' :
-          claimGiveawayType === 'figurine'   ? 'Item name (e.g. Mike Trout Figurine)' :
-          claimGiveawayType === 'poster'     ? 'Item name (e.g. 2025 Opening Day Poster)' :
-          'Item name or description'
+        const itemNamePlaceholder = 'What did you get?'
 
         return (
           <div
@@ -1829,22 +1482,6 @@ export default function MilestoneGrid({
                       <ChevronRight size={14} color="#8B949E" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%) rotate(90deg)', pointerEvents: 'none' }} />
                     </div>
 
-                    {/* Giveaway item type selector (bobblehead achievement only) */}
-                    {isBobble && (
-                      <div style={{ position: 'relative' }}>
-                        <select
-                          value={claimGiveawayType}
-                          onChange={e => setClaimGiveawayType(e.target.value as GiveawayTypeValue)}
-                          style={{ ...inputStyle, paddingRight: 36, appearance: 'none', WebkitAppearance: 'none' }}
-                        >
-                          {GIVEAWAY_TYPES.map(t => (
-                            <option key={t.value} value={t.value}>{t.emoji} {t.label}</option>
-                          ))}
-                        </select>
-                        <ChevronRight size={14} color="#8B949E" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%) rotate(90deg)', pointerEvents: 'none' }} />
-                      </div>
-                    )}
-
                     {/* Item name (bobblehead) */}
                     {isBobble && (
                       <input
@@ -1876,40 +1513,6 @@ export default function MilestoneGrid({
                       style={{ ...inputStyle, resize: 'vertical' }}
                     />
 
-                    {/* Photo upload — bobblehead/giveaway only */}
-                    {isBobble && (
-                      <div>
-                        <input
-                          type="file"
-                          id="bobblehead-photo"
-                          accept="image/*"
-                          onChange={e => setClaimPhotoFile(e.target.files?.[0] ?? null)}
-                          style={{ display: 'none' }}
-                        />
-                        <label
-                          htmlFor="bobblehead-photo"
-                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 12px', borderRadius: 10, border: '1.5px dashed #30363D', backgroundColor: '#0B1117', cursor: 'pointer', fontSize: 13, color: '#8B949E' }}
-                        >
-                          📷 {claimPhotoFile ? claimPhotoFile.name : 'Add photo (optional)'}
-                        </label>
-                        {claimPhotoFile && (
-                          <div style={{ position: 'relative', marginTop: 8 }}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={URL.createObjectURL(claimPhotoFile)}
-                              alt="Preview"
-                              style={{ width: '100%', maxHeight: 180, objectFit: 'cover', borderRadius: 10, display: 'block' }}
-                            />
-                            <button
-                              onClick={() => setClaimPhotoFile(null)}
-                              style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            >
-                              <X size={12} color="#fff" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
 
                     {/* Save */}
                     <button
@@ -2031,13 +1634,7 @@ export default function MilestoneGrid({
         const showExistingPhoto   = !!existingPhotoUrl && !editDeletePhoto && !editPhotoFile
         const showDeletedNotice   = !!existingPhotoUrl && editDeletePhoto && !editPhotoFile
 
-        const editItemNamePlaceholder =
-          editGiveawayType === 'bobblehead' ? 'Item name (e.g. Josh Naylor Bobblehead)' :
-          editGiveawayType === 'jersey'     ? 'Item name (e.g. Home White Jersey)' :
-          editGiveawayType === 'hat'        ? 'Item name (e.g. Summer Bucket Hat)' :
-          editGiveawayType === 'figurine'   ? 'Item name (e.g. Mike Trout Figurine)' :
-          editGiveawayType === 'poster'     ? 'Item name (e.g. 2025 Opening Day Poster)' :
-          'Item name or description'
+        const editItemNamePlaceholder = 'What did you get?'
 
         return (
           <div
@@ -2091,22 +1688,6 @@ export default function MilestoneGrid({
                     style={inputStyle}
                   />
                 </div>
-
-                {/* Giveaway type (bobblehead only) */}
-                {isBobble && (
-                  <div style={{ position: 'relative' }}>
-                    <select
-                      value={editGiveawayType}
-                      onChange={e => setEditGiveawayType(e.target.value as GiveawayTypeValue)}
-                      style={{ ...inputStyle, paddingRight: 36, appearance: 'none', WebkitAppearance: 'none' }}
-                    >
-                      {GIVEAWAY_TYPES.map(t => (
-                        <option key={t.value} value={t.value}>{t.emoji} {t.label}</option>
-                      ))}
-                    </select>
-                    <ChevronRight size={14} color="#8B949E" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%) rotate(90deg)', pointerEvents: 'none' }} />
-                  </div>
-                )}
 
                 {/* Item name (bobblehead) */}
                 {isBobble && (
@@ -2235,8 +1816,8 @@ export default function MilestoneGrid({
         <GiveawayFoodEditor
           item={editingItem}
           onClose={() => setEditingItem(null)}
-          onSaved={() => { setEditingItem(null); fetchClaims(); fetchFoodLog() }}
-          onDeleted={() => { setEditingItem(null); fetchClaims(); fetchFoodLog() }}
+          onSaved={() => { setEditingItem(null); fetchClaims(); fetchFoodLog(); fetchCollectibles() }}
+          onDeleted={() => { setEditingItem(null); fetchClaims(); fetchFoodLog(); fetchCollectibles() }}
         />
       )}
     </>
