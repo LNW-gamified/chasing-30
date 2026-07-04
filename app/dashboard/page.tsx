@@ -404,8 +404,11 @@ export default async function DashboardPage() {
 
         {/* ── Playoff Picture ─────────────────────────────────────────── */}
         {playoffPic && favStadium && (
-          <div className="dash-card" style={{ ...card, marginBottom: SECTION_GAP, padding: '16px 20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <div className="dash-card" style={{ ...card, marginBottom: SECTION_GAP, padding: '16px 20px', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', right: -10, top: '50%', transform: 'translateY(-50%)', opacity: 0.12 }}>
+              <TeamLogo abbreviation={favStadium.abbreviation} size={120} />
+            </div>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
               <TeamLogo abbreviation={favStadium.abbreviation} size={28} />
               <span style={{ fontSize: 14, fontWeight: 800, color: '#E6EDF3' }}>{favStadium.team}</span>
               <span style={{ fontSize: 12, color: '#8B949E', marginLeft: 2 }}>· Playoff Picture</span>
@@ -413,7 +416,7 @@ export default async function DashboardPage() {
                 <span style={{ fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', padding: '2px 8px', borderRadius: 10 }}>✓ CLINCHED</span>
               )}
             </div>
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               {[
                 { label: 'Record',   value: `${playoffPic.wins}–${playoffPic.losses}` },
                 { label: 'Win %',    value: playoffPic.pct },
