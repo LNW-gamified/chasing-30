@@ -1155,83 +1155,108 @@ export default function MilestoneGrid({
         </div>}
 
         {/* ── My Collection section ───────────────────────────────────────── */}
-        {stadiumCollectibles.length > 0 && filter === 'all' && (
-          <div style={{ marginBottom: 48 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#E6EDF3', marginBottom: 2 }}>🎁 My Collection</h2>
-                <div style={{ fontSize: 13, color: '#8B949E' }}>{stadiumCollectibles.length} item{stadiumCollectibles.length !== 1 ? 's' : ''} collected</div>
-              </div>
-              <button
-                onClick={() => setEditingItem({ id: 'new', name: '', category: 'giveaway', photoUrl: null })}
-                style={{ fontSize: 13, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}
+        {stadiumCollectibles.length > 0 && filter === 'all' && (() => {
+          const renderCard = (c: typeof stadiumCollectibles[number]) => {
+            const mlbVisit = c.stadium_visit_id ? allVisits.find(v => v.id === c.stadium_visit_id) : null
+            const mlbStadium = mlbVisit ? allStadiums.find(s => s.id === mlbVisit.stadium_id) : null
+            const bleEntry = c.baseball_life_entry_id ? allBle.find(e => e.id === c.baseball_life_entry_id) : null
+            const milbStadium = bleEntry?.minor_league_stadium_id
+              ? milbStadiums.find(s => s.id === bleEntry.minor_league_stadium_id)
+              : null
+
+            const stadiumName = mlbStadium?.name ?? bleEntry?.venue ?? null
+            const visitDate = mlbVisit?.visit_date ?? bleEntry?.visit_date ?? null
+
+            return (
+              <div
+                key={c.id}
+                onClick={() => {
+                  setEditingItem({
+                    id: c.id, name: c.name, category: c.category, photoUrl: c.photo_url,
+                    signedBy: c.signed_by, acquiredFrom: c.acquired_from, rating: c.rating, price: c.price,
+                  })
+                }}
+                style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
               >
-                + Add Item
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12 }}>
-                {stadiumCollectibles.map(c => {
-                  const mlbVisit = c.stadium_visit_id ? allVisits.find(v => v.id === c.stadium_visit_id) : null
-                  const mlbStadium = mlbVisit ? allStadiums.find(s => s.id === mlbVisit.stadium_id) : null
-                  const bleEntry = c.baseball_life_entry_id ? allBle.find(e => e.id === c.baseball_life_entry_id) : null
-                  const milbStadium = bleEntry?.minor_league_stadium_id
-                    ? milbStadiums.find(s => s.id === bleEntry.minor_league_stadium_id)
-                    : null
-
-                  const stadiumName = mlbStadium?.name ?? bleEntry?.venue ?? null
-                  const visitDate = mlbVisit?.visit_date ?? bleEntry?.visit_date ?? null
-
-                  return (
-                    <div
-                      key={c.id}
-                      onClick={() => {
-                        setEditingItem({
-                          id: c.id, name: c.name, category: c.category, photoUrl: c.photo_url,
-                          signedBy: c.signed_by, acquiredFrom: c.acquired_from, rating: c.rating, price: c.price,
-                        })
-                      }}
-                      style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
-                    >
-                      <div style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden', backgroundColor: '#1C2430' }}>
-                        {c.photo_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={c.photo_url} alt={c.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                        ) : (
-                          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>
-                            {c.category === 'memorabilia' ? '✍️' : c.category === 'souvenir' ? '🛍️' : c.category === 'food' ? '🍽️' : '🎁'}
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ padding: '10px 12px 12px' }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
-                          {c.name}
-                        </div>
-                        <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize', marginBottom: 6 }}>
-                          {c.category}
-                        </div>
-                        {stadiumName && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                            {mlbStadium && <TeamLogo abbreviation={mlbStadium.abbreviation} size={14} />}
-                            {!mlbStadium && milbStadium && (
-                              <MiLBLogo milbTeamId={milbStadium.milb_team_id} fallbackAbbr={milbStadium.affiliate} logoUrl={milbStadium.logo_url} size={14} />
-                            )}
-                            <span style={{ fontSize: 12, color: '#8B949E' }}>{stadiumName}</span>
-                          </div>
-                        )}
-                        {visitDate && (
-                          <div style={{ fontSize: 12, color: '#8B949E' }}>{formatDate(visitDate)}</div>
-                        )}
-                        {c.category === 'food' && c.rating && (
-                          <div style={{ fontSize: 13, color: '#F5A623', marginTop: 4 }}>{'⭐'.repeat(c.rating)}</div>
-                        )}
-                      </div>
+                <div style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden', backgroundColor: '#1C2430' }}>
+                  {c.photo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={c.photo_url} alt={c.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  ) : (
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>
+                      {c.category === 'memorabilia' ? '✍️' : c.category === 'souvenir' ? '🛍️' : c.category === 'food' ? '🍽️' : '🎁'}
                     </div>
-                  )
-                })}
+                  )}
+                </div>
+                <div style={{ padding: '10px 12px 12px' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
+                    {c.name}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize', marginBottom: 6 }}>
+                    {c.category}
+                  </div>
+                  {stadiumName && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                      {mlbStadium && <TeamLogo abbreviation={mlbStadium.abbreviation} size={14} />}
+                      {!mlbStadium && milbStadium && (
+                        <MiLBLogo milbTeamId={milbStadium.milb_team_id} fallbackAbbr={milbStadium.affiliate} logoUrl={milbStadium.logo_url} size={14} />
+                      )}
+                      <span style={{ fontSize: 12, color: '#8B949E' }}>{stadiumName}</span>
+                    </div>
+                  )}
+                  {visitDate && (
+                    <div style={{ fontSize: 12, color: '#8B949E' }}>{formatDate(visitDate)}</div>
+                  )}
+                  {c.category === 'food' && c.rating && (
+                    <div style={{ fontSize: 13, color: '#F5A623', marginTop: 4 }}>{'⭐'.repeat(c.rating)}</div>
+                  )}
+                </div>
+              </div>
+            )
+          }
+
+          const nonFood = stadiumCollectibles.filter(c => c.category !== 'food')
+          const food = stadiumCollectibles.filter(c => c.category === 'food')
+
+          return (
+            <div style={{ marginBottom: 48 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#E6EDF3', marginBottom: 2 }}>🎁 My Collection</h2>
+                  <div style={{ fontSize: 13, color: '#8B949E' }}>{stadiumCollectibles.length} item{stadiumCollectibles.length !== 1 ? 's' : ''} collected</div>
+                </div>
+                <button
+                  onClick={() => setEditingItem({ id: 'new', name: '', category: 'giveaway', photoUrl: null })}
+                  style={{ fontSize: 13, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}
+                >
+                  + Add Item
+                </button>
+              </div>
+
+              {nonFood.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                    🎁 Collectibles ({nonFood.length})
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12 }}>
+                    {nonFood.map(renderCard)}
+                  </div>
+                </div>
+              )}
+
+              {food.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                    🍔 Food & Drink ({food.length})
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12 }}>
+                    {food.map(renderCard)}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          )
+        })()}
 
       </div>
 
