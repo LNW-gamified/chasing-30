@@ -277,7 +277,7 @@ export default function MilestoneGrid({
   // Shared giveaway/food editor
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
 
-  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null }>>([])
+  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; stadium_visit_id: string | null; baseball_life_entry_id: string | null }>>([])
 
   const [hasBobbleheadGiveaway, setHasBobbleheadGiveaway] = useState(false)
 
@@ -291,7 +291,7 @@ export default function MilestoneGrid({
 
   const fetchCollectibles = useCallback(async () => {
     const supabase = createClient()
-    const { data } = await supabase.from('collectible_log').select('id, name, category, photo_url, signed_by, acquired_from, rating, price').order('created_at', { ascending: false })
+    const { data } = await supabase.from('collectible_log').select('id, name, category, photo_url, signed_by, acquired_from, rating, price, stadium_visit_id, baseball_life_entry_id').order('created_at', { ascending: false })
     if (data) setStadiumCollectibles(data)
   }, [])
 
@@ -1162,45 +1162,58 @@ export default function MilestoneGrid({
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12 }}>
-                {stadiumCollectibles.map(c => (
-                  <div
-                    key={c.id}
-                    onClick={() => {
-                      setEditingItem({
-                        id: c.id,
-                        name: c.name,
-                        category: c.category,
-                        photoUrl: c.photo_url,
-                        signedBy: c.signed_by,
-                        acquiredFrom: c.acquired_from,
-                        rating: c.rating,
-                        price: c.price,
-                      })
-                    }}
-                    style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
-                  >
-                    <div style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden', backgroundColor: '#1C2430' }}>
-                      {c.photo_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={c.photo_url}
-                          alt={c.name}
-                          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                        />
-                      ) : (
-                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>
-                          {c.category === 'memorabilia' ? '✍️' : c.category === 'souvenir' ? '🛍️' : c.category === 'food' ? '🍽️' : '🎁'}
+                {stadiumCollectibles.map(c => {
+                  const mlbVisit = c.stadium_visit_id ? allVisits.find(v => v.id === c.stadium_visit_id) : null
+                  const mlbStadium = mlbVisit ? allStadiums.find(s => s.id === mlbVisit.stadium_id) : null
+                  const bleEntry = c.baseball_life_entry_id ? allBle.find(e => e.id === c.baseball_life_entry_id) : null
+
+                  const stadiumName = mlbStadium?.name ?? bleEntry?.venue ?? null
+                  const visitDate = mlbVisit?.visit_date ?? bleEntry?.visit_date ?? null
+
+                  return (
+                    <div
+                      key={c.id}
+                      onClick={() => {
+                        setEditingItem({
+                          id: c.id, name: c.name, category: c.category, photoUrl: c.photo_url,
+                          signedBy: c.signed_by, acquiredFrom: c.acquired_from, rating: c.rating, price: c.price,
+                        })
+                      }}
+                      style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
+                    >
+                      <div style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden', backgroundColor: '#1C2430' }}>
+                        {c.photo_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={c.photo_url} alt={c.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        ) : (
+                          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>
+                            {c.category === 'memorabilia' ? '✍️' : c.category === 'souvenir' ? '🛍️' : c.category === 'food' ? '🍽️' : '🎁'}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ padding: '10px 12px 12px' }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
+                          {c.name}
                         </div>
-                      )}
+                        <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize', marginBottom: 6 }}>
+                          {c.category}
+                        </div>
+                        {stadiumName && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                            {mlbStadium && <TeamLogo abbreviation={mlbStadium.abbreviation} size={14} />}
+                            <span style={{ fontSize: 12, color: '#8B949E' }}>{stadiumName}</span>
+                          </div>
+                        )}
+                        {visitDate && (
+                          <div style={{ fontSize: 12, color: '#8B949E' }}>{formatDate(visitDate)}</div>
+                        )}
+                        {c.category === 'food' && c.rating && (
+                          <div style={{ fontSize: 13, color: '#F5A623', marginTop: 4 }}>{'⭐'.repeat(c.rating)}</div>
+                        )}
+                      </div>
                     </div>
-                    <div style={{ padding: '10px 12px 12px' }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
-                      {c.category === 'food' && c.rating && (
-                        <div style={{ fontSize: 13, color: '#F5A623', marginTop: 2 }}>{'⭐'.repeat(c.rating)}</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
             </div>
           </div>
         )}
