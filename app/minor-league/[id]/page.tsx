@@ -56,6 +56,7 @@ interface BleEntry {
   ticket_seats: string[] | null
   notes: string | null
   moments: string[] | null
+  companions: string[] | null
   weather_temp: string | null
   weather_conditions: string | null
   game_pk: number | null
@@ -237,12 +238,35 @@ export default function MinorLeagueDetailPage() {
   const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; baseball_life_entry_id: string | null }>>([])
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
 
+  const [editingCompanionsId, setEditingCompanionsId] = useState<string | null>(null)
+  const [companionsDraft,     setCompanionsDraft]     = useState<string[]>([])
+  const [companionInput,      setCompanionInput]      = useState('')
+  const [savingCompanions,    setSavingCompanions]    = useState(false)
+
+  function openCompanionsEditor(visit: BleEntry) {
+    setEditingCompanionsId(visit.id)
+    setCompanionsDraft(visit.companions ?? [])
+    setCompanionInput('')
+  }
+
+  async function saveCompanions() {
+    if (!editingCompanionsId) return
+    setSavingCompanions(true)
+    const supabase = createClient()
+    await supabase.from('baseball_life_entries')
+      .update({ companions: companionsDraft.length > 0 ? companionsDraft : null })
+      .eq('id', editingCompanionsId)
+    setSavingCompanions(false)
+    setEditingCompanionsId(null)
+    await load()
+  }
+
   async function load() {
     const supabase = createClient()
     const [{ data: s }, { data: v }] = await Promise.all([
       supabase.from('minor_league_stadiums').select('*').eq('id', id).single(),
       supabase.from('baseball_life_entries')
-        .select('id,visit_date,opponent,home_team,away_team,final_score_home,final_score_away,ticket_section,ticket_row,ticket_seats,notes,moments,weather_temp,weather_conditions,game_pk,game_data')
+        .select('id,visit_date,opponent,home_team,away_team,final_score_home,final_score_away,ticket_section,ticket_row,ticket_seats,notes,moments,companions,weather_temp,weather_conditions,game_pk,game_data')
         .eq('category', 'minor_league')
         .eq('minor_league_stadium_id', id)
         .order('visit_date', { ascending: false }),
@@ -922,7 +946,93 @@ export default function MinorLeagueDetailPage() {
                                     {visit.notes}
                                   </div>
                                 )}
-  
+
+                                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #30363D' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                      Who Was There
+                                    </div>
+                                    {editingCompanionsId !== visit.id && (
+                                      <button
+                                        type="button"
+                                        onClick={() => openCompanionsEditor(visit)}
+                                        style={{ fontSize: 13, color: '#58A6FF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                                      >
+                                        {visit.companions?.length ? 'Edit' : '+ Add'}
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  {editingCompanionsId === visit.id ? (
+                                    <div>
+                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                                        {companionsDraft.map((name, idx) => (
+                                          <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 20, backgroundColor: 'rgba(31,111,235,0.1)', border: '1px solid rgba(31,111,235,0.3)', fontSize: 13, color: '#58A6FF', fontWeight: 600 }}>
+                                            {name}
+                                            <button
+                                              type="button"
+                                              onClick={() => setCompanionsDraft(companionsDraft.filter((_, i) => i !== idx))}
+                                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#58A6FF', padding: 0, display: 'flex' }}
+                                            >✕</button>
+                                          </span>
+                                        ))}
+                                      </div>
+                                      <div style={{ display: 'flex', gap: 8 }}>
+                                        <input
+                                          value={companionInput}
+                                          onChange={e => setCompanionInput(e.target.value)}
+                                          onKeyDown={e => {
+                                            if ((e.key === 'Enter' || e.key === ',') && companionInput.trim()) {
+                                              e.preventDefault()
+                                              if (!companionsDraft.includes(companionInput.trim())) {
+                                                setCompanionsDraft([...companionsDraft, companionInput.trim()])
+                                              }
+                                              setCompanionInput('')
+                                            }
+                                          }}
+                                          placeholder="Type a name and press Enter"
+                                          style={{ flex: 1, backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={saveCompanions}
+                                          disabled={savingCompanions}
+                                          style={{ padding: '8px 12px', borderRadius: 8, border: 'none', backgroundColor: '#1F6FEB', color: '#fff', fontSize: 13, fontWeight: 700, cursor: savingCompanions ? 'default' : 'pointer' }}
+                                        >
+                                          {savingCompanions ? 'Saving…' : 'Save'}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setEditingCompanionsId(null)}
+                                          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #30363D', background: 'none', color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    visit.companions && visit.companions.length > 0 && (
+                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                        {visit.companions.map((name, idx) => (
+                                          <span key={idx} style={{ fontSize: 13, color: '#58A6FF', backgroundColor: 'rgba(31,111,235,0.1)', border: '1px solid rgba(31,111,235,0.3)', padding: '4px 10px', borderRadius: 20, fontWeight: 600 }}>
+                                            {name}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+
+                                <div style={{ marginTop: 12 }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingItem({ id: 'new', name: '', category: 'giveaway', photoUrl: null, baseballLifeEntryId: visit.id })}
+                                    style={{ width: '100%', padding: '8px', borderRadius: 8, border: '1px dashed #30363D', background: 'none', color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                                  >
+                                    + Add Food, Giveaway, or Souvenir for This Game
+                                  </button>
+                                </div>
+
                                 <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid #30363D' }}>
                                   <button
                                     onClick={() => deleteEntry(visit.id)}
