@@ -813,133 +813,132 @@ export default function StadiumDetailPage() {
                       </div>
                     )}
 
-                    {stadiumCollectibles.filter(c => c.category !== 'food').length > 0 && (
-                      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 16, paddingBottom: 2 }}>
-                        {['all', 'bobblehead', 'jersey', 'tshirt', 'hat', 'other'].map(val => {
-                          const nonFood = stadiumCollectibles.filter(c => c.category !== 'food')
-                          const count = val === 'all' ? nonFood.length : nonFood.filter(c => c.giveaway_type === val).length
-                          const labels: Record<string, string> = { all: 'All', bobblehead: 'Bobblehead', jersey: 'Jersey', tshirt: 'T-Shirt', hat: 'Hat', other: 'Other' }
-                          const emojis: Record<string, string> = { all: '🎁', bobblehead: '🪆', jersey: '👕', tshirt: '👔', hat: '🧢', other: '🎁' }
-                          return (
-                            <button
-                              key={val}
-                              onClick={() => setCollectionTypeFilter(val)}
-                              style={{
-                                flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6,
-                                padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600,
-                                backgroundColor: collectionTypeFilter === val ? '#E6EDF3' : '#161B22',
-                                color: collectionTypeFilter === val ? '#0D1117' : '#8B949E',
-                                border: '1px solid #30363D', cursor: 'pointer',
-                              }}
-                            >
-                              <span>{emojis[val]}</span> {labels[val]} <span style={{ opacity: 0.7 }}>({count})</span>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    )}
+                    {(() => {
+                      const giveaways = stadiumCollectibles.filter(c => c.category === 'giveaway')
+                      const souvenirs = stadiumCollectibles.filter(c => c.category === 'souvenir')
+                      const memorabilia = stadiumCollectibles.filter(c => c.category === 'memorabilia')
+                      const food = stadiumCollectibles.filter(c => c.category === 'food')
+                      const filteredGiveaways = giveaways.filter(c => collectionTypeFilter === 'all' || c.giveaway_type === collectionTypeFilter)
 
-                    {stadiumCollectibles.filter(c => c.category !== 'food' && (collectionTypeFilter === 'all' || c.giveaway_type === collectionTypeFilter)).length > 0 && (
-                      <div style={{ marginBottom: 20 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                          🎁 Collectibles ({stadiumCollectibles.filter(c => c.category !== 'food' && (collectionTypeFilter === 'all' || c.giveaway_type === collectionTypeFilter)).length})
-                        </div>
-                        <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
-                          {stadiumCollectibles.filter(c => c.category !== 'food' && (collectionTypeFilter === 'all' || c.giveaway_type === collectionTypeFilter)).map(c => (
-                            <div
-                              key={c.id}
-                              onClick={() => setEditingItem({
-                                id: c.id,
-                                name: c.name,
-                                category: c.category,
-                                giveawayType: c.giveaway_type,
-                                photoUrl: c.photo_url,
-                                signedBy: c.signed_by,
-                                acquiredFrom: c.acquired_from,
-                              })}
-                              style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
-                            >
-                              <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
-                                {c.photo_url ? (
-                                  /* eslint-disable-next-line @next/next/no-img-element */
-                                  <img src={c.photo_url} alt={c.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                                ) : (
-                                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
-                                    {c.category === 'memorabilia' ? '✍️' : c.category === 'souvenir' ? '🛍️' : '🎁'}
-                                  </div>
-                                )}
+                      const giveawayTypeLabels: Record<string, string> = { all: 'All', bobblehead: 'Bobblehead', jersey: 'Jersey', tshirt: 'T-Shirt', hat: 'Hat', other: 'Other' }
+                      const giveawayTypeEmojis: Record<string, string> = { all: '🎁', bobblehead: '🪆', jersey: '👕', tshirt: '👔', hat: '🧢', other: '🎁' }
+
+                      const renderCard = (c: typeof stadiumCollectibles[number]) => (
+                        <div
+                          key={c.id}
+                          onClick={() => setEditingItem({
+                            id: c.id,
+                            name: c.name,
+                            category: c.category,
+                            giveawayType: c.giveaway_type,
+                            photoUrl: c.photo_url,
+                            signedBy: c.signed_by,
+                            acquiredFrom: c.acquired_from,
+                            rating: c.rating,
+                            price: c.price,
+                          })}
+                          style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
+                        >
+                          <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
+                            {c.photo_url ? (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img src={c.photo_url} alt={c.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+                                {c.category === 'memorabilia' ? '✍️' : c.category === 'souvenir' ? '🛍️' : c.category === 'food' ? '🍽️' : '🎁'}
                               </div>
-                              <div style={{ padding: '10px 12px 12px' }}>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
-                                  {c.name}
-                                </div>
-                                <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize', marginBottom: 6 }}>
-                                  {c.category}
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                                  <TeamLogo abbreviation={stadium.abbreviation} size={20} />
-                                  <span style={{ fontSize: 12, color: '#E6EDF3' }}>{stadium.name}</span>
-                                </div>
-                                {(() => {
-                                  const v = visitLookup(c.stadium_visit_id)
-                                  return v ? <div style={{ fontSize: 12, color: '#8B949E' }}>{formatDate(v.visit_date)}</div> : null
-                                })()}
+                            )}
+                          </div>
+                          <div style={{ padding: '10px 12px 12px' }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
+                              {c.name}
+                            </div>
+                            <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize', marginBottom: 6 }}>
+                              {c.category}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                              <TeamLogo abbreviation={stadium.abbreviation} size={20} />
+                              <span style={{ fontSize: 12, color: '#E6EDF3' }}>{stadium.name}</span>
+                            </div>
+                            {(() => {
+                              const v = visitLookup(c.stadium_visit_id)
+                              return v ? <div style={{ fontSize: 12, color: '#8B949E' }}>{formatDate(v.visit_date)}</div> : null
+                            })()}
+                            {c.category === 'food' && c.rating && (
+                              <div style={{ fontSize: 13, color: '#F5A623', marginTop: 4 }}>{'⭐'.repeat(c.rating)}</div>
+                            )}
+                          </div>
+                        </div>
+                      )
+
+                      return (
+                        <>
+                          {giveaways.length > 0 && (
+                            <div style={{ marginBottom: 20 }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                                🎁 Giveaways ({giveaways.length})
+                              </div>
+                              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 12, paddingBottom: 2 }}>
+                                {['all', 'bobblehead', 'jersey', 'tshirt', 'hat', 'other'].map(val => {
+                                  const count = val === 'all' ? giveaways.length : giveaways.filter(c => c.giveaway_type === val).length
+                                  return (
+                                    <button
+                                      key={val}
+                                      onClick={() => setCollectionTypeFilter(val)}
+                                      style={{
+                                        flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6,
+                                        padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600,
+                                        backgroundColor: collectionTypeFilter === val ? '#E6EDF3' : '#161B22',
+                                        color: collectionTypeFilter === val ? '#0D1117' : '#8B949E',
+                                        border: '1px solid #30363D', cursor: 'pointer',
+                                      }}
+                                    >
+                                      <span>{giveawayTypeEmojis[val]}</span> {giveawayTypeLabels[val]} <span style={{ opacity: 0.7 }}>({count})</span>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                              <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
+                                {filteredGiveaways.map(renderCard)}
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                          )}
 
-                    {stadiumCollectibles.filter(c => c.category === 'food').length > 0 && (
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                          🍔 Food & Drink ({stadiumCollectibles.filter(c => c.category === 'food').length})
-                        </div>
-                        <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
-                          {stadiumCollectibles.filter(c => c.category === 'food').map(item => (
-                            <div
-                              key={item.id}
-                              onClick={() => setEditingItem({
-                                id: item.id,
-                                name: item.name,
-                                category: item.category,
-                                photoUrl: item.photo_url,
-                                rating: item.rating,
-                                price: item.price,
-                              })}
-                              style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
-                            >
-                              <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
-                                {item.photo_url ? (
-                                  /* eslint-disable-next-line @next/next/no-img-element */
-                                  <img src={item.photo_url} alt={item.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                                ) : (
-                                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🍽️</div>
-                                )}
+                          {souvenirs.length > 0 && (
+                            <div style={{ marginBottom: 20 }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                                🛍️ Souvenirs ({souvenirs.length})
                               </div>
-                              <div style={{ padding: '10px 12px 12px' }}>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
-                                  {item.name}
-                                </div>
-                                <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize', marginBottom: 6 }}>
-                                  {item.category}
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                                  <TeamLogo abbreviation={stadium.abbreviation} size={20} />
-                                  <span style={{ fontSize: 12, color: '#E6EDF3' }}>{stadium.name}</span>
-                                </div>
-                                {(() => {
-                                  const v = visitLookup(item.stadium_visit_id)
-                                  return v ? <div style={{ fontSize: 12, color: '#8B949E' }}>{formatDate(v.visit_date)}</div> : null
-                                })()}
-                                {item.rating && <div style={{ fontSize: 13, color: '#F5A623', marginTop: 4 }}>{'⭐'.repeat(item.rating)}</div>}
+                              <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
+                                {souvenirs.map(renderCard)}
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                          )}
+
+                          {memorabilia.length > 0 && (
+                            <div style={{ marginBottom: 20 }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                                ✍️ Memorabilia ({memorabilia.length})
+                              </div>
+                              <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
+                                {memorabilia.map(renderCard)}
+                              </div>
+                            </div>
+                          )}
+
+                          {food.length > 0 && (
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                                🍔 Food & Drink ({food.length})
+                              </div>
+                              <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
+                                {food.map(renderCard)}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )
+                    })()}
                 </div>
               </section>
             )}

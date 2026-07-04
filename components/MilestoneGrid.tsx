@@ -276,6 +276,7 @@ export default function MilestoneGrid({
 
   // Shared giveaway/food editor
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
+  const [collectionTypeFilter, setCollectionTypeFilter] = useState<string>('all')
 
   const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; giveaway_type: string | null; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; stadium_visit_id: string | null; baseball_life_entry_id: string | null }>>([])
 
@@ -1215,8 +1216,14 @@ export default function MilestoneGrid({
             )
           }
 
-          const nonFood = stadiumCollectibles.filter(c => c.category !== 'food')
+          const giveaways = stadiumCollectibles.filter(c => c.category === 'giveaway')
+          const souvenirs = stadiumCollectibles.filter(c => c.category === 'souvenir')
+          const memorabilia = stadiumCollectibles.filter(c => c.category === 'memorabilia')
           const food = stadiumCollectibles.filter(c => c.category === 'food')
+          const filteredGiveaways = giveaways.filter(c => collectionTypeFilter === 'all' || c.giveaway_type === collectionTypeFilter)
+
+          const giveawayTypeLabels: Record<string, string> = { all: 'All', bobblehead: 'Bobblehead', jersey: 'Jersey', tshirt: 'T-Shirt', hat: 'Hat', other: 'Other' }
+          const giveawayTypeEmojis: Record<string, string> = { all: '🎁', bobblehead: '🪆', jersey: '👕', tshirt: '👔', hat: '🧢', other: '🎁' }
 
           return (
             <div style={{ marginBottom: 48 }}>
@@ -1233,13 +1240,55 @@ export default function MilestoneGrid({
                 </button>
               </div>
 
-              {nonFood.length > 0 && (
+              {giveaways.length > 0 && (
                 <div style={{ marginBottom: 20 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                    🎁 Collectibles ({nonFood.length})
+                    🎁 Giveaways ({giveaways.length})
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 12, paddingBottom: 2 }}>
+                    {['all', 'bobblehead', 'jersey', 'tshirt', 'hat', 'other'].map(val => {
+                      const count = val === 'all' ? giveaways.length : giveaways.filter(c => c.giveaway_type === val).length
+                      return (
+                        <button
+                          key={val}
+                          onClick={() => setCollectionTypeFilter(val)}
+                          style={{
+                            flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6,
+                            padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600,
+                            backgroundColor: collectionTypeFilter === val ? '#E6EDF3' : '#161B22',
+                            color: collectionTypeFilter === val ? '#0D1117' : '#8B949E',
+                            border: '1px solid #30363D', cursor: 'pointer',
+                          }}
+                        >
+                          <span>{giveawayTypeEmojis[val]}</span> {giveawayTypeLabels[val]} <span style={{ opacity: 0.7 }}>({count})</span>
+                        </button>
+                      )
+                    })}
                   </div>
                   <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
-                    {nonFood.map(renderCard)}
+                    {filteredGiveaways.map(renderCard)}
+                  </div>
+                </div>
+              )}
+
+              {souvenirs.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                    🛍️ Souvenirs ({souvenirs.length})
+                  </div>
+                  <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
+                    {souvenirs.map(renderCard)}
+                  </div>
+                </div>
+              )}
+
+              {memorabilia.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                    ✍️ Memorabilia ({memorabilia.length})
+                  </div>
+                  <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
+                    {memorabilia.map(renderCard)}
                   </div>
                 </div>
               )}
