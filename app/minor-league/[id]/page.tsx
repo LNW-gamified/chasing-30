@@ -15,6 +15,7 @@ import { TEAM_BTN_COLOR, TEAM_GRADIENTS } from '@/lib/team-colors'
 import { formatDate } from '@/lib/utils'
 import { getUserTimezone } from '@/lib/user-timezone'
 import GiveawayFoodEditor, { type EditorItem } from '@/components/GiveawayFoodEditor'
+import CollectibleLightbox from '@/components/CollectibleLightbox'
 
 const userTz = getUserTimezone()
 
@@ -237,6 +238,7 @@ export default function MinorLeagueDetailPage() {
   const [lightboxUrl,    setLightboxUrl]    = useState<string | null>(null)
   const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; giveaway_type: string | null; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; baseball_life_entry_id: string | null }>>([])
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
+  const [viewingItem, setViewingItem] = useState<EditorItem | null>(null)
   const [collectionTypeFilter, setCollectionTypeFilter] = useState<string>('all')
 
   const [editingCompanionsId, setEditingCompanionsId] = useState<string | null>(null)
@@ -1084,7 +1086,7 @@ export default function MinorLeagueDetailPage() {
                       const renderCard = (c: typeof stadiumCollectibles[number]) => (
                         <div
                           key={c.id}
-                          onClick={() => setEditingItem({
+                          onClick={() => setViewingItem({
                             id: c.id,
                             name: c.name,
                             category: c.category,
@@ -1547,6 +1549,14 @@ export default function MinorLeagueDetailPage() {
           defaultMinorLeagueStadiumId={stadium.id}
           onClose={() => setShowForm(false)}
           onSaved={() => { setShowForm(false); load() }}
+        />
+      )}
+
+      {viewingItem && (
+        <CollectibleLightbox
+          item={viewingItem}
+          onClose={() => setViewingItem(null)}
+          onEdit={() => { setEditingItem(viewingItem); setViewingItem(null) }}
         />
       )}
 

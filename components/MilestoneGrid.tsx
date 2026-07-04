@@ -11,6 +11,7 @@ import SpecialVisitButton from '@/components/SpecialVisitButton'
 import { classifyDayNightHeuristic } from '@/lib/sunrise-sunset'
 import { MILESTONE_POINTS } from '@/lib/ranks'
 import GiveawayFoodEditor, { type EditorItem } from '@/components/GiveawayFoodEditor'
+import CollectibleLightbox from '@/components/CollectibleLightbox'
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -276,6 +277,7 @@ export default function MilestoneGrid({
 
   // Shared giveaway/food editor
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
+  const [viewingItem, setViewingItem] = useState<EditorItem | null>(null)
   const [collectionTypeFilter, setCollectionTypeFilter] = useState<string>('all')
 
   const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; giveaway_type: string | null; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; stadium_visit_id: string | null; baseball_life_entry_id: string | null }>>([])
@@ -1172,7 +1174,7 @@ export default function MilestoneGrid({
               <div
                 key={c.id}
                 onClick={() => {
-                  setEditingItem({
+                  setViewingItem({
                     id: c.id, name: c.name, category: c.category, giveawayType: c.giveaway_type, photoUrl: c.photo_url,
                     signedBy: c.signed_by, acquiredFrom: c.acquired_from, rating: c.rating, price: c.price,
                   })
@@ -1834,6 +1836,14 @@ export default function MilestoneGrid({
           </div>
         )
       })()}
+
+      {viewingItem && (
+        <CollectibleLightbox
+          item={viewingItem}
+          onClose={() => setViewingItem(null)}
+          onEdit={() => { setEditingItem(viewingItem); setViewingItem(null) }}
+        />
+      )}
 
       {editingItem && (
         <GiveawayFoodEditor
