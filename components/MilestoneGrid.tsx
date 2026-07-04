@@ -279,6 +279,8 @@ export default function MilestoneGrid({
 
   const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; stadium_visit_id: string | null; baseball_life_entry_id: string | null }>>([])
 
+  const [milbStadiums, setMilbStadiums] = useState<Array<{ id: string; milb_team_id: number | null; affiliate: string; logo_url: string | null }>>([])
+
   const [hasBobbleheadGiveaway, setHasBobbleheadGiveaway] = useState(false)
 
   // ── Data loading ──────────────────────────────────────────────────────────
@@ -295,8 +297,15 @@ export default function MilestoneGrid({
     if (data) setStadiumCollectibles(data)
   }, [])
 
+  const fetchMilbStadiums = useCallback(async () => {
+    const supabase = createClient()
+    const { data } = await supabase.from('minor_league_stadiums').select('id, milb_team_id, affiliate, logo_url')
+    if (data) setMilbStadiums(data)
+  }, [])
+
   useEffect(() => { fetchClaims() }, [fetchClaims])
   useEffect(() => { fetchCollectibles() }, [fetchCollectibles])
+  useEffect(() => { fetchMilbStadiums() }, [fetchMilbStadiums])
 
   useEffect(() => {
     const supabase = createClient()
@@ -1166,6 +1175,9 @@ export default function MilestoneGrid({
                   const mlbVisit = c.stadium_visit_id ? allVisits.find(v => v.id === c.stadium_visit_id) : null
                   const mlbStadium = mlbVisit ? allStadiums.find(s => s.id === mlbVisit.stadium_id) : null
                   const bleEntry = c.baseball_life_entry_id ? allBle.find(e => e.id === c.baseball_life_entry_id) : null
+                  const milbStadium = bleEntry?.minor_league_stadium_id
+                    ? milbStadiums.find(s => s.id === bleEntry.minor_league_stadium_id)
+                    : null
 
                   const stadiumName = mlbStadium?.name ?? bleEntry?.venue ?? null
                   const visitDate = mlbVisit?.visit_date ?? bleEntry?.visit_date ?? null
@@ -1201,6 +1213,9 @@ export default function MilestoneGrid({
                         {stadiumName && (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                             {mlbStadium && <TeamLogo abbreviation={mlbStadium.abbreviation} size={14} />}
+                            {!mlbStadium && milbStadium && (
+                              <MiLBLogo milbTeamId={milbStadium.milb_team_id} fallbackAbbr={milbStadium.affiliate} logoUrl={milbStadium.logo_url} size={14} />
+                            )}
                             <span style={{ fontSize: 12, color: '#8B949E' }}>{stadiumName}</span>
                           </div>
                         )}
