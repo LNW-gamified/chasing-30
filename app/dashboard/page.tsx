@@ -350,7 +350,7 @@ export default async function DashboardPage() {
               ...card,
               marginBottom: SECTION_GAP,
               backgroundImage: nextGamePhoto
-                ? `linear-gradient(to bottom, rgba(13,26,40,0.75), rgba(16,30,48,0.92)), url(${nextGamePhoto})`
+                ? `linear-gradient(to bottom, rgba(13,26,40,0.45), rgba(16,30,48,0.65)), url(${nextGamePhoto})`
                 : 'linear-gradient(135deg, #0D1A28 0%, #101E30 100%)',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
