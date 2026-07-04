@@ -347,7 +347,6 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
       moments:               selectedMoments.length > 0 ? selectedMoments : null,
       notes:                 notes.trim() || null,
       companions:            companions.length > 0 ? companions : null,
-      giveaway_items:        giveawayItems.length > 0 ? giveawayItems : null,
     }
 
     const { data: savedEntry, error: saveErr } = await supabase.from('baseball_life_entries').insert(payload).select('id').single()
@@ -385,13 +384,24 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
           photoUrl = urlData.publicUrl
         }
       }
-      await supabase.from('food_log').insert({
+      await supabase.from('collectible_log').insert({
         user_id: user.id,
         baseball_life_entry_id: savedEntry.id,
         name: item.name.trim(),
-        category: item.category,
+        category: 'food',
         rating: item.rating,
         photo_url: photoUrl,
+      })
+    }
+
+    for (const item of giveawayItems) {
+      if (!item.name.trim()) continue
+      await supabase.from('collectible_log').insert({
+        user_id: user.id,
+        baseball_life_entry_id: savedEntry.id,
+        name: item.name.trim(),
+        category: 'giveaway',
+        photo_url: item.photo_url,
       })
     }
 
