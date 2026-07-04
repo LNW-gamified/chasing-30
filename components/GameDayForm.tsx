@@ -121,6 +121,28 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
   const [companions, setCompanions] = useState<string[]>(visit?.companions ?? [])
   const [companionInput, setCompanionInput] = useState('')
   const [foodItems, setFoodItems] = useState<Array<{ name: string; category: string; rating: number | null; photoFile: File | null; photoPreview: string | null }>>([])
+  const [giveawayItems, setGiveawayItems] = useState<Array<{ name: string; photo_url: string | null }>>([])
+  const [uploadingIdx, setUploadingIdx] = useState<Record<number, boolean>>({})
+
+  function removeGiveawayItem(idx: number) {
+    setGiveawayItems(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  async function uploadGiveawayPhoto(idx: number, file: File) {
+    setUploadingIdx(prev => ({ ...prev, [idx]: true }))
+    try {
+      const supabase = createClient()
+      const ext  = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { error } = await supabase.storage.from('giveaway-photos').upload(path, file)
+      if (!error) {
+        const { data: { publicUrl } } = supabase.storage.from('giveaway-photos').getPublicUrl(path)
+        setGiveawayItems(prev => prev.map((item, i) => i === idx ? { ...item, photo_url: publicUrl } : item))
+      }
+    } finally {
+      setUploadingIdx(prev => { const n = { ...prev }; delete n[idx]; return n })
+    }
+  }
 
   const tz      = STADIUM_TZ[stadium.abbreviation] ?? 'America/Los_Angeles'
   const tzLabel = TZ_LABEL[tz] ?? 'PT'
@@ -394,13 +416,25 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
         }
       }
       const { data: { user } } = await supabase.auth.getUser()
-      await supabase.from('food_log').insert({
+      await supabase.from('collectible_log').insert({
         user_id: user?.id,
         stadium_visit_id: visitId,
         name: item.name.trim(),
-        category: item.category,
+        category: 'food',
         rating: item.rating,
         photo_url: photoUrl,
+      })
+    }
+
+    for (const item of giveawayItems) {
+      if (!item.name.trim()) continue
+      const { data: { user } } = await supabase.auth.getUser()
+      await supabase.from('collectible_log').insert({
+        user_id: user?.id,
+        stadium_visit_id: visitId,
+        name: item.name.trim(),
+        category: 'giveaway',
+        photo_url: item.photo_url,
       })
     }
 
@@ -1018,6 +1052,41 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                 )
               })}
             </div>
+          </div>
+
+          {sectionHead('Giveaways & Collectibles')}
+          <div style={{ marginBottom: 16 }}>
+            {giveawayItems.map((item, idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, backgroundColor: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.2)', marginBottom: 8 }}>
+                <input
+                  value={item.name}
+                  onChange={e => setGiveawayItems(prev => prev.map((it, i) => i === idx ? { ...it, name: e.target.value } : it))}
+                  placeholder="e.g. Bobblehead"
+                  style={{ flex: 1, backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
+                />
+                {item.photo_url ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={item.photo_url} alt={item.name} style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover', display: 'block' }} />
+                    <label style={{ cursor: 'pointer', fontSize: 13, color: '#8B949E', fontWeight: 600 }}>
+                      Replace
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadGiveawayPhoto(idx, f) }} />
+                    </label>
+                  </div>
+                ) : (
+                  <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: '#8B949E', padding: '4px 8px', borderRadius: 6, border: '1px dashed #30363D', flexShrink: 0 }}>
+                    {uploadingIdx[idx] ? 'Uploading…' : 'Photo'}
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadGiveawayPhoto(idx, f) }} />
+                  </label>
+                )}
+                <button type="button" onClick={() => removeGiveawayItem(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8B949E', padding: 2, display: 'flex', flexShrink: 0 }}>✕</button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setGiveawayItems([...giveawayItems, { name: '', photo_url: null }])}
+              style={{ width: '100%', padding: '10px', borderRadius: 10, border: '1px dashed #30363D', background: 'none', color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >+ Add Giveaway or Collectible</button>
           </div>
 
           {sectionHead('Food & Drink')}
