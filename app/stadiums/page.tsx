@@ -188,7 +188,7 @@ function EventCard({ event, attendedCount, onLog }: {
   const gradColor = EVENT_GRADIENT[event.category] ?? meta.color
   return (
     <div className="stadium-card" style={{ backgroundColor: '#111827', border: attended ? '1px solid rgba(63,185,80,0.4)' : '1px solid #21262D', borderTop: `3px solid ${meta.color}`, borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s' }}>
-      <div style={{ height: 100, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ height: 136, position: 'relative', overflow: 'hidden' }}>
         {event.image_url
           ? <img src={event.image_url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
           : <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${hexToRgba(gradColor, 0.35)} 0%, ${hexToRgba(gradColor, 0.12)} 100%)` }} />
@@ -231,7 +231,7 @@ function ExperienceCard({ exp, visited, onLog }: {
   const showImage = exp.image_url && !imgFailed
   return (
     <div className="stadium-card" style={{ backgroundColor: '#111827', border: visited ? '1px solid rgba(63,185,80,0.4)' : '1px solid #21262D', borderTop: '3px solid #8B949E', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s' }}>
-      <div style={{ height: 100, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ height: 136, position: 'relative', overflow: 'hidden' }}>
         {showImage
           ? <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -283,14 +283,14 @@ function MinorLeagueCard({ stadium, visitCount }: {
   return (
     <Link href={`/minor-league/${stadium.id}`} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
       <div className="stadium-card" style={{ backgroundColor: '#111827', border: visited ? '1px solid rgba(63,185,80,0.4)' : '1px solid #21262D', borderTop: `3px solid ${affiliateAccent}`, borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer', opacity: visited ? 1 : 0.82, transition: 'transform 0.15s, box-shadow 0.15s' }}>
-        <div style={{ height: 100, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ height: 136, position: 'relative', overflow: 'hidden' }}>
           {stadium.image_url
             ? <img src={stadium.image_url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55 }} />
             : <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${hexToRgba(affiliateAccent, 0.2)} 0%, ${hexToRgba(affiliateAccent, 0.06)} 100%)` }} />
           }
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)' }} />
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
-            <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={48} logoUrl={stadium.logo_url} />
+            <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={80} logoUrl={stadium.logo_url} />
           </div>
           {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#0B1117', fontWeight: 900 }}>✓</div>}
         </div>
