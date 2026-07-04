@@ -226,6 +226,7 @@ export default function StadiumDetailPage() {
       .from('collectible_log')
       .select('id, name, category, photo_url, signed_by, acquired_from, rating, price, stadium_visit_id')
       .in('stadium_visit_id', visitIds)
+      .order('created_at', { ascending: false })
     if (collectibles) setStadiumCollectibles(collectibles)
   }, [visits])
 

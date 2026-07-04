@@ -326,6 +326,7 @@ export default function MinorLeagueDetailPage() {
       .from('collectible_log')
       .select('id, name, category, photo_url, signed_by, acquired_from, rating, price, baseball_life_entry_id')
       .in('baseball_life_entry_id', entryIds)
+      .order('created_at', { ascending: false })
     if (collectibles) setStadiumCollectibles(collectibles)
   }, [visits])
 
