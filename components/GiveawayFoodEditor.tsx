@@ -7,6 +7,7 @@ const COLLECTIBLE_CATEGORIES = [
   { value: 'giveaway',    label: 'Giveaway',    emoji: '🎁' },
   { value: 'souvenir',    label: 'Souvenir',    emoji: '🛍️' },
   { value: 'memorabilia', label: 'Memorabilia', emoji: '✍️' },
+  { value: 'food',        label: 'Food & Drink',emoji: '🍔' },
 ] as const
 
 const GIVEAWAY_SUBTYPES = [
@@ -17,19 +18,8 @@ const GIVEAWAY_SUBTYPES = [
   { value: 'other',      label: 'Other',      emoji: '🎁' },
 ] as const
 
-const FOOD_TYPES = [
-  { value: 'hot_dog',   label: 'Hot Dog',   emoji: '🌭' },
-  { value: 'specialty', label: 'Specialty', emoji: '🍔' },
-  { value: 'dessert',   label: 'Dessert',   emoji: '🍦' },
-  { value: 'drink',     label: 'Drink',     emoji: '🥤' },
-  { value: 'other',     label: 'Other',     emoji: '🍽️' },
-] as const
-
-export type EditorItemType = 'collectible' | 'food'
-
 export interface EditorItem {
   id: string
-  itemType: EditorItemType
   name: string
   category: string
   giveawayType?: string | null
@@ -40,10 +30,7 @@ export interface EditorItem {
   acquiredFrom?: string | null
   stadiumVisitId?: string | null
   baseballLifeEntryId?: string | null
-  // Restricts the MLB game picker to a single stadium when opened from a stadium detail page.
-  // Leave unset to show games from every stadium (used on the records page).
   scopedStadiumId?: string | null
-  // Restricts the MiLB game picker to a single minor league stadium the same way.
   scopedMinorLeagueStadiumId?: string | null
 }
 
@@ -58,14 +45,10 @@ interface MlbGameOption { id: string; visit_date: string; home_team: string | nu
 interface MilbGameOption { id: string; visit_date: string; opponent: string | null }
 
 /**
- * Shared edit/delete/photo-upload lightbox for:
- * - collectible items (giveaways, souvenirs, memorabilia) — collectible_log table
- * - food/drink items — food_log table
- * Also used with item.id === 'new' to create a fresh row (isNew = true).
- *
- * When opened without a pre-selected game (stadiumVisitId and baseballLifeEntryId
- * both null/undefined), shows two separate pickers — one for MLB games, one for
- * MiLB games — since every collectible must be tied to exactly one logged game.
+ * Shared edit/delete/photo-upload lightbox for everything in collectible_log —
+ * giveaways, souvenirs, memorabilia, and food/drink. Food is just another
+ * category value here now, not a separate table or item type. One table,
+ * one editor, one add button, regardless of where it's opened from.
  */
 export default function GiveawayFoodEditor({ item, onClose, onSaved, onDeleted }: Props) {
   const isNew = item.id === 'new'
@@ -90,9 +73,9 @@ export default function GiveawayFoodEditor({ item, onClose, onSaved, onDeleted }
   const [milbGames, setMilbGames] = useState<MilbGameOption[]>([])
   const [loadingGames, setLoadingGames] = useState(false)
 
-  const typeOptions = item.itemType === 'food' ? FOOD_TYPES : COLLECTIBLE_CATEGORIES
-  const isMemorabilia = item.itemType === 'collectible' && category === 'memorabilia'
-  const isGiveaway = item.itemType === 'collectible' && category === 'giveaway'
+  const isMemorabilia = category === 'memorabilia'
+  const isGiveaway = category === 'giveaway'
+  const isFood = category === 'food'
   const tempId = `temp-${Date.now()}`
 
   useEffect(() => {
@@ -158,43 +141,26 @@ export default function GiveawayFoodEditor({ item, onClose, onSaved, onDeleted }
     const finalStadiumVisitId = needsGamePicker ? (selectedStadiumVisitId || null) : (item.stadiumVisitId ?? null)
     const finalBleId = needsGamePicker ? (selectedBleId || null) : (item.baseballLifeEntryId ?? null)
 
-    if (item.itemType === 'food') {
-      const payload = {
-        name: name.trim(),
-        category,
-        rating,
-        price: price.trim() ? Number(price) : null,
-        photo_url: photoUrl,
-      }
-      if (isNew) {
-        await supabase.from('food_log').insert({
-          ...payload,
-          user_id: userId,
-          stadium_visit_id: finalStadiumVisitId,
-          baseball_life_entry_id: finalBleId,
-        })
-      } else {
-        await supabase.from('food_log').update(payload).eq('id', item.id)
-      }
+    const payload = {
+      name: name.trim(),
+      category,
+      giveaway_type: isGiveaway ? giveawayType : null,
+      rating: isFood ? rating : null,
+      price: isFood && price.trim() ? Number(price) : null,
+      photo_url: photoUrl,
+      signed_by: isMemorabilia && signedBy.trim() ? signedBy.trim() : null,
+      acquired_from: isMemorabilia && acquiredFrom.trim() ? acquiredFrom.trim() : null,
+    }
+
+    if (isNew) {
+      await supabase.from('collectible_log').insert({
+        ...payload,
+        user_id: userId,
+        stadium_visit_id: finalStadiumVisitId,
+        baseball_life_entry_id: finalBleId,
+      })
     } else {
-      const payload = {
-        name: name.trim(),
-        category,
-        giveaway_type: isGiveaway ? giveawayType : null,
-        photo_url: photoUrl,
-        signed_by: isMemorabilia && signedBy.trim() ? signedBy.trim() : null,
-        acquired_from: isMemorabilia && acquiredFrom.trim() ? acquiredFrom.trim() : null,
-      }
-      if (isNew) {
-        await supabase.from('collectible_log').insert({
-          ...payload,
-          user_id: userId,
-          stadium_visit_id: finalStadiumVisitId,
-          baseball_life_entry_id: finalBleId,
-        })
-      } else {
-        await supabase.from('collectible_log').update(payload).eq('id', item.id)
-      }
+      await supabase.from('collectible_log').update(payload).eq('id', item.id)
     }
 
     setSaving(false)
@@ -206,8 +172,7 @@ export default function GiveawayFoodEditor({ item, onClose, onSaved, onDeleted }
     if (!confirmDelete) { setConfirmDelete(true); return }
     setDeleting(true)
     const supabase = createClient()
-    const table = item.itemType === 'food' ? 'food_log' : 'collectible_log'
-    await supabase.from(table).delete().eq('id', item.id)
+    await supabase.from('collectible_log').delete().eq('id', item.id)
     setDeleting(false)
     onDeleted()
   }
@@ -225,7 +190,7 @@ export default function GiveawayFoodEditor({ item, onClose, onSaved, onDeleted }
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <span style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3' }}>
-            {isNew ? 'Add ' : 'Edit '}{item.itemType === 'food' ? 'Food & Drink' : 'Collectible'}
+            {isNew ? 'Add Item' : 'Edit Item'}
           </span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#8B949E', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}>✕</button>
         </div>
@@ -280,7 +245,7 @@ export default function GiveawayFoodEditor({ item, onClose, onSaved, onDeleted }
             <img src={photoUrl} alt={name} style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 10, marginBottom: 8 }} />
           ) : (
             <div style={{ width: '100%', height: 120, borderRadius: 10, backgroundColor: '#0D1117', border: '1px dashed #30363D', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, marginBottom: 8 }}>
-              {item.itemType === 'food' ? '🍽️' : '🎁'}
+              {isFood ? '🍽️' : '🎁'}
             </div>
           )}
           <label style={{ display: 'inline-block', fontSize: 13, fontWeight: 600, color: '#58A6FF', cursor: uploading ? 'default' : 'pointer', opacity: uploading ? 0.5 : 1 }}>
@@ -308,7 +273,7 @@ export default function GiveawayFoodEditor({ item, onClose, onSaved, onDeleted }
             onChange={e => setCategory(e.target.value)}
             style={{ width: '100%', backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 14, cursor: 'pointer' }}
           >
-            {typeOptions.map(t => (
+            {COLLECTIBLE_CATEGORIES.map(t => (
               <option key={t.value} value={t.value}>{t.emoji} {t.label}</option>
             ))}
           </select>
@@ -352,7 +317,7 @@ export default function GiveawayFoodEditor({ item, onClose, onSaved, onDeleted }
           </>
         )}
 
-        {item.itemType === 'food' && (
+        {isFood && (
           <>
             <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Rating</div>

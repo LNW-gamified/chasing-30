@@ -234,8 +234,7 @@ export default function MinorLeagueDetailPage() {
   }>>([])
 
   const [lightboxUrl,    setLightboxUrl]    = useState<string | null>(null)
-  const [stadiumFood, setStadiumFood] = useState<Array<{ id: string; name: string; category: string; rating: number | null; photo_url: string | null }>>([])
-  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; photo_url: string | null; signed_by: string | null; acquired_from: string | null; baseball_life_entry_id: string | null }>>([])
+  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; baseball_life_entry_id: string | null }>>([])
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
 
   async function load() {
@@ -319,22 +318,19 @@ export default function MinorLeagueDetailPage() {
 
   useEffect(() => { load() }, [id])
 
-  const fetchFood = useCallback(async () => {
+  const fetchCollection = useCallback(async () => {
     if (visits.length === 0) return
     const entryIds = visits.map(e => e.id)
     const supabase = createClient()
-    const [{ data: food }, { data: collectibles }] = await Promise.all([
-      supabase.from('food_log').select('id, name, category, rating, photo_url, baseball_life_entry_id')
-        .in('baseball_life_entry_id', entryIds),
-      supabase.from('collectible_log').select('id, name, category, photo_url, signed_by, acquired_from, baseball_life_entry_id')
-        .in('baseball_life_entry_id', entryIds),
-    ])
-    if (food) setStadiumFood(food)
+    const { data: collectibles } = await supabase
+      .from('collectible_log')
+      .select('id, name, category, photo_url, signed_by, acquired_from, rating, price, baseball_life_entry_id')
+      .in('baseball_life_entry_id', entryIds)
     if (collectibles) setStadiumCollectibles(collectibles)
   }, [visits])
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { fetchFood() }, [fetchFood])
+  useEffect(() => { fetchCollection() }, [fetchCollection])
 
   const visitsByYear = visits.reduce<Record<string, typeof visits>>((acc, v) => {
     const year = v.visit_date.slice(0, 4)
@@ -950,31 +946,30 @@ export default function MinorLeagueDetailPage() {
                         Your Collection at {stadium.name}
                       </div>
                       <button
-                        onClick={() => setEditingItem({ id: 'new', itemType: 'collectible', name: '', category: 'giveaway', photoUrl: null, scopedMinorLeagueStadiumId: stadium.id })}
+                        onClick={() => setEditingItem({ id: 'new', name: '', category: 'giveaway', photoUrl: null, scopedMinorLeagueStadiumId: stadium.id })}
                         style={{ fontSize: 13, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}
                       >
                         + Add Item
                       </button>
                     </div>
 
-                    {stadiumCollectibles.length === 0 && stadiumFood.length === 0 && (
+                    {stadiumCollectibles.length === 0 && (
                       <div style={{ fontSize: 13, color: '#8B949E', padding: '4px 0 4px' }}>
                         Nothing logged yet — tap &ldquo;+ Add Item&rdquo; to start your collection at this stadium.
                       </div>
                     )}
 
-                    {stadiumCollectibles.length > 0 && (
+                    {stadiumCollectibles.filter(c => c.category !== 'food').length > 0 && (
                       <div style={{ marginBottom: 20 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                          🎁 Collectibles ({stadiumCollectibles.length})
+                          🎁 Collectibles ({stadiumCollectibles.filter(c => c.category !== 'food').length})
                         </div>
                         <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
-                          {stadiumCollectibles.map(c => (
+                          {stadiumCollectibles.filter(c => c.category !== 'food').map(c => (
                             <div
                               key={c.id}
                               onClick={() => setEditingItem({
                                 id: c.id,
-                                itemType: 'collectible',
                                 name: c.name,
                                 category: c.category,
                                 photoUrl: c.photo_url,
@@ -1002,42 +997,39 @@ export default function MinorLeagueDetailPage() {
                       </div>
                     )}
 
-                    {stadiumFood.length > 0 && (
+                    {stadiumCollectibles.filter(c => c.category === 'food').length > 0 && (
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                          🍔 Food & Drink ({stadiumFood.length})
+                          🍔 Food & Drink ({stadiumCollectibles.filter(c => c.category === 'food').length})
                         </div>
                         <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
-                          {stadiumFood.map(item => {
-                            const categoryEmoji: Record<string, string> = { hot_dog: '🌭', specialty: '🍔', dessert: '🍦', drink: '🥤', other: '🍽️' }
-                            return (
-                              <div
-                                key={item.id}
-                                onClick={() => setEditingItem({
-                                  id: item.id,
-                                  itemType: 'food',
-                                  name: item.name,
-                                  category: item.category,
-                                  photoUrl: item.photo_url,
-                                  rating: item.rating,
-                                })}
-                                style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
-                              >
-                                <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
-                                  {item.photo_url ? (
-                                    /* eslint-disable-next-line @next/next/no-img-element */
-                                    <img src={item.photo_url} alt={item.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                                  ) : (
-                                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>{categoryEmoji[item.category] ?? '🍽️'}</div>
-                                  )}
-                                </div>
-                                <div style={{ padding: '6px 8px' }}>
-                                  <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
-                                  {item.rating && <div style={{ fontSize: 13, color: '#F5A623' }}>{'⭐'.repeat(item.rating)}</div>}
-                                </div>
+                          {stadiumCollectibles.filter(c => c.category === 'food').map(item => (
+                            <div
+                              key={item.id}
+                              onClick={() => setEditingItem({
+                                id: item.id,
+                                name: item.name,
+                                category: item.category,
+                                photoUrl: item.photo_url,
+                                rating: item.rating,
+                                price: item.price,
+                              })}
+                              style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
+                            >
+                              <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
+                                {item.photo_url ? (
+                                  /* eslint-disable-next-line @next/next/no-img-element */
+                                  <img src={item.photo_url} alt={item.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🍽️</div>
+                                )}
                               </div>
-                            )
-                          })}
+                              <div style={{ padding: '6px 8px' }}>
+                                <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+                                {item.rating && <div style={{ fontSize: 13, color: '#F5A623' }}>{'⭐'.repeat(item.rating)}</div>}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
@@ -1398,8 +1390,8 @@ export default function MinorLeagueDetailPage() {
         <GiveawayFoodEditor
           item={editingItem}
           onClose={() => setEditingItem(null)}
-          onSaved={() => { setEditingItem(null); load(); fetchFood() }}
-          onDeleted={() => { setEditingItem(null); load(); fetchFood() }}
+          onSaved={() => { setEditingItem(null); load(); fetchCollection() }}
+          onDeleted={() => { setEditingItem(null); load(); fetchCollection() }}
         />
       )}
     </div>

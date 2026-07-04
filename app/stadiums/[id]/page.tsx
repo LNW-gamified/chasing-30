@@ -129,8 +129,7 @@ export default function StadiumDetailPage() {
   const [tripMonths, setTripMonths]             = useState<Set<number>>(new Set())
   const [visitPromos, setVisitPromos]           = useState<Record<string, { promotions: string[]; promotion_photos: Record<string, string> }>>({})
   const [lightboxUrl, setLightboxUrl]           = useState<string | null>(null)
-  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; photo_url: string | null; signed_by: string | null; acquired_from: string | null; stadium_visit_id: string | null }>>([])
-  const [stadiumFood, setStadiumFood] = useState<Array<{ id: string; name: string; category: string; rating: number | null; photo_url: string | null; stadium_visit_id: string | null }>>([])
+  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; stadium_visit_id: string | null }>>([])
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
 
   useEffect(() => {
@@ -223,14 +222,11 @@ export default function StadiumDetailPage() {
     if (visits.length === 0) return
     const visitIds = visits.map(v => v.id)
     const supabase = createClient()
-    const [{ data: collectibles }, { data: food }] = await Promise.all([
-      supabase.from('collectible_log').select('id, name, category, photo_url, signed_by, acquired_from, stadium_visit_id')
-        .in('stadium_visit_id', visitIds),
-      supabase.from('food_log').select('id, name, category, rating, photo_url, stadium_visit_id')
-        .in('stadium_visit_id', visitIds),
-    ])
+    const { data: collectibles } = await supabase
+      .from('collectible_log')
+      .select('id, name, category, photo_url, signed_by, acquired_from, rating, price, stadium_visit_id')
+      .in('stadium_visit_id', visitIds)
     if (collectibles) setStadiumCollectibles(collectibles)
-    if (food) setStadiumFood(food)
   }, [visits])
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -802,31 +798,30 @@ export default function StadiumDetailPage() {
                         Your Collection at {stadium.name}
                       </div>
                       <button
-                        onClick={() => setEditingItem({ id: 'new', itemType: 'collectible', name: '', category: 'giveaway', photoUrl: null, scopedStadiumId: stadium.id })}
+                        onClick={() => setEditingItem({ id: 'new', name: '', category: 'giveaway', photoUrl: null, scopedStadiumId: stadium.id })}
                         style={{ fontSize: 13, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}
                       >
                         + Add Item
                       </button>
                     </div>
 
-                    {stadiumCollectibles.length === 0 && stadiumFood.length === 0 && (
+                    {stadiumCollectibles.length === 0 && (
                       <div style={{ fontSize: 13, color: '#8B949E', padding: '4px 0 4px' }}>
                         Nothing logged yet — tap &ldquo;+ Add Item&rdquo; to start your collection at this stadium.
                       </div>
                     )}
 
-                    {stadiumCollectibles.length > 0 && (
+                    {stadiumCollectibles.filter(c => c.category !== 'food').length > 0 && (
                       <div style={{ marginBottom: 20 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                          🎁 Collectibles ({stadiumCollectibles.length})
+                          🎁 Collectibles ({stadiumCollectibles.filter(c => c.category !== 'food').length})
                         </div>
                         <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
-                          {stadiumCollectibles.map(c => (
+                          {stadiumCollectibles.filter(c => c.category !== 'food').map(c => (
                             <div
                               key={c.id}
                               onClick={() => setEditingItem({
                                 id: c.id,
-                                itemType: 'collectible',
                                 name: c.name,
                                 category: c.category,
                                 photoUrl: c.photo_url,
@@ -864,52 +859,49 @@ export default function StadiumDetailPage() {
                       </div>
                     )}
 
-                    {stadiumFood.length > 0 && (
+                    {stadiumCollectibles.filter(c => c.category === 'food').length > 0 && (
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                          🍔 Food & Drink ({stadiumFood.length})
+                          🍔 Food & Drink ({stadiumCollectibles.filter(c => c.category === 'food').length})
                         </div>
                         <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
-                          {stadiumFood.map(item => {
-                            const categoryEmoji: Record<string, string> = { hot_dog: '🌭', specialty: '🍔', dessert: '🍦', drink: '🥤', other: '🍽️' }
-                            return (
-                              <div
-                                key={item.id}
-                                onClick={() => setEditingItem({
-                                  id: item.id,
-                                  itemType: 'food',
-                                  name: item.name,
-                                  category: item.category,
-                                  photoUrl: item.photo_url,
-                                  rating: item.rating,
-                                })}
-                                style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
-                              >
-                                <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
-                                  {item.photo_url ? (
-                                    /* eslint-disable-next-line @next/next/no-img-element */
-                                    <img src={item.photo_url} alt={item.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                                  ) : (
-                                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>{categoryEmoji[item.category] ?? '🍽️'}</div>
-                                  )}
-                                </div>
-                                {(() => {
-                                  const v = visitLookup(item.stadium_visit_id)
-                                  if (!v) return null
-                                  return (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px 0' }}>
-                                      <TeamLogo abbreviation={stadium.abbreviation} size={14} />
-                                      <span style={{ fontSize: 11, color: '#8B949E' }}>{formatDate(v.visit_date)}</span>
-                                    </div>
-                                  )
-                                })()}
-                                <div style={{ padding: '6px 8px' }}>
-                                  <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
-                                  {item.rating && <div style={{ fontSize: 13, color: '#F5A623' }}>{'⭐'.repeat(item.rating)}</div>}
-                                </div>
+                          {stadiumCollectibles.filter(c => c.category === 'food').map(item => (
+                            <div
+                              key={item.id}
+                              onClick={() => setEditingItem({
+                                id: item.id,
+                                name: item.name,
+                                category: item.category,
+                                photoUrl: item.photo_url,
+                                rating: item.rating,
+                                price: item.price,
+                              })}
+                              style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
+                            >
+                              <div style={{ position: 'relative', paddingBottom: '100%', backgroundColor: '#1C2430' }}>
+                                {item.photo_url ? (
+                                  /* eslint-disable-next-line @next/next/no-img-element */
+                                  <img src={item.photo_url} alt={item.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🍽️</div>
+                                )}
                               </div>
-                            )
-                          })}
+                              {(() => {
+                                const v = visitLookup(item.stadium_visit_id)
+                                if (!v) return null
+                                return (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px 0' }}>
+                                    <TeamLogo abbreviation={stadium.abbreviation} size={14} />
+                                    <span style={{ fontSize: 11, color: '#8B949E' }}>{formatDate(v.visit_date)}</span>
+                                  </div>
+                                )
+                              })()}
+                              <div style={{ padding: '6px 8px' }}>
+                                <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+                                {item.rating && <div style={{ fontSize: 13, color: '#F5A623' }}>{'⭐'.repeat(item.rating)}</div>}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}

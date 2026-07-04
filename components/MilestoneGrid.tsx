@@ -277,9 +277,7 @@ export default function MilestoneGrid({
   // Shared giveaway/food editor
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
 
-  const [foodLog, setFoodLog] = useState<Array<{ id: string; name: string; category: string; rating: number | null; photo_url: string | null; created_at: string }>>([])
-
-  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; photo_url: string | null; signed_by: string | null; acquired_from: string | null }>>([])
+  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null }>>([])
 
   const [hasBobbleheadGiveaway, setHasBobbleheadGiveaway] = useState(false)
 
@@ -291,20 +289,13 @@ export default function MilestoneGrid({
     if (data) setClaims(data as AchievementClaim[])
   }, [])
 
-  const fetchFoodLog = useCallback(async () => {
-    const supabase = createClient()
-    const { data } = await supabase.from('food_log').select('*').order('created_at', { ascending: false })
-    if (data) setFoodLog(data)
-  }, [])
-
   const fetchCollectibles = useCallback(async () => {
     const supabase = createClient()
-    const { data } = await supabase.from('collectible_log').select('id, name, category, photo_url, signed_by, acquired_from').order('created_at', { ascending: false })
+    const { data } = await supabase.from('collectible_log').select('id, name, category, photo_url, signed_by, acquired_from, rating, price').order('created_at', { ascending: false })
     if (data) setStadiumCollectibles(data)
   }, [])
 
   useEffect(() => { fetchClaims() }, [fetchClaims])
-  useEffect(() => { fetchFoodLog() }, [fetchFoodLog])
   useEffect(() => { fetchCollectibles() }, [fetchCollectibles])
 
   useEffect(() => {
@@ -1163,7 +1154,7 @@ export default function MilestoneGrid({
                 <div style={{ fontSize: 13, color: '#8B949E' }}>{stadiumCollectibles.length} item{stadiumCollectibles.length !== 1 ? 's' : ''} collected</div>
               </div>
               <button
-                onClick={() => setEditingItem({ id: 'new', itemType: 'collectible', name: '', category: 'giveaway', photoUrl: null })}
+                onClick={() => setEditingItem({ id: 'new', name: '', category: 'giveaway', photoUrl: null })}
                 style={{ fontSize: 13, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}
               >
                 + Add Item
@@ -1177,12 +1168,13 @@ export default function MilestoneGrid({
                     onClick={() => {
                       setEditingItem({
                         id: c.id,
-                        itemType: 'collectible',
                         name: c.name,
                         category: c.category,
                         photoUrl: c.photo_url,
                         signedBy: c.signed_by,
                         acquiredFrom: c.acquired_from,
+                        rating: c.rating,
+                        price: c.price,
                       })
                     }}
                     style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
@@ -1197,66 +1189,18 @@ export default function MilestoneGrid({
                         />
                       ) : (
                         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>
-                          {c.category === 'memorabilia' ? '✍️' : c.category === 'souvenir' ? '🛍️' : '🎁'}
+                          {c.category === 'memorabilia' ? '✍️' : c.category === 'souvenir' ? '🛍️' : c.category === 'food' ? '🍽️' : '🎁'}
                         </div>
                       )}
                     </div>
                     <div style={{ padding: '10px 12px 12px' }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                      {c.category === 'food' && c.rating && (
+                        <div style={{ fontSize: 13, color: '#F5A623', marginTop: 2 }}>{'⭐'.repeat(c.rating)}</div>
+                      )}
                     </div>
                   </div>
                 ))}
-            </div>
-          </div>
-        )}
-
-        {foodLog.length > 0 && (
-          <div style={{ marginTop: 28 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
-              🍔 Food &amp; Drink Log
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12 }}>
-              {foodLog.map(item => {
-                const categoryEmoji: Record<string, string> = {
-                  hot_dog: '🌭', specialty: '🍔', dessert: '🍦', drink: '🥤', other: '🍽️',
-                }
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => {
-                      setEditingItem({
-                        id: item.id,
-                        itemType: 'food',
-                        name: item.name,
-                        category: item.category,
-                        photoUrl: item.photo_url,
-                        rating: item.rating,
-                      })
-                    }}
-                    style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
-                  >
-                    <div style={{ position: 'relative', paddingBottom: '75%', backgroundColor: '#1C2430' }}>
-                      {item.photo_url ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={item.photo_url} alt={item.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
-                          {categoryEmoji[item.category] ?? '🍽️'}
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ padding: '10px 12px' }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', marginBottom: 2 }}>{item.name}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <span style={{ fontSize: 13 }}>{categoryEmoji[item.category] ?? '🍽️'}</span>
-                        {item.rating && (
-                          <span style={{ fontSize: 13, color: '#F5A623' }}>{'⭐'.repeat(item.rating)}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
             </div>
           </div>
         )}
@@ -1793,8 +1737,8 @@ export default function MilestoneGrid({
         <GiveawayFoodEditor
           item={editingItem}
           onClose={() => setEditingItem(null)}
-          onSaved={() => { setEditingItem(null); fetchClaims(); fetchFoodLog(); fetchCollectibles() }}
-          onDeleted={() => { setEditingItem(null); fetchClaims(); fetchFoodLog(); fetchCollectibles() }}
+          onSaved={() => { setEditingItem(null); fetchClaims(); fetchCollectibles() }}
+          onDeleted={() => { setEditingItem(null); fetchClaims(); fetchCollectibles() }}
         />
       )}
     </>
