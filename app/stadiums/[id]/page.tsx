@@ -1809,6 +1809,7 @@ export default function StadiumDetailPage() {
             setShowForm(false)
             setEditingVisit(undefined)
             load(true)
+            fetchCollection()
             if (newVisitId) triggerAutofill(newVisitId)
           }}
         />

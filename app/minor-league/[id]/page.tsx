@@ -1553,7 +1553,7 @@ export default function MinorLeagueDetailPage() {
           defaultCategory="minor_league"
           defaultMinorLeagueStadiumId={stadium.id}
           onClose={() => setShowForm(false)}
-          onSaved={() => { setShowForm(false); load() }}
+          onSaved={() => { setShowForm(false); load(); fetchCollection() }}
         />
       )}
 
