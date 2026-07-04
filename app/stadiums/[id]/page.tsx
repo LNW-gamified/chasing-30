@@ -850,8 +850,13 @@ export default function StadiumDetailPage() {
                                   </div>
                                 )
                               })()}
-                              <div style={{ padding: '6px 8px', fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {c.name}
+                              <div style={{ padding: '6px 8px' }}>
+                                <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {c.name}
+                                </div>
+                                <div style={{ fontSize: 11, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize' }}>
+                                  {c.category}
+                                </div>
                               </div>
                             </div>
                           ))}
