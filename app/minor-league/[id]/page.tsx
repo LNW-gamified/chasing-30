@@ -1100,7 +1100,7 @@ export default function MinorLeagueDetailPage() {
                                   </div>
                                 )}
                               </div>
-                              <div style={{ padding: '8px 10px' }}>
+                              <div style={{ padding: '10px 12px 12px' }}>
                                 <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
                                   {c.name}
                                 </div>
@@ -1149,7 +1149,7 @@ export default function MinorLeagueDetailPage() {
                                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🍽️</div>
                                 )}
                               </div>
-                              <div style={{ padding: '8px 10px' }}>
+                              <div style={{ padding: '10px 12px 12px' }}>
                                 <div style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
                                   {item.name}
                                 </div>

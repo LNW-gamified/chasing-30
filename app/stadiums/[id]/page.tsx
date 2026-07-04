@@ -842,23 +842,21 @@ export default function StadiumDetailPage() {
                                   </div>
                                 )}
                               </div>
-                              {(() => {
-                                const v = visitLookup(c.stadium_visit_id)
-                                if (!v) return null
-                                return (
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px 0' }}>
-                                    <TeamLogo abbreviation={stadium.abbreviation} size={14} />
-                                    <span style={{ fontSize: 11, color: '#8B949E' }}>{formatDate(v.visit_date)}</span>
-                                  </div>
-                                )
-                              })()}
                               <div style={{ padding: '10px 12px 12px' }}>
                                 <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
                                   {c.name}
                                 </div>
-                                <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize' }}>
+                                <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize', marginBottom: 6 }}>
                                   {c.category}
                                 </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                                  <TeamLogo abbreviation={stadium.abbreviation} size={14} />
+                                  <span style={{ fontSize: 12, color: '#8B949E' }}>{stadium.name}</span>
+                                </div>
+                                {(() => {
+                                  const v = visitLookup(c.stadium_visit_id)
+                                  return v ? <div style={{ fontSize: 12, color: '#8B949E' }}>{formatDate(v.visit_date)}</div> : null
+                                })()}
                               </div>
                             </div>
                           ))}
@@ -893,23 +891,21 @@ export default function StadiumDetailPage() {
                                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🍽️</div>
                                 )}
                               </div>
-                              {(() => {
-                                const v = visitLookup(item.stadium_visit_id)
-                                if (!v) return null
-                                return (
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px 0' }}>
-                                    <TeamLogo abbreviation={stadium.abbreviation} size={14} />
-                                    <span style={{ fontSize: 11, color: '#8B949E' }}>{formatDate(v.visit_date)}</span>
-                                  </div>
-                                )
-                              })()}
                               <div style={{ padding: '10px 12px 12px' }}>
                                 <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 3 }}>
                                   {item.name}
                                 </div>
-                                <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize' }}>
+                                <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize', marginBottom: 6 }}>
                                   {item.category}
                                 </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                                  <TeamLogo abbreviation={stadium.abbreviation} size={14} />
+                                  <span style={{ fontSize: 12, color: '#8B949E' }}>{stadium.name}</span>
+                                </div>
+                                {(() => {
+                                  const v = visitLookup(item.stadium_visit_id)
+                                  return v ? <div style={{ fontSize: 12, color: '#8B949E' }}>{formatDate(v.visit_date)}</div> : null
+                                })()}
                                 {item.rating && <div style={{ fontSize: 13, color: '#F5A623', marginTop: 4 }}>{'⭐'.repeat(item.rating)}</div>}
                               </div>
                             </div>
