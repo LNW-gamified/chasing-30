@@ -131,6 +131,7 @@ export default function StadiumDetailPage() {
   const [lightboxUrl, setLightboxUrl]           = useState<string | null>(null)
   const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; giveaway_type: string | null; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; stadium_visit_id: string | null }>>([])
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
+  const [collectionTypeFilter, setCollectionTypeFilter] = useState<string>('all')
 
   useEffect(() => {
     function handleLightbox(e: Event) {
@@ -813,12 +814,38 @@ export default function StadiumDetailPage() {
                     )}
 
                     {stadiumCollectibles.filter(c => c.category !== 'food').length > 0 && (
+                      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 16, paddingBottom: 2 }}>
+                        {['all', 'bobblehead', 'jersey', 'tshirt', 'hat', 'other'].map(val => {
+                          const nonFood = stadiumCollectibles.filter(c => c.category !== 'food')
+                          const count = val === 'all' ? nonFood.length : nonFood.filter(c => c.giveaway_type === val).length
+                          const labels: Record<string, string> = { all: 'All', bobblehead: 'Bobblehead', jersey: 'Jersey', tshirt: 'T-Shirt', hat: 'Hat', other: 'Other' }
+                          const emojis: Record<string, string> = { all: '🎁', bobblehead: '🪆', jersey: '👕', tshirt: '👔', hat: '🧢', other: '🎁' }
+                          return (
+                            <button
+                              key={val}
+                              onClick={() => setCollectionTypeFilter(val)}
+                              style={{
+                                flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6,
+                                padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600,
+                                backgroundColor: collectionTypeFilter === val ? '#E6EDF3' : '#161B22',
+                                color: collectionTypeFilter === val ? '#0D1117' : '#8B949E',
+                                border: '1px solid #30363D', cursor: 'pointer',
+                              }}
+                            >
+                              <span>{emojis[val]}</span> {labels[val]} <span style={{ opacity: 0.7 }}>({count})</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {stadiumCollectibles.filter(c => c.category !== 'food' && (collectionTypeFilter === 'all' || c.giveaway_type === collectionTypeFilter)).length > 0 && (
                       <div style={{ marginBottom: 20 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                          🎁 Collectibles ({stadiumCollectibles.filter(c => c.category !== 'food').length})
+                          🎁 Collectibles ({stadiumCollectibles.filter(c => c.category !== 'food' && (collectionTypeFilter === 'all' || c.giveaway_type === collectionTypeFilter)).length})
                         </div>
                         <div className="grid grid-cols-3 md:grid-cols-4" style={{ gap: 10 }}>
-                          {stadiumCollectibles.filter(c => c.category !== 'food').map(c => (
+                          {stadiumCollectibles.filter(c => c.category !== 'food' && (collectionTypeFilter === 'all' || c.giveaway_type === collectionTypeFilter)).map(c => (
                             <div
                               key={c.id}
                               onClick={() => setEditingItem({
