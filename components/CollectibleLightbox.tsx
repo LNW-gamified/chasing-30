@@ -8,6 +8,10 @@ interface Props {
   onEdit: () => void
 }
 
+const GIVEAWAY_TYPE_LABELS: Record<string, string> = {
+  bobblehead: 'Bobblehead', jersey: 'Jersey', tshirt: 'T-Shirt', hat: 'Hat', other: 'Other',
+}
+
 /**
  * Full-photo lightbox shown when tapping a My Collection card. Matches the
  * plain photo-lightbox style already used elsewhere in the app, plus an
@@ -43,7 +47,9 @@ export default function CollectibleLightbox({ item, onClose, onEdit }: Props) {
 
       <div onClick={e => e.stopPropagation()} style={{ textAlign: 'center', marginBottom: 20 }}>
         <div style={{ fontSize: 17, fontWeight: 800, color: '#E6EDF3', marginBottom: 4 }}>{item.name}</div>
-        <div style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize' }}>{item.category}</div>
+        <div style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize' }}>
+          {item.category === 'giveaway' && item.giveawayType ? (GIVEAWAY_TYPE_LABELS[item.giveawayType] ?? item.category) : item.category}
+        </div>
       </div>
 
       <button

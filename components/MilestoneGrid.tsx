@@ -1196,7 +1196,7 @@ export default function MilestoneGrid({
                     {c.name}
                   </div>
                   <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize', marginBottom: 6 }}>
-                    {c.category}
+                    {c.category === 'giveaway' && c.giveaway_type ? (giveawayTypeLabels[c.giveaway_type] ?? c.category) : c.category}
                   </div>
                   {stadiumName && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
