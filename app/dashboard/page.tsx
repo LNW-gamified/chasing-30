@@ -14,6 +14,7 @@ import TeamLogo from '@/components/TeamLogo'
 import { fetchPlayoffPicture, type PlayoffPicture } from '@/lib/mlb-api'
 import PennantRace from '@/components/PennantRace'
 import { getTeamAbbrById } from '@/lib/team-logos'
+import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 
 // ─── MLB API ──────────────────────────────────────────────────────────────────
 
@@ -172,6 +173,9 @@ export default async function DashboardPage() {
   const nextPlannedTrip = allTrips.find((t: any) =>
     t.status === 'planned' && t.start_date && t.start_date >= todayISO
   ) as any | undefined
+  const nextGamePhoto = nextPlannedTrip?.stadium?.abbreviation
+    ? await fetchStadiumPhoto(nextPlannedTrip.stadium.abbreviation)
+    : null
 
   // Stats
   const favAbbr            = (userSettings as any)?.favorite_team_abbr ?? null
@@ -345,7 +349,11 @@ export default async function DashboardPage() {
             style={{
               ...card,
               marginBottom: SECTION_GAP,
-              background: 'linear-gradient(135deg, #0D1A28 0%, #101E30 100%)',
+              backgroundImage: nextGamePhoto
+                ? `linear-gradient(to bottom, rgba(13,26,40,0.75), rgba(16,30,48,0.92)), url(${nextGamePhoto})`
+                : 'linear-gradient(135deg, #0D1A28 0%, #101E30 100%)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
               border: '1px solid #1A2E44',
               padding: '20px 24px',
               position: 'relative', overflow: 'hidden',
