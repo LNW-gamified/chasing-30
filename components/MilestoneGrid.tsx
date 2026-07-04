@@ -1218,10 +1218,17 @@ export default function MilestoneGrid({
             )
           }
 
-          const giveaways = stadiumCollectibles.filter(c => c.category === 'giveaway')
-          const souvenirs = stadiumCollectibles.filter(c => c.category === 'souvenir')
-          const memorabilia = stadiumCollectibles.filter(c => c.category === 'memorabilia')
-          const food = stadiumCollectibles.filter(c => c.category === 'food')
+          const getVisitDate = (c: typeof stadiumCollectibles[number]): string => {
+            if (c.stadium_visit_id) return allVisits.find(v => v.id === c.stadium_visit_id)?.visit_date ?? ''
+            if (c.baseball_life_entry_id) return allBle.find(e => e.id === c.baseball_life_entry_id)?.visit_date ?? ''
+            return ''
+          }
+          const byGameDate = [...stadiumCollectibles].sort((a, b) => getVisitDate(b).localeCompare(getVisitDate(a)))
+
+          const giveaways = byGameDate.filter(c => c.category === 'giveaway')
+          const souvenirs = byGameDate.filter(c => c.category === 'souvenir')
+          const memorabilia = byGameDate.filter(c => c.category === 'memorabilia')
+          const food = byGameDate.filter(c => c.category === 'food')
           const filteredGiveaways = giveaways.filter(c => collectionTypeFilter === 'all' || c.giveaway_type === collectionTypeFilter)
 
           const giveawayTypeLabels: Record<string, string> = { all: 'All', bobblehead: 'Bobblehead', jersey: 'Jersey', tshirt: 'T-Shirt', hat: 'Hat', other: 'Other' }

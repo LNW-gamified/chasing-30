@@ -1074,10 +1074,15 @@ export default function MinorLeagueDetailPage() {
                     )}
 
                     {(() => {
-                      const giveaways = stadiumCollectibles.filter(c => c.category === 'giveaway')
-                      const souvenirs = stadiumCollectibles.filter(c => c.category === 'souvenir')
-                      const memorabilia = stadiumCollectibles.filter(c => c.category === 'memorabilia')
-                      const food = stadiumCollectibles.filter(c => c.category === 'food')
+                      const byGameDate = [...stadiumCollectibles].sort((a, b) => {
+                        const dateA = visits.find(vi => vi.id === a.baseball_life_entry_id)?.visit_date ?? ''
+                        const dateB = visits.find(vi => vi.id === b.baseball_life_entry_id)?.visit_date ?? ''
+                        return dateB.localeCompare(dateA)
+                      })
+                      const giveaways = byGameDate.filter(c => c.category === 'giveaway')
+                      const souvenirs = byGameDate.filter(c => c.category === 'souvenir')
+                      const memorabilia = byGameDate.filter(c => c.category === 'memorabilia')
+                      const food = byGameDate.filter(c => c.category === 'food')
                       const filteredGiveaways = giveaways.filter(c => collectionTypeFilter === 'all' || c.giveaway_type === collectionTypeFilter)
 
                       const giveawayTypeLabels: Record<string, string> = { all: 'All', bobblehead: 'Bobblehead', jersey: 'Jersey', tshirt: 'T-Shirt', hat: 'Hat', other: 'Other' }
