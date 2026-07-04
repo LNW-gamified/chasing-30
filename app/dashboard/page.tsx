@@ -13,7 +13,7 @@ import HeroRing, { type RingDot } from '@/components/HeroRing'
 import TeamLogo from '@/components/TeamLogo'
 import { fetchPlayoffPicture, type PlayoffPicture } from '@/lib/mlb-api'
 import PennantRace from '@/components/PennantRace'
-import { getTeamAbbrById } from '@/lib/team-logos'
+import { getTeamAbbrById, getTeamLogoUrl } from '@/lib/team-logos'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 
 // ─── MLB API ──────────────────────────────────────────────────────────────────
@@ -350,7 +350,7 @@ export default async function DashboardPage() {
               ...card,
               marginBottom: SECTION_GAP,
               backgroundImage: nextGamePhoto
-                ? `linear-gradient(to bottom, rgba(13,26,40,0.45), rgba(16,30,48,0.65)), url(${nextGamePhoto})`
+                ? `linear-gradient(to bottom, rgba(13,26,40,0.62), rgba(16,30,48,0.82)), url(${nextGamePhoto})`
                 : 'linear-gradient(135deg, #0D1A28 0%, #101E30 100%)',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
@@ -405,8 +405,9 @@ export default async function DashboardPage() {
         {/* ── Playoff Picture ─────────────────────────────────────────── */}
         {playoffPic && favStadium && (
           <div className="dash-card" style={{ ...card, marginBottom: SECTION_GAP, padding: '16px 20px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', right: -10, top: '50%', transform: 'translateY(-50%)', opacity: 0.12 }}>
-              <TeamLogo abbreviation={favStadium.abbreviation} size={120} />
+            <div style={{ position: 'absolute', right: -10, top: '50%', transform: 'translateY(-50%)', opacity: 0.15, pointerEvents: 'none' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={getTeamLogoUrl(favStadium.abbreviation)} alt="" width={120} height={120} style={{ objectFit: 'contain', display: 'block' }} />
             </div>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
               <TeamLogo abbreviation={favStadium.abbreviation} size={28} />
