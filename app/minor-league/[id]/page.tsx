@@ -1122,7 +1122,7 @@ export default function MinorLeagueDetailPage() {
                               {c.category === 'giveaway' && c.giveaway_type ? (giveawayTypeLabels[c.giveaway_type] ?? c.category) : c.category}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                              <TeamLogo abbreviation={stadium.abbreviation} size={20} />
+                              <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} logoUrl={stadium.logo_url} size={20} />
                               <span style={{ fontSize: 12, color: '#E6EDF3' }}>{stadium.name}</span>
                             </div>
                             {(() => {
