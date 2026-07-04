@@ -1108,8 +1108,8 @@ export default function MinorLeagueDetailPage() {
                                   {c.category}
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                                  <TeamLogo abbreviation={stadium.abbreviation} size={14} />
-                                  <span style={{ fontSize: 12, color: '#8B949E' }}>{stadium.name}</span>
+                                  <TeamLogo abbreviation={stadium.abbreviation} size={20} />
+                                  <span style={{ fontSize: 12, color: '#E6EDF3' }}>{stadium.name}</span>
                                 </div>
                                 {(() => {
                                   const v = visits.find(vi => vi.id === c.baseball_life_entry_id)
@@ -1157,8 +1157,8 @@ export default function MinorLeagueDetailPage() {
                                   {item.category}
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                                  <TeamLogo abbreviation={stadium.abbreviation} size={14} />
-                                  <span style={{ fontSize: 12, color: '#8B949E' }}>{stadium.name}</span>
+                                  <TeamLogo abbreviation={stadium.abbreviation} size={20} />
+                                  <span style={{ fontSize: 12, color: '#E6EDF3' }}>{stadium.name}</span>
                                 </div>
                                 {(() => {
                                   const v = visits.find(vi => vi.id === item.baseball_life_entry_id)

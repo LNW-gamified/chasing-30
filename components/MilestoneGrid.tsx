@@ -1197,11 +1197,11 @@ export default function MilestoneGrid({
                   </div>
                   {stadiumName && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                      {mlbStadium && <TeamLogo abbreviation={mlbStadium.abbreviation} size={14} />}
+                      {mlbStadium && <TeamLogo abbreviation={mlbStadium.abbreviation} size={20} />}
                       {!mlbStadium && milbStadium && (
-                        <MiLBLogo milbTeamId={milbStadium.milb_team_id} fallbackAbbr={milbStadium.affiliate} logoUrl={milbStadium.logo_url} size={14} />
+                        <MiLBLogo milbTeamId={milbStadium.milb_team_id} fallbackAbbr={milbStadium.affiliate} logoUrl={milbStadium.logo_url} size={20} />
                       )}
-                      <span style={{ fontSize: 12, color: '#8B949E' }}>{stadiumName}</span>
+                      <span style={{ fontSize: 12, color: '#E6EDF3' }}>{stadiumName}</span>
                     </div>
                   )}
                   {visitDate && (
