@@ -1034,6 +1034,42 @@ export default function MinorLeagueDetailPage() {
                                   >
                                     + Add Food, Giveaway, or Souvenir for This Game
                                   </button>
+                                  {(() => {
+                                    const gameItems = stadiumCollectibles.filter(c => c.baseball_life_entry_id === visit.id)
+                                    if (gameItems.length === 0) return null
+                                    return (
+                                      <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                        {gameItems.map(c => (
+                                          <div
+                                            key={c.id}
+                                            onClick={() => setViewingItem({
+                                              id: c.id,
+                                              name: c.name,
+                                              category: c.category,
+                                              giveawayType: c.giveaway_type,
+                                              photoUrl: c.photo_url,
+                                              signedBy: c.signed_by,
+                                              acquiredFrom: c.acquired_from,
+                                              rating: c.rating,
+                                              price: c.price,
+                                            })}
+                                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 8, backgroundColor: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.15)', cursor: 'pointer' }}
+                                          >
+                                            {c.photo_url ? (
+                                              /* eslint-disable-next-line @next/next/no-img-element */
+                                              <img src={c.photo_url} alt={c.name} style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
+                                            ) : (
+                                              <div style={{ width: 28, height: 28, borderRadius: 6, backgroundColor: '#1C2430', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>
+                                                {c.category === 'memorabilia' ? '✍️' : c.category === 'souvenir' ? '🛍️' : c.category === 'food' ? '🍽️' : '🎁'}
+                                              </div>
+                                            )}
+                                            <span style={{ fontSize: 13, color: '#E6EDF3', fontWeight: 600, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+                                            <span style={{ fontSize: 11, color: '#8B949E', textTransform: 'capitalize', flexShrink: 0 }}>{c.category}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )
+                                  })()}
                                 </div>
 
                                 <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid #30363D' }}>
