@@ -803,7 +803,7 @@ export default function StadiumDetailPage() {
                         Your Collection at {stadium.name}
                       </div>
                       <button
-                        onClick={() => setEditingItem({ id: 'new', itemType: 'collectible', name: '', category: 'giveaway', photoUrl: null, stadiumVisitId: visits[0]?.id ?? null })}
+                        onClick={() => setEditingItem({ id: 'new', itemType: 'collectible', name: '', category: 'giveaway', photoUrl: null, scopedStadiumId: stadium.id })}
                         style={{ fontSize: 13, fontWeight: 600, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}
                       >
                         + Add Item

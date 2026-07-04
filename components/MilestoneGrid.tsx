@@ -259,7 +259,6 @@ export default function MilestoneGrid({
 
   // Claim form fields
   const [claimVisitId,        setClaimVisitId]        = useState('')
-  const [claimBobbleheadName, setClaimBobbleheadName] = useState('')
   const [claimPlayerName,     setClaimPlayerName]     = useState('')
   const [claimNotes,          setClaimNotes]          = useState('')
   const [claimSaving,         setClaimSaving]         = useState(false)
@@ -268,7 +267,6 @@ export default function MilestoneGrid({
   const [editingClaim,       setEditingClaim]      = useState<AchievementClaim | null>(null)
   const [editingExp,         setEditingExp]         = useState<StaticExperience | null>(null)
   const [editVisitId,        setEditVisitId]        = useState('')
-  const [editBobbleheadName, setEditBobbleheadName] = useState('')
   const [editPlayerName,     setEditPlayerName]     = useState('')
   const [editNotes,          setEditNotes]          = useState('')
   const [editClaimDate,      setEditClaimDate]      = useState('')
@@ -323,7 +321,6 @@ export default function MilestoneGrid({
   function closeModal() {
     setSelected(null)
     setClaimVisitId('')
-    setClaimBobbleheadName('')
     setClaimPlayerName('')
     setClaimNotes('')
   }
@@ -333,9 +330,6 @@ export default function MilestoneGrid({
     const supabase = createClient()
     const extra: Record<string, string> = {}
 
-    if (exp.id === 'bobblehead' && claimBobbleheadName.trim()) {
-      extra.bobblehead_name = claimBobbleheadName.trim()
-    }
     if (PLAYER_NAME_EXP.has(exp.id) && claimPlayerName.trim()) {
       extra.player_name = claimPlayerName.trim()
     }
@@ -358,7 +352,6 @@ export default function MilestoneGrid({
     await fetchClaims()
 
     setClaimVisitId('')
-    setClaimBobbleheadName('')
     setClaimPlayerName('')
     setClaimNotes('')
     setClaimSaving(false)
@@ -376,7 +369,6 @@ export default function MilestoneGrid({
     setEditingClaim(claim)
     setEditingExp(exp)
     setEditVisitId(claim.stadium_visit_id ?? '')
-    setEditBobbleheadName(claim.extra_data?.bobblehead_name ? String(claim.extra_data.bobblehead_name) : '')
     setEditPlayerName(claim.extra_data?.player_name ? String(claim.extra_data.player_name) : '')
     setEditNotes(claim.notes ?? '')
     setEditClaimDate(claim.claim_date)
@@ -420,10 +412,6 @@ export default function MilestoneGrid({
     }
 
     // Extra-data fields per achievement type
-    if (editingExp.id === 'bobblehead') {
-      if (editBobbleheadName.trim()) extra.bobblehead_name = editBobbleheadName.trim()
-      else delete extra.bobblehead_name
-    }
     if (PLAYER_NAME_EXP.has(editingExp.id)) {
       if (editPlayerName.trim()) extra.player_name = editPlayerName.trim()
       else delete extra.player_name
@@ -1387,13 +1375,12 @@ export default function MilestoneGrid({
       {selected?.type === 'static' && (() => {
         const exp          = selected.experience
         const isBobble     = exp.id === 'bobblehead'
+        const isAutomatic  = exp.tracking_type === 'automatic'
         const expClaims    = claims.filter(c => c.achievement_id === exp.id).sort((a, b) => b.claim_date.localeCompare(a.claim_date))
-        const hasClaims    = expClaims.length > 0
+        const hasClaims    = isBobble ? hasBobbleheadGiveaway : expClaims.length > 0
         const isRepeatable = exp.tracking_type === 'manual_repeatable'
         const showsPlayer  = PLAYER_NAME_EXP.has(exp.id)
-        const showForm     = isRepeatable || !hasClaims
-
-        const itemNamePlaceholder = 'What did you get?'
+        const showForm     = !isAutomatic && (isRepeatable || !hasClaims)
 
         return (
           <div
@@ -1423,8 +1410,23 @@ export default function MilestoneGrid({
                   <div style={{ fontSize: 13, color: '#8B949E' }}>{exp.description}</div>
                 </div>
 
+                {/* ── automatic tracking state ── */}
+                {isAutomatic && (
+                  <div style={{ padding: '14px 16px', borderRadius: 12, backgroundColor: hasClaims ? 'rgba(63,185,80,0.07)' : 'rgba(139,148,158,0.06)', border: `1px solid ${hasClaims ? 'rgba(63,185,80,0.2)' : '#30363D'}`, marginBottom: 16 }}>
+                    {hasClaims ? (
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#3FB950' }}>✓ Automatically earned</div>
+                    ) : (
+                      <div style={{ fontSize: 13, color: '#8B949E' }}>
+                        {isBobble
+                          ? 'Automatically earned when you log a bobblehead giveaway to your collection.'
+                          : 'Automatically earned — no manual logging needed.'}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* ── manual_once claimed state ── */}
-                {!isRepeatable && hasClaims && (() => {
+                {!isRepeatable && !isAutomatic && hasClaims && (() => {
                   const claim   = expClaims[0]
                   const visit   = allVisits.find(v => v.id === claim.stadium_visit_id)
                   const stadium = visit ? allStadiums.find(s => s.id === visit.stadium_id) : null
@@ -1481,17 +1483,6 @@ export default function MilestoneGrid({
                       </select>
                       <ChevronRight size={14} color="#8B949E" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%) rotate(90deg)', pointerEvents: 'none' }} />
                     </div>
-
-                    {/* Item name (bobblehead) */}
-                    {isBobble && (
-                      <input
-                        type="text"
-                        placeholder={itemNamePlaceholder}
-                        value={claimBobbleheadName}
-                        onChange={e => setClaimBobbleheadName(e.target.value)}
-                        style={inputStyle}
-                      />
-                    )}
 
                     {/* Player name (autograph / met_player) */}
                     {showsPlayer && (
@@ -1628,13 +1619,10 @@ export default function MilestoneGrid({
 
       {/* ── Edit claim modal ─────────────────────────────────────────────────── */}
       {editingClaim && editingExp && (() => {
-        const isBobble    = editingExp.id === 'bobblehead'
         const showsPlayer = PLAYER_NAME_EXP.has(editingExp.id)
         const existingPhotoUrl    = editingClaim.extra_data?.photo_url ? String(editingClaim.extra_data.photo_url) : null
         const showExistingPhoto   = !!existingPhotoUrl && !editDeletePhoto && !editPhotoFile
         const showDeletedNotice   = !!existingPhotoUrl && editDeletePhoto && !editPhotoFile
-
-        const editItemNamePlaceholder = 'What did you get?'
 
         return (
           <div
@@ -1688,17 +1676,6 @@ export default function MilestoneGrid({
                     style={inputStyle}
                   />
                 </div>
-
-                {/* Item name (bobblehead) */}
-                {isBobble && (
-                  <input
-                    type="text"
-                    placeholder={editItemNamePlaceholder}
-                    value={editBobbleheadName}
-                    onChange={e => setEditBobbleheadName(e.target.value)}
-                    style={inputStyle}
-                  />
-                )}
 
                 {/* Player name (autograph / met_player) */}
                 {showsPlayer && (

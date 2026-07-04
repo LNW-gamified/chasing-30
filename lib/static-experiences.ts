@@ -1,4 +1,4 @@
-export type TrackingType = 'manual_once' | 'manual_repeatable'
+export type TrackingType = 'manual_once' | 'manual_repeatable' | 'automatic'
 
 export interface StaticExperience {
   id: string
@@ -11,8 +11,9 @@ export interface StaticExperience {
 export const STATIC_EXPERIENCES: StaticExperience[] = [
   // manual_once
   { id: 'opening_day',     name: 'Opening Day',            description: 'Attend Opening Day for any team',              icon: '🌱', tracking_type: 'manual_once' },
+  // automatic (earned by logging data elsewhere — no manual claim form)
+  { id: 'bobblehead',      name: 'Bobblehead Collection',  description: 'Score a giveaway item at the park',           icon: '🪆', tracking_type: 'automatic' },
   // manual_repeatable
-  { id: 'bobblehead',      name: 'Bobblehead Collection',  description: 'Score a giveaway item at the park',           icon: '🪆', tracking_type: 'manual_repeatable' },
   { id: 'foul_ball',       name: 'Caught a Foul Ball',     description: 'Catch or retrieve a foul ball at a game',      icon: '⚾', tracking_type: 'manual_repeatable' },
   { id: 'autograph',       name: 'Got an Autograph',       description: 'Get a player autograph at any MLB venue',      icon: '✍️', tracking_type: 'manual_repeatable' },
   { id: 'met_player',      name: 'Met a Player',           description: 'Meet an MLB player in person',                 icon: '🤝', tracking_type: 'manual_repeatable' },
