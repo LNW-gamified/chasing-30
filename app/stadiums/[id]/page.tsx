@@ -14,6 +14,7 @@ import { fetchTeamNews, type ESPNNewsItem } from '@/lib/espn-api'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Loader2, Users, CalendarDays, Trophy, Share2, Hash, Building2, Map, ChevronRight, CloudRain, Wind } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
+import { MLB_TEAMS } from '@/lib/teams'
 import { TEAM_BTN_COLOR, TEAM_GRADIENTS, darkerOf } from '@/lib/team-colors'
 import GiveawayFoodEditor, { type EditorItem } from '@/components/GiveawayFoodEditor'
 import CollectibleLightbox from '@/components/CollectibleLightbox'
@@ -679,71 +680,88 @@ export default function StadiumDetailPage() {
                             ? (homeWon ? '#3FB950' : '#F85149')
                             : '#30363D'
                           const opponent = (visit.visiting_team ?? '—').replace(/^vs\.?\s+/i, '')
-                          const scoreStr = hasScore
-                            ? ` · ${visit.away_runs}–${visit.home_runs}`
-                            : ''
                           const giveawayName = visitPromos[visit.id]?.promotions?.[0]
+                          const opponentAbbr = MLB_TEAMS.find(t => t.name === opponent)?.abbr
+                          const dt = new Date(visit.visit_date + 'T12:00:00')
+                          const dayAbbr = dt.toLocaleDateString('en-US', { weekday: 'short' })
+                          const monthDay = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                          const year2 = dt.getFullYear()
                           return (
                             <button
                               key={visit.id}
                               onClick={() => setExpandedVisit(isExpanded ? null : visit.id)}
                               style={{
-                                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                                padding: '12px 14px',
-                                backgroundColor: isExpanded ? '#1C2430' : '#161B22',
+                                position: 'relative', width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                                padding: '14px 16px',
+                                backgroundImage: `linear-gradient(135deg, ${teamColor}1A 0%, ${isExpanded ? '#1C2430' : '#161B22'} 60%)`,
                                 border: '1px solid #30363D',
                                 borderLeft: `3px solid ${borderColor}`,
                                 borderRadius: 12, cursor: 'pointer', textAlign: 'left',
+                                overflow: 'hidden',
                               }}
                             >
-                              {/* Team logo — always show logo on collapsed row */}
-                              <div style={{ width: 40, height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <TeamLogo abbreviation={stadium.abbreviation} size={40} />
+                              {/* Ticket-stub notches */}
+                              <div style={{ position: 'absolute', left: -7, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, borderRadius: '50%', backgroundColor: '#0B1117', border: '1px solid #30363D' }} />
+                              <div style={{ position: 'absolute', right: -7, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, borderRadius: '50%', backgroundColor: '#0B1117', border: '1px solid #30363D' }} />
+
+                              {/* Date badge */}
+                              <div style={{
+                                flexShrink: 0, width: 46, textAlign: 'center',
+                                backgroundColor: 'rgba(0,0,0,0.25)', borderRadius: 8, padding: '5px 2px',
+                              }}>
+                                <div style={{ fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase' }}>{dayAbbr}</div>
+                                <div style={{ fontSize: 13, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1 }}>{monthDay}</div>
+                                <div style={{ fontSize: 9, color: '#6E7681' }}>{year2}</div>
                               </div>
 
-                              {/* Center: date + matchup */}
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 3, fontWeight: 500 }}>
-                                  {formatDate(visit.visit_date)}
-                                </div>
-                                <div style={{
-                                  fontSize: 14, fontWeight: 700, color: '#E6EDF3',
-                                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                                  display: 'flex', alignItems: 'center', gap: 6,
-                                }}>
-                                  <span>vs {opponent}{scoreStr}</span>
-                                  {hasScore && (
-                                    <span style={{
-                                      fontSize: 10, fontWeight: 800, flexShrink: 0,
-                                      padding: '1px 5px', borderRadius: 4,
-                                      color: homeWon ? '#3FB950' : '#F85149',
-                                      backgroundColor: homeWon ? 'rgba(63,185,80,0.14)' : 'rgba(248,81,73,0.14)',
-                                    }}>
-                                      {homeWon ? 'W' : 'L'}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Right: giveaway badge + chevron */}
+                              {/* Matchup: home logo — score — away logo */}
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                                <TeamLogo abbreviation={stadium.abbreviation} size={34} />
+                                {hasScore ? (
+                                  <div style={{ textAlign: 'center', minWidth: 44 }}>
+                                    <div style={{ fontSize: 18, fontWeight: 900, lineHeight: 1, color: homeWon ? '#3FB950' : '#E6EDF3' }}>
+                                      {visit.home_runs}<span style={{ color: '#6E7681', fontWeight: 500 }}>-</span>{visit.away_runs}
+                                    </div>
+                                    <span style={{
+                                      fontSize: 9, fontWeight: 800, color: homeWon ? '#3FB950' : '#F85149',
+                                    }}>
+                                      {homeWon ? 'WIN' : 'LOSS'}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span style={{ fontSize: 12, color: '#6E7681', fontWeight: 700 }}>VS</span>
+                                )}
+                                {opponentAbbr ? <TeamLogo abbreviation={opponentAbbr} size={34} /> : (
+                                  <div style={{ width: 34, height: 34, borderRadius: '50%', backgroundColor: '#1C2430', flexShrink: 0 }} />
+                                )}
+                              </div>
+
+                              {/* Opponent name + giveaway */}
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{
+                                  fontSize: 13, fontWeight: 700, color: '#E6EDF3',
+                                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                }}>
+                                  vs {opponent}
+                                </div>
                                 {giveawayName && (
                                   <span style={{
-                                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                                    display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 3,
                                     fontSize: 11, fontWeight: 700, color: '#F5A623',
                                     backgroundColor: 'rgba(245,166,35,0.12)',
                                     border: '1px solid rgba(245,166,35,0.3)',
-                                    borderRadius: 20, padding: '3px 8px',
+                                    borderRadius: 20, padding: '2px 7px',
                                   }}>
                                     🎁 Giveaway
                                   </span>
                                 )}
-                                <ChevronRight
-                                  size={16}
-                                  color={isExpanded ? '#E6EDF3' : '#8B949E'}
-                                  style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}
-                                />
                               </div>
+
+                              <ChevronRight
+                                size={16}
+                                color={isExpanded ? '#E6EDF3' : '#8B949E'}
+                                style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}
+                              />
                             </button>
                           )
                         })}
@@ -1576,6 +1594,35 @@ export default function StadiumDetailPage() {
             {/* ── TEAM TAB ─────────────────────────────────────────── */}
             {activeTab === 'roster' && (
               <>
+                {/* Team News */}
+                {teamNews.length > 0 && (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle Icon={Trophy}>Team News</SectionTitle>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {teamNews.map((item, i) => (
+                        <a
+                          key={i}
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ display: 'flex', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D', textDecoration: 'none' }}
+                        >
+                          {item.imageUrl && (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img src={item.imageUrl} alt="" style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.4, marginBottom: 4 }}>{item.headline}</div>
+                            <div style={{ fontSize: 13, color: '#8B949E' }}>
+                              {new Date(item.published).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · ESPN
+                            </div>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
                 {/* This Season */}
                 {teamStats && (teamStats.wins !== null || teamStats.era) && (
                   <section style={{ marginBottom: 32 }}>
@@ -1613,35 +1660,6 @@ export default function StadiumDetailPage() {
                           <div style={{ fontSize: 18, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{s!.value}</div>
                           <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s!.label}</div>
                         </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {/* Team News */}
-                {teamNews.length > 0 && (
-                  <section style={{ marginBottom: 32 }}>
-                    <SectionTitle Icon={Trophy}>Team News</SectionTitle>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {teamNews.map((item, i) => (
-                        <a
-                          key={i}
-                          href={item.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ display: 'flex', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D', textDecoration: 'none' }}
-                        >
-                          {item.imageUrl && (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img src={item.imageUrl} alt="" style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
-                          )}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.4, marginBottom: 4 }}>{item.headline}</div>
-                            <div style={{ fontSize: 13, color: '#8B949E' }}>
-                              {new Date(item.published).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · ESPN
-                            </div>
-                          </div>
-                        </a>
                       ))}
                     </div>
                   </section>
