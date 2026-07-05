@@ -1391,7 +1391,7 @@ export default function StadiumDetailPage() {
                     <SectionTitle Icon={Map}>Field Dimensions</SectionTitle>
                     <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '20px 16px' }}>
                       {/* Stylized field diagram — not to scale, just a visual read on the shape of the park */}
-                      <svg viewBox="0 0 300 200" style={{ width: '100%', height: 'auto', display: 'block', marginBottom: 8 }}>
+                      <svg viewBox="0 -18 300 218" style={{ width: '100%', height: 'auto', display: 'block', marginBottom: 8 }}>
                         <defs>
                           <linearGradient id="grassGrad" x1="0" y1="1" x2="0" y2="0">
                             <stop offset="0%" stopColor="#1C3A24" />
