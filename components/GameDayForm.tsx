@@ -324,11 +324,13 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
     const allPhotoPaths = [...photoPathsToKeep, ...newPaths]
     const uploadedPhotoUrl = allPhotoPaths[0] ?? null
 
+    const stripVsPrefix = (s: string) => s.replace(/^\s*vs\.?\s+/i, '').trim()
+
     const payload = {
       stadium_id: stadium.id,
       visit_date: form.visit_date,
-      home_team: form.home_team,
-      visiting_team: form.visiting_team,
+      home_team: stripVsPrefix(form.home_team),
+      visiting_team: stripVsPrefix(form.visiting_team),
       home_team_record: form.home_team_record || null,
       visiting_team_record: form.visiting_team_record || null,
       seat_section: form.seat_section || null,
