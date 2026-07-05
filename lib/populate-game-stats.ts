@@ -112,6 +112,14 @@ export async function populateGameStats(
       } catch {}
     }
 
+    let gameDuration: string | null = null
+    const durationMin: number | undefined = gameData.gameInfo?.gameDurationMinutes
+    if (typeof durationMin === 'number' && durationMin > 0) {
+      const h = Math.floor(durationMin / 60)
+      const m = durationMin % 60
+      gameDuration = `${h}h ${m}m`
+    }
+
     // Game event detection
     const allPlays: any[] = liveData.plays?.allPlays ?? []
     const homeRunsTotal = homeLS.runs ?? 0
@@ -190,6 +198,7 @@ export async function populateGameStats(
     }
 
     if (firstPitchTime) update.first_pitch_time = firstPitchTime
+    if (gameDuration) update.game_duration = gameDuration
     if (homeSP?.name) {
       update.home_starter_name = homeSP.name
       update.home_starter_wl   = homeSP.wl

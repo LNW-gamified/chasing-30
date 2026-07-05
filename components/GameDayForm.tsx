@@ -618,16 +618,6 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                 required
               />
             )}
-            {field(
-              'Game Duration',
-              <input
-                type="text"
-                className="input"
-                placeholder="e.g. 3h 12m"
-                value={form.game_duration}
-                onChange={(e) => set('game_duration', e.target.value)}
-              />
-            )}
           </div>
 
           {sectionHead('Seating')}
@@ -951,6 +941,16 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                 placeholder="38500"
                 value={form.attendance}
                 onChange={(e) => set('attendance', e.target.value)}
+              />
+            )}
+            {field(
+              'Game Duration',
+              <input
+                type="text"
+                className="input"
+                placeholder="e.g. 3h 12m"
+                value={form.game_duration}
+                onChange={(e) => set('game_duration', e.target.value)}
               />
             )}
             {field(
