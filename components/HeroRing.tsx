@@ -13,14 +13,19 @@ interface Props {
   visited: number
   total: number
   dots: RingDot[]
+  gradient?: [string, string]   // tier-driven ring color, defaults to blue-green
+  glow?: string                 // tier-driven glow color for the tip + fill
 }
 
-export default function HeroRing({ visited, total, dots }: Props) {
+export default function HeroRing({ visited, total, dots, gradient, glow }: Props) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
     const id = requestAnimationFrame(() => setMounted(true))
     return () => cancelAnimationFrame(id)
   }, [])
+
+  const [gradFrom, gradTo] = gradient ?? ['#1F6FEB', '#3FB950']
+  const glowColor = glow ?? 'rgba(63,185,80,0.8)'
 
   const size    = 200
   const sw      = 12
@@ -46,10 +51,10 @@ export default function HeroRing({ visited, total, dots }: Props) {
         style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}
       >
         <defs>
-          {/* Blue-to-green gradient following the arc bounding box */}
+          {/* Tier-driven gradient following the arc bounding box */}
           <linearGradient id="arcGrad" x1="1" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="#1F6FEB" />
-            <stop offset="100%" stopColor="#3FB950" />
+            <stop offset="0%"   stopColor={gradFrom} />
+            <stop offset="100%" stopColor={gradTo} />
           </linearGradient>
           {/* Glow filter for arc tip */}
           <filter id="tipGlow" x="-100%" y="-100%" width="300%" height="300%">
@@ -70,7 +75,7 @@ export default function HeroRing({ visited, total, dots }: Props) {
           strokeDashoffset={mounted ? offset : circ}
           style={{
             transition: 'stroke-dashoffset 1.4s cubic-bezier(0.22,1,0.36,1)',
-            filter: 'drop-shadow(0 0 6px rgba(63,185,80,0.8)) drop-shadow(0 0 16px rgba(63,185,80,0.4))',
+            filter: `drop-shadow(0 0 6px ${glowColor}) drop-shadow(0 0 16px ${glowColor})`,
           }}
         />
 
@@ -79,19 +84,37 @@ export default function HeroRing({ visited, total, dots }: Props) {
           <circle
             cx={tipX} cy={tipY}
             r={sw / 2 + 2}
-            fill="#3FB950"
+            fill={gradTo}
             filter="url(#tipGlow)"
             style={{ opacity: 0.9 }}
           />
         )}
       </svg>
 
-      {/* Visited stadium logo blobs — only rendered for visited positions */}
+      {/* Stadium slots — ghost outline for unvisited, filled logo for visited */}
       {dots.map(({ abbr, visited: v, visitDate }, i) => {
-        if (!v || !abbr) return null  // unvisited = no dot; the SVG track is the ring
         const angle = (i / dots.length) * 2 * Math.PI - Math.PI / 2
         const x = size / 2 + r * Math.cos(angle) - dotHalf
         const y = size / 2 + r * Math.sin(angle) - dotHalf
+
+        if (!v || !abbr) {
+          // Unvisited slot — faint ghost outline so the ring reads as
+          // "30 slots to fill" even early on, instead of empty track.
+          return (
+            <div
+              key={i}
+              style={{
+                position: 'absolute', left: x, top: y,
+                width: dotPx, height: dotPx,
+                borderRadius: '50%',
+                border: '1.5px dashed rgba(139,148,158,0.28)',
+                background: 'rgba(255,255,255,0.02)',
+                zIndex: 1,
+              }}
+            />
+          )
+        }
+
         const tooltipText = visitDate
           ? `${abbr} · ${new Date(visitDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
           : abbr
@@ -103,8 +126,8 @@ export default function HeroRing({ visited, total, dots }: Props) {
               position: 'absolute', left: x, top: y,
               width: dotPx, height: dotPx,
               borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
-              border: '2px solid #3FB950',
-              boxShadow: '0 0 8px rgba(63,185,80,0.7)',
+              border: `2px solid ${gradTo}`,
+              boxShadow: `0 0 8px ${glowColor}`,
               zIndex: 2, cursor: 'help',
             }}
           >

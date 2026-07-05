@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase'
 import TeamLogo from '@/components/TeamLogo'
 import { X } from 'lucide-react'
 import { MLB_TEAMS as TEAMS } from '@/lib/teams'
+import { TEAM_PRIMARY } from '@/lib/team-colors'
 
 interface Props {
   userId: string
@@ -18,6 +19,7 @@ export default function FavoriteTeamPicker({ userId, currentFavAbbr }: Props) {
   const router = useRouter()
 
   const currentTeam = TEAMS.find(t => t.abbr === currentFavAbbr) ?? null
+  const teamColor = currentTeam ? (TEAM_PRIMARY[currentTeam.abbr] ?? '#1F6FEB') : null
 
   async function pick(abbr: string | null) {
     setSaving(true)
@@ -34,18 +36,19 @@ export default function FavoriteTeamPicker({ userId, currentFavAbbr }: Props) {
     <>
       {/* Trigger row */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
+        display: 'flex', alignItems: 'center', gap: 12,
         marginBottom: 12,
-        backgroundColor: '#111827', border: '1px solid #1e2d4a',
-        borderRadius: 10, padding: '10px 14px',
+        backgroundColor: teamColor ? `${teamColor}1A` : '#111827',
+        border: teamColor ? `1px solid ${teamColor}55` : '1px solid #1e2d4a',
+        borderRadius: 10, padding: '12px 14px',
       }}>
         <span style={{ fontSize: 12, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
           Favorite Team
         </span>
         {currentTeam ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <TeamLogo abbreviation={currentTeam.abbr} size={22} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{currentTeam.abbr}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <TeamLogo abbreviation={currentTeam.abbr} size={32} />
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#E6EDF3' }}>{currentTeam.abbr}</span>
             <span style={{ fontSize: 12, color: '#8B949E' }}>{currentTeam.name}</span>
           </div>
         ) : (

@@ -15,6 +15,8 @@ import { fetchPlayoffPicture, type PlayoffPicture } from '@/lib/mlb-api'
 import PennantRace from '@/components/PennantRace'
 import { getTeamAbbrById, getTeamLogoUrl } from '@/lib/team-logos'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
+import { getTier } from '@/lib/tiers'
+import { TEAM_GRADIENTS } from '@/lib/team-colors'
 
 // ─── MLB API ──────────────────────────────────────────────────────────────────
 
@@ -146,6 +148,7 @@ export default async function DashboardPage() {
 
   const visitedIds   = new Set(allVisits.map(v => v.stadium_id))
   const visitedCount = visitedIds.size
+  const tier = getTier(visitedCount)
   const earnedMilestones = MILESTONES.filter(m => m.check(allVisits, allStadiums, [], allBaseballLife))
   const pct = Math.round((visitedCount / 30) * 100)
 
@@ -179,7 +182,6 @@ export default async function DashboardPage() {
   // Stats
   const favAbbr            = (userSettings as any)?.favorite_team_abbr ?? null
   const gamesAttended      = allVisits.length
-  const baseballLifeCount   = allBaseballLife.length
   const mlCount = allBaseballLife.filter(e => e.category === 'minor_league').length
   const speCount = allBaseballLife.filter(e => e.category === 'mlb_special_event').length
   const pilgCount = allBaseballLife.filter(e => e.category === 'pilgrimage').length
@@ -229,6 +231,8 @@ export default async function DashboardPage() {
   // Fav team stadium
   const favStadium = favAbbr ? allStadiums.find(s => s.abbreviation === favAbbr) ?? null : null
   const favStadiumVisited = favStadium ? visitedIds.has(favStadium.id) : false
+  const chasePhoto = favStadium ? await fetchStadiumPhoto(favStadium.abbreviation) : null
+  const chaseGradient = favAbbr && TEAM_GRADIENTS[favAbbr] ? TEAM_GRADIENTS[favAbbr] : null
 
   // ─── Shared styles ──────────────────────────────────────────────────────────
 
@@ -267,8 +271,15 @@ export default async function DashboardPage() {
               style={{
                 ...card,
                 padding: '20px 20px 24px',
-                background: '#111827',
-                border: '1px solid #1e2d4a',
+                backgroundImage: chasePhoto
+                  ? `linear-gradient(to bottom, rgba(10,16,26,0.82), rgba(10,16,26,0.94)), url(${chasePhoto})`
+                  : chaseGradient
+                    ? `linear-gradient(160deg, ${chaseGradient[0]}22 0%, #111827 55%)`
+                    : undefined,
+                background: chasePhoto || chaseGradient ? undefined : '#111827',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                border: `1px solid ${tier.glow.replace(/[\d.]+\)$/, '0.35)')}`,
                 textAlign: 'center',
                 height: '100%',
                 display: 'flex',
@@ -276,12 +287,21 @@ export default async function DashboardPage() {
                 boxSizing: 'border-box',
               }}
             >
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(63,185,80,0.55)', textTransform: 'uppercase', letterSpacing: '0.22em', marginBottom: 10 }}>
-                THE CHASE
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 10 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: tier.textColor, textTransform: 'uppercase', letterSpacing: '0.22em' }}>
+                  THE CHASE
+                </span>
+                <span style={{
+                  fontSize: 11, fontWeight: 800, color: tier.textColor,
+                  border: `1px solid ${tier.textColor}55`, borderRadius: 999,
+                  padding: '1px 8px', textTransform: 'uppercase', letterSpacing: '0.08em',
+                }}>
+                  {tier.label} Tier
+                </span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-                <HeroRing visited={visitedCount} total={30} dots={ringDots} />
+                <HeroRing visited={visitedCount} total={30} dots={ringDots} gradient={tier.gradient} glow={tier.glow} />
               </div>
 
               <div style={{ fontSize: 22, fontWeight: 800, color: '#E6EDF3', marginBottom: 3, letterSpacing: '-0.3px' }}>
@@ -291,18 +311,18 @@ export default async function DashboardPage() {
                   </span>
                 ) : visitedCount === 0
                   ? 'The journey begins with one ballpark'
-                  : `${visitedCount} of 30 MLB stadiums visited`}
+                  : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} to go`}
               </div>
               <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 10 }}>
                 {visitedCount === 30
                   ? 'Hall of Famer status achieved!'
-                  : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} remaining on the tour`}
+                  : `${pct}% of the way to all 30`}
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#3FB950', boxShadow: '0 0 5px rgba(63,185,80,0.5)' }}/>
-                  <span style={{ fontSize: 12, color: '#3FB950', fontWeight: 700 }}>{pct}% complete</span>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: tier.textColor, boxShadow: `0 0 5px ${tier.glow}` }}/>
+                  <span style={{ fontSize: 12, color: tier.textColor, fontWeight: 700 }}>{pct}% complete</span>
                 </div>
                 <span style={{ color: '#21262D', fontSize: 14 }}>|</span>
                 <Link href="/milestones" style={{ fontSize: 12, color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
@@ -413,7 +433,13 @@ export default async function DashboardPage() {
         {/* ── Playoff Picture ─────────────────────────────────────────── */}
         {playoffPic && favStadium && (
           <div className="dash-card" style={{ ...card, marginBottom: SECTION_GAP, padding: '16px 20px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', right: -10, top: '50%', transform: 'translateY(-50%)', opacity: 0.15, pointerEvents: 'none' }}>
+            <div style={{
+              position: 'absolute', right: -20, top: '50%', transform: 'translateY(-50%)',
+              width: 160, height: 160, borderRadius: '50%',
+              background: `radial-gradient(circle, ${TEAM_GRADIENTS[favStadium.abbreviation]?.[0] ?? '#1F6FEB'}33 0%, transparent 70%)`,
+              pointerEvents: 'none',
+            }} />
+            <div style={{ position: 'absolute', right: -10, top: '50%', transform: 'translateY(-50%)', opacity: 0.3, pointerEvents: 'none' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={getTeamLogoUrl(favStadium.abbreviation)} alt="" width={120} height={120} style={{ objectFit: 'contain', display: 'block' }} />
             </div>
@@ -503,23 +529,25 @@ export default async function DashboardPage() {
           <SectionHeader label="Your Scouting Report" />
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {([
-              { Icon: CalendarDays,  value: totalGames,                label: 'Total Games',     valSize: 36, color: '#1F6FEB', sub: `${gamesAttended} MLB · ${mlCount} MiLB` },
-              { Icon: ClipboardList, value: beyondThe30Total,          label: 'Beyond the 30',   valSize: 36, color: '#F5A623', sub: beyondThe30Sub },
-              { Icon: MapPin,        value: destinationsVisited,       label: 'Destinations',    valSize: 36, color: '#1F6FEB', sub: null },
-              { Icon: DollarSign,    value: formatCurrency(totalSpent),label: 'Total Spent',     valSize: 32, color: '#3FB950', sub: null },
-              { Icon: Trophy,        value: favDivision,               label: 'Fav Division',    valSize: favDivision.length > 7 ? 18 : 24, color: '#F5A623', sub: null },
-              { Icon: Eye,           value: mostSeenTeam,              label: 'Most Seen Team',  valSize: mostSeenTeam.length > 7 ? 18 : 24, color: '#F5A623', sub: null },
-            ]).map(({ Icon, value, label, valSize, color, sub }) => (
+              { Icon: CalendarDays,  value: totalGames,                label: 'Total Games',     valSize: 40, color: '#1F6FEB', sub: `${gamesAttended} MLB · ${mlCount} MiLB`, hero: true },
+              { Icon: ClipboardList, value: beyondThe30Total,          label: 'Beyond the 30',   valSize: 32, color: '#F5A623', sub: beyondThe30Sub, hero: false },
+              { Icon: MapPin,        value: destinationsVisited,       label: 'Destinations',    valSize: 32, color: '#1F6FEB', sub: null, hero: false },
+              { Icon: DollarSign,    value: formatCurrency(totalSpent),label: 'Total Spent',     valSize: 28, color: '#3FB950', sub: null, hero: false },
+              { Icon: Trophy,        value: favDivision,               label: 'Fav Division',    valSize: favDivision.length > 7 ? 18 : 22, color: '#F5A623', sub: null, hero: false },
+              { Icon: Eye,           value: mostSeenTeam,              label: 'Most Seen Team',  valSize: mostSeenTeam.length > 7 ? 18 : 22, color: tier.textColor, sub: null, hero: false },
+            ]).map(({ Icon, value, label, valSize, color, sub, hero }) => (
               <div
                 key={label}
-                className="dash-card"
+                className={`dash-card${hero ? ' col-span-2' : ''}`}
                 style={{
                   ...card,
                   padding: '20px 18px 18px',
                   display: 'flex', flexDirection: 'column',
+                  borderTop: `2px solid ${color}`,
+                  background: `linear-gradient(160deg, ${color}14 0%, #161B22 45%)`,
                 }}
               >
-                <Icon size={24} color={color} strokeWidth={1.8} style={{ marginBottom: 14, flexShrink: 0 }}/>
+                <Icon size={hero ? 28 : 24} color={color} strokeWidth={1.8} style={{ marginBottom: 14, flexShrink: 0 }}/>
                 <div style={{
                   fontSize: valSize, fontWeight: 900, color: '#E6EDF3',
                   lineHeight: 1, marginBottom: 8,
