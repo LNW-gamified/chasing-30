@@ -1681,10 +1681,17 @@ export default function StadiumDetailPage() {
                               {group.players.map((p, i) => (
                                 <div key={p.id} style={{
                                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                  padding: '10px 14px',
+                                  padding: '8px 14px',
                                   borderBottom: i < group.players.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
                                 }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={`https://img.mlbstatic.com/mlb-photos/image/upload/w_60,d_people:generic:headshot:silo:current.png,q_auto:best,f_auto/v1/people/${p.id}/headshot/67/current`}
+                                      alt=""
+                                      width={32} height={32}
+                                      style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, backgroundColor: '#0D1117', border: `1px solid ${group.color}55` }}
+                                    />
                                     {p.jerseyNumber && (
                                       <span style={{ fontSize: 13, fontWeight: 800, color: '#F5A623', width: 24, textAlign: 'right', flexShrink: 0 }}>
                                         #{p.jerseyNumber}
