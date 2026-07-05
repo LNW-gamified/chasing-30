@@ -56,7 +56,7 @@ async function fetchTodayGames(favAbbr: string | null): Promise<TodayGame[]> {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getFirstName(user: any): string {
+function getFirstName(user: any): string | null {
   const meta = user?.user_metadata
   const full =
     meta?.full_name ??
@@ -66,7 +66,7 @@ function getFirstName(user: any): string {
     meta?.display_name ??
     null
   if (full) return (full as string).trim().split(/\s+/)[0]
-  return 'Your'
+  return null
 }
 
 function fmtDate(d: string | null | undefined): string {
@@ -531,10 +531,8 @@ export default async function DashboardPage() {
             {([
               { Icon: CalendarDays,  value: totalGames,                label: 'Total Games',     valSize: 40, color: '#1F6FEB', sub: `${gamesAttended} MLB · ${mlCount} MiLB`, hero: true },
               { Icon: ClipboardList, value: beyondThe30Total,          label: 'Beyond the 30',   valSize: 32, color: '#F5A623', sub: beyondThe30Sub, hero: false },
-              { Icon: MapPin,        value: destinationsVisited,       label: 'Destinations',    valSize: 32, color: '#1F6FEB', sub: null, hero: false },
+              { Icon: MapPin,        value: destinationsVisited,       label: 'Destinations',    valSize: 32, color: '#1F6FEB', sub: destinationsVisited === 0 ? 'Log your first' : null, hero: false },
               { Icon: DollarSign,    value: formatCurrency(totalSpent),label: 'Total Spent',     valSize: 28, color: '#3FB950', sub: null, hero: false },
-              { Icon: Trophy,        value: favDivision,               label: 'Fav Division',    valSize: favDivision.length > 7 ? 18 : 22, color: '#F5A623', sub: null, hero: false },
-              { Icon: Eye,           value: mostSeenTeam,              label: 'Most Seen Team',  valSize: mostSeenTeam.length > 7 ? 18 : 22, color: tier.textColor, sub: null, hero: false },
             ]).map(({ Icon, value, label, valSize, color, sub, hero }) => (
               <div
                 key={label}
@@ -569,6 +567,35 @@ export default async function DashboardPage() {
                 </div>
               </div>
             ))}
+
+            {/* Identity tile — fav division + most seen team share one card so the
+                grid fills evenly (6 stats didn't divide clean against a hero tile) */}
+            <div
+              className="dash-card"
+              style={{
+                ...card,
+                padding: '20px 18px 18px',
+                display: 'flex', flexDirection: 'column',
+                justifyContent: 'space-between',
+                borderTop: `2px solid ${tier.textColor}`,
+                background: `linear-gradient(160deg, ${tier.textColor}14 0%, #161B22 45%)`,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <Trophy size={20} color="#F5A623" strokeWidth={1.8} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{favDivision}</div>
+                  <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Fav Division</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Eye size={20} color={tier.textColor} strokeWidth={1.8} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mostSeenTeam}</div>
+                  <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Most Seen Team</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
