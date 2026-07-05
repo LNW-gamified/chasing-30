@@ -1668,40 +1668,35 @@ export default function StadiumDetailPage() {
                       { label: 'DH',       players: dh,       color: '#B98CFF' },
                     ].filter(g => g.players.length > 0)
                     return (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                         {groups.map(group => (
                           <div key={group.label}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
                               <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: group.color, boxShadow: `0 0 6px ${group.color}88` }} />
                               <span style={{ fontSize: 13, fontWeight: 700, color: group.color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                                 {group.label}
                               </span>
                             </div>
-                            <div style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', borderLeft: `3px solid ${group.color}`, overflow: 'hidden' }}>
-                              {group.players.map((p, i) => (
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                              {group.players.map((p) => (
                                 <div key={p.id} style={{
-                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                  padding: '8px 14px',
-                                  borderBottom: i < group.players.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                                  backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D',
+                                  borderTop: `2px solid ${group.color}`, padding: '10px 6px 8px',
                                 }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src={`https://img.mlbstatic.com/mlb-photos/image/upload/w_60,d_people:generic:headshot:silo:current.png,q_auto:best,f_auto/v1/people/${p.id}/headshot/67/current`}
-                                      alt=""
-                                      width={32} height={32}
-                                      style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, backgroundColor: '#0D1117', border: `1px solid ${group.color}55` }}
-                                    />
-                                    {p.jerseyNumber && (
-                                      <span style={{ fontSize: 13, fontWeight: 800, color: '#F5A623', width: 24, textAlign: 'right', flexShrink: 0 }}>
-                                        #{p.jerseyNumber}
-                                      </span>
-                                    )}
-                                    <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{p.name}</span>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={`https://img.mlbstatic.com/mlb-photos/image/upload/w_120,d_people:generic:headshot:silo:current.png,q_auto:best,f_auto/v1/people/${p.id}/headshot/67/current`}
+                                    alt=""
+                                    width={64} height={86}
+                                    style={{ width: 64, height: 86, borderRadius: 8, objectFit: 'cover', backgroundColor: '#0D1117', border: `1px solid ${group.color}55`, marginBottom: 6 }}
+                                  />
+                                  <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3', textAlign: 'center', lineHeight: 1.25 }}>
+                                    {p.name}
                                   </div>
-                                  <span style={{ fontSize: 13, fontWeight: 700, color: group.color, backgroundColor: `${group.color}1F`, padding: '2px 8px', borderRadius: 10 }}>
-                                    {p.position}
-                                  </span>
+                                  <div style={{ fontSize: 11, fontWeight: 700, color: group.color, marginTop: 3 }}>
+                                    {p.jerseyNumber ? `#${p.jerseyNumber} · ` : ''}{p.position}
+                                  </div>
                                 </div>
                               ))}
                             </div>
