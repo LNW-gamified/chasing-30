@@ -118,6 +118,7 @@ export default function StadiumDetailPage() {
   const [tripMonths, setTripMonths]             = useState<Set<number>>(new Set())
   const [visitPromos, setVisitPromos]           = useState<Record<string, { promotions: string[]; promotion_photos: Record<string, string> }>>({})
   const [lightboxUrl, setLightboxUrl]           = useState<string | null>(null)
+  const [lightboxZoomed, setLightboxZoomed]     = useState(false)
   const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; giveaway_type: string | null; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; stadium_visit_id: string | null }>>([])
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
   const [viewingItem, setViewingItem] = useState<EditorItem | null>(null)
@@ -126,6 +127,7 @@ export default function StadiumDetailPage() {
   useEffect(() => {
     function handleLightbox(e: Event) {
       setLightboxUrl((e as CustomEvent).detail)
+      setLightboxZoomed(false)
     }
     window.addEventListener('open-lightbox', handleLightbox)
     return () => window.removeEventListener('open-lightbox', handleLightbox)
@@ -411,22 +413,32 @@ export default function StadiumDetailPage() {
     <div style={{ color: '#E6EDF3' }}>
       {lightboxUrl && (
         <div
-          onClick={() => setLightboxUrl(null)}
+          onClick={() => { setLightboxUrl(null); setLightboxZoomed(false) }}
           style={{
             position: 'fixed', inset: 0, zIndex: 1000,
             backgroundColor: 'rgba(0,0,0,0.92)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 16,
+            display: lightboxZoomed ? 'block' : 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            padding: 16, overflow: 'auto',
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={lightboxUrl}
             alt="Photo"
-            style={{ maxWidth: '100%', maxHeight: '90vh', borderRadius: 12, objectFit: 'contain' }}
+            onClick={(e) => { e.stopPropagation(); setLightboxZoomed(z => !z) }}
+            style={{
+              maxWidth: lightboxZoomed ? 'none' : '100%',
+              maxHeight: lightboxZoomed ? 'none' : '90vh',
+              width: lightboxZoomed ? '220%' : 'auto',
+              borderRadius: 12, objectFit: 'contain',
+              cursor: lightboxZoomed ? 'zoom-out' : 'zoom-in',
+              display: lightboxZoomed ? 'block' : undefined,
+              margin: lightboxZoomed ? '16px auto' : undefined,
+            }}
           />
           <button
-            onClick={() => setLightboxUrl(null)}
+            onClick={() => { setLightboxUrl(null); setLightboxZoomed(false) }}
             style={{
               position: 'absolute', top: 20, right: 20,
               background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%',
@@ -1409,8 +1421,9 @@ export default function StadiumDetailPage() {
                           <img
                             src={stadiumMapUrl}
                             alt={`${stadium.name} seating map`}
-                            style={{ width: '100%', height: 'auto', display: 'block' }}
+                            style={{ width: '100%', height: 'auto', display: 'block', cursor: 'zoom-in' }}
                             onError={() => setStadiumMapUrl(null)}
+                            onClick={() => { setLightboxUrl(stadiumMapUrl); setLightboxZoomed(false) }}
                           />
                         </div>
                       </section>
