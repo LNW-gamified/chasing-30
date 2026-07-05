@@ -86,6 +86,7 @@ export default function StadiumDetailPage() {
   const [editingVisit, setEditingVisit] = useState<StadiumVisit | undefined>()
   const [expandedVisit, setExpandedVisit] = useState<string | null>(null)
   const [showAllUpcoming, setShowAllUpcoming] = useState(false)
+  const [showAllMoves, setShowAllMoves] = useState(false)
   const [upcomingGames, setUpcomingGames] = useState<UpcomingGame[]>([])
   const [fetchingStats, setFetchingStats] = useState<string | null>(null)
   const [statsError, setStatsError] = useState<Record<string, string>>({})
@@ -385,7 +386,7 @@ export default function StadiumDetailPage() {
     { key: 'games-attended',  label: 'Games Attended'   },
     { key: 'upcoming-games',  label: 'Upcoming Games'   },
     { key: 'stadium-info',    label: 'Stadium Detail'   },
-    { key: 'roster',          label: 'Roster'           },
+    { key: 'roster',          label: 'Team Hub'         },
   ]
 
   function visitLookup(visitId: string | null) {
@@ -1023,60 +1024,13 @@ export default function StadiumDetailPage() {
             {activeTab === 'stadium-info' && (
               <>
                 {/* About */}
-                <section style={{ marginBottom: 32 }}>
-                  <SectionTitle Icon={Building2}>About</SectionTitle>
-                  <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
-                    {[
-                      { label: 'Full Name', value: stadium.name },
-                      { label: 'Team', value: stadium.team },
-                      { label: 'City', value: `${stadium.city}, ${stadium.state}` },
-                      { label: 'League / Division', value: `${stadium.league} ${stadium.division}` },
-                      stadium.capacity ? { label: 'Capacity', value: stadium.capacity.toLocaleString() } : null,
-                      stadium.opened ? { label: 'Opened', value: String(stadium.opened) } : null,
-                      stadium.surface ? { label: 'Surface', value: stadium.surface } : null,
-                    ].filter(Boolean).map((row, i, arr) => (
-                      <div key={row!.label} style={{
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        padding: '12px 16px',
-                        borderBottom: i < arr.length - 1 ? '1px solid #30363D' : 'none',
-                      }}>
-                        <span style={{ fontSize: 13, color: '#8B949E' }}>{row!.label}</span>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{row!.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {stadiumSummary && (
-                    <div style={{ padding: '14px 16px', borderTop: '1px solid #30363D', fontSize: 13, color: '#8B949E', lineHeight: 1.7 }}>
-                      {stadiumSummary}
-                    </div>
-                  )}
-                </section>
-
-                {/* Team News */}
-                {teamNews.length > 0 && (
+                {stadiumSummary && (
                   <section style={{ marginBottom: 32 }}>
-                    <SectionTitle Icon={Trophy}>Team News</SectionTitle>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {teamNews.map((item, i) => (
-                        <a
-                          key={i}
-                          href={item.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ display: 'flex', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D', textDecoration: 'none' }}
-                        >
-                          {item.imageUrl && (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img src={item.imageUrl} alt="" style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
-                          )}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.4, marginBottom: 4 }}>{item.headline}</div>
-                            <div style={{ fontSize: 13, color: '#8B949E' }}>
-                              {new Date(item.published).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · ESPN
-                            </div>
-                          </div>
-                        </a>
-                      ))}
+                    <SectionTitle Icon={Building2}>About</SectionTitle>
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '16px' }}>
+                      <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.7 }}>
+                        {stadiumSummary}
+                      </div>
                     </div>
                   </section>
                 )}
@@ -1130,11 +1084,17 @@ export default function StadiumDetailPage() {
                               </div>
                               {classics.map((f, i) => (
                                 <div key={f.id} style={{
-                                  display: 'flex', alignItems: 'flex-start', gap: 10,
-                                  padding: '10px 16px',
+                                  display: 'flex', alignItems: 'flex-start', gap: 12,
+                                  padding: '12px 16px',
                                   borderBottom: (i < classics.length - 1 || seasonal.length > 0) ? '1px solid rgba(48,54,61,0.6)' : 'none',
                                 }}>
-                                  <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🏆</span>
+                                  <div style={{
+                                    width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                                    backgroundColor: 'rgba(245,166,35,0.12)', border: '1px solid rgba(245,166,35,0.3)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                                  }}>
+                                    🏆
+                                  </div>
                                   <div>
                                     <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{f.item_name}</div>
                                     {f.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{f.description}</div>}
@@ -1150,11 +1110,17 @@ export default function StadiumDetailPage() {
                               </div>
                               {seasonal.map((f, i) => (
                                 <div key={f.id} style={{
-                                  display: 'flex', alignItems: 'flex-start', gap: 10,
-                                  padding: '10px 16px',
+                                  display: 'flex', alignItems: 'flex-start', gap: 12,
+                                  padding: '12px 16px',
                                   borderBottom: i < seasonal.length - 1 ? '1px solid rgba(48,54,61,0.6)' : 'none',
                                 }}>
-                                  <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🔥</span>
+                                  <div style={{
+                                    width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                                    backgroundColor: 'rgba(248,81,73,0.12)', border: '1px solid rgba(248,81,73,0.3)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                                  }}>
+                                    🔥
+                                  </div>
                                   <div>
                                     <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{f.item_name}</div>
                                     {f.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{f.description}</div>}
@@ -1185,11 +1151,17 @@ export default function StadiumDetailPage() {
                               </div>
                               {classics.map((s, i) => (
                                 <div key={s.id} style={{
-                                  display: 'flex', alignItems: 'flex-start', gap: 10,
-                                  padding: '10px 16px',
+                                  display: 'flex', alignItems: 'flex-start', gap: 12,
+                                  padding: '12px 16px',
                                   borderBottom: (i < classics.length - 1 || seasonal.length > 0) ? '1px solid rgba(48,54,61,0.6)' : 'none',
                                 }}>
-                                  <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>🏆</span>
+                                  <div style={{
+                                    width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                                    backgroundColor: 'rgba(88,166,255,0.12)', border: '1px solid rgba(88,166,255,0.3)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                                  }}>
+                                    🏆
+                                  </div>
                                   <div>
                                     <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{s.item_name}</div>
                                     {s.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{s.description}</div>}
@@ -1205,11 +1177,17 @@ export default function StadiumDetailPage() {
                               </div>
                               {seasonal.map((s, i) => (
                                 <div key={s.id} style={{
-                                  display: 'flex', alignItems: 'flex-start', gap: 10,
-                                  padding: '10px 16px',
+                                  display: 'flex', alignItems: 'flex-start', gap: 12,
+                                  padding: '12px 16px',
                                   borderBottom: i < seasonal.length - 1 ? '1px solid rgba(48,54,61,0.6)' : 'none',
                                 }}>
-                                  <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>⭐</span>
+                                  <div style={{
+                                    width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                                    backgroundColor: 'rgba(245,166,35,0.12)', border: '1px solid rgba(245,166,35,0.3)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                                  }}>
+                                    ⭐
+                                  </div>
                                   <div>
                                     <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{s.item_name}</div>
                                     {s.description && <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>{s.description}</div>}
@@ -1411,22 +1389,41 @@ export default function StadiumDetailPage() {
                 {venueDimensions && (venueDimensions.leftLine || venueDimensions.center) && (
                   <section style={{ marginBottom: 32 }}>
                     <SectionTitle Icon={Map}>Field Dimensions</SectionTitle>
-                    {/* Diamond diagram */}
                     <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '20px 16px' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16, textAlign: 'center' }}>
+                      {/* Stylized field diagram — not to scale, just a visual read on the shape of the park */}
+                      <svg viewBox="0 0 300 200" style={{ width: '100%', height: 'auto', display: 'block', marginBottom: 8 }}>
+                        <defs>
+                          <linearGradient id="grassGrad" x1="0" y1="1" x2="0" y2="0">
+                            <stop offset="0%" stopColor="#1C3A24" />
+                            <stop offset="100%" stopColor="#16301E" />
+                          </linearGradient>
+                        </defs>
+                        {/* Outfield grass */}
+                        <path d="M 150 185 L 40 50 Q 95 20 150 12 Q 205 20 260 50 Z" fill="url(#grassGrad)" stroke="#2F6B3C" strokeWidth="1.5" />
+                        {/* Foul lines */}
+                        <line x1="150" y1="185" x2="40" y2="50" stroke="#8B949E" strokeWidth="1" strokeDasharray="3 3" opacity="0.5" />
+                        <line x1="150" y1="185" x2="260" y2="50" stroke="#8B949E" strokeWidth="1" strokeDasharray="3 3" opacity="0.5" />
+                        {/* Infield dirt */}
+                        <path d="M 150 185 L 118 150 L 150 118 L 182 150 Z" fill="#5C4430" stroke="#3D2E1F" strokeWidth="1" />
+                        {/* Home plate */}
+                        <circle cx="150" cy="185" r="3.5" fill="#E6EDF3" />
+                        {/* Distance markers */}
                         {[
-                          { label: 'Left Line',    value: venueDimensions.leftLine },
-                          { label: 'Center',       value: venueDimensions.center },
-                          { label: 'Right Line',   value: venueDimensions.rightLine },
-                          { label: 'Left-Center',  value: venueDimensions.leftCenter },
-                          { label: 'Right-Center', value: venueDimensions.rightCenter },
-                        ].filter(r => r.value).map(({ label, value }) => (
-                          <div key={label} style={{ backgroundColor: '#1C2430', borderRadius: 10, padding: '10px 6px' }}>
-                            <div style={{ fontSize: 20, fontWeight: 900, color: '#3FB950', lineHeight: 1 }}>{value}<span style={{ fontSize: 13, fontWeight: 600, color: '#8B949E' }}>ft</span></div>
-                            <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600 }}>{label}</div>
-                          </div>
+                          { x: 40,  y: 50,  value: venueDimensions.leftLine,    labelDx: -8,  anchor: 'end' as const    },
+                          { x: 95,  y: 20,  value: venueDimensions.leftCenter, labelDx: -6,  anchor: 'end' as const    },
+                          { x: 150, y: 12,  value: venueDimensions.center,     labelDx: 0,   anchor: 'middle' as const },
+                          { x: 205, y: 20,  value: venueDimensions.rightCenter,labelDx: 6,   anchor: 'start' as const  },
+                          { x: 260, y: 50,  value: venueDimensions.rightLine,   labelDx: 8,   anchor: 'start' as const  },
+                        ].filter(m => m.value).map((m, i) => (
+                          <g key={i}>
+                            <circle cx={m.x} cy={m.y} r="2.5" fill="#3FB950" />
+                            <text x={m.x + m.labelDx} y={m.y - 8} textAnchor={m.anchor}
+                              fontSize="13" fontWeight="900" fill="#3FB950">{m.value}</text>
+                            <text x={m.x + m.labelDx} y={m.y + 4} textAnchor={m.anchor}
+                              fontSize="7" fontWeight="700" fill="#8B949E">ft</text>
+                          </g>
                         ))}
-                      </div>
+                      </svg>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         {venueDimensions.roofType && (
                           <span style={{ fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid #30363D', borderRadius: 20, padding: '4px 10px' }}>
@@ -1439,77 +1436,6 @@ export default function StadiumDetailPage() {
                           </span>
                         )}
                       </div>
-                    </div>
-                  </section>
-                )}
-
-                {/* This Season */}
-                {teamStats && (teamStats.wins !== null || teamStats.era) && (
-                  <section style={{ marginBottom: 32 }}>
-                    <SectionTitle Icon={Trophy}>This Season</SectionTitle>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                      {teamStats.wins !== null && teamStats.losses !== null && (
-                        <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
-                          <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.wins}–{teamStats.losses}</div>
-                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Record</div>
-                        </div>
-                      )}
-                      {teamStats.era && (
-                        <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
-                          <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.era}</div>
-                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Team ERA</div>
-                        </div>
-                      )}
-                      {teamStats.avg && (
-                        <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
-                          <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.avg}</div>
-                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Team AVG</div>
-                        </div>
-                      )}
-                      {teamStats.homeRuns != null && (
-                        <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
-                          <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.homeRuns}</div>
-                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Home Runs</div>
-                        </div>
-                      )}
-                      {teamStats.runsScored != null && (
-                        <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
-                          <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.runsScored}</div>
-                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Runs Scored</div>
-                        </div>
-                      )}
-                      {teamStats.strikeouts != null && (
-                        <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
-                          <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{teamStats.strikeouts}</div>
-                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Strikeouts</div>
-                        </div>
-                      )}
-                    </div>
-                  </section>
-                )}
-
-                {/* Minor League Affiliates */}
-                {affiliates.length > 0 && (
-                  <section style={{ marginBottom: 32 }}>
-                    <SectionTitle Icon={Trophy}>Minor League Affiliates</SectionTitle>
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
-                      {affiliates.map((a, i) => (
-                        <div key={a.level} style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          padding: '12px 16px',
-                          borderBottom: i < affiliates.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                        }}>
-                          <div>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{a.name}</span>
-                            {a.leagueName && (
-                              <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>{a.leagueName}</div>
-                            )}
-                          </div>
-                          <span style={{ fontSize: 12, fontWeight: 800, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)', padding: '3px 10px', borderRadius: 10, flexShrink: 0 }}>
-                            {a.level}
-                          </span>
-                        </div>
-                      ))}
                     </div>
                   </section>
                 )}
@@ -1559,90 +1485,209 @@ export default function StadiumDetailPage() {
                     </a>
                   </div>
                 </section>
-
-                {/* Recent Moves */}
-                {transactions.length > 0 && (
-                  <section style={{ marginBottom: 32 }}>
-                    <SectionTitle Icon={ChevronRight}>Recent Moves</SectionTitle>
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
-                      {transactions.map((t, i) => {
-                        const typeEmoji: Record<string, string> = {
-                          DFA: '📤', OU: '📤', DL: '🤕', IL: '🤕', AA: '📥',
-                          RM: '🔄', TR: '🔄', SG: '✍️', RE: '✍️', DES: '❌',
-                          SE: '🌐', OUT: '📤',
-                        }
-                        const emoji = typeEmoji[t.typeCode] ?? '📋'
-                        const date  = t.date ? new Date(t.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
-                        return (
-                          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', borderBottom: i < transactions.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-                            <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{emoji}</span>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 13, color: '#E6EDF3', lineHeight: 1.4 }}>{t.description}</div>
-                              {date && <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>{date}</div>}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </section>
-                )}
               </>
             )}
 
-            {/* ── ROSTER TAB ───────────────────────────────────────── */}
+            {/* ── TEAM TAB ─────────────────────────────────────────── */}
             {activeTab === 'roster' && (
-              <section>
-                {roster.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '48px 16px', color: '#8B949E', fontSize: 14 }}>
-                    Loading roster…
-                  </div>
-                ) : (() => {
-                  const pitchers = roster.filter(p => p.positionType === 'Pitcher')
-                  const catchers = roster.filter(p => p.position === 'C')
-                  const infield  = roster.filter(p => ['1B','2B','3B','SS'].includes(p.position))
-                  const outfield = roster.filter(p => ['LF','CF','RF','OF'].includes(p.position))
-                  const dh       = roster.filter(p => p.position === 'DH')
-                  const groups   = [
-                    { label: 'Pitchers', players: pitchers },
-                    { label: 'Catchers', players: catchers },
-                    { label: 'Infield',  players: infield  },
-                    { label: 'Outfield', players: outfield },
-                    { label: 'DH',       players: dh       },
-                  ].filter(g => g.players.length > 0)
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                      {groups.map(group => (
-                        <div key={group.label}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
-                            {group.label}
+              <>
+                {/* Team News */}
+                {teamNews.length > 0 && (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle Icon={Trophy}>Team News</SectionTitle>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {teamNews.map((item, i) => (
+                        <a
+                          key={i}
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ display: 'flex', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D', textDecoration: 'none' }}
+                        >
+                          {item.imageUrl && (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img src={item.imageUrl} alt="" style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.4, marginBottom: 4 }}>{item.headline}</div>
+                            <div style={{ fontSize: 13, color: '#8B949E' }}>
+                              {new Date(item.published).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · ESPN
+                            </div>
                           </div>
-                          <div style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden' }}>
-                            {group.players.map((p, i) => (
-                              <div key={p.id} style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                padding: '10px 14px',
-                                borderBottom: i < group.players.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                              }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                  {p.jerseyNumber && (
-                                    <span style={{ fontSize: 13, fontWeight: 800, color: '#F5A623', width: 24, textAlign: 'right', flexShrink: 0 }}>
-                                      #{p.jerseyNumber}
-                                    </span>
-                                  )}
-                                  <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{p.name}</span>
-                                </div>
-                                <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 8px', borderRadius: 10 }}>
-                                  {p.position}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* This Season */}
+                {teamStats && (teamStats.wins !== null || teamStats.era) && (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle Icon={Trophy}>This Season</SectionTitle>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                      {([
+                        teamStats.wins !== null && teamStats.losses !== null
+                          ? { value: `${teamStats.wins}–${teamStats.losses}`, label: 'Record', color: '#1F6FEB' } : null,
+                        teamStats.era ? { value: teamStats.era, label: 'Team ERA', color: '#F5A623' } : null,
+                        teamStats.avg ? { value: teamStats.avg, label: 'Team AVG', color: '#F5A623' } : null,
+                        teamStats.homeRuns != null ? { value: String(teamStats.homeRuns), label: 'Home Runs', color: '#3FB950' } : null,
+                        teamStats.runsScored != null ? { value: String(teamStats.runsScored), label: 'Runs Scored', color: '#3FB950' } : null,
+                        teamStats.strikeouts != null ? { value: String(teamStats.strikeouts), label: 'Strikeouts', color: '#F5A623' } : null,
+                      ]).filter(Boolean).map((s, i) => (
+                        <div key={i} style={{
+                          backgroundColor: '#161B22', borderTop: `2px solid ${s!.color}`, border: '1px solid #30363D',
+                          borderRadius: 12, padding: '12px 8px', textAlign: 'center',
+                        }}>
+                          <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{s!.value}</div>
+                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s!.label}</div>
                         </div>
                       ))}
                     </div>
+                  </section>
+                )}
+
+                {/* Roster */}
+                <section style={{ marginBottom: 32 }}>
+                  <SectionTitle Icon={Users}>Roster</SectionTitle>
+                  {roster.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '48px 16px', color: '#8B949E', fontSize: 14 }}>
+                      Loading roster…
+                    </div>
+                  ) : (() => {
+                    const pitchers = roster.filter(p => p.positionType === 'Pitcher')
+                    const catchers = roster.filter(p => p.position === 'C')
+                    const infield  = roster.filter(p => ['1B','2B','3B','SS'].includes(p.position))
+                    const outfield = roster.filter(p => ['LF','CF','RF','OF'].includes(p.position))
+                    const dh       = roster.filter(p => p.position === 'DH')
+                    const groups   = [
+                      { label: 'Pitchers', players: pitchers },
+                      { label: 'Catchers', players: catchers },
+                      { label: 'Infield',  players: infield  },
+                      { label: 'Outfield', players: outfield },
+                      { label: 'DH',       players: dh       },
+                    ].filter(g => g.players.length > 0)
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        {groups.map(group => (
+                          <div key={group.label}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                              {group.label}
+                            </div>
+                            <div style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden' }}>
+                              {group.players.map((p, i) => (
+                                <div key={p.id} style={{
+                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                  padding: '10px 14px',
+                                  borderBottom: i < group.players.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                                }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    {p.jerseyNumber && (
+                                      <span style={{ fontSize: 13, fontWeight: 800, color: '#F5A623', width: 24, textAlign: 'right', flexShrink: 0 }}>
+                                        #{p.jerseyNumber}
+                                      </span>
+                                    )}
+                                    <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{p.name}</span>
+                                  </div>
+                                  <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 8px', borderRadius: 10 }}>
+                                    {p.position}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })()}
+                </section>
+
+                {/* Minor League Affiliates */}
+                {affiliates.length > 0 && (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle Icon={Trophy}>Minor League Affiliates</SectionTitle>
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
+                      {affiliates.map((a, i) => (
+                        <div key={a.level} style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '12px 16px',
+                          borderBottom: i < affiliates.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                        }}>
+                          <div>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{a.name}</span>
+                            {a.leagueName && (
+                              <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>{a.leagueName}</div>
+                            )}
+                          </div>
+                          <span style={{ fontSize: 12, fontWeight: 800, color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)', padding: '3px 10px', borderRadius: 10, flexShrink: 0 }}>
+                            {a.level}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Recent Moves */}
+                {transactions.length > 0 && (() => {
+                  // Categorize by the actual description text (verified against real MLB
+                  // transaction wording) rather than typeCode, since typeCode values from
+                  // the API weren't reliably matching the old emoji map.
+                  type MoveKind = 'up' | 'injury' | 'rehab' | 'signed' | 'out' | 'other'
+                  function classify(desc: string): { kind: MoveKind; color: string; icon: string } {
+                    const d = desc.toLowerCase()
+                    if (d.includes('recalled') || d.includes('selected the contract'))
+                      return { kind: 'up', color: '#3FB950', icon: '⬆️' }
+                    if (d.includes('injured list'))
+                      return { kind: 'injury', color: '#F85149', icon: '🩹' }
+                    if (d.includes('rehab assignment'))
+                      return { kind: 'rehab', color: '#58A6FF', icon: '🔄' }
+                    if (d.includes('signed') || d.includes('activated'))
+                      return { kind: 'signed', color: '#3FB950', icon: '✍️' }
+                    if (d.includes('designated for assignment') || d.includes('released') || d.includes('optioned') || d.includes('sent') && d.includes('minor'))
+                      return { kind: 'out', color: '#F5A623', icon: '⬇️' }
+                    return { kind: 'other', color: '#8B949E', icon: '📋' }
+                  }
+                  const visibleMoves = showAllMoves ? transactions : transactions.slice(0, 8)
+                  return (
+                    <section style={{ marginBottom: 32 }}>
+                      <SectionTitle Icon={ChevronRight}>Recent Moves</SectionTitle>
+                      <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
+                        {visibleMoves.map((t, i) => {
+                          const { color, icon } = classify(t.description)
+                          const date = t.date ? new Date(t.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+                          return (
+                            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', borderBottom: i < visibleMoves.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                              <div style={{
+                                width: 26, height: 26, borderRadius: 8, flexShrink: 0,
+                                backgroundColor: `${color}1F`, border: `1px solid ${color}55`,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13,
+                              }}>
+                                {icon}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 13, color: '#E6EDF3', lineHeight: 1.4 }}>{t.description}</div>
+                                {date && <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>{date}</div>}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {transactions.length > 8 && (
+                        <button
+                          onClick={() => setShowAllMoves(v => !v)}
+                          style={{
+                            width: '100%', marginTop: 10, padding: '10px 0', borderRadius: 10,
+                            border: '1px solid #30363D', background: '#161B22', cursor: 'pointer',
+                            fontSize: 13, fontWeight: 700, color: '#58A6FF',
+                          }}
+                        >
+                          {showAllMoves ? 'Show less' : `Show all moves (${transactions.length - 8} more)`}
+                        </button>
+                      )}
+                    </section>
                   )
                 })()}
-              </section>
+              </>
             )}
 
           </div>{/* /tab content */}
