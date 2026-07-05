@@ -191,14 +191,14 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
     )
   }
 
-  const pillStyle = (active: boolean): React.CSSProperties => ({
+  const pillStyle = (active: boolean, accent?: string): React.CSSProperties => ({
     flexShrink: 0,
     padding: '6px 14px', borderRadius: 999, cursor: 'pointer',
     fontSize: 12, fontWeight: 600,
     backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-    backgroundColor: active ? 'rgba(230,237,243,0.82)' : 'rgba(11,17,23,0.48)',
-    color:           active ? '#0B1117' : 'rgba(230,237,243,0.78)',
-    border: active ? '1px solid rgba(255,255,255,0.22)' : '1px solid rgba(255,255,255,0.07)',
+    backgroundColor: active ? (accent ? `${accent}CC` : 'rgba(230,237,243,0.82)') : 'rgba(11,17,23,0.48)',
+    color:           active ? (accent ? '#0B1117' : '#0B1117') : 'rgba(230,237,243,0.78)',
+    border: active ? `1px solid ${accent ? `${accent}88` : 'rgba(255,255,255,0.22)'}` : '1px solid rgba(255,255,255,0.07)',
     boxShadow: '0 2px 10px rgba(0,0,0,0.4)',
     transition: 'background-color 0.15s, color 0.15s',
     whiteSpace: 'nowrap' as const,
@@ -274,11 +274,14 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
 
         {/* Row 2: Status filter (offset to clear back button) */}
         <div className="no-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto', paddingLeft: 46 }}>
-          {STATUS_FILTERS.map(f => (
-            <button key={f.id} onClick={() => setStatusFilter(f.id)} style={pillStyle(statusFilter === f.id)}>
-              {f.label}
-            </button>
-          ))}
+          {STATUS_FILTERS.map(f => {
+            const accent = f.id === 'visited' ? '#3FB950' : f.id === 'not-yet' ? '#F5A623' : undefined
+            return (
+              <button key={f.id} onClick={() => setStatusFilter(f.id)} style={pillStyle(statusFilter === f.id, accent)}>
+                {f.label}
+              </button>
+            )
+          })}
         </div>
       </div>
 
