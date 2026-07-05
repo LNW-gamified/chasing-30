@@ -598,16 +598,6 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
               />
             )}
             {field(
-              'First Pitch',
-              <input
-                type="text"
-                className="input"
-                placeholder="7:10 PM"
-                value={form.first_pitch_time}
-                onChange={(e) => set('first_pitch_time', e.target.value)}
-              />
-            )}
-            {field(
               'Home Team',
               <input
                 type="text"
@@ -629,26 +619,6 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
               />
             )}
             {field(
-              'Home Record',
-              <input
-                type="text"
-                className="input"
-                placeholder="W-L record"
-                value={form.home_team_record}
-                onChange={(e) => set('home_team_record', e.target.value)}
-              />
-            )}
-            {field(
-              'Away Record',
-              <input
-                type="text"
-                className="input"
-                placeholder="W-L record"
-                value={form.visiting_team_record}
-                onChange={(e) => set('visiting_team_record', e.target.value)}
-              />
-            )}
-            {field(
               'Game Duration',
               <input
                 type="text"
@@ -656,16 +626,6 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
                 placeholder="e.g. 3h 12m"
                 value={form.game_duration}
                 onChange={(e) => set('game_duration', e.target.value)}
-              />
-            )}
-            {field(
-              'Attendance',
-              <input
-                type="number"
-                className="input"
-                placeholder="38500"
-                value={form.attendance}
-                onChange={(e) => set('attendance', e.target.value)}
               />
             )}
           </div>
@@ -972,6 +932,48 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
           </div>
           {showBoxScore && (
             <div>
+          <div className="grid grid-cols-2 gap-3" style={{ marginBottom: 12 }}>
+            {field(
+              'First Pitch',
+              <input
+                type="text"
+                className="input"
+                placeholder="7:10 PM"
+                value={form.first_pitch_time}
+                onChange={(e) => set('first_pitch_time', e.target.value)}
+              />
+            )}
+            {field(
+              'Attendance',
+              <input
+                type="number"
+                className="input"
+                placeholder="38500"
+                value={form.attendance}
+                onChange={(e) => set('attendance', e.target.value)}
+              />
+            )}
+            {field(
+              'Home Record',
+              <input
+                type="text"
+                className="input"
+                placeholder="W-L record"
+                value={form.home_team_record}
+                onChange={(e) => set('home_team_record', e.target.value)}
+              />
+            )}
+            {field(
+              'Away Record',
+              <input
+                type="text"
+                className="input"
+                placeholder="W-L record"
+                value={form.visiting_team_record}
+                onChange={(e) => set('visiting_team_record', e.target.value)}
+              />
+            )}
+          </div>
           <div className="flex items-center justify-between pt-4 pb-1 mb-2" style={{ borderBottom: '1px solid #30363D' }}>
             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#1F6FEB' }}>
               Conditions
