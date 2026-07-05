@@ -11,7 +11,7 @@ import DashboardSpecialVisitButton from '@/components/DashboardSpecialVisitButto
 import OnThisDay, { type HistoryFact } from '@/components/OnThisDay'
 import HeroRing, { type RingDot } from '@/components/HeroRing'
 import TeamLogo from '@/components/TeamLogo'
-import { fetchPlayoffPicture, type PlayoffPicture } from '@/lib/mlb-api'
+import { fetchPlayoffPicture, type PlayoffPicture, fetchMinorLeagueAffiliates, fetchFarmSystemToday, type FarmGame } from '@/lib/mlb-api'
 import PennantRace from '@/components/PennantRace'
 import { getTeamAbbrById, getTeamLogoUrl } from '@/lib/team-logos'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
@@ -233,6 +233,8 @@ export default async function DashboardPage() {
 
   const todayGames   = await fetchTodayGames(favAbbr)
   const playoffPic: PlayoffPicture | null = favAbbr ? await fetchPlayoffPicture(favAbbr) : null
+  const affiliates = favAbbr ? await fetchMinorLeagueAffiliates(favAbbr) : []
+  const farmGames: FarmGame[] = affiliates.length > 0 ? await fetchFarmSystemToday(affiliates) : []
 
   // Fav team stadium
   const favStadium = favAbbr ? allStadiums.find(s => s.abbreviation === favAbbr) ?? null : null
@@ -485,6 +487,61 @@ export default async function DashboardPage() {
             {/* Standings, nested here so it reads as part of the playoff-picture story */}
             <div style={{ position: 'relative', marginTop: 16, paddingTop: 14, borderTop: '1px solid #30363D' }}>
               <Standings favAbbr={favAbbr} />
+            </div>
+          </div>
+        )}
+
+        {/* ── Farm System Today ────────────────────────────────────────── */}
+        {farmGames.length > 0 && (
+          <div className="dash-card" style={{ ...card, marginBottom: SECTION_GAP, padding: '16px 20px' }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#E6EDF3', marginBottom: 12 }}>
+              Your Farm System Today
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {farmGames.map((g, i) => {
+                const hasScore = (g.isLive || g.isFinal) && g.teamScore !== null
+                const teamWin  = hasScore && g.teamScore! > g.oppScore!
+                return (
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 12px', borderRadius: 10,
+                    backgroundColor: '#1C2430', border: '1px solid #30363D',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                      <span style={{
+                        fontSize: 11, fontWeight: 800, color: '#F5A623',
+                        backgroundColor: 'rgba(245,166,35,0.12)', padding: '2px 7px', borderRadius: 8, flexShrink: 0,
+                      }}>
+                        {g.level}
+                      </span>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {g.affiliateName}
+                        </div>
+                        <div style={{ fontSize: 12, color: '#8B949E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {g.isHome ? 'vs' : '@'} {g.opponent}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      {hasScore ? (
+                        <>
+                          <div style={{ fontSize: 15, fontWeight: 900, color: teamWin ? '#3FB950' : '#E6EDF3' }}>
+                            {g.teamScore}-{g.oppScore}
+                          </div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: g.isLive ? '#F85149' : '#8B949E' }}>
+                            {g.isLive ? (g.inning ?? 'LIVE') : 'FINAL'}
+                          </div>
+                        </>
+                      ) : (
+                        <div style={{ fontSize: 12, color: '#8B949E', fontWeight: 600 }}>
+                          {new Date(g.gameDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

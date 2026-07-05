@@ -439,6 +439,8 @@ export async function fetchPlayoffPicture(teamAbbr: string): Promise<PlayoffPict
 // ── Minor league affiliates ───────────────────────────────────────────────────
 
 export interface MiLBAffiliate {
+  id:         number
+  sportId:    number
   name:       string
   level:      string
   leagueName: string
@@ -462,7 +464,10 @@ export async function fetchMinorLeagueAffiliates(teamAbbr: string): Promise<MiLB
         const level = Object.keys(LEVELS).find(l => sport.includes(l))
         if (!level || seen.has(level)) return null
         seen.add(level)
-        return { name: t.name, level: LEVELS[level], leagueName: t.league?.name ?? '' }
+        return {
+          id: t.id, sportId: t.sport?.id,
+          name: t.name, level: LEVELS[level], leagueName: t.league?.name ?? '',
+        }
       })
       .filter(Boolean)
       .sort((a: MiLBAffiliate, b: MiLBAffiliate) =>
@@ -471,4 +476,58 @@ export async function fetchMinorLeagueAffiliates(teamAbbr: string): Promise<MiLB
   } catch {
     return []
   }
+}
+
+export interface FarmGame {
+  affiliateName: string
+  level:         string
+  opponent:      string
+  isHome:        boolean
+  teamScore:     number | null
+  oppScore:      number | null
+  isLive:        boolean
+  isFinal:       boolean
+  gameDate:      string
+  inning:        string | null
+}
+
+// Fetches today's game (if any) for each affiliate. MLB's schedule endpoint
+// requires an explicit sportId for non-MLB teams (verified: Triple-A=11,
+// Double-A=12, High-A=13, Single-A=14 — teamId+date alone returns an error).
+export async function fetchFarmSystemToday(affiliates: MiLBAffiliate[]): Promise<FarmGame[]> {
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+  const results = await Promise.all(affiliates.map(async (aff): Promise<FarmGame | null> => {
+    if (!aff.id || !aff.sportId) return null
+    try {
+      const res = await fetch(
+        `https://statsapi.mlb.com/api/v1/schedule?sportId=${aff.sportId}&teamId=${aff.id}&date=${today}&hydrate=linescore`
+      )
+      if (!res.ok) return null
+      const data = await res.json()
+      const game = data.dates?.[0]?.games?.[0]
+      if (!game) return null
+
+      const isHome = game.teams?.home?.team?.id === aff.id
+      const opponent = (isHome ? game.teams?.away?.team?.name : game.teams?.home?.team?.name) ?? 'TBD'
+      const ls = game.linescore
+      const inningNum  = ls?.currentInning ?? null
+      const inningHalf = ls?.isTopInning === false ? 'Bot' : 'Top'
+
+      return {
+        affiliateName: aff.name,
+        level:         aff.level,
+        opponent,
+        isHome,
+        teamScore: (isHome ? game.teams?.home?.score : game.teams?.away?.score) ?? null,
+        oppScore:  (isHome ? game.teams?.away?.score : game.teams?.home?.score) ?? null,
+        isLive:  game.status?.abstractGameState === 'Live',
+        isFinal: game.status?.abstractGameState === 'Final',
+        gameDate: game.gameDate,
+        inning: inningNum ? `${inningHalf} ${inningNum}` : null,
+      }
+    } catch {
+      return null
+    }
+  }))
+  return results.filter((g): g is FarmGame => g !== null)
 }
