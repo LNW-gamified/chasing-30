@@ -80,6 +80,7 @@ export default function StadiumDetailPage() {
   const id = params.id as string
 
   const [stadium, setStadium] = useState<Stadium | null>(null)
+  const [stadiumMapUrl, setStadiumMapUrl] = useState<string | null>(null)
   const [visits, setVisits] = useState<StadiumVisit[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -152,6 +153,18 @@ export default function StadiumDetailPage() {
     ])
     setStadium(s)
     setVisits(v ?? [])
+
+    // Stadium map — manually uploaded by Chris to the 'stadium-maps' bucket,
+    // named by team abbreviation (e.g. sea.jpg). Check it actually exists
+    // before setting a URL, since most stadiums won't have one uploaded yet.
+    if (s) {
+      const mapFilename = `${s.abbreviation.toLowerCase()}.jpg`
+      const { data: mapFiles } = await supabase.storage.from('stadium-maps').list('', { search: mapFilename })
+      if (mapFiles?.some(f => f.name === mapFilename)) {
+        const { data: urlData } = supabase.storage.from('stadium-maps').getPublicUrl(mapFilename)
+        setStadiumMapUrl(urlData.publicUrl)
+      }
+    }
 
     // Fetch promo data for visits that came from a trip stop
     const tripIds = (v ?? []).map(vis => vis.trip_id).filter(Boolean) as string[]
@@ -1385,61 +1398,80 @@ export default function StadiumDetailPage() {
                   </section>
                 )}
 
-                {/* Field Dimensions */}
-                {venueDimensions && (venueDimensions.leftLine || venueDimensions.center) && (
-                  <section style={{ marginBottom: 32 }}>
-                    <SectionTitle Icon={Map}>Field Dimensions</SectionTitle>
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '20px 16px' }}>
-                      {/* Stylized field diagram — not to scale, just a visual read on the shape of the park */}
-                      <div style={{ display: 'flex', justifyContent: 'center' }}>
-                        <svg viewBox="0 -18 300 218" style={{ width: '100%', maxWidth: 320, height: 'auto', display: 'block', marginBottom: 8 }}>
-                        <defs>
-                          <linearGradient id="grassGrad" x1="0" y1="1" x2="0" y2="0">
-                            <stop offset="0%" stopColor="#1C3A24" />
-                            <stop offset="100%" stopColor="#16301E" />
-                          </linearGradient>
-                        </defs>
-                        {/* Outfield grass */}
-                        <path d="M 150 185 L 40 50 Q 95 20 150 12 Q 205 20 260 50 Z" fill="url(#grassGrad)" stroke="#2F6B3C" strokeWidth="1.5" />
-                        {/* Foul lines */}
-                        <line x1="150" y1="185" x2="40" y2="50" stroke="#8B949E" strokeWidth="1" strokeDasharray="3 3" opacity="0.5" />
-                        <line x1="150" y1="185" x2="260" y2="50" stroke="#8B949E" strokeWidth="1" strokeDasharray="3 3" opacity="0.5" />
-                        {/* Infield dirt */}
-                        <path d="M 150 185 L 118 150 L 150 118 L 182 150 Z" fill="#5C4430" stroke="#3D2E1F" strokeWidth="1" />
-                        {/* Home plate */}
-                        <circle cx="150" cy="185" r="3.5" fill="#E6EDF3" />
-                        {/* Distance markers */}
-                        {[
-                          { x: 40,  y: 50,  value: venueDimensions.leftLine,    labelDx: -8,  anchor: 'end' as const    },
-                          { x: 95,  y: 20,  value: venueDimensions.leftCenter, labelDx: -6,  anchor: 'end' as const    },
-                          { x: 150, y: 12,  value: venueDimensions.center,     labelDx: 0,   anchor: 'middle' as const },
-                          { x: 205, y: 20,  value: venueDimensions.rightCenter,labelDx: 6,   anchor: 'start' as const  },
-                          { x: 260, y: 50,  value: venueDimensions.rightLine,   labelDx: 8,   anchor: 'start' as const  },
-                        ].filter(m => m.value).map((m, i) => (
-                          <g key={i}>
-                            <circle cx={m.x} cy={m.y} r="2.5" fill="#3FB950" />
-                            <text x={m.x + m.labelDx} y={m.y - 8} textAnchor={m.anchor}
-                              fontSize="13" fontWeight="900" fill="#3FB950">{m.value}</text>
-                            <text x={m.x + m.labelDx} y={m.y + 4} textAnchor={m.anchor}
-                              fontSize="7" fontWeight="700" fill="#8B949E">ft</text>
-                          </g>
-                        ))}
-                        </svg>
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        {venueDimensions.roofType && (
-                          <span style={{ fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid #30363D', borderRadius: 20, padding: '4px 10px' }}>
-                            🏟️ {venueDimensions.roofType} roof
-                          </span>
-                        )}
-                        {venueDimensions.turfType && (
-                          <span style={{ fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid #30363D', borderRadius: 20, padding: '4px 10px' }}>
-                            🌿 {venueDimensions.turfType}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </section>
+                {/* Stadium Map + Field Dimensions — side by side on desktop */}
+                {(stadiumMapUrl || (venueDimensions && (venueDimensions.leftLine || venueDimensions.center))) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: 32 }}>
+                    {stadiumMapUrl && (
+                      <section>
+                        <SectionTitle Icon={Map}>Stadium Map</SectionTitle>
+                        <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={stadiumMapUrl}
+                            alt={`${stadium.name} seating map`}
+                            style={{ width: '100%', height: 'auto', display: 'block' }}
+                            onError={() => setStadiumMapUrl(null)}
+                          />
+                        </div>
+                      </section>
+                    )}
+
+                    {venueDimensions && (venueDimensions.leftLine || venueDimensions.center) && (
+                      <section>
+                        <SectionTitle Icon={Map}>Field Dimensions</SectionTitle>
+                        <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '20px 16px' }}>
+                          {/* Stylized field diagram — not to scale, just a visual read on the shape of the park */}
+                          <div style={{ display: 'flex', justifyContent: 'center' }}>
+                            <svg viewBox="0 -18 300 218" style={{ width: '100%', maxWidth: 320, height: 'auto', display: 'block', marginBottom: 8 }}>
+                            <defs>
+                              <linearGradient id="grassGrad" x1="0" y1="1" x2="0" y2="0">
+                                <stop offset="0%" stopColor="#1C3A24" />
+                                <stop offset="100%" stopColor="#16301E" />
+                              </linearGradient>
+                            </defs>
+                            {/* Outfield grass */}
+                            <path d="M 150 185 L 40 50 Q 95 20 150 12 Q 205 20 260 50 Z" fill="url(#grassGrad)" stroke="#2F6B3C" strokeWidth="1.5" />
+                            {/* Foul lines */}
+                            <line x1="150" y1="185" x2="40" y2="50" stroke="#8B949E" strokeWidth="1" strokeDasharray="3 3" opacity="0.5" />
+                            <line x1="150" y1="185" x2="260" y2="50" stroke="#8B949E" strokeWidth="1" strokeDasharray="3 3" opacity="0.5" />
+                            {/* Infield dirt */}
+                            <path d="M 150 185 L 118 150 L 150 118 L 182 150 Z" fill="#5C4430" stroke="#3D2E1F" strokeWidth="1" />
+                            {/* Home plate */}
+                            <circle cx="150" cy="185" r="3.5" fill="#E6EDF3" />
+                            {/* Distance markers */}
+                            {[
+                              { x: 40,  y: 50,  value: venueDimensions.leftLine,    labelDx: -8,  anchor: 'end' as const    },
+                              { x: 95,  y: 20,  value: venueDimensions.leftCenter, labelDx: -6,  anchor: 'end' as const    },
+                              { x: 150, y: 12,  value: venueDimensions.center,     labelDx: 0,   anchor: 'middle' as const },
+                              { x: 205, y: 20,  value: venueDimensions.rightCenter,labelDx: 6,   anchor: 'start' as const  },
+                              { x: 260, y: 50,  value: venueDimensions.rightLine,   labelDx: 8,   anchor: 'start' as const  },
+                            ].filter(m => m.value).map((m, i) => (
+                              <g key={i}>
+                                <circle cx={m.x} cy={m.y} r="2.5" fill="#3FB950" />
+                                <text x={m.x + m.labelDx} y={m.y - 8} textAnchor={m.anchor}
+                                  fontSize="13" fontWeight="900" fill="#3FB950">{m.value}</text>
+                                <text x={m.x + m.labelDx} y={m.y + 4} textAnchor={m.anchor}
+                                  fontSize="7" fontWeight="700" fill="#8B949E">ft</text>
+                              </g>
+                            ))}
+                            </svg>
+                          </div>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {venueDimensions.roofType && (
+                              <span style={{ fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid #30363D', borderRadius: 20, padding: '4px 10px' }}>
+                                🏟️ {venueDimensions.roofType} roof
+                              </span>
+                            )}
+                            {venueDimensions.turfType && (
+                              <span style={{ fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid #30363D', borderRadius: 20, padding: '4px 10px' }}>
+                                🌿 {venueDimensions.turfType}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </section>
+                    )}
+                  </div>
                 )}
 
                 {/* Directions & Links */}
