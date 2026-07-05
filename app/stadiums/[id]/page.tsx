@@ -66,10 +66,10 @@ const RATING_PRIORITY: Record<string, number> = {
 type MiniStadium = { id: string; league: string; division: string }
 type ActiveTab = 'games-attended' | 'upcoming-games' | 'stadium-info' | 'roster'
 
-function SectionTitle({ Icon, children }: { Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; children: React.ReactNode }) {
+function SectionTitle({ Icon, children, color }: { Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; children: React.ReactNode; color?: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-      <Icon size={17} color="#8B949E" strokeWidth={2} />
+      <Icon size={17} color={color ?? '#8B949E'} strokeWidth={2} />
       <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#E6EDF3' }}>{children}</h2>
     </div>
   )
@@ -1051,8 +1051,8 @@ export default function StadiumDetailPage() {
                 {/* About */}
                 {stadiumSummary && (
                   <section style={{ marginBottom: 32 }}>
-                    <SectionTitle Icon={Building2}>About</SectionTitle>
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '16px' }}>
+                    <SectionTitle Icon={Building2} color={teamColor}>About</SectionTitle>
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', borderLeft: `3px solid ${teamColor}`, padding: '16px' }}>
                       <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.7 }}>
                         {stadiumSummary}
                       </div>
@@ -1229,9 +1229,9 @@ export default function StadiumDetailPage() {
 
                 {/* Best Time to Visit */}
                 <section style={{ marginBottom: 32 }}>
-                  <SectionTitle Icon={CalendarDays}>Best Time to Visit</SectionTitle>
+                  <SectionTitle Icon={CalendarDays} color="#3FB950">Best Time to Visit</SectionTitle>
                   {DOME_STADIUMS.has(stadium.abbreviation) ? (
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '20px 16px' }}>
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', borderLeft: '3px solid #3FB950', padding: '20px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: RETRACTABLE_ROOF.has(stadium.abbreviation) ? 10 : 0 }}>
                         <span style={{ fontSize: 22 }}>🏟️</span>
                         <div>
@@ -1378,7 +1378,7 @@ export default function StadiumDetailPage() {
                 {/* Virtual Tour */}
                 {tourVideoId && (
                   <section style={{ marginBottom: 32 }}>
-                    <SectionTitle Icon={Map}>Virtual Tour</SectionTitle>
+                    <SectionTitle Icon={Map} color="#F85149">Virtual Tour</SectionTitle>
                     <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid #30363D', aspectRatio: '16/9', position: 'relative', backgroundColor: '#161B22' }}>
                       <iframe
                         src={`https://www.youtube.com/embed/${tourVideoId}?rel=0&modestbranding=1`}
@@ -1394,11 +1394,12 @@ export default function StadiumDetailPage() {
                 {/* Retired Numbers */}
                 {retiredNumbers.length > 0 && (
                   <section style={{ marginBottom: 32 }}>
-                    <SectionTitle Icon={Hash}>Retired Numbers</SectionTitle>
+                    <SectionTitle Icon={Hash} color="#F5A623">Retired Numbers</SectionTitle>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                       {retiredNumbers.map(rn => (
                         <div key={rn.id} style={{
                           backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D',
+                          borderTop: '2px solid #F5A623',
                           padding: '10px 14px', textAlign: 'center', minWidth: 72,
                         }}>
                           <div style={{ fontSize: 24, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{rn.number}</div>
@@ -1415,7 +1416,7 @@ export default function StadiumDetailPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ marginBottom: 32 }}>
                     {stadiumMapUrl && (
                       <section>
-                        <SectionTitle Icon={Map}>Stadium Map</SectionTitle>
+                        <SectionTitle Icon={Map} color={teamColor}>Stadium Map</SectionTitle>
                         <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
@@ -1431,7 +1432,7 @@ export default function StadiumDetailPage() {
 
                     {venueDimensions && (venueDimensions.leftLine || venueDimensions.center) && (
                       <section>
-                        <SectionTitle Icon={Map}>Field Dimensions</SectionTitle>
+                        <SectionTitle Icon={Map} color="#3FB950">Field Dimensions</SectionTitle>
                         <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '20px 16px' }}>
                           {/* Stylized field diagram — not to scale, just a visual read on the shape of the park */}
                           <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -1489,7 +1490,7 @@ export default function StadiumDetailPage() {
 
                 {/* Directions & Links */}
                 <section style={{ marginBottom: 32 }}>
-                  <SectionTitle Icon={Map}>Directions &amp; Links</SectionTitle>
+                  <SectionTitle Icon={Map} color="#1F6FEB">Directions &amp; Links</SectionTitle>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <a
                       href={`https://maps.google.com/?q=${encodeURIComponent(stadium.name + ' ' + stadium.city + ' ' + stadium.state)}`}
@@ -1501,7 +1502,10 @@ export default function StadiumDetailPage() {
                         backgroundColor: '#161B22', border: '1px solid #30363D',
                       }}
                     >
-                      <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>📍 Google Maps</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3', display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: 'rgba(31,111,235,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>📍</span>
+                        Google Maps
+                      </span>
                       <span style={{ fontSize: 13, color: '#1F6FEB' }}>Open ↗</span>
                     </a>
                     <a
@@ -1514,7 +1518,10 @@ export default function StadiumDetailPage() {
                         backgroundColor: '#161B22', border: '1px solid #30363D',
                       }}
                     >
-                      <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>⚾ Team Website</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3', display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: `${teamColor}24`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>⚾</span>
+                        Team Website
+                      </span>
                       <span style={{ fontSize: 13, color: '#1F6FEB' }}>Open ↗</span>
                     </a>
                     <a
@@ -1527,7 +1534,10 @@ export default function StadiumDetailPage() {
                         backgroundColor: '#161B22', border: '1px solid #30363D',
                       }}
                     >
-                      <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3' }}>📅 Home Schedule</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: '#E6EDF3', display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: 'rgba(63,185,80,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>📅</span>
+                        Home Schedule
+                      </span>
                       <span style={{ fontSize: 13, color: '#1F6FEB' }}>Open ↗</span>
                     </a>
                   </div>
