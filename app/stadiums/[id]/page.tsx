@@ -1576,35 +1576,6 @@ export default function StadiumDetailPage() {
             {/* ── TEAM TAB ─────────────────────────────────────────── */}
             {activeTab === 'roster' && (
               <>
-                {/* Team News */}
-                {teamNews.length > 0 && (
-                  <section style={{ marginBottom: 32 }}>
-                    <SectionTitle Icon={Trophy}>Team News</SectionTitle>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {teamNews.map((item, i) => (
-                        <a
-                          key={i}
-                          href={item.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ display: 'flex', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D', textDecoration: 'none' }}
-                        >
-                          {item.imageUrl && (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img src={item.imageUrl} alt="" style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
-                          )}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.4, marginBottom: 4 }}>{item.headline}</div>
-                            <div style={{ fontSize: 13, color: '#8B949E' }}>
-                              {new Date(item.published).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · ESPN
-                            </div>
-                          </div>
-                        </a>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
                 {/* This Season */}
                 {teamStats && (teamStats.wins !== null || teamStats.era) && (
                   <section style={{ marginBottom: 32 }}>
@@ -1642,6 +1613,35 @@ export default function StadiumDetailPage() {
                           <div style={{ fontSize: 18, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{s!.value}</div>
                           <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s!.label}</div>
                         </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Team News */}
+                {teamNews.length > 0 && (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle Icon={Trophy}>Team News</SectionTitle>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {teamNews.map((item, i) => (
+                        <a
+                          key={i}
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ display: 'flex', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D', textDecoration: 'none' }}
+                        >
+                          {item.imageUrl && (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img src={item.imageUrl} alt="" style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.4, marginBottom: 4 }}>{item.headline}</div>
+                            <div style={{ fontSize: 13, color: '#8B949E' }}>
+                              {new Date(item.published).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · ESPN
+                            </div>
+                          </div>
+                        </a>
                       ))}
                     </div>
                   </section>
