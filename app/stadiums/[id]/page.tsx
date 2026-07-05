@@ -1404,8 +1404,8 @@ export default function StadiumDetailPage() {
                     <SectionTitle Icon={Hash} color="#F5A623">Retired Numbers</SectionTitle>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, justifyContent: 'flex-start' }}>
                       {retiredNumbers.map(rn => (
-                        <div key={rn.id} style={{ textAlign: 'center', width: 88 }}>
-                          <svg viewBox="0 0 100 100" width="88" height="88" style={{ display: 'block', margin: '0 auto 6px' }}>
+                        <div key={rn.id} style={{ textAlign: 'center', width: 100 }}>
+                          <svg viewBox="0 0 116 100" width="100" height="86" style={{ display: 'block', margin: '0 auto 6px' }}>
                             <defs>
                               <radialGradient id={`jersey-${rn.id}`} cx="35%" cy="25%" r="75%">
                                 <stop offset="0%" stopColor="#2A2000" />
@@ -1413,11 +1413,11 @@ export default function StadiumDetailPage() {
                               </radialGradient>
                             </defs>
                             <path
-                              d="M 20,20 L 35,8 L 42,16 L 50,22 L 58,16 L 65,8 L 80,20 L 70,35 L 70,92 L 30,92 L 30,35 Z"
+                              d="M 18,20 L 38,8 L 46,16 L 58,22 L 70,16 L 78,8 L 98,20 L 84,35 L 84,92 L 32,92 L 32,35 Z"
                               fill={`url(#jersey-${rn.id})`}
                               stroke="#F5A623" strokeWidth="2.5" strokeLinejoin="round"
                             />
-                            <text x="50" y="66" textAnchor="middle" fontSize="26" fontWeight="900" fill="#F5C05C">
+                            <text x="58" y="66" textAnchor="middle" fontSize="26" fontWeight="900" fill="#F5C05C">
                               {rn.number}
                             </text>
                           </svg>
