@@ -3,7 +3,7 @@ import { MILESTONES } from '@/lib/milestones'
 import type { Stadium, StadiumVisit, BaseballLifeEntry, Trip } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
-import { CalendarDays, ClipboardList, MapPin, DollarSign, Trophy, Eye } from 'lucide-react'
+import { CalendarDays, ClipboardList, MapPin, DollarSign, Trophy, Eye, Star } from 'lucide-react'
 import TodayGames, { type TodayGame } from '@/components/TodayGames'
 import Standings from '@/components/Standings'
 import FavoriteTeamPicker from '@/components/FavoriteTeamPicker'
@@ -181,18 +181,24 @@ export default async function DashboardPage() {
 
   // Stats
   const favAbbr            = (userSettings as any)?.favorite_team_abbr ?? null
-  const gamesAttended      = allVisits.length
-  const mlCount = allBaseballLife.filter(e => e.category === 'minor_league').length
-  const speCount = allBaseballLife.filter(e => e.category === 'mlb_special_event').length
-  const pilgCount = allBaseballLife.filter(e => e.category === 'pilgrimage').length
+  const gamesAttended      = allVisits.length   // MLB Games — raw games attended, not unique stadiums
+  const mlCount     = allBaseballLife.filter(e => e.category === 'minor_league').length
+  const speCount    = allBaseballLife.filter(e => e.category === 'mlb_special_event').length
+  const springCount = allBaseballLife.filter(e => e.category === 'spring_training').length
+  const pilgCount   = allBaseballLife.filter(e => e.category === 'pilgrimage').length
   const destinationsVisited = new Set((destVisits ?? []).map((dv: any) => dv.destination_id)).size
-  const totalGames = gamesAttended + allBaseballLife.filter(e => e.category === 'minor_league').length
-  const beyondThe30Total = allBaseballLife.length
-  const beyondThe30Sub = [
-    mlCount > 0 ? `${mlCount} MiLB` : null,
-    speCount > 0 ? `${speCount} Events` : null,
-    pilgCount > 0 ? `${pilgCount} Pilgrimages` : null,
-  ].filter(Boolean).join(' · ') || 'Log experiences to see breakdown'
+  const specialEventsTotal = speCount + springCount
+  const specialEventsSub = [
+    speCount > 0   ? `${speCount} Events` : null,
+    springCount > 0 ? `${springCount} Spring Training` : null,
+  ].filter(Boolean).join(' · ') || 'Log your first event'
+  const destinationsTotal = pilgCount + destinationsVisited
+  const destinationsSub = destinationsTotal === 0
+    ? 'Log your first'
+    : [
+        pilgCount > 0 ? `${pilgCount} Pilgrimages` : null,
+        destinationsVisited > 0 ? `${destinationsVisited} Trips` : null,
+      ].filter(Boolean).join(' · ')
   const totalSpent = allTrips.reduce((sum, t: any) => {
     const tripLevel  = Number(t.actual_travel ?? 0) + Number(t.actual_hotel ?? 0)
     const stopsLevel = (t.stops ?? []).reduce((s: number, stop: any) =>
@@ -529,14 +535,15 @@ export default async function DashboardPage() {
           <SectionHeader label="Your Scouting Report" />
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {([
-              { Icon: CalendarDays,  value: totalGames,                label: 'Total Games',     valSize: 40, color: '#1F6FEB', sub: `${gamesAttended} MLB · ${mlCount} MiLB`, hero: true },
-              { Icon: ClipboardList, value: beyondThe30Total,          label: 'Beyond the 30',   valSize: 32, color: '#F5A623', sub: beyondThe30Sub, hero: false },
-              { Icon: MapPin,        value: destinationsVisited,       label: 'Destinations',    valSize: 32, color: '#1F6FEB', sub: destinationsVisited === 0 ? 'Log your first' : null, hero: false },
-              { Icon: DollarSign,    value: formatCurrency(totalSpent),label: 'Total Spent',     valSize: 28, color: '#3FB950', sub: null, hero: false },
-            ]).map(({ Icon, value, label, valSize, color, sub, hero }) => (
+              { Icon: CalendarDays,  value: gamesAttended,             label: 'MLB Games',       color: '#1F6FEB', sub: `${visitedCount} of 30 stadiums` },
+              { Icon: ClipboardList, value: mlCount,                   label: 'MiLB',            color: '#F5A623', sub: mlCount === 0 ? 'Log your first' : null },
+              { Icon: Star,          value: specialEventsTotal,        label: 'Special Events',  color: '#3FB950', sub: specialEventsSub },
+              { Icon: MapPin,        value: destinationsTotal,         label: 'Destinations',    color: '#1F6FEB', sub: destinationsSub },
+              { Icon: DollarSign,    value: formatCurrency(totalSpent),label: 'Total Spent',     color: '#3FB950', sub: null },
+            ]).map(({ Icon, value, label, color, sub }) => (
               <div
                 key={label}
-                className={`dash-card${hero ? ' col-span-2' : ''}`}
+                className="dash-card"
                 style={{
                   ...card,
                   padding: '20px 18px 18px',
@@ -545,9 +552,9 @@ export default async function DashboardPage() {
                   background: `linear-gradient(160deg, ${color}14 0%, #161B22 45%)`,
                 }}
               >
-                <Icon size={hero ? 28 : 24} color={color} strokeWidth={1.8} style={{ marginBottom: 14, flexShrink: 0 }}/>
+                <Icon size={24} color={color} strokeWidth={1.8} style={{ marginBottom: 14, flexShrink: 0 }}/>
                 <div style={{
-                  fontSize: valSize, fontWeight: 900, color: '#E6EDF3',
+                  fontSize: 32, fontWeight: 900, color: '#E6EDF3',
                   lineHeight: 1, marginBottom: 8,
                   letterSpacing: typeof value === 'number' ? '-1px' : '0',
                   width: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -569,7 +576,7 @@ export default async function DashboardPage() {
             ))}
 
             {/* Identity tile — fav division + most seen team share one card so the
-                grid fills evenly (6 stats didn't divide clean against a hero tile) */}
+                grid fills evenly (6 stats total against a 3-column grid) */}
             <div
               className="dash-card"
               style={{

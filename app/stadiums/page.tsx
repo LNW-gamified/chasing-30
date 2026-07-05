@@ -595,7 +595,7 @@ export default function StadiumsPage() {
                           attendedCount={eventAttendedCount(ev.slug)}
                           onLog={() => openLog(
                             ev.category === 'spring_training' ? 'spring_training' :
-                            ev.category === 'amateur' ? 'pilgrimage' :
+                            ev.category === 'amateur' ? 'mlb_special_event' :
                             'mlb_special_event',
                             eventDefaultType(ev.slug)
                           )}
@@ -621,7 +621,7 @@ export default function StadiumsPage() {
                           attendedCount={eventAttendedCount(ev.slug)}
                           onLog={() => openLog(
                             ev.category === 'spring_training' ? 'spring_training' :
-                            ev.category === 'amateur' ? 'pilgrimage' :
+                            ev.category === 'amateur' ? 'mlb_special_event' :
                             'mlb_special_event',
                             eventDefaultType(ev.slug)
                           )}

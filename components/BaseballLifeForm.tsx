@@ -22,9 +22,11 @@ const CATEGORY_CARDS: {
 ]
 
 const MLB_SPECIAL_EVENT_TYPES = [
-  'All-Star Game', 'Home Run Derby', 'Wild Card Game',
+  'Opening Day', 'All-Star Game', 'Home Run Derby', 'Wild Card Game',
   'ALDS', 'NLDS', 'ALCS', 'NLCS', 'World Series',
-  'Field of Dreams Game', 'Other',
+  'Field of Dreams Game', 'London Series', 'Mexico Series', 'Puerto Rico Series',
+  'Banana Ball', 'College Baseball', 'Cape Cod Baseball', 'Arizona Fall League',
+  'Other',
 ]
 
 const PILGRIMAGE_DESTINATIONS = [
@@ -32,7 +34,12 @@ const PILGRIMAGE_DESTINATIONS = [
   'Louisville Slugger Museum & Factory',
   'Rawlings Baseball Factory',
   'Negro Leagues Baseball Museum',
+  'Babe Ruth Birthplace and Museum',
+  'Jackie Robinson Museum',
   'Field of Dreams Site',
+  'Doubleday Field',
+  'Rickwood Field',
+  'Baseball Reliquary',
   'Fenway Park Tour',
   'Wrigley Field Tour',
   'Yankee Stadium Tour',
