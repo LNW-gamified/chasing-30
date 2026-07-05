@@ -104,6 +104,10 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
     }
   }, [])
   const [weatherLoading, setWeatherLoading] = useState(false)
+  // Box score is collapsed by default for new games (auto-fills from MLB after
+  // saving), but starts open when editing a game that already has stats entered,
+  // so people don't lose sight of data that's already there.
+  const [showBoxScore, setShowBoxScore] = useState(!!visit?.home_starter_name || !!visit?.hp_umpire || !!visit?.inning_scores?.length)
   const [weatherNote, setWeatherNote] = useState<string | null>(null)
   const [additionalSeats, setAdditionalSeats] = useState<ExtraSeat[]>(
     () => (visit?.additional_seats as ExtraSeat[] | null) ?? []
@@ -715,6 +719,259 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
             <Plus size={12} /> Add Another Seat
           </button>
 
+          {sectionHead('Photo')}
+          <div style={{ marginBottom: 8 }}>
+            {photoPreviews.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 10 }}>
+                {photoPreviews.map((src, idx) => (
+                  <div key={idx} style={{ position: 'relative', paddingBottom: '100%', borderRadius: 10, overflow: 'hidden', backgroundColor: '#1C2430' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt={`Photo ${idx + 1}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(idx)}
+                      style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.7)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Trash2 size={11} color="#F85149" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {(photoPathsToKeep.length + photoFiles.length) < 5 && (
+              <label
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: 6, borderRadius: 12, cursor: 'pointer',
+                  border: '2px dashed #30363D', backgroundColor: '#1a2235',
+                  padding: photoPreviews.length > 0 ? '12px' : '2rem 1rem', color: '#8B949E',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#1F6FEB')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#30363D')}
+              >
+                <ImagePlus size={22} />
+                <span style={{ fontSize: 12 }}>
+                  {photoPreviews.length === 0 ? 'Add up to 5 photos' : `Add photo (${photoPreviews.length}/5)`}
+                </span>
+                <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoChange} />
+              </label>
+            )}
+          </div>
+
+          {sectionHead('Game Day Moments')}
+          <div style={{ marginBottom: 4 }}>
+            <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 10 }}>
+              Tap to mark moments from this game.
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+              {GAME_MOMENTS.map(({ id, icon, label }) => {
+                const selected = selectedMoments.includes(id)
+                const accent   = TEAM_PRIMARY[stadium.abbreviation] ?? '#1F6FEB'
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() =>
+                      setSelectedMoments(prev =>
+                        prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
+                      )
+                    }
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      padding: '6px 11px', borderRadius: 999, fontSize: 12, fontWeight: 600,
+                      cursor: 'pointer', transition: 'all 0.12s',
+                      backgroundColor: selected ? `${accent}22` : 'transparent',
+                      color: selected ? accent : '#8B949E',
+                      border: `1.5px solid ${selected ? accent : '#30363D'}`,
+                    }}
+                  >
+                    <span style={{ fontSize: 14 }}>{icon}</span> {label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {sectionHead('Giveaways & Collectibles')}
+          <div style={{ marginBottom: 16 }}>
+            {giveawayItems.map((item, idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, backgroundColor: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.2)', marginBottom: 8 }}>
+                <input
+                  value={item.name}
+                  onChange={e => setGiveawayItems(prev => prev.map((it, i) => i === idx ? { ...it, name: e.target.value } : it))}
+                  placeholder="e.g. Bobblehead"
+                  style={{ flex: 1, backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
+                />
+                <select
+                  value={item.category}
+                  onChange={e => setGiveawayItems(prev => prev.map((it, i) => i === idx ? { ...it, category: e.target.value } : it))}
+                  style={{ backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
+                >
+                  <option value="giveaway">🎁 Giveaway</option>
+                  <option value="souvenir">🛍️ Souvenir</option>
+                  <option value="memorabilia">✍️ Memorabilia</option>
+                </select>
+                {item.category === 'giveaway' && (
+                  <select
+                    value={item.giveaway_type}
+                    onChange={e => setGiveawayItems(prev => prev.map((it, i) => i === idx ? { ...it, giveaway_type: e.target.value } : it))}
+                    style={{ backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
+                  >
+                    <option value="bobblehead">🪆 Bobblehead</option>
+                    <option value="jersey">👕 Jersey</option>
+                    <option value="tshirt">👔 T-Shirt</option>
+                    <option value="hat">🧢 Hat</option>
+                    <option value="other">🎁 Other</option>
+                  </select>
+                )}
+                {item.photo_url ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={item.photo_url} alt={item.name} style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover', display: 'block' }} />
+                    <label style={{ cursor: 'pointer', fontSize: 13, color: '#8B949E', fontWeight: 600 }}>
+                      Replace
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadGiveawayPhoto(idx, f) }} />
+                    </label>
+                  </div>
+                ) : (
+                  <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: '#8B949E', padding: '4px 8px', borderRadius: 6, border: '1px dashed #30363D', flexShrink: 0 }}>
+                    {uploadingIdx[idx] ? 'Uploading…' : 'Photo'}
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadGiveawayPhoto(idx, f) }} />
+                  </label>
+                )}
+                <button type="button" onClick={() => removeGiveawayItem(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8B949E', padding: 2, display: 'flex', flexShrink: 0 }}>✕</button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setGiveawayItems([...giveawayItems, { name: '', category: 'giveaway', giveaway_type: 'other', photo_url: null }])}
+              style={{ width: '100%', padding: '10px', borderRadius: 10, border: '1px dashed #30363D', background: 'none', color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >+ Add Giveaway or Collectible</button>
+          </div>
+
+          {sectionHead('Food & Drink')}
+          <div style={{ marginBottom: 8 }}>
+            {foodItems.map((item, idx) => (
+              <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px', borderRadius: 10, backgroundColor: '#1a2235', marginBottom: 8 }}>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    value={item.name}
+                    onChange={e => { const u = [...foodItems]; u[idx] = { ...u[idx], name: e.target.value }; setFoodItems(u) }}
+                    placeholder="e.g. Garlic Fries"
+                    style={{ flex: 1, backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
+                  />
+                  <select
+                    value={item.category}
+                    onChange={e => { const u = [...foodItems]; u[idx] = { ...u[idx], category: e.target.value }; setFoodItems(u) }}
+                    style={{ backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
+                  >
+                    <option value="hot_dog">🌭 Hot Dog</option>
+                    <option value="specialty">🍔 Specialty</option>
+                    <option value="dessert">🍦 Dessert</option>
+                    <option value="drink">🥤 Drink</option>
+                    <option value="other">🍽️ Other</option>
+                  </select>
+                  <button type="button" onClick={() => setFoodItems(foodItems.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', color: '#F85149', cursor: 'pointer', padding: '0 6px' }}>✕</button>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {[1,2,3,4,5].map(n => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => { const u = [...foodItems]; u[idx] = { ...u[idx], rating: item.rating === n ? null : n }; setFoodItems(u) }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, padding: 0, opacity: item.rating != null && n <= item.rating ? 1 : 0.25 }}
+                    >⭐</button>
+                  ))}
+                  <label style={{ marginLeft: 'auto', cursor: 'pointer', fontSize: 13, color: '#8B949E', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <ImagePlus size={14} /> {item.photoPreview ? 'Change' : 'Photo'}
+                    <input type="file" accept="image/*" style={{ display: 'none' }}
+                      onChange={e => {
+                        const f = e.target.files?.[0]; if (!f) return
+                        const u = [...foodItems]; u[idx] = { ...u[idx], photoFile: f, photoPreview: URL.createObjectURL(f) }; setFoodItems(u)
+                      }} />
+                  </label>
+                </div>
+                {item.photoPreview && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={item.photoPreview} alt={item.name} style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover' }} />
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setFoodItems([...foodItems, { name: '', category: 'other', rating: null, photoFile: null, photoPreview: null }])}
+              style={{ width: '100%', padding: '10px', borderRadius: 10, border: '1px dashed #30363D', background: 'none', color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >+ Add Food or Drink</button>
+          </div>
+
+          {sectionHead('Story & Notes')}
+          <div>
+            <label className="label">Notes / Game Story</label>
+            <textarea
+              className="input"
+              rows={5}
+              placeholder="Write about your experience at this game..."
+              value={form.notes}
+              onChange={(e) => set('notes', e.target.value)}
+              style={{ resize: 'vertical' }}
+            />
+          </div>
+
+          {sectionHead('Who Was There')}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+              {companions.map((name, idx) => (
+                <span key={idx} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '5px 10px', borderRadius: 20,
+                  backgroundColor: 'rgba(31,111,235,0.1)', border: '1px solid rgba(31,111,235,0.3)',
+                  fontSize: 13, color: '#58A6FF', fontWeight: 600,
+                }}>
+                  {name}
+                  <button type="button" onClick={() => setCompanions(companions.filter((_, i) => i !== idx))}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#58A6FF', padding: 0, display: 'flex' }}>
+                    <X size={11} />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <input
+              value={companionInput}
+              onChange={e => setCompanionInput(e.target.value)}
+              onKeyDown={e => {
+                if ((e.key === 'Enter' || e.key === ',') && companionInput.trim()) {
+                  e.preventDefault()
+                  if (!companions.includes(companionInput.trim())) {
+                    setCompanions([...companions, companionInput.trim()])
+                  }
+                  setCompanionInput('')
+                }
+              }}
+              placeholder="Type a name and press Enter"
+              style={{ width: '100%', backgroundColor: '#1a2235', border: '1px solid #30363D', borderRadius: 10, padding: '10px 12px', color: '#E6EDF3', fontSize: 13 }}
+            />
+          </div>
+
+          {sectionHead('Full Box Score')}
+          <div style={{
+            marginBottom: 8, fontSize: 12, color: '#8B949E',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <span>Optional. Auto-filled from MLB for past games once you save.</span>
+            <button
+              type="button"
+              onClick={() => setShowBoxScore(v => !v)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: '#1F6FEB', fontSize: 12, fontWeight: 700, flexShrink: 0, marginLeft: 12,
+              }}
+            >
+              {showBoxScore ? 'Hide' : 'Add manually'}
+            </button>
+          </div>
+          {showBoxScore && (
+            <div>
           <div className="flex items-center justify-between pt-4 pb-1 mb-2" style={{ borderBottom: '1px solid #30363D' }}>
             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#1F6FEB' }}>
               Conditions
@@ -984,238 +1241,9 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
             ))}
           </div>
 
-          {sectionHead('Photo')}
-          <div style={{ marginBottom: 8 }}>
-            {photoPreviews.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 10 }}>
-                {photoPreviews.map((src, idx) => (
-                  <div key={idx} style={{ position: 'relative', paddingBottom: '100%', borderRadius: 10, overflow: 'hidden', backgroundColor: '#1C2430' }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt={`Photo ${idx + 1}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <button
-                      type="button"
-                      onClick={() => removePhoto(idx)}
-                      style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.7)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      <Trash2 size={11} color="#F85149" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            {(photoPathsToKeep.length + photoFiles.length) < 5 && (
-              <label
-                style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  gap: 6, borderRadius: 12, cursor: 'pointer',
-                  border: '2px dashed #30363D', backgroundColor: '#1a2235',
-                  padding: photoPreviews.length > 0 ? '12px' : '2rem 1rem', color: '#8B949E',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#1F6FEB')}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#30363D')}
-              >
-                <ImagePlus size={22} />
-                <span style={{ fontSize: 12 }}>
-                  {photoPreviews.length === 0 ? 'Add up to 5 photos' : `Add photo (${photoPreviews.length}/5)`}
-                </span>
-                <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoChange} />
-              </label>
-            )}
-          </div>
-
-          {sectionHead('Game Day Moments')}
-          <div style={{ marginBottom: 4 }}>
-            <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 10 }}>
-              Tap to mark moments from this game.
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-              {GAME_MOMENTS.map(({ id, icon, label }) => {
-                const selected = selectedMoments.includes(id)
-                const accent   = TEAM_PRIMARY[stadium.abbreviation] ?? '#1F6FEB'
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() =>
-                      setSelectedMoments(prev =>
-                        prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
-                      )
-                    }
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 5,
-                      padding: '6px 11px', borderRadius: 999, fontSize: 12, fontWeight: 600,
-                      cursor: 'pointer', transition: 'all 0.12s',
-                      backgroundColor: selected ? `${accent}22` : 'transparent',
-                      color: selected ? accent : '#8B949E',
-                      border: `1.5px solid ${selected ? accent : '#30363D'}`,
-                    }}
-                  >
-                    <span style={{ fontSize: 14 }}>{icon}</span> {label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
+          )}
 
-          {sectionHead('Giveaways & Collectibles')}
-          <div style={{ marginBottom: 16 }}>
-            {giveawayItems.map((item, idx) => (
-              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, backgroundColor: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.2)', marginBottom: 8 }}>
-                <input
-                  value={item.name}
-                  onChange={e => setGiveawayItems(prev => prev.map((it, i) => i === idx ? { ...it, name: e.target.value } : it))}
-                  placeholder="e.g. Bobblehead"
-                  style={{ flex: 1, backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
-                />
-                <select
-                  value={item.category}
-                  onChange={e => setGiveawayItems(prev => prev.map((it, i) => i === idx ? { ...it, category: e.target.value } : it))}
-                  style={{ backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
-                >
-                  <option value="giveaway">🎁 Giveaway</option>
-                  <option value="souvenir">🛍️ Souvenir</option>
-                  <option value="memorabilia">✍️ Memorabilia</option>
-                </select>
-                {item.category === 'giveaway' && (
-                  <select
-                    value={item.giveaway_type}
-                    onChange={e => setGiveawayItems(prev => prev.map((it, i) => i === idx ? { ...it, giveaway_type: e.target.value } : it))}
-                    style={{ backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
-                  >
-                    <option value="bobblehead">🪆 Bobblehead</option>
-                    <option value="jersey">👕 Jersey</option>
-                    <option value="tshirt">👔 T-Shirt</option>
-                    <option value="hat">🧢 Hat</option>
-                    <option value="other">🎁 Other</option>
-                  </select>
-                )}
-                {item.photo_url ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={item.photo_url} alt={item.name} style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover', display: 'block' }} />
-                    <label style={{ cursor: 'pointer', fontSize: 13, color: '#8B949E', fontWeight: 600 }}>
-                      Replace
-                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadGiveawayPhoto(idx, f) }} />
-                    </label>
-                  </div>
-                ) : (
-                  <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: '#8B949E', padding: '4px 8px', borderRadius: 6, border: '1px dashed #30363D', flexShrink: 0 }}>
-                    {uploadingIdx[idx] ? 'Uploading…' : 'Photo'}
-                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadGiveawayPhoto(idx, f) }} />
-                  </label>
-                )}
-                <button type="button" onClick={() => removeGiveawayItem(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8B949E', padding: 2, display: 'flex', flexShrink: 0 }}>✕</button>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => setGiveawayItems([...giveawayItems, { name: '', category: 'giveaway', giveaway_type: 'other', photo_url: null }])}
-              style={{ width: '100%', padding: '10px', borderRadius: 10, border: '1px dashed #30363D', background: 'none', color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-            >+ Add Giveaway or Collectible</button>
-          </div>
-
-          {sectionHead('Food & Drink')}
-          <div style={{ marginBottom: 8 }}>
-            {foodItems.map((item, idx) => (
-              <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px', borderRadius: 10, backgroundColor: '#1a2235', marginBottom: 8 }}>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    value={item.name}
-                    onChange={e => { const u = [...foodItems]; u[idx] = { ...u[idx], name: e.target.value }; setFoodItems(u) }}
-                    placeholder="e.g. Garlic Fries"
-                    style={{ flex: 1, backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
-                  />
-                  <select
-                    value={item.category}
-                    onChange={e => { const u = [...foodItems]; u[idx] = { ...u[idx], category: e.target.value }; setFoodItems(u) }}
-                    style={{ backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 13 }}
-                  >
-                    <option value="hot_dog">🌭 Hot Dog</option>
-                    <option value="specialty">🍔 Specialty</option>
-                    <option value="dessert">🍦 Dessert</option>
-                    <option value="drink">🥤 Drink</option>
-                    <option value="other">🍽️ Other</option>
-                  </select>
-                  <button type="button" onClick={() => setFoodItems(foodItems.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', color: '#F85149', cursor: 'pointer', padding: '0 6px' }}>✕</button>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  {[1,2,3,4,5].map(n => (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => { const u = [...foodItems]; u[idx] = { ...u[idx], rating: item.rating === n ? null : n }; setFoodItems(u) }}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, padding: 0, opacity: item.rating != null && n <= item.rating ? 1 : 0.25 }}
-                    >⭐</button>
-                  ))}
-                  <label style={{ marginLeft: 'auto', cursor: 'pointer', fontSize: 13, color: '#8B949E', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <ImagePlus size={14} /> {item.photoPreview ? 'Change' : 'Photo'}
-                    <input type="file" accept="image/*" style={{ display: 'none' }}
-                      onChange={e => {
-                        const f = e.target.files?.[0]; if (!f) return
-                        const u = [...foodItems]; u[idx] = { ...u[idx], photoFile: f, photoPreview: URL.createObjectURL(f) }; setFoodItems(u)
-                      }} />
-                  </label>
-                </div>
-                {item.photoPreview && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={item.photoPreview} alt={item.name} style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover' }} />
-                )}
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => setFoodItems([...foodItems, { name: '', category: 'other', rating: null, photoFile: null, photoPreview: null }])}
-              style={{ width: '100%', padding: '10px', borderRadius: 10, border: '1px dashed #30363D', background: 'none', color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-            >+ Add Food or Drink</button>
-          </div>
-
-          {sectionHead('Story & Notes')}
-          <div>
-            <label className="label">Notes / Game Story</label>
-            <textarea
-              className="input"
-              rows={5}
-              placeholder="Write about your experience at this game..."
-              value={form.notes}
-              onChange={(e) => set('notes', e.target.value)}
-              style={{ resize: 'vertical' }}
-            />
-          </div>
-
-          {sectionHead('Who Was There')}
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-              {companions.map((name, idx) => (
-                <span key={idx} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  padding: '5px 10px', borderRadius: 20,
-                  backgroundColor: 'rgba(31,111,235,0.1)', border: '1px solid rgba(31,111,235,0.3)',
-                  fontSize: 13, color: '#58A6FF', fontWeight: 600,
-                }}>
-                  {name}
-                  <button type="button" onClick={() => setCompanions(companions.filter((_, i) => i !== idx))}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#58A6FF', padding: 0, display: 'flex' }}>
-                    <X size={11} />
-                  </button>
-                </span>
-              ))}
-            </div>
-            <input
-              value={companionInput}
-              onChange={e => setCompanionInput(e.target.value)}
-              onKeyDown={e => {
-                if ((e.key === 'Enter' || e.key === ',') && companionInput.trim()) {
-                  e.preventDefault()
-                  if (!companions.includes(companionInput.trim())) {
-                    setCompanions([...companions, companionInput.trim()])
-                  }
-                  setCompanionInput('')
-                }
-              }}
-              placeholder="Type a name and press Enter"
-              style={{ width: '100%', backgroundColor: '#1a2235', border: '1px solid #30363D', borderRadius: 10, padding: '10px 12px', color: '#E6EDF3', fontSize: 13 }}
-            />
-          </div>
 
           {error && (
             <div
