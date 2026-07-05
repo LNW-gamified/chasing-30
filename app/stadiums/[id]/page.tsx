@@ -1073,18 +1073,19 @@ export default function StadiumDetailPage() {
                       border: '1px solid #30363D', padding: 3,
                     }}>
                       {([
-                        { key: 'food',      emoji: '🍟', label: 'Food'      },
-                        { key: 'souvenirs', emoji: '🛍️', label: 'Souvenirs' },
-                      ] as const).map(({ key, emoji, label }) => (
+                        { key: 'food',      emoji: '🍟', label: 'Food',      color: '#F5A623' },
+                        { key: 'souvenirs', emoji: '🛍️', label: 'Souvenirs', color: '#58A6FF' },
+                      ] as const).map(({ key, emoji, label, color }) => (
                         <button
                           key={key}
                           onClick={() => setIntelSubTab(key)}
                           style={{
                             flex: 1, padding: '7px 10px', borderRadius: 8,
                             fontSize: 13, fontWeight: intelSubTab === key ? 700 : 500,
-                            border: 'none', cursor: 'pointer',
-                            backgroundColor: intelSubTab === key ? '#161B22' : 'transparent',
-                            color: intelSubTab === key ? '#E6EDF3' : '#8B949E',
+                            border: intelSubTab === key ? `1px solid ${color}55` : '1px solid transparent',
+                            cursor: 'pointer',
+                            backgroundColor: intelSubTab === key ? `${color}1F` : 'transparent',
+                            color: intelSubTab === key ? color : '#8B949E',
                             boxShadow: intelSubTab === key ? '0 1px 3px rgba(0,0,0,0.35)' : 'none',
                             transition: 'background-color 0.15s, color 0.15s',
                           }}
