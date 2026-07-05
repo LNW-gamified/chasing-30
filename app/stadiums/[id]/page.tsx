@@ -1405,15 +1405,22 @@ export default function StadiumDetailPage() {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, justifyContent: 'flex-start' }}>
                       {retiredNumbers.map(rn => (
                         <div key={rn.id} style={{ textAlign: 'center', width: 88 }}>
-                          <div style={{
-                            width: 88, height: 88, borderRadius: '50%', margin: '0 auto 10px',
-                            background: 'radial-gradient(circle at 35% 30%, #2A2000 0%, #161B22 70%)',
-                            border: '2px solid #F5A623',
-                            boxShadow: '0 0 0 4px rgba(245,166,35,0.12), 0 4px 14px rgba(0,0,0,0.4)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          }}>
-                            <span style={{ fontSize: 30, fontWeight: 900, color: '#F5C05C', lineHeight: 1 }}>{rn.number}</span>
-                          </div>
+                          <svg viewBox="0 0 100 100" width="88" height="88" style={{ display: 'block', margin: '0 auto 6px' }}>
+                            <defs>
+                              <radialGradient id={`jersey-${rn.id}`} cx="35%" cy="25%" r="75%">
+                                <stop offset="0%" stopColor="#2A2000" />
+                                <stop offset="100%" stopColor="#161B22" />
+                              </radialGradient>
+                            </defs>
+                            <path
+                              d="M 20,20 L 35,8 L 42,16 L 50,22 L 58,16 L 65,8 L 80,20 L 70,35 L 70,92 L 30,92 L 30,35 Z"
+                              fill={`url(#jersey-${rn.id})`}
+                              stroke="#F5A623" strokeWidth="2.5" strokeLinejoin="round"
+                            />
+                            <text x="50" y="66" textAnchor="middle" fontSize="26" fontWeight="900" fill="#F5C05C">
+                              {rn.number}
+                            </text>
+                          </svg>
                           <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.3 }}>{rn.player_name}</div>
                           <div style={{ fontSize: 12, color: '#6E7681', marginTop: 1 }}>{rn.year_retired}</div>
                         </div>
