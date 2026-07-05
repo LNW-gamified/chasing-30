@@ -504,6 +504,24 @@ export default function TripDetailPage() {
             </div>
           )}
 
+          {isDestinationTrip && !destInfo && ((trip as any).custom_name || (trip as any).custom_city) && (
+            <div style={{
+              backgroundColor: '#161B22', borderRadius: 14,
+              border: '1px solid #30363D', padding: '16px 18px',
+              marginBottom: 16, display: 'flex', gap: 14, alignItems: 'flex-start',
+            }}>
+              <MapPin size={40} style={{ flexShrink: 0, color: '#8B949E' }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {(trip as any).custom_name && (
+                  <div style={{ fontSize: 17, fontWeight: 800, color: '#E6EDF3', marginBottom: 2 }}>{(trip as any).custom_name}</div>
+                )}
+                {(trip as any).custom_city && (
+                  <div style={{ fontSize: 13, color: '#8B949E' }}>{(trip as any).custom_city}</div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* ── All stops visited prompt ───────────────────────────── */}
           {trip.status === 'planned' && stops.length > 0 && stops.every(s => s.stadium_id && visitedStadiumIds.has(s.stadium_id)) && !showComplete && (
             <div style={{

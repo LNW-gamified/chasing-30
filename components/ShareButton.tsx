@@ -82,7 +82,7 @@ export default function ShareButton() {
       } else {
         setError(`Link: ${url}`)
       }
-    } catch (e) {
+    } catch {
       setError('Something went wrong')
     } finally {
       setBusy(false)

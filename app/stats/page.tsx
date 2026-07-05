@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase-server'
-import { haversineDistance, formatCurrency } from '@/lib/utils'
+import { haversineDistance } from '@/lib/utils'
 import type { Stadium, StadiumVisit, Trip } from '@/types'
-import { BarChart3, TrendingUp, DollarSign, MapPin, Trophy, Users, Star } from 'lucide-react'
+import { TrendingUp, MapPin, Trophy, Users, Star } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 import YearRecap from '@/components/YearRecap'
 

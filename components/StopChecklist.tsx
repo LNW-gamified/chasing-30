@@ -65,7 +65,7 @@ export default function StopChecklist({ stopId, items, onReload }: Props) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>Don't Forget</span>
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>Don&apos;t Forget</span>
           {totalItems > 0 ? (
             <span style={{
               fontSize: 13, padding: '2px 8px', borderRadius: 999, fontWeight: 600,

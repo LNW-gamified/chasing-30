@@ -39,6 +39,8 @@ export async function POST(req: NextRequest) {
         end_date: end_date || null,
         experience_type: experience_type || 'other',
         destination_id,
+        custom_name: custom_name || null,
+        custom_city: custom_city || null,
         notes: notes || null,
         est_travel: est_travel ?? 0,
         est_hotel: est_hotel ?? 0,

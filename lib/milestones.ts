@@ -638,7 +638,7 @@ export const MILESTONES: Milestone[] = [
     name: 'Hat Trick',
     description: 'Visit 3 different stadiums on a single road trip',
     icon: '🎩',
-    check: (_v, _s, _e, _b, destVisits) => {
+    check: (_v, _s, _e, _b, _destVisits) => {
       // Checked via trip stops -- if any trip has 3+ stadium stops
       // Falls back to checking visits within a 7-day window
       const visits = _v ?? []

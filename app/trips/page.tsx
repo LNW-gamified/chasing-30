@@ -331,6 +331,9 @@ export default function TripsPage() {
                       const destInfo = isDestination && (trip as any).destination?.slug
                         ? DESTINATION_BY_SLUG[(trip as any).destination.slug]
                         : null
+                      const customCity = (trip as any).custom_city as string | null
+                      const customName = (trip as any).custom_name as string | null
+                      const isCustomDestination = isDestination && !destInfo && !!(customCity || customName)
                       const heroGrad = isDestination && destInfo
                         ? `linear-gradient(135deg, ${destInfo.heroColor[0]}, ${destInfo.heroColor[1]})`
                         : isUndated
@@ -372,6 +375,14 @@ export default function TripsPage() {
                                 position: 'absolute', right: 14, top: '50%',
                                 transform: 'translateY(-50%)', fontSize: 48, opacity: 0.8,
                               }}>{destInfo.icon}</div>
+                            )}
+                            {isCustomDestination && (
+                              <div style={{
+                                position: 'absolute', right: 14, top: '50%',
+                                transform: 'translateY(-50%)', opacity: 0.75,
+                              }}>
+                                <MapPin size={40} color="#ffffff" />
+                              </div>
                             )}
                             {!isDestination && abbrs.length > 0 && (
                               <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', flexWrap: 'wrap', gap: 5, maxWidth: 160, justifyContent: 'flex-end' }}>
@@ -424,6 +435,15 @@ export default function TripsPage() {
                                   <div style={{ fontSize: 13, color: '#8B949E' }}>
                                     {destInfo.city !== 'Various' ? `${destInfo.city}${destInfo.state ? `, ${destInfo.state}` : ''}` : 'Location varies'}
                                   </div>
+                                </div>
+                              </div>
+                            )}
+                            {isCustomDestination && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                                <MapPin size={18} color="#8B949E" />
+                                <div>
+                                  {customName && <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{customName}</div>}
+                                  {customCity && <div style={{ fontSize: 13, color: '#8B949E' }}>{customCity}</div>}
                                 </div>
                               </div>
                             )}

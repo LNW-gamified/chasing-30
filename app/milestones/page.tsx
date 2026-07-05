@@ -94,7 +94,6 @@ export default async function MilestonesPage() {
 
   const currentRank = getRank(totalPoints)
   const nextRank = getNextRank(totalPoints)
-  const visitedCount = new Set(allVisits.map(v => v.stadium_id)).size
   const inProgress = computeInProgress(unearned.map(m => m.id), allVisits, allStadiums)
 
   const claimedIds = new Set((claims ?? []).map(c => c.achievement_id))

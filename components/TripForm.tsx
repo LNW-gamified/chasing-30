@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import type { Stadium, Trip, TripStop, Destination } from '@/types'
-import { X, Plus, Trash2, Loader2, MapPin, Ticket, DollarSign, FileText, CalendarDays, ChevronDown } from 'lucide-react'
+import { X, Plus, Trash2, Loader2, MapPin, Ticket, DollarSign, CalendarDays, ChevronDown } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 import { DESTINATION_BY_SLUG, EXPERIENCE_TYPES } from '@/lib/destinations'
 import { MLB_TEAM_IDS as ABBR_TO_MLB_ID } from '@/lib/mlb-api'
@@ -274,8 +274,6 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
           games.push({ gamePk: game.gamePk, gameDate, displayDate, opponent, opponentTeamId, firstPitch, promotions, apiPromoPhotos, isPast: gameDate < today })
         }
       }
-
-      const gamesWithPromos = games.filter(g => g.promotions.length > 0)
 
       // Restore selectedPk when editing an existing stop
       let restoredPk = ''

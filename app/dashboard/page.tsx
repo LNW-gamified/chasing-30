@@ -148,7 +148,6 @@ export default async function DashboardPage() {
   const visitedCount = visitedIds.size
   const earnedMilestones = MILESTONES.filter(m => m.check(allVisits, allStadiums, [], allBaseballLife))
   const pct = Math.round((visitedCount / 30) * 100)
-  const name = getFirstName(user)
 
   // Ring dots — visited stadiums in chronological visit order, then empty slots
   const visitedInOrder: Array<{ abbr: string; visitDate: string }> = []
@@ -246,6 +245,15 @@ export default async function DashboardPage() {
     <div style={{ color: '#E6EDF3', overflowX: 'hidden', maxWidth: '100%' }}>
       <div style={{ maxWidth: 800, width: '100%', margin: '0 auto', padding: '1.5rem 1rem 2rem', overflowX: 'hidden', boxSizing: 'border-box' }}>
 
+
+        {(() => {
+          const name = getFirstName(user)
+          return name ? (
+            <div style={{ fontSize: 14, color: '#8B949E', marginBottom: 14, fontWeight: 500 }}>
+              Welcome back, {name}
+            </div>
+          ) : null
+        })()}
 
         {/* ── Hero row: The Chase (left) + Today at the Ballpark (right) ── */}
         <div

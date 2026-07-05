@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { MLB_TEAM_IDS, MLB_ID_TO_ABBR as ID_TO_ABBR } from '@/lib/mlb-api'
+import { MLB_ID_TO_ABBR as ID_TO_ABBR } from '@/lib/mlb-api'
 
 export const revalidate = 3600
 
