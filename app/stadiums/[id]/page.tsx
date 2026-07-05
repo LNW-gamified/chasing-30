@@ -1608,11 +1608,27 @@ export default function StadiumDetailPage() {
                 {/* This Season */}
                 {teamStats && (teamStats.wins !== null || teamStats.era) && (
                   <section style={{ marginBottom: 32 }}>
-                    <SectionTitle Icon={Trophy}>This Season</SectionTitle>
+                    <SectionTitle Icon={Trophy} color={teamColor}>This Season</SectionTitle>
+
+                    {teamStats.wins !== null && teamStats.losses !== null && (
+                      <div style={{
+                        borderRadius: 14, border: `1px solid ${teamColor}44`, padding: '20px 16px',
+                        background: `linear-gradient(135deg, ${teamColor}26 0%, #161B22 65%)`,
+                        textAlign: 'center', marginBottom: 12,
+                      }}>
+                        <div style={{ fontSize: 42, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>
+                          {teamStats.wins}<span style={{ color: '#8B949E', fontWeight: 500 }}>–</span>{teamStats.losses}
+                        </div>
+                        <div style={{ fontSize: 13, color: '#8B949E', marginTop: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                          Record{(teamStats.wins + teamStats.losses) > 0
+                            ? ` · ${(teamStats.wins / (teamStats.wins + teamStats.losses) * 100).toFixed(1)}%`
+                            : ''}
+                        </div>
+                      </div>
+                    )}
+
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                       {([
-                        teamStats.wins !== null && teamStats.losses !== null
-                          ? { value: `${teamStats.wins}–${teamStats.losses}`, label: 'Record', color: '#1F6FEB' } : null,
                         teamStats.era ? { value: teamStats.era, label: 'Team ERA', color: '#F5A623' } : null,
                         teamStats.avg ? { value: teamStats.avg, label: 'Team AVG', color: '#F5A623' } : null,
                         teamStats.homeRuns != null ? { value: String(teamStats.homeRuns), label: 'Home Runs', color: '#3FB950' } : null,
@@ -1623,7 +1639,7 @@ export default function StadiumDetailPage() {
                           backgroundColor: '#161B22', borderTop: `2px solid ${s!.color}`, border: '1px solid #30363D',
                           borderRadius: 12, padding: '12px 8px', textAlign: 'center',
                         }}>
-                          <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{s!.value}</div>
+                          <div style={{ fontSize: 18, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{s!.value}</div>
                           <div style={{ fontSize: 12, color: '#8B949E', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s!.label}</div>
                         </div>
                       ))}
@@ -1645,20 +1661,23 @@ export default function StadiumDetailPage() {
                     const outfield = roster.filter(p => ['LF','CF','RF','OF'].includes(p.position))
                     const dh       = roster.filter(p => p.position === 'DH')
                     const groups   = [
-                      { label: 'Pitchers', players: pitchers },
-                      { label: 'Catchers', players: catchers },
-                      { label: 'Infield',  players: infield  },
-                      { label: 'Outfield', players: outfield },
-                      { label: 'DH',       players: dh       },
+                      { label: 'Pitchers', players: pitchers, color: '#1F6FEB' },
+                      { label: 'Catchers', players: catchers, color: '#F5A623' },
+                      { label: 'Infield',  players: infield,  color: '#3FB950' },
+                      { label: 'Outfield', players: outfield, color: '#F85149' },
+                      { label: 'DH',       players: dh,       color: '#B98CFF' },
                     ].filter(g => g.players.length > 0)
                     return (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         {groups.map(group => (
                           <div key={group.label}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
-                              {group.label}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
+                              <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: group.color, boxShadow: `0 0 6px ${group.color}88` }} />
+                              <span style={{ fontSize: 13, fontWeight: 700, color: group.color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                {group.label}
+                              </span>
                             </div>
-                            <div style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden' }}>
+                            <div style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', borderLeft: `3px solid ${group.color}`, overflow: 'hidden' }}>
                               {group.players.map((p, i) => (
                                 <div key={p.id} style={{
                                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -1673,7 +1692,7 @@ export default function StadiumDetailPage() {
                                     )}
                                     <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{p.name}</span>
                                   </div>
-                                  <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 8px', borderRadius: 10 }}>
+                                  <span style={{ fontSize: 13, fontWeight: 700, color: group.color, backgroundColor: `${group.color}1F`, padding: '2px 8px', borderRadius: 10 }}>
                                     {p.position}
                                   </span>
                                 </div>
