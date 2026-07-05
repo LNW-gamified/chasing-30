@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import TeamLogo from '@/components/TeamLogo'
+import { TEAM_BTN_COLOR } from '@/lib/team-colors'
 import { getUserTimezone } from '@/lib/user-timezone'
 
 const userTz = getUserTimezone()
@@ -94,6 +95,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
   const [games, setGames]             = useState<TodayGame[]>(() => sortGames(initialGames))
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [secsAgo, setSecsAgo]         = useState(0)
+  const favColor = favAbbr ? (TEAM_BTN_COLOR[favAbbr] ?? '#1F6FEB') : '#1F6FEB'
 
   const poll = useCallback(async () => {
     if (!inPollWindow()) return
@@ -177,14 +179,14 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
                 minWidth: 210, flexShrink: 0, scrollSnapAlign: 'start',
                 borderRadius: 14, padding: '16px 18px 18px',
                 minHeight: 140,
-                border: g.isFavorite ? '2px solid #1F6FEB' : '1px solid #21262D',
-                boxShadow: g.isFavorite ? '0 4px 20px rgba(31,111,235,0.25)' : '0 4px 16px rgba(0,0,0,0.4)',
+                border: g.isFavorite ? `2px solid ${favColor}` : '1px solid #21262D',
+                boxShadow: g.isFavorite ? `0 4px 20px ${favColor}40` : '0 4px 16px rgba(0,0,0,0.4)',
                 position: 'relative', overflow: 'hidden',
                 background: `linear-gradient(135deg, ${homeColor}20 0%, #161B22 50%)`,
               }}
             >
               {g.isFavorite && (
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: '#1F6FEB' }}/>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: favColor }}/>
               )}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
@@ -231,15 +233,15 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
               style={{
                 borderRadius: 10, padding: '8px 10px 14px',
                 minHeight: 110,
-                border: g.isFavorite ? '1.5px solid #1F6FEB' : '1px solid #21262D',
+                border: g.isFavorite ? `1.5px solid ${favColor}` : '1px solid #21262D',
                 position: 'relative', overflow: 'hidden',
                 background: `linear-gradient(135deg, ${homeColor}22 0%, #1C2430 65%)`,
-                boxShadow: g.isFavorite ? '0 2px 10px rgba(31,111,235,0.2)' : 'none',
+                boxShadow: g.isFavorite ? `0 2px 10px ${favColor}33` : 'none',
                 display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
               }}
             >
               {g.isFavorite && (
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: '#1F6FEB' }}/>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: favColor }}/>
               )}
 
               {/* Teams + score row */}
