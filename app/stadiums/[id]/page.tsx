@@ -6,13 +6,13 @@ import { createClient } from '@/lib/supabase'
 import GameDayForm from '@/components/GameDayForm'
 import BoxScore from '@/components/BoxScore'
 import { formatDate } from '@/lib/utils'
-import type { Stadium, StadiumVisit, StadiumNote, RetiredNumber, StadiumTrendingFood, StadiumSouvenir, StadiumWeather } from '@/types'
+import type { Stadium, StadiumVisit, RetiredNumber, StadiumTrendingFood, StadiumSouvenir, StadiumWeather } from '@/types'
 import { MILESTONES } from '@/lib/milestones'
 import { fetchUpcomingHomeGames, fetchVenueDimensions, fetchTeamSeasonStats, fetchTeamRoster, fetchRecentTransactions, fetchMinorLeagueAffiliates, type UpcomingGame, type VenueDimensions, type TeamSeasonStats, type RosterPlayer, type Transaction, type MiLBAffiliate } from '@/lib/mlb-api'
 import { fetchStadiumPhoto, fetchStadiumSummary } from '@/lib/stadium-wikipedia'
 import { fetchTeamNews, type ESPNNewsItem } from '@/lib/espn-api'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy, Share2, MessageSquare, Hash, Building2, Map, ChevronRight, CloudRain, Wind } from 'lucide-react'
+import { ArrowLeft, Plus, Loader2, Users, CalendarDays, Trophy, Share2, Hash, Building2, Map, ChevronRight, CloudRain, Wind } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 import { TEAM_BTN_COLOR, TEAM_GRADIENTS, darkerOf } from '@/lib/team-colors'
 import GiveawayFoodEditor, { type EditorItem } from '@/components/GiveawayFoodEditor'
@@ -85,10 +85,7 @@ export default function StadiumDetailPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingVisit, setEditingVisit] = useState<StadiumVisit | undefined>()
   const [expandedVisit, setExpandedVisit] = useState<string | null>(null)
-  const [stadiumNote, setStadiumNote] = useState('')
-  const [editingNote, setEditingNote] = useState(false)
-  const [noteInput, setNoteInput] = useState('')
-  const [savingNote, setSavingNote] = useState(false)
+  const [showAllUpcoming, setShowAllUpcoming] = useState(false)
   const [upcomingGames, setUpcomingGames] = useState<UpcomingGame[]>([])
   const [fetchingStats, setFetchingStats] = useState<string | null>(null)
   const [statsError, setStatsError] = useState<Record<string, string>>({})
@@ -138,13 +135,12 @@ export default function StadiumDetailPage() {
   async function load(checkMilestones = false) {
     const supabase = createClient()
     const [
-      { data: s }, { data: v }, { data: n },
+      { data: s }, { data: v },
       { data: av }, { data: as_ }, { data: rn },
       { data: tf }, { data: sv }, { data: ts },
     ] = await Promise.all([
       supabase.from('stadiums').select('*').eq('id', id).single(),
       supabase.from('stadium_visits').select('*').eq('stadium_id', id).order('visit_date', { ascending: false }),
-      supabase.from('stadium_notes').select('notes').eq('stadium_id', id).maybeSingle(),
       supabase.from('stadium_visits').select('stadium_id, moments'),
       supabase.from('stadiums').select('id, league, division'),
       supabase.from('retired_numbers').select('*').eq('team_id', id).order('year_retired'),
@@ -177,9 +173,6 @@ export default function StadiumDetailPage() {
         setVisitPromos(map)
       }
     }
-    const note = (n as StadiumNote | null)?.notes ?? ''
-    setStadiumNote(note)
-    setNoteInput(note)
     const avRows = (av ?? []) as { stadium_id: string; moments: string[] | null }[]
     setAllGlobalMoments(new Set(avRows.flatMap(r => r.moments ?? [])))
     const stadiumList = (as_ ?? []) as MiniStadium[]
@@ -289,19 +282,6 @@ export default function StadiumDetailPage() {
       .finally(() => setFetchingStats(null))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expandedVisit])
-
-  async function saveNote() {
-    setSavingNote(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('stadium_notes').upsert(
-      { stadium_id: id, notes: noteInput || null, updated_by: user?.id ?? null },
-      { onConflict: 'stadium_id' }
-    )
-    setStadiumNote(noteInput)
-    setEditingNote(false)
-    setSavingNote(false)
-  }
 
   async function deleteVisit(visitId: string) {
     if (!confirm('Delete this game record?')) return
@@ -958,8 +938,8 @@ export default function StadiumDetailPage() {
                   <section style={{ marginBottom: 32 }}>
                     <SectionTitle Icon={CalendarDays}>Upcoming Home Games</SectionTitle>
                     <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #30363D' }}>
-                      <div style={{ backgroundColor: '#0B1117', maxHeight: 360, overflowY: 'auto' }}>
-                        {upcomingGames.map((g, i) => {
+                      <div style={{ backgroundColor: '#0B1117' }}>
+                        {(showAllUpcoming ? upcomingGames : upcomingGames.slice(0, 8)).map((g, i, arr) => {
                           const dt      = new Date(g.gameDate)
                           const dayAbbr = dt.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/Los_Angeles' })
                           const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })
@@ -968,7 +948,7 @@ export default function StadiumDetailPage() {
                             <div key={g.gamePk} style={{
                               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                               padding: '12px 16px',
-                              borderBottom: i < upcomingGames.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                              borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
                             }}>
                               <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                                 <div style={{ textAlign: 'center', minWidth: 36 }}>
@@ -981,8 +961,19 @@ export default function StadiumDetailPage() {
                                     {g.awayTeam}
                                   </div>
                                   {g.promotions.length > 0 && (
-                                    <div style={{ fontSize: 13, color: '#F5A623', marginTop: 2 }}>
-                                      🎁 {g.promotions[0]}{g.promotions.length > 1 ? ` +${g.promotions.length - 1} more` : ''}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, flexWrap: 'wrap' }}>
+                                      <span style={{
+                                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                                        fontSize: 11, fontWeight: 700, color: '#F5A623',
+                                        backgroundColor: 'rgba(245,166,35,0.12)',
+                                        border: '1px solid rgba(245,166,35,0.3)',
+                                        borderRadius: 20, padding: '2px 8px',
+                                      }}>
+                                        🎁 {g.promotions[0]}
+                                      </span>
+                                      {g.promotions.length > 1 && (
+                                        <span style={{ fontSize: 12, color: '#8B949E' }}>+{g.promotions.length - 1} more</span>
+                                      )}
                                     </div>
                                   )}
                                 </div>
@@ -1001,6 +992,18 @@ export default function StadiumDetailPage() {
                         })}
                       </div>
                     </div>
+                    {upcomingGames.length > 8 && (
+                      <button
+                        onClick={() => setShowAllUpcoming(v => !v)}
+                        style={{
+                          width: '100%', marginTop: 10, padding: '10px 0', borderRadius: 10,
+                          border: '1px solid #30363D', background: '#161B22', cursor: 'pointer',
+                          fontSize: 13, fontWeight: 700, color: '#58A6FF',
+                        }}
+                      >
+                        {showAllUpcoming ? 'Show less' : `Show full schedule (${upcomingGames.length - 8} more)`}
+                      </button>
+                    )}
                   </section>
                 ) : (
                   <section style={{ marginBottom: 32 }}>
@@ -1010,104 +1013,6 @@ export default function StadiumDetailPage() {
                       <a href={`https://www.mlb.com/${MLB_SCHEDULE_SLUG[stadium.abbreviation] ?? stadium.abbreviation.toLowerCase()}/schedule`} target="_blank" rel="noopener noreferrer" style={{ color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
                         Check MLB.com →
                       </a>
-                    </div>
-                  </section>
-                )}
-
-                {/* Notes */}
-                <section style={{ marginBottom: 32 }}>
-                  <SectionTitle Icon={MessageSquare}>Notes</SectionTitle>
-                  {editingNote ? (
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: 16 }}>
-                      <textarea
-                        rows={4}
-                        value={noteInput}
-                        onChange={e => setNoteInput(e.target.value)}
-                        placeholder={`Parking tips, best food spots, recommended seats at ${stadium.name}...`}
-                        autoFocus
-                        style={{
-                          width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #30363D',
-                          fontSize: 14, color: '#E6EDF3', backgroundColor: '#1C2430',
-                          resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
-                        }}
-                      />
-                      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                        <button
-                          onClick={saveNote}
-                          disabled={savingNote}
-                          style={{
-                            padding: '9px 18px', borderRadius: 8, fontSize: 14, fontWeight: 700,
-                            backgroundColor: teamColor, color: '#ffffff', border: 'none', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', gap: 6,
-                          }}
-                        >
-                          <Save size={14} /> {savingNote ? 'Saving…' : 'Save Note'}
-                        </button>
-                        <button
-                          onClick={() => setEditingNote(false)}
-                          style={{ padding: '9px 18px', borderRadius: 8, fontSize: 14, fontWeight: 600, border: '1.5px solid #30363D', backgroundColor: '#1C2430', cursor: 'pointer', color: '#8B949E' }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : stadiumNote ? (
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', backgroundColor: 'rgba(139,148,158,0.12)', padding: '3px 10px', borderRadius: 20 }}>
-                          General
-                        </span>
-                        <button
-                          onClick={() => { setNoteInput(stadiumNote); setEditingNote(true) }}
-                          style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid #30363D', background: '#1C2430', cursor: 'pointer', fontSize: 13, color: '#8B949E', display: 'flex', alignItems: 'center', gap: 4 }}
-                        >
-                          <Pencil size={12} /> Edit
-                        </button>
-                      </div>
-                      <div style={{ fontSize: 14, color: '#E6EDF3', fontStyle: 'italic', lineHeight: 1.6 }}>
-                        &ldquo;{stadiumNote}&rdquo;
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, padding: '40px 24px', textAlign: 'center' }}>
-                      <div style={{ fontSize: 32, marginBottom: 10 }}>💬</div>
-                      <div style={{ fontWeight: 700, fontSize: 15, color: '#E6EDF3', marginBottom: 4 }}>Be the first to share</div>
-                      <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 20 }}>Parking tips, best food spots, recommended seats...</div>
-                      <button
-                        onClick={() => { setNoteInput(''); setEditingNote(true) }}
-                        style={{ padding: '10px 22px', borderRadius: 10, fontSize: 14, fontWeight: 700, border: 'none', backgroundColor: teamColor, cursor: 'pointer', color: '#fff' }}
-                      >
-                        Add a Note
-                      </button>
-                    </div>
-                  )}
-                </section>
-
-                {/* Team News */}
-                {teamNews.length > 0 && (
-                  <section style={{ marginBottom: 32 }}>
-                    <SectionTitle Icon={Trophy}>Team News</SectionTitle>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {teamNews.map((item, i) => (
-                        <a
-                          key={i}
-                          href={item.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ display: 'flex', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D', textDecoration: 'none' }}
-                        >
-                          {item.imageUrl && (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img src={item.imageUrl} alt="" style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
-                          )}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.4, marginBottom: 4 }}>{item.headline}</div>
-                            <div style={{ fontSize: 13, color: '#8B949E' }}>
-                              {new Date(item.published).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · ESPN
-                            </div>
-                          </div>
-                        </a>
-                      ))}
                     </div>
                   </section>
                 )}
@@ -1146,6 +1051,35 @@ export default function StadiumDetailPage() {
                     </div>
                   )}
                 </section>
+
+                {/* Team News */}
+                {teamNews.length > 0 && (
+                  <section style={{ marginBottom: 32 }}>
+                    <SectionTitle Icon={Trophy}>Team News</SectionTitle>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {teamNews.map((item, i) => (
+                        <a
+                          key={i}
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ display: 'flex', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D', textDecoration: 'none' }}
+                        >
+                          {item.imageUrl && (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img src={item.imageUrl} alt="" style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.4, marginBottom: 4 }}>{item.headline}</div>
+                            <div style={{ fontSize: 13, color: '#8B949E' }}>
+                              {new Date(item.published).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · ESPN
+                            </div>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </section>
+                )}
 
                 {/* Food & Souvenirs sub-tabs */}
                 {(trendingFood.length > 0 || souvenirs.length > 0) && (
