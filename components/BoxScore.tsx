@@ -205,6 +205,7 @@ export default function BoxScore({
   const [scoringPlays, setScoringPlays] = useState<ScoringPlay[]>([])
   const [weather, setWeather]           = useState<WeatherData | null>(null)
   const [dayNight, setDayNight]         = useState<DayNight>(null)
+  const [recapExpanded, setRecapExpanded] = useState(false)
 
   useEffect(() => {
     const paths = visit.photos?.length ? visit.photos : visit.photo_url ? [visit.photo_url] : []
@@ -263,6 +264,22 @@ export default function BoxScore({
   const lastInn = innings[innings.length - 1]
   const isWalkOff = homeWins && lastInn && (lastInn.home ?? 0) > 0 && innings.length >= 9
 
+  // The go-ahead play — the earliest scoring play after which the eventual
+  // winner held the lead for the rest of the game, walking backward from the
+  // final play. Ties are skipped since neither team is "ahead" on a tie.
+  let goAheadPlayIndex: number | null = null
+  if (hasScore && homeWins !== awayWins && scoringPlays.length > 0) {
+    for (let i = scoringPlays.length - 1; i >= 0; i--) {
+      const p = scoringPlays[i]
+      const winnerAhead = homeWins ? p.homeScore > p.awayScore : p.awayScore > p.homeScore
+      if (winnerAhead) {
+        goAheadPlayIndex = i
+      } else {
+        break
+      }
+    }
+  }
+
   // Seat info string
   const seatParts: string[] = []
   if (visit.seat_section) seatParts.push(`Section ${visit.seat_section}`)
@@ -314,10 +331,10 @@ export default function BoxScore({
           </div>
           <div style={{ textAlign: 'center' }}>
             {hasScore ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ fontSize: 26, fontWeight: 900, lineHeight: 1, color: awayWins ? '#E6EDF3' : '#8B949E' }}>{awayScore}</span>
-                <span style={{ fontSize: 16, color: '#30363D', fontWeight: 300 }}>–</span>
-                <span style={{ fontSize: 26, fontWeight: 900, lineHeight: 1, color: homeWins ? '#E6EDF3' : '#8B949E' }}>{homeScore}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 32, fontWeight: 900, lineHeight: 1, color: awayWins ? '#3FB950' : '#8B949E' }}>{awayScore}</span>
+                <span style={{ fontSize: 18, color: '#30363D', fontWeight: 300 }}>–</span>
+                <span style={{ fontSize: 32, fontWeight: 900, lineHeight: 1, color: homeWins ? '#3FB950' : '#8B949E' }}>{homeScore}</span>
               </div>
             ) : (
               <div style={{ fontSize: 13, color: '#8B949E' }}>vs</div>
@@ -522,6 +539,88 @@ export default function BoxScore({
         {/* GAME OVERVIEW TAB */}
         {tab === 'overview' && (
           <>
+            {/* Your memory of this game — grouped and visually distinct from the
+                auto-pulled MLB data below, since you entered all of this yourself */}
+            {(signedPhotoUrls.length > 0 || (visit.companions && visit.companions.length > 0) || visit.notes) && (
+              <div style={{
+                marginBottom: 16, padding: '14px', borderRadius: 12,
+                backgroundColor: 'rgba(245,166,35,0.06)', border: '1px solid rgba(245,166,35,0.18)',
+              }}>
+                {signedPhotoUrls.length > 0 && (() => {
+                  const photos = signedPhotoUrls
+                  return (
+                    <div style={{ marginBottom: (visit.companions?.length || visit.notes) ? 14 : 0 }}>
+                      <div style={LABEL}>{photos.length === 1 ? 'Photo' : `Photos (${photos.length})`}</div>
+                      {photos.length === 1 ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={photos[0]}
+                          alt="Game photo"
+                          style={{ width: '100%', maxHeight: 320, objectFit: 'cover', borderRadius: 10, cursor: 'pointer' }}
+                          onClick={() => window.dispatchEvent(new CustomEvent('open-lightbox', { detail: photos[0] }))}
+                        />
+                      ) : (
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: photos.length === 2 ? '1fr 1fr' : '2fr 1fr',
+                          gridTemplateRows: photos.length >= 3 ? '1fr 1fr' : '1fr',
+                          gap: 4, borderRadius: 10, overflow: 'hidden', maxHeight: 320,
+                        }}>
+                          {photos.slice(0, 4).map((url, idx) => (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              key={idx}
+                              src={url}
+                              alt={`Game photo ${idx + 1}`}
+                              onClick={() => window.dispatchEvent(new CustomEvent('open-lightbox', { detail: url }))}
+                              style={{
+                                width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer', display: 'block',
+                                gridColumn: photos.length >= 3 && idx === 0 ? '1' : 'auto',
+                                gridRow: photos.length >= 3 && idx === 0 ? '1 / 3' : 'auto',
+                              }}
+                            />
+                          ))}
+                          {photos.length > 4 && (
+                            <div style={{ position: 'relative' }}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={photos[3]} alt="More" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                              <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, color: '#fff' }}>
+                                +{photos.length - 3}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
+
+                {visit.companions && visit.companions.length > 0 && (
+                  <div style={{ marginBottom: visit.notes ? 14 : 0 }}>
+                    <div style={LABEL}>Went With</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {visit.companions.map((name, i) => (
+                        <span key={i} style={{
+                          fontSize: 13, fontWeight: 600, color: '#58A6FF',
+                          padding: '4px 10px', borderRadius: 20,
+                          backgroundColor: 'rgba(31,111,235,0.1)', border: '1px solid rgba(31,111,235,0.25)',
+                        }}>
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {visit.notes && (
+                  <div>
+                    <div style={LABEL}>Notes</div>
+                    <div style={{ fontSize: 13, color: '#E6EDF3', backgroundColor: 'rgba(0,0,0,0.18)', borderRadius: 8, padding: '10px 12px', whiteSpace: 'pre-wrap' }}>{visit.notes}</div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Players of the Game */}
             {(topHitter || topPitcher) && (
               <div style={{ marginBottom: 14 }}>
@@ -563,7 +662,7 @@ export default function BoxScore({
               </div>
             )}
 
-            {(visit.weather || visit.game_duration || visit.temperature || weather) && (
+            {(visit.weather || visit.game_duration || visit.temperature || weather || visit.hp_umpire) && (
               <div style={{ marginBottom: 14 }}>
                 <div style={LABEL}>Game Info</div>
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
@@ -583,6 +682,17 @@ export default function BoxScore({
                     <div>
                       <div style={{ fontSize: 13, color: '#8B949E' }}>Duration</div>
                       <div style={{ fontSize: 13, color: '#E6EDF3', marginTop: 1 }}>{visit.game_duration}</div>
+                    </div>
+                  )}
+                  {(visit.hp_umpire || visit.first_base_umpire) && (
+                    <div>
+                      <div style={{ fontSize: 13, color: '#8B949E' }}>Umpires</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1px 8px', fontSize: 13, color: '#E6EDF3', marginTop: 1 }}>
+                        {visit.hp_umpire && <span><span style={{ color: '#8B949E', fontWeight: 600 }}>HP</span> {visit.hp_umpire}</span>}
+                        {visit.first_base_umpire && <span><span style={{ color: '#8B949E', fontWeight: 600 }}>1B</span> {visit.first_base_umpire}</span>}
+                        {visit.second_base_umpire && <span><span style={{ color: '#8B949E', fontWeight: 600 }}>2B</span> {visit.second_base_umpire}</span>}
+                        {visit.third_base_umpire && <span><span style={{ color: '#8B949E', fontWeight: 600 }}>3B</span> {visit.third_base_umpire}</span>}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -614,90 +724,7 @@ export default function BoxScore({
               </div>
             )}
 
-            {(visit.hp_umpire || visit.first_base_umpire) && (
-              <div style={{ marginBottom: 14 }}>
-                <div style={LABEL}>Umpires</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 13, color: '#8B949E' }}>
-                  {visit.hp_umpire && <span><span style={{ color: '#E6EDF3', fontWeight: 600 }}>HP</span> {visit.hp_umpire}</span>}
-                  {visit.first_base_umpire && <span><span style={{ color: '#E6EDF3', fontWeight: 600 }}>1B</span> {visit.first_base_umpire}</span>}
-                  {visit.second_base_umpire && <span><span style={{ color: '#E6EDF3', fontWeight: 600 }}>2B</span> {visit.second_base_umpire}</span>}
-                  {visit.third_base_umpire && <span><span style={{ color: '#E6EDF3', fontWeight: 600 }}>3B</span> {visit.third_base_umpire}</span>}
-                </div>
-              </div>
-            )}
 
-            {signedPhotoUrls.length > 0 && (() => {
-              const photos = signedPhotoUrls
-              return (
-                <div style={{ marginBottom: 14 }}>
-                  <div style={LABEL}>{photos.length === 1 ? 'Photo' : `Photos (${photos.length})`}</div>
-                  {photos.length === 1 ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src={photos[0]}
-                      alt="Game photo"
-                      style={{ width: '100%', maxHeight: 240, objectFit: 'cover', borderRadius: 10, cursor: 'pointer' }}
-                      onClick={() => window.dispatchEvent(new CustomEvent('open-lightbox', { detail: photos[0] }))}
-                    />
-                  ) : (
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: photos.length === 2 ? '1fr 1fr' : '2fr 1fr',
-                      gridTemplateRows: photos.length >= 3 ? '1fr 1fr' : '1fr',
-                      gap: 4, borderRadius: 10, overflow: 'hidden', maxHeight: 280,
-                    }}>
-                      {photos.slice(0, 4).map((url, idx) => (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
-                          key={idx}
-                          src={url}
-                          alt={`Game photo ${idx + 1}`}
-                          onClick={() => window.dispatchEvent(new CustomEvent('open-lightbox', { detail: url }))}
-                          style={{
-                            width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer', display: 'block',
-                            gridColumn: photos.length >= 3 && idx === 0 ? '1' : 'auto',
-                            gridRow: photos.length >= 3 && idx === 0 ? '1 / 3' : 'auto',
-                          }}
-                        />
-                      ))}
-                      {photos.length > 4 && (
-                        <div style={{ position: 'relative' }}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={photos[3]} alt="More" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, color: '#fff' }}>
-                            +{photos.length - 3}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )
-            })()}
-
-            {visit.companions && visit.companions.length > 0 && (
-              <>
-                <div style={LABEL}>Went With</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {visit.companions.map((name, i) => (
-                    <span key={i} style={{
-                      fontSize: 13, fontWeight: 600, color: '#58A6FF',
-                      padding: '4px 10px', borderRadius: 20,
-                      backgroundColor: 'rgba(31,111,235,0.1)', border: '1px solid rgba(31,111,235,0.25)',
-                    }}>
-                      {name}
-                    </span>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {visit.notes && (
-              <div>
-                <div style={LABEL}>Notes</div>
-                <div style={{ fontSize: 13, color: '#E6EDF3', backgroundColor: '#1C2430', borderRadius: 8, padding: '10px 12px', whiteSpace: 'pre-wrap' }}>{visit.notes}</div>
-              </div>
-            )}
 
             {!visit.moments?.length && !visit.hp_umpire && !signedPhotoUrls.length && !visit.notes && !visit.weather && (
               <div style={{ fontSize: 13, color: '#8B949E', textAlign: 'center', padding: '12px 0' }}>
@@ -710,19 +737,31 @@ export default function BoxScore({
               <div style={{ marginTop: 14 }}>
                 <div style={LABEL}>Scoring Plays</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {scoringPlays.map((play, i) => (
-                    <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 10px', borderRadius: 8, backgroundColor: '#1C2430', border: '1px solid #30363D' }}>
+                  {scoringPlays.map((play, i) => {
+                    const isGoAhead = i === goAheadPlayIndex
+                    return (
+                    <div key={i} style={{
+                      display: 'flex', gap: 10, padding: '8px 10px', borderRadius: 8,
+                      backgroundColor: isGoAhead ? 'rgba(63,185,80,0.08)' : '#1C2430',
+                      border: isGoAhead ? '1px solid rgba(63,185,80,0.35)' : '1px solid #30363D',
+                      borderLeft: isGoAhead ? '3px solid #3FB950' : '1px solid #30363D',
+                    }}>
                       <div style={{ flexShrink: 0, fontSize: 13, fontWeight: 700, color: '#8B949E', width: 44, paddingTop: 1 }}>
                         {play.halfInning === 'top' ? '▲' : '▼'}{play.inning}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
+                        {isGoAhead && (
+                          <div style={{ fontSize: 11, fontWeight: 700, color: '#3FB950', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>
+                            Go-ahead
+                          </div>
+                        )}
                         <div style={{ fontSize: 12, color: '#C9D1D9', lineHeight: 1.5 }}>{play.description}</div>
                       </div>
                       <div style={{ flexShrink: 0, fontSize: 13, fontWeight: 800, color: '#8B949E', paddingTop: 1 }}>
                         {play.awayScore}–{play.homeScore}
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               </div>
             )}
@@ -731,11 +770,28 @@ export default function BoxScore({
             {gameContent && (gameContent.recap || gameContent.highlights.length > 0) && (
               <div style={{ marginTop: 14 }}>
                 <div style={LABEL}>Game Recap</div>
-                {gameContent.recap && (
-                  <div style={{ fontSize: 13, color: '#C9D1D9', lineHeight: 1.6, marginBottom: gameContent.highlights.length > 0 ? 12 : 0, fontStyle: 'italic' }}>
-                    {gameContent.recap.length > 220 ? gameContent.recap.slice(0, 220) + '…' : gameContent.recap}
-                  </div>
-                )}
+                {gameContent.recap && (() => {
+                  const isLong = gameContent.recap.length > 220
+                  const displayText = isLong && !recapExpanded ? gameContent.recap.slice(0, 220).replace(/\s+\S*$/, '') : gameContent.recap
+                  return (
+                    <div style={{ marginBottom: gameContent.highlights.length > 0 ? 12 : 0 }}>
+                      <div style={{ fontSize: 13, color: '#C9D1D9', lineHeight: 1.6, fontStyle: 'italic' }}>
+                        {displayText}{isLong && !recapExpanded ? '…' : ''}
+                      </div>
+                      {isLong && (
+                        <button
+                          onClick={() => setRecapExpanded(v => !v)}
+                          style={{
+                            marginTop: 4, background: 'none', border: 'none', cursor: 'pointer',
+                            fontSize: 12, fontWeight: 700, color: '#58A6FF', padding: 0,
+                          }}
+                        >
+                          {recapExpanded ? 'Show less' : 'Read more'}
+                        </button>
+                      )}
+                    </div>
+                  )
+                })()}
                 {gameContent.highlights.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {gameContent.highlights.map((h, i) => (

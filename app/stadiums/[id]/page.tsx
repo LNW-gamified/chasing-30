@@ -66,17 +66,6 @@ const RATING_PRIORITY: Record<string, number> = {
 type MiniStadium = { id: string; league: string; division: string }
 type ActiveTab = 'games-attended' | 'upcoming-games' | 'stadium-info' | 'roster'
 
-function guessGiveawayEmoji(name: string): string {
-  const n = name.toLowerCase()
-  if (n.includes('bobblehead') || n.includes('bobble')) return '🪆'
-  if (n.includes('jersey')) return '👕'
-  if (n.includes('t-shirt') || n.includes('tshirt') || n.includes('shirt')) return '👔'
-  if (n.includes('hat') || n.includes('cap')) return '🎩'
-  if (n.includes('poster')) return '📋'
-  if (n.includes('bingo') || n.includes('card')) return '🎫'
-  return '🎁'
-}
-
 function SectionTitle({ Icon, children }: { Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
@@ -476,7 +465,7 @@ export default function StadiumDetailPage() {
           )}
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.2) 35%, rgba(0,0,0,0.65) 65%, rgba(0,0,0,0.9) 100%)',
+            background: `linear-gradient(to bottom, ${colors[1]}1A 0%, ${colors[1]}33 35%, ${colors[1]}CC 65%, ${colors[1]}F2 100%)`,
           }} />
           <div style={{ position: 'absolute', top: 16, left: 16, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 10 }}>
             <Link href="/stadiums" style={{
@@ -503,42 +492,40 @@ export default function StadiumDetailPage() {
           >
             <Share2 size={16} color="#ffffff" />
           </button>
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 16px 18px', zIndex: 10 }}>
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 16px 14px', zIndex: 10 }}>
             <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.75)', marginBottom: 4 }}>
               {stadium.team}
             </div>
             <h1 style={{ margin: '0 0 4px', fontSize: 28, fontWeight: 800, color: '#ffffff', lineHeight: 1.1, textShadow: '0 2px 10px rgba(0,0,0,0.4)' }}>
               {stadium.name}
             </h1>
-            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.78)' }}>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.78)', marginBottom: 12 }}>
               {stadium.city}, {stadium.state}
+            </div>
+            {/* Stat chips — folded into the hero instead of a separate boxy row */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[
+                { Icon: Users,        value: stadium.capacity ? stadium.capacity.toLocaleString() : '—', label: 'Capacity' },
+                { Icon: CalendarDays, value: stadium.opened ? String(stadium.opened) : '—',               label: 'Opened'   },
+                { Icon: Trophy,       value: `${stadium.league} ${stadium.division}`,                     label: 'Division' },
+              ].map(({ Icon, value, label }) => (
+                <div key={label} style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  backgroundColor: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(6px)',
+                  borderRadius: 10, padding: '6px 10px',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                }}>
+                  <Icon size={13} color="rgba(255,255,255,0.75)" strokeWidth={2} />
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#ffffff', lineHeight: 1.1 }}>{value}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
         {/* ── Max-width wrapper ─────────────────────────────────────── */}
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
-
-          {/* ── STATS ROW ────────────────────────────────────────────── */}
-          <div style={{ backgroundColor: '#161B22', borderBottom: '1px solid #30363D', padding: '14px 12px' }}>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {[
-                { Icon: Users,       value: stadium.capacity ? stadium.capacity.toLocaleString() : '—', label: 'Capacity'    },
-                { Icon: CalendarDays, value: stadium.opened ? String(stadium.opened) : '—',              label: 'Opened'      },
-                { Icon: Trophy,      value: `${stadium.league} ${stadium.division}`,                    label: 'Division'    },
-              ].map(({ Icon, value, label }) => (
-                <div key={label} style={{
-                  flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  backgroundColor: '#1C2430', borderRadius: 12, padding: '12px 6px',
-                  border: '1px solid #30363D',
-                }}>
-                  <Icon size={15} color="#1F6FEB" strokeWidth={2} style={{ marginBottom: 5 }} />
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</div>
-                  <div style={{ fontWeight: 800, fontSize: 15, color: '#E6EDF3', lineHeight: 1.2, textAlign: 'center' }}>{value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* ── CELEBRATORY BANNER + ACTION BUTTONS ──────────────────── */}
           <div style={{ padding: '16px 16px 0' }}>
@@ -720,17 +707,29 @@ export default function StadiumDetailPage() {
                                   <span>vs {opponent}{scoreStr}</span>
                                   {hasScore && (
                                     <span style={{
-                                      width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-                                      backgroundColor: homeWon ? '#3FB950' : '#F85149',
-                                    }} />
+                                      fontSize: 10, fontWeight: 800, flexShrink: 0,
+                                      padding: '1px 5px', borderRadius: 4,
+                                      color: homeWon ? '#3FB950' : '#F85149',
+                                      backgroundColor: homeWon ? 'rgba(63,185,80,0.14)' : 'rgba(248,81,73,0.14)',
+                                    }}>
+                                      {homeWon ? 'W' : 'L'}
+                                    </span>
                                   )}
                                 </div>
                               </div>
 
-                              {/* Right: giveaway icon + chevron */}
+                              {/* Right: giveaway badge + chevron */}
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                                 {giveawayName && (
-                                  <span style={{ fontSize: 13 }}>{guessGiveawayEmoji(giveawayName)}</span>
+                                  <span style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                                    fontSize: 11, fontWeight: 700, color: '#F5A623',
+                                    backgroundColor: 'rgba(245,166,35,0.12)',
+                                    border: '1px solid rgba(245,166,35,0.3)',
+                                    borderRadius: 20, padding: '3px 8px',
+                                  }}>
+                                    🎁 Giveaway
+                                  </span>
                                 )}
                                 <ChevronRight
                                   size={16}
