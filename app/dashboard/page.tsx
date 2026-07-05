@@ -481,6 +481,11 @@ export default async function DashboardPage() {
                 </div>
               ))}
             </div>
+
+            {/* Standings, nested here so it reads as part of the playoff-picture story */}
+            <div style={{ position: 'relative', marginTop: 16, paddingTop: 14, borderTop: '1px solid #30363D' }}>
+              <Standings favAbbr={favAbbr} />
+            </div>
           </div>
         )}
 
@@ -615,9 +620,8 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-{/* ── Favorite team picker + Standings ─────────────────────────── */}
+{/* ── Favorite team picker ─────────────────────────────────────── */}
         <FavoriteTeamPicker userId={userId} currentFavAbbr={favAbbr} />
-        <Standings favAbbr={favAbbr} />
 
       </div>
     </div>
