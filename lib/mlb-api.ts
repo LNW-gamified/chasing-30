@@ -235,11 +235,33 @@ export interface GameHighlight {
   title:       string
   description: string
   url:         string
+  thumbnailUrl: string | null
 }
 
 export interface GameContent {
   recap:      string | null
   highlights: GameHighlight[]
+}
+
+interface ImageCut {
+  aspectRatio: string
+  width: number
+  height: number
+  src: string
+}
+
+function pickThumbnail(image: { cuts?: ImageCut[] } | undefined): string | null {
+  const cuts = image?.cuts
+  if (!cuts || cuts.length === 0) return null
+  // Prefer 16:9 cuts sized for a small list thumbnail (target ~400px wide),
+  // rather than the largest available (1920px) or smallest (74px).
+  const widescreen = cuts.filter(c => c.aspectRatio === '16:9')
+  const pool = widescreen.length > 0 ? widescreen : cuts
+  const target = 400
+  const closest = pool.reduce((best, c) =>
+    Math.abs(c.width - target) < Math.abs(best.width - target) ? c : best
+  , pool[0])
+  return closest.src
 }
 
 export async function fetchGameContent(gamePk: number): Promise<GameContent | null> {
@@ -257,6 +279,7 @@ export async function fetchGameContent(gamePk: number): Promise<GameContent | nu
         description: h.blurb   ?? '',
         url:         h.playbacks?.find((p: any) => p.name === 'mp4Avc') ?.url
                   ?? h.playbacks?.[0]?.url ?? '',
+        thumbnailUrl: pickThumbnail(h.image),
       }))
       .filter(h => h.url)
     return { recap, highlights }

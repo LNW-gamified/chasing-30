@@ -793,7 +793,7 @@ export default function BoxScore({
                   )
                 })()}
                 {gameContent.highlights.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {gameContent.highlights.map((h, i) => (
                       <a
                         key={i}
@@ -801,13 +801,34 @@ export default function BoxScore({
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{
-                          display: 'flex', alignItems: 'center', gap: 8,
-                          padding: '8px 10px', borderRadius: 8, textDecoration: 'none',
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          borderRadius: 8, textDecoration: 'none', overflow: 'hidden',
                           backgroundColor: '#1C2430', border: '1px solid #30363D',
                         }}
                       >
-                        <span style={{ fontSize: 16, flexShrink: 0 }}>▶</span>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: '#58A6FF', lineHeight: 1.3 }}>{h.title}</span>
+                        <div style={{ position: 'relative', flexShrink: 0, width: 96, height: 54, backgroundColor: '#0D1117' }}>
+                          {h.thumbnailUrl && (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              src={h.thumbnailUrl}
+                              alt=""
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                            />
+                          )}
+                          <div style={{
+                            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            backgroundColor: h.thumbnailUrl ? 'rgba(0,0,0,0.25)' : 'transparent',
+                          }}>
+                            <div style={{
+                              width: 26, height: 26, borderRadius: '50%',
+                              backgroundColor: 'rgba(0,0,0,0.55)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              <span style={{ fontSize: 12, color: '#fff', marginLeft: 2 }}>▶</span>
+                            </div>
+                          </div>
+                        </div>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#58A6FF', lineHeight: 1.3, padding: '6px 10px 6px 0' }}>{h.title}</span>
                       </a>
                     ))}
                   </div>
