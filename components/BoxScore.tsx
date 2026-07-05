@@ -209,10 +209,8 @@ export default function BoxScore({
 
   useEffect(() => {
     const paths = visit.photos?.length ? visit.photos : visit.photo_url ? [visit.photo_url] : []
-    if (paths.length > 0) {
-      getSignedPhotoUrls(paths).then(setSignedPhotoUrls)
-    }
-  }, [visit.id])
+    Promise.resolve(paths.length > 0 ? getSignedPhotoUrls(paths) : []).then(setSignedPhotoUrls)
+  }, [visit.id, visit.photo_url, visit.photos])
 
   useEffect(() => {
     if (visit.mlb_game_pk) {
