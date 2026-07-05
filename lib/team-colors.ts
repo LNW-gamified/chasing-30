@@ -63,3 +63,20 @@ export const TEAM_GRADIENTS: Record<string, [string, string]> = {
   TEX: ['#003278', '#C0111F'], TOR: ['#134A8E', '#1D2D5C'],
   WSH: ['#14225A', '#AB0003'], ATL: ['#13274F', '#CE1141'],
 }
+
+// Relative luminance (0-1, higher = lighter) for a hex color.
+function luminance(hex: string): number {
+  const n = hex.replace('#', '')
+  const r = parseInt(n.substring(0, 2), 16) / 255
+  const g = parseInt(n.substring(2, 4), 16) / 255
+  const b = parseInt(n.substring(4, 6), 16) / 255
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+
+// Picks the visually darker of a team's two gradient colors — used for photo
+// overlay tints, where the vibrant/brand color of the pair would be too intense
+// washed across an entire image (e.g. ATL and BAL both have a saturated color
+// as the second entry, which floods the hero photo if used directly).
+export function darkerOf(pair: [string, string]): string {
+  return luminance(pair[0]) <= luminance(pair[1]) ? pair[0] : pair[1]
+}

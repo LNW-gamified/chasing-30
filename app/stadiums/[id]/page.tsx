@@ -14,7 +14,7 @@ import { fetchTeamNews, type ESPNNewsItem } from '@/lib/espn-api'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Pencil, Save, Loader2, Users, CalendarDays, Trophy, Share2, MessageSquare, Hash, Building2, Map, ChevronRight, CloudRain, Wind } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
-import { TEAM_BTN_COLOR, TEAM_GRADIENTS } from '@/lib/team-colors'
+import { TEAM_BTN_COLOR, TEAM_GRADIENTS, darkerOf } from '@/lib/team-colors'
 import GiveawayFoodEditor, { type EditorItem } from '@/components/GiveawayFoodEditor'
 import CollectibleLightbox from '@/components/CollectibleLightbox'
 
@@ -398,6 +398,7 @@ export default function StadiumDetailPage() {
 
   const visited    = visits.length > 0
   const colors     = TEAM_GRADIENTS[stadium.abbreviation] ?? ['#0B1117', '#161B22']
+  const heroTint   = darkerOf(colors)
   const teamColor  = TEAM_BTN_COLOR[stadium.abbreviation] ?? '#1F6FEB'
 
   const TABS: { key: ActiveTab; label: string }[] = [
@@ -465,7 +466,7 @@ export default function StadiumDetailPage() {
           )}
           <div style={{
             position: 'absolute', inset: 0,
-            background: `linear-gradient(to bottom, ${colors[1]}1A 0%, ${colors[1]}33 35%, ${colors[1]}CC 65%, ${colors[1]}F2 100%)`,
+            background: `linear-gradient(to bottom, ${heroTint}00 0%, ${heroTint}1A 35%, ${heroTint}99 65%, ${heroTint}E0 100%)`,
           }} />
           <div style={{ position: 'absolute', top: 16, left: 16, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 10 }}>
             <Link href="/stadiums" style={{
