@@ -1052,8 +1052,11 @@ export default function StadiumDetailPage() {
                 {stadiumSummary && (
                   <section style={{ marginBottom: 32 }}>
                     <SectionTitle Icon={Building2} color={teamColor}>About</SectionTitle>
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', borderLeft: `3px solid ${teamColor}`, padding: '16px' }}>
-                      <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.7 }}>
+                    <div style={{
+                      borderRadius: 14, border: `1px solid ${teamColor}44`, padding: '18px 20px',
+                      background: `linear-gradient(135deg, ${teamColor}1F 0%, #161B22 55%)`,
+                    }}>
+                      <div style={{ fontSize: 13, color: '#C9D1D9', lineHeight: 1.7 }}>
                         {stadiumSummary}
                       </div>
                     </div>
@@ -1231,24 +1234,28 @@ export default function StadiumDetailPage() {
                 <section style={{ marginBottom: 32 }}>
                   <SectionTitle Icon={CalendarDays} color="#3FB950">Best Time to Visit</SectionTitle>
                   {DOME_STADIUMS.has(stadium.abbreviation) ? (
-                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', borderLeft: '3px solid #3FB950', padding: '20px 16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: RETRACTABLE_ROOF.has(stadium.abbreviation) ? 10 : 0 }}>
-                        <span style={{ fontSize: 22 }}>🏟️</span>
-                        <div>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3' }}>Climate Controlled</div>
-                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 2 }}>Great any time of year</div>
-                        </div>
-                        <span style={{
-                          marginLeft: 'auto', fontSize: 13, fontWeight: 700,
-                          color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)',
-                          border: '1px solid rgba(63,185,80,0.3)', borderRadius: 20, padding: '3px 10px',
-                        }}>🟢 Any Month</span>
+                    <div style={{
+                      borderRadius: 14, border: '1px solid rgba(63,185,80,0.3)', padding: '22px 20px',
+                      background: 'linear-gradient(135deg, rgba(63,185,80,0.14) 0%, #161B22 60%)',
+                      display: 'flex', alignItems: 'center', gap: 18,
+                    }}>
+                      <div style={{
+                        width: 64, height: 64, borderRadius: '50%', flexShrink: 0,
+                        background: 'radial-gradient(circle at 35% 30%, rgba(63,185,80,0.35) 0%, rgba(63,185,80,0.08) 70%)',
+                        border: '2px solid #3FB950',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28,
+                      }}>
+                        🏟️
                       </div>
-                      {RETRACTABLE_ROOF.has(stadium.abbreviation) && (
-                        <div style={{ fontSize: 12, color: '#8B949E', borderTop: '1px solid #30363D', paddingTop: 10, marginTop: 4 }}>
-                          ☀️ Roof opens when weather permits
-                        </div>
-                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 22, fontWeight: 900, color: '#3FB950', lineHeight: 1.1 }}>Any month works</div>
+                        <div style={{ fontSize: 13, color: '#8B949E', marginTop: 4 }}>Climate controlled, great any time of year</div>
+                        {RETRACTABLE_ROOF.has(stadium.abbreviation) && (
+                          <div style={{ fontSize: 12, color: '#8B949E', marginTop: 6 }}>
+                            ☀️ Roof opens when weather permits
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ) : weatherLoading ? (
                     <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '28px 16px', textAlign: 'center', color: '#8B949E', fontSize: 13 }}>
@@ -1395,16 +1402,20 @@ export default function StadiumDetailPage() {
                 {retiredNumbers.length > 0 && (
                   <section style={{ marginBottom: 32 }}>
                     <SectionTitle Icon={Hash} color="#F5A623">Retired Numbers</SectionTitle>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, justifyContent: 'flex-start' }}>
                       {retiredNumbers.map(rn => (
-                        <div key={rn.id} style={{
-                          backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D',
-                          borderTop: '2px solid #F5A623',
-                          padding: '10px 14px', textAlign: 'center', minWidth: 72,
-                        }}>
-                          <div style={{ fontSize: 24, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{rn.number}</div>
-                          <div style={{ fontSize: 13, color: '#F5A623', marginTop: 4, lineHeight: 1.3 }}>{rn.player_name}</div>
-                          <div style={{ fontSize: 12, color: '#6E7681', marginTop: 2 }}>{rn.year_retired}</div>
+                        <div key={rn.id} style={{ textAlign: 'center', width: 88 }}>
+                          <div style={{
+                            width: 88, height: 88, borderRadius: '50%', margin: '0 auto 10px',
+                            background: 'radial-gradient(circle at 35% 30%, #2A2000 0%, #161B22 70%)',
+                            border: '2px solid #F5A623',
+                            boxShadow: '0 0 0 4px rgba(245,166,35,0.12), 0 4px 14px rgba(0,0,0,0.4)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <span style={{ fontSize: 30, fontWeight: 900, color: '#F5C05C', lineHeight: 1 }}>{rn.number}</span>
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.3 }}>{rn.player_name}</div>
+                          <div style={{ fontSize: 12, color: '#6E7681', marginTop: 1 }}>{rn.year_retired}</div>
                         </div>
                       ))}
                     </div>
@@ -1436,7 +1447,7 @@ export default function StadiumDetailPage() {
                         <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', padding: '20px 16px' }}>
                           {/* Stylized field diagram — not to scale, just a visual read on the shape of the park */}
                           <div style={{ display: 'flex', justifyContent: 'center' }}>
-                            <svg viewBox="0 -18 300 218" style={{ width: '100%', maxWidth: 320, height: 'auto', display: 'block', marginBottom: 8 }}>
+                            <svg viewBox="0 -50 300 250" style={{ width: '100%', maxWidth: 320, height: 'auto', display: 'block', marginBottom: 8 }}>
                             <defs>
                               <linearGradient id="grassGrad" x1="0" y1="1" x2="0" y2="0">
                                 <stop offset="0%" stopColor="#1C3A24" />
@@ -1452,11 +1463,10 @@ export default function StadiumDetailPage() {
                             <path d="M 150 185 L 118 150 L 150 118 L 182 150 Z" fill="#5C4430" stroke="#3D2E1F" strokeWidth="1" />
                             {/* Home plate */}
                             <circle cx="150" cy="185" r="3.5" fill="#E6EDF3" />
-                            {/* Distance markers */}
+                            {/* Distance markers — center field is the hero number, others are supporting stats */}
                             {[
                               { x: 40,  y: 50,  value: venueDimensions.leftLine,    labelDx: -8,  anchor: 'end' as const    },
                               { x: 95,  y: 20,  value: venueDimensions.leftCenter, labelDx: -6,  anchor: 'end' as const    },
-                              { x: 150, y: 12,  value: venueDimensions.center,     labelDx: 0,   anchor: 'middle' as const },
                               { x: 205, y: 20,  value: venueDimensions.rightCenter,labelDx: 6,   anchor: 'start' as const  },
                               { x: 260, y: 50,  value: venueDimensions.rightLine,   labelDx: 8,   anchor: 'start' as const  },
                             ].filter(m => m.value).map((m, i) => (
@@ -1468,6 +1478,16 @@ export default function StadiumDetailPage() {
                                   fontSize="7" fontWeight="700" fill="#8B949E">ft</text>
                               </g>
                             ))}
+                            {venueDimensions.center && (
+                              <g>
+                                <circle cx="150" cy="12" r="5" fill="#3FB950" opacity="0.25" />
+                                <circle cx="150" cy="12" r="3" fill="#3FB950" />
+                                <text x="150" y="-14" textAnchor="middle"
+                                  fontSize="30" fontWeight="900" fill="#3FB950">{venueDimensions.center}</text>
+                                <text x="150" y="0" textAnchor="middle"
+                                  fontSize="9" fontWeight="700" fill="#8B949E">FT TO CENTER</text>
+                              </g>
+                            )}
                             </svg>
                           </div>
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
