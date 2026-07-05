@@ -686,14 +686,15 @@ export default function StadiumDetailPage() {
                           const dayAbbr = dt.toLocaleDateString('en-US', { weekday: 'short' })
                           const monthDay = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                           const year2 = dt.getFullYear()
+                          const hasSeat = visit.seat_section || visit.seat_row || visit.seat_number
                           return (
                             <button
                               key={visit.id}
                               onClick={() => setExpandedVisit(isExpanded ? null : visit.id)}
                               style={{
-                                position: 'relative', width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                                padding: '14px 16px',
-                                backgroundImage: `linear-gradient(135deg, ${teamColor}1A 0%, ${isExpanded ? '#1C2430' : '#161B22'} 60%)`,
+                                position: 'relative', width: '100%', display: 'flex', alignItems: 'stretch', gap: 0,
+                                padding: 0,
+                                backgroundImage: `linear-gradient(135deg, ${teamColor}40 0%, ${isExpanded ? '#1C2430' : '#161B22'} 65%)`,
                                 border: '1px solid #30363D',
                                 borderLeft: `3px solid ${borderColor}`,
                                 borderRadius: 12, cursor: 'pointer', textAlign: 'left',
@@ -701,67 +702,103 @@ export default function StadiumDetailPage() {
                               }}
                             >
                               {/* Ticket-stub notches */}
-                              <div style={{ position: 'absolute', left: -7, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, borderRadius: '50%', backgroundColor: '#0B1117', border: '1px solid #30363D' }} />
-                              <div style={{ position: 'absolute', right: -7, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, borderRadius: '50%', backgroundColor: '#0B1117', border: '1px solid #30363D' }} />
+                              <div style={{ position: 'absolute', left: -9, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, borderRadius: '50%', backgroundColor: '#0B1117', border: '1.5px solid #4A5568', zIndex: 2 }} />
+                              <div style={{ position: 'absolute', right: -9, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, borderRadius: '50%', backgroundColor: '#0B1117', border: '1.5px solid #4A5568', zIndex: 2 }} />
 
-                              {/* Date badge */}
-                              <div style={{
-                                flexShrink: 0, width: 46, textAlign: 'center',
-                                backgroundColor: 'rgba(0,0,0,0.25)', borderRadius: 8, padding: '5px 2px',
-                              }}>
-                                <div style={{ fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase' }}>{dayAbbr}</div>
-                                <div style={{ fontSize: 13, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1 }}>{monthDay}</div>
-                                <div style={{ fontSize: 9, color: '#6E7681' }}>{year2}</div>
-                              </div>
-
-                              {/* Matchup: home logo — score — away logo */}
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                                <TeamLogo abbreviation={stadium.abbreviation} size={34} />
-                                {hasScore ? (
-                                  <div style={{ textAlign: 'center', minWidth: 44 }}>
-                                    <div style={{ fontSize: 18, fontWeight: 900, lineHeight: 1, color: homeWon ? '#3FB950' : '#E6EDF3' }}>
-                                      {visit.home_runs}<span style={{ color: '#6E7681', fontWeight: 500 }}>-</span>{visit.away_runs}
-                                    </div>
-                                    <span style={{
-                                      fontSize: 9, fontWeight: 800, color: homeWon ? '#3FB950' : '#F85149',
-                                    }}>
-                                      {homeWon ? 'WIN' : 'LOSS'}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <span style={{ fontSize: 12, color: '#6E7681', fontWeight: 700 }}>VS</span>
-                                )}
-                                {opponentAbbr ? <TeamLogo abbreviation={opponentAbbr} size={34} /> : (
-                                  <div style={{ width: 34, height: 34, borderRadius: '50%', backgroundColor: '#1C2430', flexShrink: 0 }} />
-                                )}
-                              </div>
-
-                              {/* Opponent name + giveaway */}
-                              <div style={{ flex: 1, minWidth: 0 }}>
+                              {/* Main card body */}
+                              <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px' }}>
+                                {/* Date badge */}
                                 <div style={{
-                                  fontSize: 13, fontWeight: 700, color: '#E6EDF3',
-                                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                  flexShrink: 0, width: 52, textAlign: 'center',
+                                  backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 9, padding: '6px 2px',
                                 }}>
-                                  vs {opponent}
+                                  <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase' }}>{dayAbbr}</div>
+                                  <div style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.15 }}>{monthDay}</div>
+                                  <div style={{ fontSize: 10, color: '#6E7681' }}>{year2}</div>
                                 </div>
-                                {giveawayName && (
-                                  <span style={{
-                                    display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 3,
-                                    fontSize: 11, fontWeight: 700, color: '#F5A623',
-                                    backgroundColor: 'rgba(245,166,35,0.12)',
-                                    border: '1px solid rgba(245,166,35,0.3)',
-                                    borderRadius: 20, padding: '2px 7px',
+
+                                {/* Matchup: home logo — score — away logo */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                                  <TeamLogo abbreviation={stadium.abbreviation} size={42} />
+                                  {hasScore ? (
+                                    <div style={{ textAlign: 'center', minWidth: 54 }}>
+                                      <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1, color: homeWon ? '#3FB950' : '#E6EDF3' }}>
+                                        {visit.home_runs}<span style={{ color: '#6E7681', fontWeight: 500 }}>-</span>{visit.away_runs}
+                                      </div>
+                                      <span style={{
+                                        fontSize: 10, fontWeight: 800, color: homeWon ? '#3FB950' : '#F85149',
+                                      }}>
+                                        {homeWon ? 'WIN' : 'LOSS'}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span style={{ fontSize: 13, color: '#6E7681', fontWeight: 700 }}>VS</span>
+                                  )}
+                                  {opponentAbbr ? <TeamLogo abbreviation={opponentAbbr} size={42} /> : (
+                                    <div style={{ width: 42, height: 42, borderRadius: '50%', backgroundColor: '#1C2430', flexShrink: 0 }} />
+                                  )}
+                                </div>
+
+                                {/* Opponent name + giveaway */}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{
+                                    fontSize: 15, fontWeight: 700, color: '#E6EDF3',
+                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                                   }}>
-                                    🎁 Giveaway
-                                  </span>
-                                )}
+                                    vs {opponent}
+                                  </div>
+                                  {giveawayName && (
+                                    <span style={{
+                                      display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4,
+                                      fontSize: 12, fontWeight: 700, color: '#F5A623',
+                                      backgroundColor: 'rgba(245,166,35,0.12)',
+                                      border: '1px solid rgba(245,166,35,0.3)',
+                                      borderRadius: 20, padding: '2px 8px',
+                                      maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                    }}>
+                                      🎁 {giveawayName}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
 
-                              <ChevronRight
-                                size={16}
-                                color={isExpanded ? '#E6EDF3' : '#8B949E'}
-                                style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}
-                              />
+                              {/* Ticket-stub: seat info */}
+                              {hasSeat && (
+                                <div style={{
+                                  flexShrink: 0, width: 92, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
+                                  borderLeft: '1.5px dashed #4A5568', padding: '10px 8px',
+                                  backgroundColor: 'rgba(0,0,0,0.15)',
+                                }}>
+                                  {visit.seat_section && (
+                                    <div style={{ textAlign: 'center' }}>
+                                      <div style={{ fontSize: 9, fontWeight: 700, color: '#6E7681', textTransform: 'uppercase' }}>Sec</div>
+                                      <div style={{ fontSize: 13, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1 }}>{visit.seat_section}</div>
+                                    </div>
+                                  )}
+                                  <div style={{ display: 'flex', gap: 8 }}>
+                                    {visit.seat_row && (
+                                      <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: 9, fontWeight: 700, color: '#6E7681', textTransform: 'uppercase' }}>Row</div>
+                                        <div style={{ fontSize: 12, fontWeight: 700, color: '#C9D1D9', lineHeight: 1.1 }}>{visit.seat_row}</div>
+                                      </div>
+                                    )}
+                                    {visit.seat_number && (
+                                      <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: 9, fontWeight: 700, color: '#6E7681', textTransform: 'uppercase' }}>Seat</div>
+                                        <div style={{ fontSize: 12, fontWeight: 700, color: '#C9D1D9', lineHeight: 1.1 }}>{visit.seat_number}</div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', padding: '0 12px' }}>
+                                <ChevronRight
+                                  size={16}
+                                  color={isExpanded ? '#E6EDF3' : '#8B949E'}
+                                  style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}
+                                />
+                              </div>
                             </button>
                           )
                         })}
