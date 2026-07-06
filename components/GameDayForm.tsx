@@ -312,7 +312,17 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
     // Upload new files, store paths (not URLs)
     const newPaths: string[] = []
     for (const file of photoFiles) {
-      const ext = file.name.split('.').pop()
+      const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
+      const isRaw = file.type === 'image/x-adobe-dng' || ['dng', 'raw', 'cr2', 'nef', 'arw'].includes(ext)
+      if (isRaw) {
+        setError(
+          `"${file.name}" is a RAW photo format (DNG), which can't be displayed on the web. ` +
+          `If this came from your camera roll, check if ProRAW is turned on for your camera and try a regular photo instead, ` +
+          `or take a screenshot of it and upload that.`
+        )
+        setSaving(false)
+        return
+      }
       const path = `${stadium.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
       const { data: uploadData, error: uploadErr } = await supabase.storage
         .from('game-photos')
