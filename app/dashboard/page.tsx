@@ -442,47 +442,51 @@ export default async function DashboardPage() {
         {/* ── Playoff Picture ─────────────────────────────────────────── */}
         {playoffPic && favStadium && (
           <div className="dash-card" style={{ ...card, marginBottom: SECTION_GAP, padding: '16px 20px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{
-              position: 'absolute', right: -20, top: '50%', transform: 'translateY(-50%)',
-              width: 160, height: 160, borderRadius: '50%',
-              background: `radial-gradient(circle, ${TEAM_GRADIENTS[favStadium.abbreviation]?.[0] ?? '#1F6FEB'}33 0%, transparent 70%)`,
-              pointerEvents: 'none',
-            }} />
-            <div style={{ position: 'absolute', right: -10, top: '50%', transform: 'translateY(-50%)', opacity: 0.3, pointerEvents: 'none' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={getTeamLogoUrl(favStadium.abbreviation)} alt="" width={120} height={120} style={{ objectFit: 'contain', display: 'block' }} />
-            </div>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-              <TeamLogo abbreviation={favStadium.abbreviation} size={28} />
-              <span style={{ fontSize: 14, fontWeight: 800, color: '#E6EDF3' }}>{favStadium.team}</span>
-              <span style={{ fontSize: 12, color: '#8B949E', marginLeft: 2 }}>· Playoff Picture</span>
-              {playoffPic.clinched && (
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', padding: '2px 8px', borderRadius: 10 }}>✓ CLINCHED</span>
-              )}
-            </div>
-            <div style={{ position: 'relative', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              {[
-                { label: 'Record',   value: `${playoffPic.wins}–${playoffPic.losses}` },
-                { label: 'Win %',    value: playoffPic.pct },
-                { label: `${playoffPic.divisionName} Rank`, value: `#${playoffPic.divisionRank}` },
-                playoffPic.gamesBack !== '—'
-                  ? { label: 'GB',   value: playoffPic.gamesBack }
-                  : { label: 'Division', value: 'Leader' },
-                playoffPic.wildCardRank
-                  ? { label: 'Wild Card', value: `#${playoffPic.wildCardRank}` }
-                  : null,
-                playoffPic.magicNumber
-                  ? { label: 'Magic #', value: playoffPic.magicNumber }
-                  : null,
-                playoffPic.eliminationNumber
-                  ? { label: 'Elim #', value: playoffPic.eliminationNumber }
-                  : null,
-              ].filter(Boolean).map(stat => (
-                <div key={stat!.label}>
-                  <div style={{ fontSize: 12, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{stat!.label}</div>
-                  <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3' }}>{stat!.value}</div>
-                </div>
-              ))}
+            {/* Header + stats zone — watermark anchors here, not to the whole
+                card, since Standings below makes the card's height variable */}
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                position: 'absolute', right: -20, top: '50%', transform: 'translateY(-50%)',
+                width: 160, height: 160, borderRadius: '50%',
+                background: `radial-gradient(circle, ${TEAM_GRADIENTS[favStadium.abbreviation]?.[0] ?? '#1F6FEB'}33 0%, transparent 70%)`,
+                pointerEvents: 'none',
+              }} />
+              <div style={{ position: 'absolute', right: -10, top: '50%', transform: 'translateY(-50%)', opacity: 0.3, pointerEvents: 'none' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={getTeamLogoUrl(favStadium.abbreviation)} alt="" width={120} height={120} style={{ objectFit: 'contain', display: 'block' }} />
+              </div>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                <TeamLogo abbreviation={favStadium.abbreviation} size={28} />
+                <span style={{ fontSize: 14, fontWeight: 800, color: '#E6EDF3' }}>{favStadium.team}</span>
+                <span style={{ fontSize: 12, color: '#8B949E', marginLeft: 2 }}>· Playoff Picture</span>
+                {playoffPic.clinched && (
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', padding: '2px 8px', borderRadius: 10 }}>✓ CLINCHED</span>
+                )}
+              </div>
+              <div style={{ position: 'relative', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                {[
+                  { label: 'Record',   value: `${playoffPic.wins}–${playoffPic.losses}` },
+                  { label: 'Win %',    value: playoffPic.pct },
+                  { label: `${playoffPic.divisionName} Rank`, value: `#${playoffPic.divisionRank}` },
+                  playoffPic.gamesBack !== '—'
+                    ? { label: 'GB',   value: playoffPic.gamesBack }
+                    : { label: 'Division', value: 'Leader' },
+                  playoffPic.wildCardRank
+                    ? { label: 'Wild Card', value: `#${playoffPic.wildCardRank}` }
+                    : null,
+                  playoffPic.magicNumber
+                    ? { label: 'Magic #', value: playoffPic.magicNumber }
+                    : null,
+                  playoffPic.eliminationNumber
+                    ? { label: 'Elim #', value: playoffPic.eliminationNumber }
+                    : null,
+                ].filter(Boolean).map(stat => (
+                  <div key={stat!.label}>
+                    <div style={{ fontSize: 12, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{stat!.label}</div>
+                    <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3' }}>{stat!.value}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Standings, nested here so it reads as part of the playoff-picture story */}

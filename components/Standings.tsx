@@ -149,18 +149,18 @@ export default function Standings({ favAbbr }: Props) {
           paddingLeft: 14, borderLeft: '3px solid #F5A623',
         }}
       >
-        <span style={{ fontSize: 20, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.3px' }}>
-          Standings
-        </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {updatedLabel && !collapsed && (
-            <span style={{ fontSize: 12, color: '#8B949E' }}>{updatedLabel}</span>
-          )}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
+            Standings
+          </span>
           {collapsed
-            ? <ChevronDown size={15} style={{ color: '#8B949E' }} />
-            : <ChevronUp   size={15} style={{ color: '#8B949E' }} />
+            ? <ChevronDown size={14} style={{ color: '#8B949E' }} />
+            : <ChevronUp   size={14} style={{ color: '#8B949E' }} />
           }
-        </div>
+        </span>
+        {updatedLabel && !collapsed && (
+          <span style={{ fontSize: 12, color: '#8B949E' }}>{updatedLabel}</span>
+        )}
       </div>
 
       {!collapsed && (
