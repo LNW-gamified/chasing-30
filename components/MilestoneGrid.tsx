@@ -15,6 +15,17 @@ import CollectibleLightbox from '@/components/CollectibleLightbox'
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
+// Achievements are colored by difficulty tier, derived from their point value
+// (the same values already defined in MILESTONE_POINTS), so harder
+// achievements read as more prestigious instead of every card looking equally
+// important regardless of whether it's worth 50 or 300 points.
+function getTierColor(pts: number): { name: string; color: string; glow: string } {
+  if (pts >= 200) return { name: 'Diamond', color: '#B98CFF', glow: 'rgba(185,140,255,0.35)' }
+  if (pts >= 150) return { name: 'Gold',    color: '#F5A623', glow: 'rgba(245,166,35,0.35)' }
+  if (pts >= 100) return { name: 'Silver',  color: '#C7CCD4', glow: 'rgba(199,204,212,0.3)' }
+  return               { name: 'Bronze',  color: '#D08A56', glow: 'rgba(208,138,86,0.3)' }
+}
+
 // Which experiences take a "player name" extra field
 const PLAYER_NAME_EXP = new Set(['autograph', 'met_player'])
 
@@ -694,6 +705,10 @@ export default function MilestoneGrid({
         <div className="no-scrollbar" style={{ overflowX: 'auto', display: 'flex', gap: 8, marginBottom: 20, paddingBottom: 4 }}>
           {CATEGORIES.map(cat => {
             const active = filter === cat.key
+            const tabColor = cat.key === 'earned' ? '#3FB950'
+              : cat.key === 'inprogress' ? '#F5A623'
+              : cat.key === 'records' ? '#58A6FF'
+              : '#1F6FEB'
             let count: number | null = null
             if (cat.key === 'earned') count = earned.length + earnedStaticCount + earnedLadderCount
             if (cat.key === 'inprogress') {
@@ -713,8 +728,8 @@ export default function MilestoneGrid({
                 onClick={() => setFilter(cat.key)}
                 style={{
                   flexShrink: 0, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6,
-                  padding: '8px 14px', borderRadius: 20, border: `1.5px solid ${active ? '#1F6FEB' : '#30363D'}`,
-                  backgroundColor: active ? '#1F6FEB' : '#161B22',
+                  padding: '8px 14px', borderRadius: 20, border: `1.5px solid ${active ? tabColor : '#30363D'}`,
+                  backgroundColor: active ? tabColor : '#161B22',
                   cursor: 'pointer', transition: 'all 0.15s',
                 }}
               >
@@ -1013,6 +1028,7 @@ export default function MilestoneGrid({
           {filteredMilestones.map(m => {
             const isEarned = earnedIds.has(m.id)
             const pts      = MILESTONE_POINTS[m.id] ?? 25
+            const tier     = getTierColor(pts)
             const progress = getMilestoneProgress(m.id, allVisits, allStadiums, allEvents)
             const pct      = progress ? Math.round((progress.current / progress.total) * 100) : 0
             const isDiv    = DIVISION_IDS.has(m.id)
@@ -1023,15 +1039,16 @@ export default function MilestoneGrid({
                 onClick={() => { setSelected({ type: 'milestone', milestone: m, isEarned }); if (isEarned) fireConfetti() }}
                 style={{
                   position: 'relative', display: 'flex', flexDirection: 'column',
-                  padding: '16px 14px 14px', borderRadius: 16, border: 'none', cursor: 'pointer',
+                  padding: '16px 14px 14px', borderRadius: 16, cursor: 'pointer',
                   textAlign: 'left', overflow: 'hidden', minHeight: 150,
                   background: isEarned
-                    ? 'linear-gradient(135deg, #1A1500 0%, #2A1E00 100%)'
+                    ? `linear-gradient(135deg, ${tier.color}22 0%, #161B22 70%)`
                     : '#161B22',
-                  borderWidth: 1.5, borderStyle: 'solid',
-                  borderColor: isEarned ? 'rgba(245,166,35,0.4)' : '#30363D',
-                  filter: !isEarned && !progress?.current ? 'grayscale(30%)' : 'none',
-                  opacity: !isEarned && !progress?.current ? 0.7 : 1,
+                  borderWidth: isEarned ? 2 : 1.5, borderStyle: 'solid',
+                  borderColor: isEarned ? tier.color : `${tier.color}55`,
+                  boxShadow: isEarned ? `0 0 16px ${tier.glow}` : 'none',
+                  filter: !isEarned && !progress?.current ? 'grayscale(55%)' : 'none',
+                  opacity: !isEarned && !progress?.current ? 0.6 : 1,
                   transition: 'opacity 0.15s, border-color 0.15s',
                 }}
               >
@@ -1039,14 +1056,14 @@ export default function MilestoneGrid({
                 {isEarned && <div className="earned-card-shine" />}
 
                 {/* Points badge */}
-                <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 13, fontWeight: 800, color: isEarned ? '#F5A623' : '#8B949E', background: isEarned ? 'rgba(245,166,35,0.15)' : 'rgba(48,54,61,0.5)', padding: '2px 7px', borderRadius: 20 }}>
+                <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 13, fontWeight: 800, color: isEarned ? tier.color : '#8B949E', background: isEarned ? `${tier.color}26` : 'rgba(48,54,61,0.5)', padding: '2px 7px', borderRadius: 20 }}>
                   +{pts}
                 </div>
 
                 {/* Auto-tracked badge */}
                 <div style={{ position: 'absolute', bottom: 10, left: 10, display: 'flex', alignItems: 'center', gap: 3 }}>
-                  <Zap size={9} color={isEarned ? '#F5A623' : '#8B949E'} />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: isEarned ? '#F5A623' : '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tracked</span>
+                  <Zap size={9} color={isEarned ? tier.color : '#8B949E'} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: isEarned ? tier.color : '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tracked</span>
                 </div>
 
                 {/* Icon */}
@@ -1061,21 +1078,22 @@ export default function MilestoneGrid({
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: isEarned ? '#E6EDF3' : '#C9D1D9', marginBottom: 3, lineHeight: 1.3 }}>{m.name}</div>
-                  <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.4, marginBottom: isEarned && m.earnDate ? 4 : (progress && !isEarned ? 8 : 24) }}>{m.description}</div>
+                  <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.4, marginBottom: isEarned && m.earnDate ? 4 : 8 }}>{m.description}</div>
                   {isEarned && m.earnDate && (
-                    <div style={{ fontSize: 13, color: 'rgba(245,166,35,0.7)', fontWeight: 600, marginBottom: 20 }}>
+                    <div style={{ fontSize: 13, color: `${tier.color}B3`, fontWeight: 600, marginBottom: 20 }}>
                       Earned {new Date(m.earnDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </div>
                   )}
                 </div>
 
-                {/* Progress bar (in-progress, not earned) */}
-                {progress && !isEarned && progress.current > 0 && (
+                {/* Progress bar — always shown when not earned (even at 0) so the
+                    exact requirement is visible without opening the card */}
+                {progress && !isEarned && (
                   <div style={{ marginBottom: 20 }}>
                     <div style={{ height: 4, background: '#1C2430', borderRadius: 3, overflow: 'hidden', marginBottom: 3 }}>
-                      <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`, background: isDiv ? 'linear-gradient(90deg,#1F6FEB,#58A6FF)' : 'linear-gradient(90deg,#F5A623,#E8820C)', minWidth: 6, transition: 'width 0.4s ease' }} />
+                      <div style={{ height: '100%', borderRadius: 3, width: `${Math.max(pct, progress.current > 0 ? 4 : 0)}%`, background: isDiv ? 'linear-gradient(90deg,#1F6FEB,#58A6FF)' : `linear-gradient(90deg, ${tier.color}, ${tier.color}CC)`, transition: 'width 0.4s ease' }} />
                     </div>
-                    <span style={{ fontSize: 13, color: '#8B949E' }}>{progress.current}/{progress.total}</span>
+                    <span style={{ fontSize: 13, color: '#8B949E' }}>{progress.current}/{progress.total} needed</span>
                   </div>
                 )}
               </button>
