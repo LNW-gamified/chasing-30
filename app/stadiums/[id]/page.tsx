@@ -691,8 +691,9 @@ export default function StadiumDetailPage() {
                             <button
                               key={visit.id}
                               onClick={() => setExpandedVisit(isExpanded ? null : visit.id)}
+                              className="flex flex-col md:flex-row"
                               style={{
-                                position: 'relative', width: '100%', display: 'flex', alignItems: 'stretch', gap: 0,
+                                position: 'relative', width: '100%', alignItems: 'stretch', gap: 0,
                                 padding: 0,
                                 backgroundImage: `linear-gradient(135deg, ${teamColor}40 0%, ${isExpanded ? '#1C2430' : '#161B22'} 65%)`,
                                 border: '1px solid #30363D',
@@ -701,12 +702,13 @@ export default function StadiumDetailPage() {
                                 overflow: 'hidden',
                               }}
                             >
-                              {/* Ticket-stub notches */}
-                              <div style={{ position: 'absolute', left: -9, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, borderRadius: '50%', backgroundColor: '#0B1117', border: '1.5px solid #4A5568', zIndex: 2 }} />
-                              <div style={{ position: 'absolute', right: -9, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, borderRadius: '50%', backgroundColor: '#0B1117', border: '1.5px solid #4A5568', zIndex: 2 }} />
+                              {/* Ticket-stub notches — desktop only, since the card doesn't read as
+                                  a horizontal ticket once the stub stacks below on mobile */}
+                              <div className="hidden md:block" style={{ position: 'absolute', left: -9, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, borderRadius: '50%', backgroundColor: '#0B1117', border: '1.5px solid #4A5568', zIndex: 2 }} />
+                              <div className="hidden md:block" style={{ position: 'absolute', right: -9, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, borderRadius: '50%', backgroundColor: '#0B1117', border: '1.5px solid #4A5568', zIndex: 2 }} />
 
                               {/* Main card body */}
-                              <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px' }}>
+                              <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px', overflow: 'hidden' }}>
                                 {/* Date badge */}
                                 <div style={{
                                   flexShrink: 0, width: 52, textAlign: 'center',
@@ -760,22 +762,37 @@ export default function StadiumDetailPage() {
                                     </span>
                                   )}
                                 </div>
+
+                                {/* Chevron rides inline with the main body on mobile, since the
+                                    stub moves below and no longer has its own column to hold it */}
+                                <div className="md:hidden" style={{ flexShrink: 0 }}>
+                                  <ChevronRight
+                                    size={16}
+                                    color={isExpanded ? '#E6EDF3' : '#8B949E'}
+                                    style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}
+                                  />
+                                </div>
                               </div>
 
-                              {/* Ticket-stub: seat info */}
+                              {/* Ticket-stub: seat info — full-width bar under the main content on
+                                  mobile, narrow column beside it on desktop, so it never has to
+                                  fight the matchup/logos for the same horizontal space */}
                               {hasSeat && (
-                                <div style={{
-                                  flexShrink: 0, width: 92, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
-                                  borderLeft: '1.5px dashed #4A5568', padding: '10px 8px',
-                                  backgroundColor: 'rgba(0,0,0,0.15)',
-                                }}>
+                                <div
+                                  className="w-full md:w-[92px] flex-row md:flex-col border-t-[1.5px] md:border-t-0 md:border-l-[1.5px] border-dashed border-[#4A5568]"
+                                  style={{
+                                    flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
+                                    padding: '8px 12px',
+                                    backgroundColor: 'rgba(0,0,0,0.15)',
+                                  }}
+                                >
                                   {visit.seat_section && (
                                     <div style={{ textAlign: 'center' }}>
                                       <div style={{ fontSize: 9, fontWeight: 700, color: '#6E7681', textTransform: 'uppercase' }}>Sec</div>
                                       <div style={{ fontSize: 13, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1 }}>{visit.seat_section}</div>
                                     </div>
                                   )}
-                                  <div style={{ display: 'flex', gap: 8 }}>
+                                  <div className="flex md:flex-row" style={{ display: 'flex', gap: 16 }}>
                                     {visit.seat_row && (
                                       <div style={{ textAlign: 'center' }}>
                                         <div style={{ fontSize: 9, fontWeight: 700, color: '#6E7681', textTransform: 'uppercase' }}>Row</div>
@@ -792,7 +809,7 @@ export default function StadiumDetailPage() {
                                 </div>
                               )}
 
-                              <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', padding: '0 12px' }}>
+                              <div className="hidden md:flex" style={{ flexShrink: 0, alignItems: 'center', padding: '0 12px' }}>
                                 <ChevronRight
                                   size={16}
                                   color={isExpanded ? '#E6EDF3' : '#8B949E'}
