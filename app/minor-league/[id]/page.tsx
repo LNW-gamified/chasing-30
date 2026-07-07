@@ -1574,28 +1574,24 @@ export default function MinorLeagueDetailPage() {
                 {/* About */}
                 <section style={{ marginBottom: 32 }}>
                   <SectionTitle Icon={Building2}>About</SectionTitle>
-                  <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
-                    {[
-                      { label: 'Full Name', value: stadium.name },
-                      { label: 'Team',      value: stadium.team },
-                      stadium.address  ? { label: 'Address',  value: stadium.address } : null,
-                      { label: 'City',      value: `${stadium.city}, ${stadium.state}` },
-                      { label: 'Level',     value: stadium.level },
-                      stadium.capacity ? { label: 'Capacity', value: stadium.capacity.toLocaleString() } : null,
-                      stadium.opened   ? { label: 'Opened',   value: String(stadium.opened) } : null,
-                      stadium.surface  ? { label: 'Surface',  value: stadium.surface } : null,
-                      { label: 'Season',    value: 'April through September' },
-                    ].filter(Boolean).map((row, i, arr) => (
-                      <div key={row!.label} style={{
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        padding: '12px 16px',
-                        borderBottom: i < arr.length - 1 ? '1px solid #30363D' : 'none',
-                      }}>
-                        <span style={{ fontSize: 13, color: '#8B949E' }}>{row!.label}</span>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3', textAlign: 'right', maxWidth: '60%' }}>{row!.value}</span>
-                      </div>
-                    ))}
-                  </div>
+                  {(stadium.address || stadium.surface) && (
+                    <div style={{ backgroundColor: '#161B22', borderRadius: 14, border: '1px solid #30363D', overflow: 'hidden' }}>
+                      {[
+                        stadium.address  ? { label: 'Address',  value: stadium.address } : null,
+                        stadium.surface  ? { label: 'Surface',  value: stadium.surface } : null,
+                        { label: 'Season',    value: 'April through September' },
+                      ].filter(Boolean).map((row, i, arr) => (
+                        <div key={row!.label} style={{
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          padding: '12px 16px',
+                          borderBottom: i < arr.length - 1 ? '1px solid #30363D' : 'none',
+                        }}>
+                          <span style={{ fontSize: 13, color: '#8B949E' }}>{row!.label}</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3', textAlign: 'right', maxWidth: '60%' }}>{row!.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {stadium.description && (
                     <div style={{ padding: '14px 0 0', fontSize: 13, color: '#8B949E', lineHeight: 1.7 }}>
                       {stadium.description}
@@ -1701,35 +1697,47 @@ export default function MinorLeagueDetailPage() {
                   return (
                     <section style={{ marginBottom: 32 }}>
                       <SectionTitle Icon={Users}>Current Roster</SectionTitle>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                        {groups.map(group => (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                        {groups.map(group => {
+                          const groupColor = group.label === 'Pitchers' ? '#1F6FEB'
+                            : group.label === 'Catchers' ? '#F5A623'
+                            : group.label === 'Infield'  ? '#3FB950'
+                            : group.label === 'Outfield' ? '#F85149'
+                            : '#B98CFF'
+                          return (
                           <div key={group.label}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
-                              {group.label}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+                              <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: groupColor, boxShadow: `0 0 6px ${groupColor}88` }} />
+                              <span style={{ fontSize: 13, fontWeight: 700, color: groupColor, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                {group.label}
+                              </span>
                             </div>
-                            <div style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden' }}>
-                              {group.players.map((p, i) => (
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                              {group.players.map((p) => (
                                 <div key={p.id} style={{
-                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                  padding: '10px 14px',
-                                  borderBottom: i < group.players.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                                  backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D',
+                                  borderTop: `2px solid ${groupColor}`, padding: '10px 6px 8px',
                                 }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    {p.jerseyNumber && (
-                                      <span style={{ fontSize: 13, fontWeight: 800, color: teamColor, width: 24, textAlign: 'right', flexShrink: 0 }}>
-                                        #{p.jerseyNumber}
-                                      </span>
-                                    )}
-                                    <span style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>{p.name}</span>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={`https://img.mlbstatic.com/mlb-photos/image/upload/w_120,d_people:generic:headshot:silo:current.png,q_auto:best,f_auto/v1/people/${p.id}/headshot/67/current`}
+                                    alt=""
+                                    width={64} height={86}
+                                    style={{ width: 64, height: 86, borderRadius: 8, objectFit: 'cover', backgroundColor: '#0D1117', border: `1px solid ${groupColor}55`, marginBottom: 6 }}
+                                  />
+                                  <div style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3', textAlign: 'center', lineHeight: 1.25 }}>
+                                    {p.name}
                                   </div>
-                                  <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', padding: '2px 8px', borderRadius: 10 }}>
-                                    {p.position}
-                                  </span>
+                                  <div style={{ fontSize: 11, fontWeight: 700, color: groupColor, marginTop: 3 }}>
+                                    {p.jerseyNumber ? `#${p.jerseyNumber} · ` : ''}{p.position}
+                                  </div>
                                 </div>
                               ))}
                             </div>
                           </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     </section>
                   )
