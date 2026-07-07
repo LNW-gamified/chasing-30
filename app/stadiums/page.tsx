@@ -473,28 +473,46 @@ export default function StadiumsPage() {
         {/* ── Hero progress banner ──────────────────────────────── */}
         <div style={{ backgroundColor: '#161B22', borderBottom: '1px solid #30363D' }}>
           <div style={{ maxWidth: 960, margin: '0 auto', padding: '20px 16px' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>The Ballparks</div>
-                <div style={{ fontSize: 28, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1, marginBottom: 4 }}>{visitedCount} of 30 visited</div>
-                <div style={{ fontSize: 14, color: '#8B949E' }}>Chasing all 30 MLB ballparks</div>
-              </div>
-              {activeTab === 'mlb' && (
-                <button onClick={() => { setShowSearch(v => !v); if (showSearch) setSearch('') }} aria-label="Toggle search" style={{ background: 'rgba(139,148,158,0.1)', border: '1px solid #30363D', borderRadius: '50%', width: 36, height: 36, flexShrink: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
-                  {showSearch ? <X size={16} color="#8B949E" /> : <Search size={16} color="#8B949E" />}
-                </button>
-              )}
-            </div>
-            <div style={{ height: 8, backgroundColor: '#30363D', borderRadius: 4, marginBottom: 14, overflow: 'hidden' }}>
-              <div style={{ height: '100%', borderRadius: 4, width: `${pct}%`, backgroundColor: '#3FB950', transition: 'width 0.5s' }} />
-            </div>
-            <div style={{ display: 'flex', gap: 20 }}>
-              <div><span style={{ fontSize: 20, fontWeight: 800, color: '#3FB950' }}>{visitedCount}</span><span style={{ fontSize: 13, color: '#8B949E', marginLeft: 4 }}>visited</span></div>
-              <div><span style={{ fontSize: 20, fontWeight: 800, color: '#E6EDF3' }}>{30 - visitedCount}</span><span style={{ fontSize: 13, color: '#8B949E', marginLeft: 4 }}>remaining</span></div>
-              <div><span style={{ fontSize: 20, fontWeight: 800, color: '#F5A623' }}>{pct}%</span><span style={{ fontSize: 13, color: '#8B949E', marginLeft: 4 }}>complete</span></div>
-            </div>
+            {(() => {
+              const isML = activeTab === 'minor_league'
+              const mlTotal   = minorLeagueStadiums.length
+              const mlVisited = minorLeagueStadiums.filter(st => mlVisitCount(st.id) > 0).length
+              const mlPct     = mlTotal > 0 ? Math.round((mlVisited / mlTotal) * 100) : 0
+              const shownCount     = isML ? mlVisited : visitedCount
+              const shownTotal     = isML ? mlTotal   : 30
+              const shownPct       = isML ? mlPct     : pct
+              const shownRemaining = shownTotal - shownCount
+              const eyebrow  = isML ? 'The Farm System' : 'The Ballparks'
+              const subtitle = isML ? 'Chasing every High-A park and beyond' : 'Chasing all 30 MLB ballparks'
+              const barColor = isML ? '#F5A623' : '#3FB950'
+              return (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>{eyebrow}</div>
+                      <div style={{ fontSize: 28, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1, marginBottom: 4 }}>{shownCount} of {shownTotal} visited</div>
+                      <div style={{ fontSize: 14, color: '#8B949E' }}>{subtitle}</div>
+                    </div>
+                    {activeTab === 'mlb' && (
+                      <button onClick={() => { setShowSearch(v => !v); if (showSearch) setSearch('') }} aria-label="Toggle search" style={{ background: 'rgba(139,148,158,0.1)', border: '1px solid #30363D', borderRadius: '50%', width: 36, height: 36, flexShrink: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
+                        {showSearch ? <X size={16} color="#8B949E" /> : <Search size={16} color="#8B949E" />}
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ height: 8, backgroundColor: '#30363D', borderRadius: 4, marginBottom: 14, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', borderRadius: 4, width: `${shownPct}%`, backgroundColor: barColor, transition: 'width 0.5s' }} />
+                  </div>
+                  <div style={{ display: 'flex', gap: 20 }}>
+                    <div><span style={{ fontSize: 20, fontWeight: 800, color: '#3FB950' }}>{shownCount}</span><span style={{ fontSize: 13, color: '#8B949E', marginLeft: 4 }}>visited</span></div>
+                    <div><span style={{ fontSize: 20, fontWeight: 800, color: '#E6EDF3' }}>{shownRemaining}</span><span style={{ fontSize: 13, color: '#8B949E', marginLeft: 4 }}>remaining</span></div>
+                    <div><span style={{ fontSize: 20, fontWeight: 800, color: '#F5A623' }}>{shownPct}%</span><span style={{ fontSize: 13, color: '#8B949E', marginLeft: 4 }}>complete</span></div>
+                  </div>
+                </>
+              )
+            })()}
           </div>
         </div>
+
 
         {/* ── Tabs ─────────────────────────────────────────────── */}
         <div style={{ backgroundColor: '#161B22', borderBottom: '1px solid #30363D', overflowX: 'auto' }}>
@@ -657,7 +675,7 @@ export default function StadiumsPage() {
             <>
               <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: '#E6EDF3', marginBottom: 4 }}>Minor League Stadiums</div>
-                <div style={{ fontSize: 13, color: '#8B949E' }}>High-A and beyond — track every minor league game you attend</div>
+                <div style={{ fontSize: 13, color: '#8B949E' }}>High-A and beyond. Track every minor league game you attend.</div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {minorLeagueStadiums.map(st => (
