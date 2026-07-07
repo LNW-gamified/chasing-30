@@ -13,6 +13,7 @@ import MiLBLogo from '@/components/MiLBLogo'
 import BaseballLifeForm from '@/components/BaseballLifeForm'
 import { TEAM_BTN_COLOR, TEAM_GRADIENTS, darkerOf } from '@/lib/team-colors'
 import { formatDate } from '@/lib/utils'
+import { fetchScoringPlays, type ScoringPlay } from '@/lib/mlb-api'
 import { getUserTimezone } from '@/lib/user-timezone'
 import GiveawayFoodEditor, { type EditorItem } from '@/components/GiveawayFoodEditor'
 import CollectibleLightbox from '@/components/CollectibleLightbox'
@@ -237,6 +238,8 @@ export default function MinorLeagueDetailPage() {
 
   const [lightboxUrl,    setLightboxUrl]    = useState<string | null>(null)
   const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; giveaway_type: string | null; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; baseball_life_entry_id: string | null }>>([])
+  const [opponentLogos, setOpponentLogos] = useState<Record<string, { milbTeamId: number | null; logoUrl: string | null; affiliate: string | null }>>({})
+  const [scoringPlaysByVisit, setScoringPlaysByVisit] = useState<Record<string, ScoringPlay[]>>({})
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
   const [viewingItem, setViewingItem] = useState<EditorItem | null>(null)
   const [collectionTypeFilter, setCollectionTypeFilter] = useState<string>('all')
@@ -266,18 +269,25 @@ export default function MinorLeagueDetailPage() {
 
   async function load() {
     const supabase = createClient()
-    const [{ data: s }, { data: v }] = await Promise.all([
+    const [{ data: s }, { data: v }, { data: allTeams }] = await Promise.all([
       supabase.from('minor_league_stadiums').select('*').eq('id', id).single(),
       supabase.from('baseball_life_entries')
         .select('id,visit_date,opponent,home_team,away_team,final_score_home,final_score_away,ticket_section,ticket_row,ticket_seats,notes,moments,companions,weather_temp,weather_conditions,game_pk,game_data')
         .eq('category', 'minor_league')
         .eq('minor_league_stadium_id', id)
         .order('visit_date', { ascending: false }),
+      supabase.from('minor_league_stadiums').select('team,milb_team_id,logo_url,affiliate'),
     ])
 
     setStadium(s)
     setVisits((v ?? []) as BleEntry[])
     setLoading(false)
+
+    const logoLookup: Record<string, { milbTeamId: number | null; logoUrl: string | null; affiliate: string | null }> = {}
+    for (const t of (allTeams ?? []) as any[]) {
+      logoLookup[t.team] = { milbTeamId: t.milb_team_id, logoUrl: t.logo_url, affiliate: t.affiliate }
+    }
+    setOpponentLogos(logoLookup)
 
     if (s?.affiliate) {
       supabase.from('stadiums').select('id').eq('abbreviation', s.affiliate).maybeSingle()
@@ -359,6 +369,18 @@ export default function MinorLeagueDetailPage() {
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchCollection() }, [fetchCollection])
+
+  // Lazy-load scoring plays when a game is expanded, same live-feed endpoint
+  // already used for MLB games, confirmed to return real play-by-play for
+  // MiLB gamePks too.
+  useEffect(() => {
+    if (!expandedVisit) return
+    const visit = visits.find(v => v.id === expandedVisit)
+    if (!visit?.game_pk || scoringPlaysByVisit[expandedVisit]) return
+    fetchScoringPlays(visit.game_pk).then(plays => {
+      setScoringPlaysByVisit(prev => ({ ...prev, [expandedVisit]: plays }))
+    })
+  }, [expandedVisit, visits, scoringPlaysByVisit])
 
   const visitsByYear = visits.reduce<Record<string, typeof visits>>((acc, v) => {
     const year = v.visit_date.slice(0, 4)
@@ -789,6 +811,16 @@ export default function MinorLeagueDetailPage() {
                                   ) : (
                                     <span style={{ fontSize: 13, color: '#6E7681', fontWeight: 700 }}>VS</span>
                                   )}
+                                  {opponentLogos[opponent] ? (
+                                    <MiLBLogo
+                                      milbTeamId={opponentLogos[opponent].milbTeamId}
+                                      fallbackAbbr={opponentLogos[opponent].affiliate ?? ''}
+                                      size={42}
+                                      logoUrl={opponentLogos[opponent].logoUrl}
+                                    />
+                                  ) : (
+                                    <div style={{ width: 42, height: 42, borderRadius: '50%', backgroundColor: '#1C2430', flexShrink: 0 }} />
+                                  )}
                                 </div>
 
                                 {/* Opponent + giveaway */}
@@ -1004,7 +1036,57 @@ export default function MinorLeagueDetailPage() {
                                     </div>
                                   )
                                 })()}
-  
+
+                                {/* Scoring plays — go-ahead play highlighted, same logic as MLB */}
+                                {(() => {
+                                  const plays = scoringPlaysByVisit[visit.id]
+                                  if (!plays || plays.length === 0) return null
+                                  let goAheadIdx: number | null = null
+                                  if (hasScore && visit.final_score_home !== visit.final_score_away) {
+                                    for (let i = plays.length - 1; i >= 0; i--) {
+                                      const p = plays[i]
+                                      const winnerAhead = homeWon ? p.homeScore > p.awayScore : p.awayScore > p.homeScore
+                                      if (winnerAhead) goAheadIdx = i
+                                      else break
+                                    }
+                                  }
+                                  return (
+                                    <div style={{ marginTop: 12 }}>
+                                      <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                                        Scoring Plays
+                                      </div>
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                        {plays.map((play, i) => {
+                                          const isGoAhead = i === goAheadIdx
+                                          return (
+                                            <div key={i} style={{
+                                              display: 'flex', gap: 10, padding: '8px 10px', borderRadius: 8,
+                                              backgroundColor: isGoAhead ? 'rgba(63,185,80,0.08)' : '#1C2430',
+                                              border: isGoAhead ? '1px solid rgba(63,185,80,0.35)' : '1px solid #30363D',
+                                              borderLeft: isGoAhead ? '3px solid #3FB950' : '1px solid #30363D',
+                                            }}>
+                                              <div style={{ flexShrink: 0, fontSize: 13, fontWeight: 700, color: '#8B949E', width: 44, paddingTop: 1 }}>
+                                                {play.halfInning === 'top' ? '▲' : '▼'}{play.inning}
+                                              </div>
+                                              <div style={{ flex: 1, minWidth: 0 }}>
+                                                {isGoAhead && (
+                                                  <div style={{ fontSize: 11, fontWeight: 700, color: '#3FB950', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>
+                                                    Go-ahead
+                                                  </div>
+                                                )}
+                                                <div style={{ fontSize: 12, color: '#C9D1D9', lineHeight: 1.5 }}>{play.description}</div>
+                                              </div>
+                                              <div style={{ flexShrink: 0, fontSize: 13, fontWeight: 800, color: '#8B949E', paddingTop: 1 }}>
+                                                {play.awayScore}–{play.homeScore}
+                                              </div>
+                                            </div>
+                                          )
+                                        })}
+                                      </div>
+                                    </div>
+                                  )
+                                })()}
+
                                 {!visit.game_data && (
                                   <button
                                     onClick={() => handleFetchStats(visit.id)}
