@@ -11,7 +11,7 @@ import {
 import TeamLogo from '@/components/TeamLogo'
 import MiLBLogo from '@/components/MiLBLogo'
 import BaseballLifeForm from '@/components/BaseballLifeForm'
-import { TEAM_BTN_COLOR, TEAM_GRADIENTS } from '@/lib/team-colors'
+import { TEAM_BTN_COLOR, TEAM_GRADIENTS, darkerOf } from '@/lib/team-colors'
 import { formatDate } from '@/lib/utils'
 import { getUserTimezone } from '@/lib/user-timezone'
 import GiveawayFoodEditor, { type EditorItem } from '@/components/GiveawayFoodEditor'
@@ -449,6 +449,7 @@ export default function MinorLeagueDetailPage() {
 
   const visited         = visits.length > 0
   const affiliateColors = TEAM_GRADIENTS[stadium.affiliate] ?? ['#0B1117', '#161B22']
+  const heroTint         = darkerOf(affiliateColors)
   const teamColor       = TEAM_BTN_COLOR[stadium.affiliate] ?? '#1F6FEB'
   const heroPhoto       = !heroPhotoError ? stadium.image_url : null
 
@@ -515,7 +516,7 @@ export default function MinorLeagueDetailPage() {
           )}
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.2) 35%, rgba(0,0,0,0.65) 65%, rgba(0,0,0,0.9) 100%)',
+            background: `linear-gradient(to bottom, ${heroTint}00 0%, ${heroTint}1A 35%, ${heroTint}99 65%, ${heroTint}E0 100%)`,
           }} />
 
           <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10 }}>
@@ -543,45 +544,43 @@ export default function MinorLeagueDetailPage() {
             <Share2 size={16} color="#ffffff" />
           </button>
 
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 16px 18px', zIndex: 10 }}>
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 16px 14px', zIndex: 10 }}>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: 4 }}>
-              {stadium.team} — {stadium.level} affiliate of the {stadium.affiliate_full}
+              {stadium.team}. {stadium.level} affiliate of the {stadium.affiliate_full}.
             </div>
             <h1 style={{ margin: '0 0 4px', fontSize: 28, fontWeight: 800, color: '#ffffff', lineHeight: 1.1, textShadow: '0 2px 10px rgba(0,0,0,0.4)' }}>
               {stadium.name}
             </h1>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.78)' }}>
                 {stadium.city}, {stadium.state}
               </div>
-              <TeamLogo abbreviation={stadium.affiliate} size={36} style={{ opacity: 0.9 }} />
+              <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={36} logoUrl={stadium.logo_url} />
+            </div>
+            {/* Stat chips — folded into the hero instead of a separate boxy row */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[
+                { Icon: Users,        value: stadium.capacity ? stadium.capacity.toLocaleString() : '—', label: 'Capacity' },
+                { Icon: CalendarDays, value: stadium.opened   ? String(stadium.opened)            : '—', label: 'Opened'   },
+                { Icon: Trophy,       value: stadium.level,                                               label: 'Level'    },
+              ].map(({ Icon, value, label }) => (
+                <div key={label} style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  backgroundColor: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(6px)',
+                  borderRadius: 10, padding: '6px 10px',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                }}>
+                  <Icon size={13} color="rgba(255,255,255,0.75)" strokeWidth={2} />
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#ffffff', lineHeight: 1.1 }}>{value}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
         {/* ── Max-width wrapper ───────────────────────────────────────────── */}
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
-
-          {/* ── STATS BAR ──────────────────────────────────────────────────── */}
-          <div style={{ backgroundColor: '#161B22', borderBottom: '1px solid #30363D', padding: '14px 12px' }}>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {[
-                { Icon: Users,        value: stadium.capacity ? stadium.capacity.toLocaleString() : '—', label: 'Capacity'    },
-                { Icon: CalendarDays, value: stadium.opened   ? String(stadium.opened)            : '—', label: 'Opened'      },
-                { Icon: Trophy,       value: stadium.level,                                               label: 'Level'       },
-              ].map(({ Icon, value, label }) => (
-                <div key={label} style={{
-                  flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  backgroundColor: '#1C2430', borderRadius: 12, padding: '12px 6px',
-                  border: '1px solid #30363D',
-                }}>
-                  <Icon size={15} color={teamColor} strokeWidth={2} style={{ marginBottom: 5 }} />
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</div>
-                  <div style={{ fontWeight: 800, fontSize: 15, color: '#E6EDF3', lineHeight: 1.2, textAlign: 'center' }}>{value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* ── ACTION BUTTON ──────────────────────────────────────────────── */}
           <div style={{ padding: '16px 16px 0' }}>
@@ -742,42 +741,117 @@ export default function MinorLeagueDetailPage() {
                         const homeWon     = hasScore && (visit.final_score_home! > visit.final_score_away!)
                         const borderColor = hasScore ? (homeWon ? '#3FB950' : '#F85149') : teamColor
                         const opponent    = visit.opponent ?? visit.away_team ?? '—'
+                        const giveawayName = stadiumCollectibles.find(c => c.baseball_life_entry_id === visit.id && c.category === 'giveaway')?.name
+                        const hasSeat = visit.ticket_section || visit.ticket_row || (visit.ticket_seats && visit.ticket_seats.length > 0)
+                        const dt = new Date(visit.visit_date + 'T12:00:00')
+                        const dayAbbr  = dt.toLocaleDateString('en-US', { weekday: 'short' })
+                        const monthDay = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                        const year2    = dt.getFullYear()
 
                         return (
                           <div key={visit.id}>
                             <button
                               onClick={() => setExpandedVisit(isExpanded ? null : visit.id)}
+                              className="flex flex-col md:flex-row"
                               style={{
-                                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                                padding: '12px 14px',
-                                backgroundColor: isExpanded ? '#1C2430' : '#161B22',
+                                width: '100%', alignItems: 'stretch', gap: 0, padding: 0,
+                                backgroundImage: `linear-gradient(135deg, ${teamColor}40 0%, ${isExpanded ? '#1C2430' : '#161B22'} 65%)`,
                                 border: '1px solid #30363D',
                                 borderLeft: `3px solid ${borderColor}`,
                                 borderRadius: isExpanded ? '12px 12px 0 0' : 12,
-                                cursor: 'pointer', textAlign: 'left',
+                                cursor: 'pointer', textAlign: 'left', overflow: 'hidden',
                               }}
                             >
-                              <div style={{ width: 40, height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={36} logoUrl={stadium.logo_url} />
-                              </div>
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 3, fontWeight: 500 }}>
-                                  {formatDate(visit.visit_date)}
+                              {/* Main card body */}
+                              <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px', overflow: 'hidden' }}>
+                                {/* Date badge */}
+                                <div style={{
+                                  flexShrink: 0, width: 52, textAlign: 'center',
+                                  backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 9, padding: '6px 2px',
+                                }}>
+                                  <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase' }}>{dayAbbr}</div>
+                                  <div style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.15 }}>{monthDay}</div>
+                                  <div style={{ fontSize: 10, color: '#6E7681' }}>{year2}</div>
                                 </div>
-                                <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
-                                  <span>vs {opponent}{hasScore && ` · ${visit.final_score_away}–${visit.final_score_home}`}</span>
-                                  {hasScore && (
-                                    <span style={{
-                                      width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-                                      backgroundColor: homeWon ? '#3FB950' : '#F85149',
-                                    }} />
+
+                                {/* Logo + score */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                                  <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} size={42} logoUrl={stadium.logo_url} />
+                                  {hasScore ? (
+                                    <div style={{ textAlign: 'center', minWidth: 54 }}>
+                                      <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1, color: homeWon ? '#3FB950' : '#E6EDF3' }}>
+                                        {visit.final_score_home}<span style={{ color: '#6E7681', fontWeight: 500 }}>-</span>{visit.final_score_away}
+                                      </div>
+                                      <span style={{ fontSize: 10, fontWeight: 800, color: homeWon ? '#3FB950' : '#F85149' }}>
+                                        {homeWon ? 'WIN' : 'LOSS'}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span style={{ fontSize: 13, color: '#6E7681', fontWeight: 700 }}>VS</span>
                                   )}
                                 </div>
+
+                                {/* Opponent + giveaway */}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    vs {opponent}
+                                  </div>
+                                  {giveawayName && (
+                                    <span style={{
+                                      display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4,
+                                      fontSize: 12, fontWeight: 700, color: '#F5A623',
+                                      backgroundColor: 'rgba(245,166,35,0.12)',
+                                      border: '1px solid rgba(245,166,35,0.3)',
+                                      borderRadius: 20, padding: '2px 8px',
+                                      maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                    }}>
+                                      🎁 {giveawayName}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="md:hidden" style={{ flexShrink: 0 }}>
+                                  <ChevronRight
+                                    size={16}
+                                    color={isExpanded ? '#E6EDF3' : '#8B949E'}
+                                    style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}
+                                  />
+                                </div>
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                                {stadiumCollectibles.some(c => c.baseball_life_entry_id === visit.id && c.category === 'giveaway') && (
-                                  <span style={{ fontSize: 13 }}>🎁</span>
-                                )}
+
+                              {/* Ticket-stub: seat info */}
+                              {hasSeat && (
+                                <div
+                                  className="w-full md:w-[92px] flex-row md:flex-col border-t-[1.5px] md:border-t-0 md:border-l-[1.5px] border-dashed border-[#4A5568]"
+                                  style={{
+                                    flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
+                                    padding: '8px 12px', backgroundColor: 'rgba(0,0,0,0.15)',
+                                  }}
+                                >
+                                  {visit.ticket_section && (
+                                    <div style={{ textAlign: 'center' }}>
+                                      <div style={{ fontSize: 9, fontWeight: 700, color: '#6E7681', textTransform: 'uppercase' }}>Sec</div>
+                                      <div style={{ fontSize: 13, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1 }}>{visit.ticket_section}</div>
+                                    </div>
+                                  )}
+                                  <div style={{ display: 'flex', gap: 16 }}>
+                                    {visit.ticket_row && (
+                                      <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: 9, fontWeight: 700, color: '#6E7681', textTransform: 'uppercase' }}>Row</div>
+                                        <div style={{ fontSize: 12, fontWeight: 700, color: '#C9D1D9', lineHeight: 1.1 }}>{visit.ticket_row}</div>
+                                      </div>
+                                    )}
+                                    {visit.ticket_seats && visit.ticket_seats.length > 0 && (
+                                      <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: 9, fontWeight: 700, color: '#6E7681', textTransform: 'uppercase' }}>Seat</div>
+                                        <div style={{ fontSize: 12, fontWeight: 700, color: '#C9D1D9', lineHeight: 1.1 }}>{visit.ticket_seats.join(', ')}</div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="hidden md:flex" style={{ flexShrink: 0, alignItems: 'center', padding: '0 12px' }}>
                                 <ChevronRight
                                   size={16}
                                   color={isExpanded ? '#E6EDF3' : '#8B949E'}
