@@ -7,7 +7,6 @@ import { CalendarDays, ClipboardList, MapPin, DollarSign, Trophy, Eye, Star } fr
 import TodayGames, { type TodayGame } from '@/components/TodayGames'
 import FarmSystemToday from '@/components/FarmSystemToday'
 import Standings from '@/components/Standings'
-import FavoriteTeamPicker from '@/components/FavoriteTeamPicker'
 import DashboardSpecialVisitButton from '@/components/DashboardSpecialVisitButton'
 import OnThisDay, { type HistoryFact } from '@/components/OnThisDay'
 import HeroRing, { type RingDot } from '@/components/HeroRing'
@@ -636,9 +635,6 @@ export default async function DashboardPage() {
             View full stats →
           </Link>
         </div>
-
-{/* ── Favorite team picker ─────────────────────────────────────── */}
-        <FavoriteTeamPicker userId={userId} currentFavAbbr={favAbbr} />
 
       </div>
     </div>
