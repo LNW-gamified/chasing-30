@@ -1144,10 +1144,19 @@ export default function MilestoneGrid({
                   </div>
                 )}
 
-                {/* Manual badge */}
+                {/* Manual / Auto-tracked badge */}
                 <div style={{ position: 'absolute', bottom: 10, left: 10, display: 'flex', alignItems: 'center', gap: 3 }}>
-                  <Hand size={9} color={hasClaims ? tier.color : '#8B949E'} />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: hasClaims ? tier.color : '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Manual</span>
+                  {s.tracking_type === 'automatic' ? (
+                    <>
+                      <Zap size={9} color={hasClaims ? tier.color : '#8B949E'} />
+                      <span style={{ fontSize: 13, fontWeight: 700, color: hasClaims ? tier.color : '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tracked</span>
+                    </>
+                  ) : (
+                    <>
+                      <Hand size={9} color={hasClaims ? tier.color : '#8B949E'} />
+                      <span style={{ fontSize: 13, fontWeight: 700, color: hasClaims ? tier.color : '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Manual</span>
+                    </>
+                  )}
                 </div>
 
                 {/* + Log button for repeatable */}

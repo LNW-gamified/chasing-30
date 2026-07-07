@@ -37,7 +37,7 @@ export const MILESTONE_POINTS: Record<string, number> = {
   // Manual/static experiences (components/MilestoneGrid.tsx "Manual" cards) —
   // these have no auto-tracked equivalent, so points are assigned here using
   // the same 50/75/100 scale rather than a separate system.
-  opening_day: 75, bobblehead: 50,
+  bobblehead: 50,
   foul_ball: 100, autograph: 100, met_player: 100,
   jumbotron: 75, seventh_inning: 50, fireworks_night: 50,
   rivalry_game: 50, enemy_territory: 75, rain_delay: 75,

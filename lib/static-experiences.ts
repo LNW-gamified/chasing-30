@@ -9,8 +9,10 @@ export interface StaticExperience {
 }
 
 export const STATIC_EXPERIENCES: StaticExperience[] = [
-  // manual_once
-  { id: 'opening_day',     name: 'Opening Day',            description: 'Attend Opening Day for any team',              icon: '🌱', tracking_type: 'manual_once' },
+  // Note: Opening Day has no manual entry here — it's fully covered by the
+  // auto-tracked "First Pitch of the Year" milestone (opening_day_attendance
+  // in lib/milestones.ts), which fires when a logged mlb_special_event's
+  // event_type includes "opening day". A manual entry would just duplicate it.
   // automatic (earned by logging data elsewhere — no manual claim form)
   { id: 'bobblehead',      name: 'Bobblehead Collection',  description: 'Score a giveaway item at the park',           icon: '🪆', tracking_type: 'automatic' },
   // manual_repeatable
