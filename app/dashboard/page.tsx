@@ -445,13 +445,13 @@ export default async function DashboardPage() {
             {/* Header + stats zone — watermark anchors here, not to the whole
                 card, since Standings below makes the card's height variable */}
             <div style={{ position: 'relative' }}>
-              <div style={{
+              <div className="hidden md:block" style={{
                 position: 'absolute', right: -20, top: '50%', transform: 'translateY(-50%)',
                 width: 160, height: 160, borderRadius: '50%',
                 background: `radial-gradient(circle, ${TEAM_GRADIENTS[favStadium.abbreviation]?.[0] ?? '#1F6FEB'}33 0%, transparent 70%)`,
                 pointerEvents: 'none',
               }} />
-              <div style={{ position: 'absolute', right: -10, top: '50%', transform: 'translateY(-50%)', opacity: 0.3, pointerEvents: 'none' }}>
+              <div className="hidden md:block" style={{ position: 'absolute', right: -10, top: '50%', transform: 'translateY(-50%)', opacity: 0.3, pointerEvents: 'none' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={getTeamLogoUrl(favStadium.abbreviation)} alt="" width={120} height={120} style={{ objectFit: 'contain', display: 'block' }} />
               </div>

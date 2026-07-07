@@ -141,18 +141,18 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
       {/* ── Section header ─────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 12, paddingLeft: 14,
+        marginBottom: 12, paddingLeft: 14, gap: 8, flexWrap: 'wrap',
         borderLeft: '3px solid #F5A623', flexShrink: 0,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 18, fontWeight: 800, color: '#E6EDF3', letterSpacing: '-0.3px' }}>
             Today at the Ballpark
           </span>
           <div className="animate-pulse" style={{ width: 7, height: 7, backgroundColor: '#F85149', borderRadius: '50%' }}/>
-          <span style={{ fontSize: 12, color: '#8B949E' }}>{games.length} games</span>
+          <span style={{ fontSize: 12, color: '#8B949E', whiteSpace: 'nowrap' }}>{games.length} games</span>
         </div>
         {updatedLabel && (
-          <span style={{ fontSize: 13, color: '#8B949E' }}>{updatedLabel}</span>
+          <span style={{ fontSize: 13, color: '#8B949E', whiteSpace: 'nowrap' }}>{updatedLabel}</span>
         )}
       </div>
 
