@@ -474,17 +474,29 @@ export default function StadiumsPage() {
         <div style={{ backgroundColor: '#161B22', borderBottom: '1px solid #30363D' }}>
           <div style={{ maxWidth: 960, margin: '0 auto', padding: '20px 16px' }}>
             {(() => {
-              const isML = activeTab === 'minor_league'
+              const isML   = activeTab === 'minor_league'
+              const isEv   = activeTab === 'events'
+              const isExp  = activeTab === 'experiences'
               const mlTotal   = minorLeagueStadiums.length
               const mlVisited = minorLeagueStadiums.filter(st => mlVisitCount(st.id) > 0).length
               const mlPct     = mlTotal > 0 ? Math.round((mlVisited / mlTotal) * 100) : 0
-              const shownCount     = isML ? mlVisited : visitedCount
-              const shownTotal     = isML ? mlTotal   : 30
-              const shownPct       = isML ? mlPct     : pct
+              const evTotal    = baseballEvents.length
+              const evAttended = baseballEvents.filter(ev => eventAttendedCount(ev.slug) > 0).length
+              const evPct      = evTotal > 0 ? Math.round((evAttended / evTotal) * 100) : 0
+              const expTotal    = experiences.length
+              const expAttended = experiences.filter(exp => experienceVisited(exp)).length
+              const expPct      = expTotal > 0 ? Math.round((expAttended / expTotal) * 100) : 0
+
+              const shownCount = isML ? mlVisited : isEv ? evAttended : isExp ? expAttended : visitedCount
+              const shownTotal = isML ? mlTotal   : isEv ? evTotal    : isExp ? expTotal    : 30
+              const shownPct   = isML ? mlPct     : isEv ? evPct      : isExp ? expPct      : pct
               const shownRemaining = shownTotal - shownCount
-              const eyebrow  = isML ? 'The Farm System' : 'The Ballparks'
-              const subtitle = isML ? 'Chasing every High-A park and beyond' : 'Chasing all 30 MLB ballparks'
-              const barColor = isML ? '#F5A623' : '#3FB950'
+              const eyebrow = isML ? 'The Farm System' : isEv ? 'The Events' : isExp ? 'The Pilgrimages' : 'The Ballparks'
+              const subtitle = isML ? 'Chasing every High-A park and beyond'
+                : isEv ? 'Chasing every marquee event on the calendar'
+                : isExp ? 'Chasing every museum, factory, and historic park'
+                : 'Chasing all 30 MLB ballparks'
+              const barColor = isML ? '#F5A623' : isEv ? '#F5A623' : isExp ? '#58A6FF' : '#3FB950'
               return (
                 <>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
@@ -565,7 +577,7 @@ export default function StadiumsPage() {
             <>
               <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: '#E6EDF3', marginBottom: 4 }}>MLB Events</div>
-                <div style={{ fontSize: 13, color: '#8B949E' }}>All-Star, World Series, Playoffs, and more — track every one</div>
+                <div style={{ fontSize: 13, color: '#8B949E' }}>All-Star, World Series, Playoffs, and more. Track every one.</div>
               </div>
 
               {/* Marquee Events — All-Star, Home Run Derby, World Series */}
@@ -656,7 +668,7 @@ export default function StadiumsPage() {
             <>
               <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: '#E6EDF3', marginBottom: 4 }}>Baseball Pilgrimages</div>
-                <div style={{ fontSize: 13, color: '#8B949E' }}>Museums, factories, historic parks — the must-visit baseball destinations</div>
+                <div style={{ fontSize: 13, color: '#8B949E' }}>Museums, factories, historic parks. The must-visit baseball destinations.</div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {experiences.map(exp => (
