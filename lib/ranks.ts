@@ -34,6 +34,14 @@ export const MILESTONE_POINTS: Record<string, number> = {
   rain_delay_survivor: 50, bl_rickwood_field: 75, bl_jackie_robinson_museum: 75,
   bl_london_series: 150, bl_mexico_series: 150, bl_puerto_rico_series: 150,
   bl_banana_ball: 75,
+  // Manual/static experiences (components/MilestoneGrid.tsx "Manual" cards) —
+  // these have no auto-tracked equivalent, so points are assigned here using
+  // the same 50/75/100 scale rather than a separate system.
+  opening_day: 75, bobblehead: 50,
+  foul_ball: 100, autograph: 100, met_player: 100,
+  jumbotron: 75, seventh_inning: 50, fireworks_night: 50,
+  rivalry_game: 50, enemy_territory: 75, rain_delay: 75,
+  early_bird: 50, jersey_day: 50, night_owl: 50,
 }
 
 export function getRank(pts: number) {

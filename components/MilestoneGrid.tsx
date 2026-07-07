@@ -1107,6 +1107,8 @@ export default function MilestoneGrid({
             const isBobble     = s.id === 'bobblehead'
             const count        = expClaims.length
             const hasClaims    = isBobble ? hasBobbleheadGiveaway : count > 0
+            const pts          = MILESTONE_POINTS[s.id] ?? 25
+            const tier         = getTierColor(pts)
 
             return (
               <button
@@ -1114,15 +1116,16 @@ export default function MilestoneGrid({
                 onClick={() => setSelected({ type: 'static', experience: s })}
                 style={{
                   position: 'relative', display: 'flex', flexDirection: 'column',
-                  padding: '16px 14px 14px', borderRadius: 16, border: 'none', cursor: 'pointer',
+                  padding: '16px 14px 14px', borderRadius: 16, cursor: 'pointer',
                   textAlign: 'left', overflow: 'hidden', minHeight: 150,
                   background: hasClaims
-                    ? 'linear-gradient(135deg, #1A1500 0%, #2A1E00 100%)'
+                    ? `linear-gradient(135deg, ${tier.color}22 0%, #161B22 70%)`
                     : '#161B22',
-                  borderWidth: 1.5, borderStyle: 'solid',
-                  borderColor: hasClaims ? 'rgba(245,166,35,0.4)' : '#30363D',
+                  borderWidth: hasClaims ? 2 : 1.5, borderStyle: 'solid',
+                  borderColor: hasClaims ? tier.color : `${tier.color}55`,
+                  boxShadow: hasClaims ? `0 0 16px ${tier.glow}` : 'none',
                   opacity: !hasClaims ? 0.75 : 1,
-                  transition: 'opacity 0.15s',
+                  transition: 'opacity 0.15s, border-color 0.15s',
                 }}
               >
                 {hasClaims && <div className="earned-card-shine" />}
@@ -1136,15 +1139,15 @@ export default function MilestoneGrid({
 
                 {/* Repeatable count badge */}
                 {isRepeatable && hasClaims && (
-                  <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 13, fontWeight: 800, color: '#F5A623', background: 'rgba(245,166,35,0.18)', padding: '2px 7px', borderRadius: 999 }}>
+                  <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 13, fontWeight: 800, color: tier.color, background: `${tier.color}2E`, padding: '2px 7px', borderRadius: 999 }}>
                     {isBobble ? `${count} collected` : `${count}×`}
                   </div>
                 )}
 
                 {/* Manual badge */}
                 <div style={{ position: 'absolute', bottom: 10, left: 10, display: 'flex', alignItems: 'center', gap: 3 }}>
-                  <Hand size={9} color={hasClaims ? '#F5A623' : '#8B949E'} />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: hasClaims ? '#F5A623' : '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Manual</span>
+                  <Hand size={9} color={hasClaims ? tier.color : '#8B949E'} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: hasClaims ? tier.color : '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Manual</span>
                 </div>
 
                 {/* + Log button for repeatable */}
