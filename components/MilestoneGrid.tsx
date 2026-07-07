@@ -1340,28 +1340,31 @@ export default function MilestoneGrid({
       </div>
 
       {/* ── Milestone detail modal (centered, auto achievements) ────────────── */}
-      {selected?.type === 'milestone' && (
+      {selected?.type === 'milestone' && (() => {
+        const modalPts  = MILESTONE_POINTS[selected.milestone.id] ?? 25
+        const modalTier = getTierColor(modalPts)
+        return (
         <div
           style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, backgroundColor: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(4px)' }}
           onClick={closeModal}
         >
           <div
             className={selected.isEarned ? 'unlock-card' : undefined}
-            style={{ width: '100%', maxWidth: 360, borderRadius: 20, backgroundColor: '#161B22', position: 'relative', border: selected.isEarned ? '1px solid rgba(245,166,35,0.4)' : '1px solid #30363D', overflow: 'hidden' }}
+            style={{ width: '100%', maxWidth: 360, borderRadius: 20, backgroundColor: '#161B22', position: 'relative', border: selected.isEarned ? `1px solid ${modalTier.color}66` : '1px solid #30363D', overflow: 'hidden' }}
             onClick={e => e.stopPropagation()}
           >
-            {selected.isEarned && <div className="earned-card-shine" style={{ position: 'absolute', top: 0, bottom: 0, width: '60%', background: 'linear-gradient(105deg,transparent,rgba(245,166,35,0.08),transparent)', pointerEvents: 'none', animation: 'earned-shine 3s ease-in-out infinite' }} />}
+            {selected.isEarned && <div className="earned-card-shine" style={{ position: 'absolute', top: 0, bottom: 0, width: '60%', background: `linear-gradient(105deg,transparent,${modalTier.color}14,transparent)`, pointerEvents: 'none', animation: 'earned-shine 3s ease-in-out infinite' }} />}
             <button onClick={closeModal} style={{ position: 'absolute', top: 14, right: 14, zIndex: 10, width: 30, height: 30, borderRadius: '50%', border: 'none', backgroundColor: 'rgba(139,148,158,0.12)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <X size={15} color="#8B949E" />
             </button>
 
             <div style={{ padding: '28px 24px 24px', textAlign: 'center' }}>
-              <div style={{ width: 80, height: 80, borderRadius: '50%', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, backgroundColor: selected.isEarned ? 'rgba(245,166,35,0.18)' : 'rgba(139,148,158,0.08)', border: `2px solid ${selected.isEarned ? 'rgba(245,166,35,0.4)' : '#30363D'}` }}>
+              <div style={{ width: 80, height: 80, borderRadius: '50%', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, backgroundColor: selected.isEarned ? `${modalTier.color}2E` : 'rgba(139,148,158,0.08)', border: `2px solid ${selected.isEarned ? modalTier.color : '#30363D'}` }}>
                 {selected.milestone.icon}
               </div>
 
               {selected.isEarned && (
-                <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.12em', color: '#F5A623', textTransform: 'uppercase', marginBottom: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.12em', color: modalTier.color, textTransform: 'uppercase', marginBottom: 8 }}>
                   Achievement Unlocked!
                 </div>
               )}
@@ -1371,23 +1374,23 @@ export default function MilestoneGrid({
 
               {selected.isEarned && (() => {
                 const m   = selected.milestone
-                const pts = MILESTONE_POINTS[m.id] ?? 25
+                const pts = modalPts
                 return (
                   <>
                     <div style={{ marginBottom: 14 }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 14px', borderRadius: 20, backgroundColor: 'rgba(63,185,80,0.12)', color: '#3FB950', fontSize: 13, fontWeight: 700 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 14px', borderRadius: 20, backgroundColor: `${modalTier.color}1F`, color: modalTier.color, fontSize: 13, fontWeight: 700 }}>
                         ⚡ +{pts} pts
                       </span>
                     </div>
                     {milestoneContext && (
                       <div style={{ padding: '12px 14px', borderRadius: 12, marginBottom: 18, backgroundColor: 'rgba(139,148,158,0.06)', border: '1px solid #30363D', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#E6EDF3' }}>
-                          <Calendar size={13} color="#F5A623" style={{ flexShrink: 0 }} />
+                          <Calendar size={13} color={modalTier.color} style={{ flexShrink: 0 }} />
                           {formatDate(milestoneContext.date)}
                         </div>
                         {milestoneContext.location && (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#E6EDF3' }}>
-                            <MapPin size={13} color="#F5A623" style={{ flexShrink: 0 }} />
+                            <MapPin size={13} color={modalTier.color} style={{ flexShrink: 0 }} />
                             {milestoneContext.location}
                           </div>
                         )}
@@ -1400,7 +1403,7 @@ export default function MilestoneGrid({
                       >
                         <Share2 size={14} /> Share
                       </button>
-                      <button onClick={closeModal} style={{ flex: 1, padding: '11px 0', borderRadius: 12, backgroundColor: '#F5A623', border: 'none', color: '#0B1117', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                      <button onClick={closeModal} style={{ flex: 1, padding: '11px 0', borderRadius: 12, backgroundColor: modalTier.color, border: 'none', color: '#0B1117', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
                         Awesome!
                       </button>
                     </div>
@@ -1445,7 +1448,8 @@ export default function MilestoneGrid({
             </div>
           </div>
         </div>
-      )}
+        )
+      })()}
 
       {/* ── Static experience bottom sheet (manual_once / manual_repeatable) ── */}
       {selected?.type === 'static' && (() => {
@@ -1457,6 +1461,7 @@ export default function MilestoneGrid({
         const isRepeatable = exp.tracking_type === 'manual_repeatable'
         const showsPlayer  = PLAYER_NAME_EXP.has(exp.id)
         const showForm     = !isAutomatic && (isRepeatable || !hasClaims)
+        const expTier      = getTierColor(MILESTONE_POINTS[exp.id] ?? 25)
 
         return (
           <div
@@ -1479,7 +1484,7 @@ export default function MilestoneGrid({
 
                 {/* Icon + heading */}
                 <div style={{ textAlign: 'center', marginBottom: 22 }}>
-                  <div style={{ width: 68, height: 68, borderRadius: '50%', margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, backgroundColor: hasClaims ? 'rgba(245,166,35,0.15)' : 'rgba(139,148,158,0.08)', border: `2px solid ${hasClaims ? 'rgba(245,166,35,0.35)' : '#30363D'}` }}>
+                  <div style={{ width: 68, height: 68, borderRadius: '50%', margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, backgroundColor: hasClaims ? `${expTier.color}26` : 'rgba(139,148,158,0.08)', border: `2px solid ${hasClaims ? expTier.color : '#30363D'}` }}>
                     {exp.icon}
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 800, color: '#E6EDF3', marginBottom: 4 }}>{exp.name}</div>
