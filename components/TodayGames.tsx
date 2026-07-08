@@ -132,7 +132,10 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
   if (games.length === 0) return null
 
   const updatedLabel = lastUpdated
-    ? secsAgo < 5 ? 'Updated just now' : `${secsAgo}s ago`
+    ? secsAgo < 5 ? 'Updated just now'
+    : secsAgo < 60 ? `${secsAgo}s ago`
+    : secsAgo < 3600 ? `${Math.floor(secsAgo / 60)}m ago`
+    : `${Math.floor(secsAgo / 3600)}h ago`
     : null
 
   return (
