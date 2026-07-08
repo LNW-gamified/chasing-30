@@ -118,7 +118,20 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
     if (!inPollWindow()) return
     poll()                              // refresh immediately on mount
     const id = setInterval(poll, 60_000)
-    return () => clearInterval(id)
+
+    // Background tabs get throttled or fully paused by the browser to save
+    // resources, so the 60s interval can silently stall while the tab isn't
+    // active. Force a fresh poll the moment it becomes visible again instead
+    // of leaving stale data up until a manual reload.
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') poll()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [poll])
 
   useEffect(() => {
