@@ -479,16 +479,18 @@ export async function fetchMinorLeagueAffiliates(teamAbbr: string): Promise<MiLB
 }
 
 export interface FarmGame {
-  affiliateName: string
-  level:         string
-  opponent:      string
-  isHome:        boolean
-  teamScore:     number | null
-  oppScore:      number | null
-  isLive:        boolean
-  isFinal:       boolean
-  gameDate:      string
-  inning:        string | null
+  affiliateName:   string
+  affiliateMilbId: number
+  opponentMilbId:  number | null
+  level:           string
+  opponent:        string
+  isHome:          boolean
+  teamScore:       number | null
+  oppScore:        number | null
+  isLive:          boolean
+  isFinal:         boolean
+  gameDate:        string
+  inning:          string | null
 }
 
 // Fetches today's game (if any) for each affiliate. MLB's schedule endpoint
@@ -508,13 +510,16 @@ export async function fetchFarmSystemToday(affiliates: MiLBAffiliate[]): Promise
       if (!game) return null
 
       const isHome = game.teams?.home?.team?.id === aff.id
-      const opponent = (isHome ? game.teams?.away?.team?.name : game.teams?.home?.team?.name) ?? 'TBD'
+      const opponentTeam = isHome ? game.teams?.away?.team : game.teams?.home?.team
+      const opponent = opponentTeam?.name ?? 'TBD'
       const ls = game.linescore
       const inningNum  = ls?.currentInning ?? null
       const inningHalf = ls?.isTopInning === false ? 'Bot' : 'Top'
 
       return {
-        affiliateName: aff.name,
+        affiliateName:   aff.name,
+        affiliateMilbId: aff.id,
+        opponentMilbId:  opponentTeam?.id ?? null,
         level:         aff.level,
         opponent,
         isHome,
