@@ -793,7 +793,7 @@ export default function MinorLeagueDetailPage() {
                                 }}>
                                   <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase' }}>{dayAbbr}</div>
                                   <div style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.15 }}>{monthDay}</div>
-                                  <div style={{ fontSize: 10, color: '#6E7681' }}>{year2}</div>
+                                  <div style={{ fontSize: 10, color: '#8B949E' }}>{year2}</div>
                                 </div>
 
                                 {/* Logo + score */}
@@ -862,21 +862,21 @@ export default function MinorLeagueDetailPage() {
                                 >
                                   {visit.ticket_section && (
                                     <div style={{ textAlign: 'center' }}>
-                                      <div style={{ fontSize: 9, fontWeight: 700, color: '#6E7681', textTransform: 'uppercase' }}>Sec</div>
-                                      <div style={{ fontSize: 13, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1 }}>{visit.ticket_section}</div>
+                                      <div style={{ fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase' }}>Sec</div>
+                                      <div style={{ fontSize: 14, fontWeight: 800, color: '#E6EDF3', lineHeight: 1.1 }}>{visit.ticket_section}</div>
                                     </div>
                                   )}
                                   <div style={{ display: 'flex', gap: 16 }}>
                                     {visit.ticket_row && (
                                       <div style={{ textAlign: 'center' }}>
-                                        <div style={{ fontSize: 9, fontWeight: 700, color: '#6E7681', textTransform: 'uppercase' }}>Row</div>
-                                        <div style={{ fontSize: 12, fontWeight: 700, color: '#C9D1D9', lineHeight: 1.1 }}>{visit.ticket_row}</div>
+                                        <div style={{ fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase' }}>Row</div>
+                                        <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.1 }}>{visit.ticket_row}</div>
                                       </div>
                                     )}
                                     {visit.ticket_seats && visit.ticket_seats.length > 0 && (
                                       <div style={{ textAlign: 'center' }}>
-                                        <div style={{ fontSize: 9, fontWeight: 700, color: '#6E7681', textTransform: 'uppercase' }}>Seat</div>
-                                        <div style={{ fontSize: 12, fontWeight: 700, color: '#C9D1D9', lineHeight: 1.1 }}>{visit.ticket_seats.join(', ')}</div>
+                                        <div style={{ fontSize: 10, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase' }}>{visit.ticket_seats.length > 1 ? 'Seats' : 'Seat'}</div>
+                                        <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.1 }}>{visit.ticket_seats.join(', ')}</div>
                                       </div>
                                     )}
                                   </div>
