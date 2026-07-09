@@ -91,8 +91,10 @@ export default function FarmSystemToday({ initialGames, favAbbr }: Props) {
     const hasScore = (g.isLive || g.isFinal) && g.teamScore !== null
     const teamWin   = hasScore && g.teamScore! > g.oppScore!
     const oppWin    = hasScore && g.oppScore! > g.teamScore!
-    const homeLogo  = g.isHome ? g.affiliateMilbId : g.opponentMilbId
-    const awayLogo  = g.isHome ? g.opponentMilbId  : g.affiliateMilbId
+    const homeLogo  = g.isHome ? g.affiliateMilbId  : g.opponentMilbId
+    const awayLogo  = g.isHome ? g.opponentMilbId   : g.affiliateMilbId
+    const homeLogoUrl = g.isHome ? g.affiliateLogoUrl : g.opponentLogoUrl
+    const awayLogoUrl = g.isHome ? g.opponentLogoUrl  : g.affiliateLogoUrl
     const homeName  = g.isHome ? g.affiliateName   : g.opponent
     const awayName  = g.isHome ? g.opponent        : g.affiliateName
     const homeWin   = g.isHome ? teamWin : oppWin
@@ -115,7 +117,7 @@ export default function FarmSystemToday({ initialGames, favAbbr }: Props) {
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 0, flex: 1 }}>
-            <MiLBLogo milbTeamId={awayLogo} fallbackAbbr="" size={36} />
+            <MiLBLogo milbTeamId={awayLogo} logoUrl={awayLogoUrl} fallbackAbbr="" size={36} />
             <span style={{ fontSize: 11, fontWeight: 700, color: awayWin ? '#E6EDF3' : '#8B949E', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
               {awayName}
             </span>
@@ -140,7 +142,7 @@ export default function FarmSystemToday({ initialGames, favAbbr }: Props) {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 0, flex: 1 }}>
-            <MiLBLogo milbTeamId={homeLogo} fallbackAbbr="" size={36} />
+            <MiLBLogo milbTeamId={homeLogo} logoUrl={homeLogoUrl} fallbackAbbr="" size={36} />
             <span style={{ fontSize: 11, fontWeight: 700, color: homeWin ? '#E6EDF3' : '#8B949E', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
               {homeName}
             </span>

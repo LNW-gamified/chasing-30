@@ -481,7 +481,9 @@ export async function fetchMinorLeagueAffiliates(teamAbbr: string): Promise<MiLB
 export interface FarmGame {
   affiliateName:   string
   affiliateMilbId: number
+  affiliateLogoUrl: string | null
   opponentMilbId:  number | null
+  opponentLogoUrl: string | null
   level:           string
   opponent:        string
   isHome:          boolean
@@ -498,7 +500,7 @@ export interface FarmGame {
 // Double-A=12, High-A=13, Single-A=14 — teamId+date alone returns an error).
 export async function fetchFarmSystemToday(affiliates: MiLBAffiliate[]): Promise<FarmGame[]> {
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
-  const results = await Promise.all(affiliates.map(async (aff): Promise<FarmGame | null> => {
+  const partials = await Promise.all(affiliates.map(async (aff) => {
     if (!aff.id || !aff.sportId) return null
     try {
       const res = await fetch(
@@ -534,5 +536,42 @@ export async function fetchFarmSystemToday(affiliates: MiLBAffiliate[]): Promise
       return null
     }
   }))
-  return results.filter((g): g is FarmGame => g !== null)
+  const games = partials.filter((g): g is NonNullable<typeof g> => g !== null)
+  if (games.length === 0) return []
+
+  // Resolve real logos from our own curated table. The generic MLB CDN
+  // pattern (team-id-only, no lookup) was tested directly and returns a
+  // 400 for real team IDs, it doesn't actually work, so every logo here
+  // needs a real curated URL the same way every other MiLB logo in this
+  // app already gets one.
+  const idsNeeded = Array.from(new Set(
+    games.flatMap(g => [g.affiliateMilbId, g.opponentMilbId]).filter((id): id is number => id != null)
+  ))
+  let logoByTeamId: Record<number, string> = {}
+  if (idsNeeded.length > 0) {
+    try {
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      if (url && key) {
+        const res = await fetch(
+          `${url}/rest/v1/minor_league_stadiums?select=milb_team_id,logo_url&milb_team_id=in.(${idsNeeded.join(',')})`,
+          { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+        )
+        if (res.ok) {
+          const rows: { milb_team_id: number; logo_url: string | null }[] = await res.json()
+          for (const row of rows) {
+            if (row.logo_url) logoByTeamId[row.milb_team_id] = row.logo_url
+          }
+        }
+      }
+    } catch {
+      logoByTeamId = {}
+    }
+  }
+
+  return games.map(g => ({
+    ...g,
+    affiliateLogoUrl: logoByTeamId[g.affiliateMilbId] ?? null,
+    opponentLogoUrl:  g.opponentMilbId != null ? (logoByTeamId[g.opponentMilbId] ?? null) : null,
+  }))
 }
