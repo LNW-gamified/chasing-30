@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase-server'
+import { cookies } from 'next/headers'
 import { MILESTONES } from '@/lib/milestones'
 import type { Stadium, StadiumVisit, BaseballLifeEntry, Trip } from '@/types'
 import { formatCurrency } from '@/lib/utils'
@@ -20,9 +21,9 @@ import { TEAM_GRADIENTS } from '@/lib/team-colors'
 
 // ─── MLB API ──────────────────────────────────────────────────────────────────
 
-async function fetchTodayGames(favAbbr: string | null): Promise<TodayGame[]> {
+async function fetchTodayGames(favAbbr: string | null, timeZone: string): Promise<TodayGame[]> {
   try {
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+    const today = new Date().toLocaleDateString('en-CA', { timeZone })
     const res = await fetch(
       `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&gameType=R&hydrate=linescore`,
       { next: { revalidate: 300 } }
@@ -78,8 +79,8 @@ function fmtDate(d: string | null | undefined): string {
   } catch { return d }
 }
 
-function daysUntil(dateStr: string): number {
-  const todayLA  = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+function daysUntil(dateStr: string, tz: string): number {
+  const todayLA  = new Date().toLocaleDateString('en-CA', { timeZone: tz })
   const today    = new Date(todayLA + 'T00:00:00')
   const target   = new Date(dateStr  + 'T00:00:00')
   return Math.max(0, Math.round((target.getTime() - today.getTime()) / 86400000))
@@ -107,8 +108,10 @@ function SectionHeader({ label, right }: { label: string; right?: React.ReactNod
 
 export default async function DashboardPage() {
   const supabase = await createClient()
+  const cookieStore = await cookies()
+  const tz = cookieStore.get('chasing30_tz')?.value || 'America/Los_Angeles'
 
-  const todayISO   = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+  const todayISO   = new Date().toLocaleDateString('en-CA', { timeZone: tz })
   const [, todayMonthStr, todayDayStr] = todayISO.split('-')
   const todayMonth = parseInt(todayMonthStr, 10)
   const todayDay   = parseInt(todayDayStr,   10)
@@ -231,10 +234,10 @@ export default async function DashboardPage() {
     return last === 'Sox' ? `${words[words.length - 2]} Sox` : last
   })()
 
-  const todayGames   = await fetchTodayGames(favAbbr)
+  const todayGames   = await fetchTodayGames(favAbbr, tz)
   const playoffPic: PlayoffPicture | null = favAbbr ? await fetchPlayoffPicture(favAbbr) : null
   const affiliates = favAbbr ? await fetchMinorLeagueAffiliates(favAbbr) : []
-  const farmGames: FarmGame[] = affiliates.length > 0 ? await fetchFarmSystemToday(affiliates) : []
+  const farmGames: FarmGame[] = affiliates.length > 0 ? await fetchFarmSystemToday(affiliates, tz, supabase) : []
 
   // Fav team stadium
   const favStadium = favAbbr ? allStadiums.find(s => s.abbreviation === favAbbr) ?? null : null
@@ -427,10 +430,10 @@ export default async function DashboardPage() {
                     lineHeight: 1, letterSpacing: '-2px',
                     textShadow: '0 0 20px rgba(245,166,35,0.35)',
                   }}>
-                    {daysUntil(nextPlannedTrip.start_date)}
+                    {daysUntil(nextPlannedTrip.start_date, tz)}
                   </div>
                   <div style={{ fontSize: 13, color: 'rgba(245,166,35,0.6)', fontFamily: 'monospace', letterSpacing: '0.12em' }}>
-                    {daysUntil(nextPlannedTrip.start_date) === 0 ? 'TODAY' : daysUntil(nextPlannedTrip.start_date) === 1 ? 'DAY' : 'DAYS'}
+                    {daysUntil(nextPlannedTrip.start_date, tz) === 0 ? 'TODAY' : daysUntil(nextPlannedTrip.start_date, tz) === 1 ? 'DAY' : 'DAYS'}
                   </div>
                 </div>
               </div>

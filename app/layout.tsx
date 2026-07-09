@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
 import AppShell from '@/components/AppShell'
 import InstallPrompt from '@/components/InstallPrompt'
 import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar'
+import TimezoneSync from '@/components/TimezoneSync'
 import { MILESTONES } from '@/lib/milestones'
 import { RANK_TIERS, MILESTONE_POINTS } from '@/lib/ranks'
 import type { StadiumVisit, Stadium, BaseballLifeEntry } from '@/types'
@@ -19,8 +21,8 @@ export const metadata: Metadata = {
   },
 }
 
-function daysUntil(dateStr: string): number {
-  const todayLA = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+function daysUntil(dateStr: string, tz: string): number {
+  const todayLA = new Date().toLocaleDateString('en-CA', { timeZone: tz })
   const today   = new Date(todayLA + 'T00:00:00')
   const target  = new Date(dateStr  + 'T00:00:00')
   return Math.max(0, Math.round((target.getTime() - today.getTime()) / 86400000))
@@ -30,6 +32,8 @@ function daysUntil(dateStr: string): number {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const cookieStore = await cookies()
+  const tz = cookieStore.get('chasing30_tz')?.value || 'America/Los_Angeles'
 
   const sharedHead = (
     <>
@@ -50,6 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <html lang="en" className="h-full">
         <head>{sharedHead}</head>
         <body className="h-full" style={{ backgroundColor: '#0a0e1a', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+          <TimezoneSync />
           <ServiceWorkerRegistrar />
           {children}
         </body>
@@ -57,7 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     )
   }
 
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: tz })
 
   const [{ data: trips }, { data: visits }, { data: stadiums }, { data: bleEntries }] = await Promise.all([
     supabase.from('trips')
@@ -98,7 +103,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     id: nextTripRaw.id,
     stadiumName: stadium.name,
     stadiumAbbr: stadium.abbreviation,
-    daysAway: daysUntil(nextTripRaw.start_date),
+    daysAway: daysUntil(nextTripRaw.start_date, tz),
   } : null
 
   const userInitial = user.email?.[0]?.toUpperCase() ?? '?'
@@ -107,6 +112,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" className="h-full">
       <head>{sharedHead}</head>
       <body className="h-full" style={{ backgroundColor: '#0a0e1a' }}>
+        <TimezoneSync />
         <ServiceWorkerRegistrar />
         <AppShell
           nextTrip={nextTrip}

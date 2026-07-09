@@ -65,7 +65,7 @@ export default function FarmSystemToday({ initialGames, favAbbr }: Props) {
   const poll = useCallback(async () => {
     if (!inPollWindow() || !favAbbr) return
     try {
-      const res = await fetch(`/api/farm-system-today?team=${favAbbr}`)
+      const res = await fetch(`/api/farm-system-today?team=${favAbbr}&tz=${encodeURIComponent(userTz)}`)
       if (!res.ok) return
       const fresh = await res.json() as FarmGame[]
       setGames(fresh)

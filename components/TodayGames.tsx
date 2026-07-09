@@ -100,7 +100,7 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
   const poll = useCallback(async () => {
     if (!inPollWindow()) return
     try {
-      const res = await fetch('/api/today-games')
+      const res = await fetch(`/api/today-games?tz=${encodeURIComponent(userTz)}`)
       if (!res.ok) return
       const raw = await res.json() as Omit<TodayGame, 'isFavorite'>[]
       const withFav = raw.map(g => ({

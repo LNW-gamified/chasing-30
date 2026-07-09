@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 const MLB_ID_TO_ABBR: Record<number, string> = {
   109: 'ARI', 144: 'ATL', 110: 'BAL', 111: 'BOS', 112: 'CHC',
@@ -9,9 +9,10 @@ const MLB_ID_TO_ABBR: Record<number, string> = {
   138: 'STL', 139: 'TB',  140: 'TEX', 141: 'TOR', 120: 'WSH',
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+    const tz = req.nextUrl.searchParams.get('tz') || 'America/Los_Angeles'
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: tz })
     const res = await fetch(
       `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&gameType=R&hydrate=linescore`,
       { next: { revalidate: 60 } }
