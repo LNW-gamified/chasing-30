@@ -112,7 +112,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" className="h-full">
       <head>{sharedHead}</head>
       <body className="h-full" style={{ backgroundColor: '#0a0e1a' }}>
-        <TimezoneSync />
         <ServiceWorkerRegistrar />
         <AppShell
           nextTrip={nextTrip}

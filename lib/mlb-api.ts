@@ -543,26 +543,25 @@ export async function fetchFarmSystemToday(
   const games = partials.filter((g): g is NonNullable<typeof g> => g !== null)
   if (games.length === 0) return []
 
-  // Resolve real logos from our own curated table, using the same
-  // authenticated client the rest of the app already uses to read
-  // similarly-restricted tables like `stadiums` (RLS on this table only
-  // allows the `authenticated` role, not a bare anon key, which is why a
-  // previous version of this using a plain fetch() with the anon key
-  // silently returned nothing). The generic MLB CDN pattern (team-id-only,
-  // no lookup) was also tested directly and returns a 400 for real team
-  // IDs, so that's not an option either, every logo needs a real curated
-  // URL the same way every other MiLB logo in this app already gets one.
+  // Resolve real logos. Two tables get checked: minor_league_stadiums (your
+  // curated chase-goal stadiums, e.g. Everett and its Northwest League
+  // opponents) and milb_team_logos (opponent-only teams from other levels/
+  // divisions, kept separate so they don't pollute the stadium-chasing
+  // list). Both require an authenticated client — RLS on these tables only
+  // allows the `authenticated` role, a bare anon key gets silently blocked
+  // and returns nothing, which is why an earlier version of this using a
+  // plain fetch() with the anon key never actually worked.
   const idsNeeded = Array.from(new Set(
     games.flatMap(g => [g.affiliateMilbId, g.opponentMilbId]).filter((id): id is number => id != null)
   ))
   let logoByTeamId: Record<number, string> = {}
   if (idsNeeded.length > 0 && supabase) {
     try {
-      const { data: rows } = await supabase
-        .from('minor_league_stadiums')
-        .select('milb_team_id, logo_url')
-        .in('milb_team_id', idsNeeded)
-      for (const row of (rows ?? []) as { milb_team_id: number; logo_url: string | null }[]) {
+      const [{ data: stadiumRows }, { data: opponentRows }] = await Promise.all([
+        supabase.from('minor_league_stadiums').select('milb_team_id, logo_url').in('milb_team_id', idsNeeded),
+        supabase.from('milb_team_logos').select('milb_team_id, logo_url').in('milb_team_id', idsNeeded),
+      ])
+      for (const row of [...(stadiumRows ?? []), ...(opponentRows ?? [])] as { milb_team_id: number; logo_url: string | null }[]) {
         if (row.logo_url) logoByTeamId[row.milb_team_id] = row.logo_url
       }
     } catch {
