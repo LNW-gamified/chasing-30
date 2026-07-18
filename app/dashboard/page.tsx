@@ -322,6 +322,16 @@ export default async function DashboardPage() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%', maxWidth: 300, margin: '0 auto' }}>
+                <Link href="/stadiums" style={{
+                  display: 'block', width: '100%', textAlign: 'center',
+                  padding: '9px 0', borderRadius: 999,
+                  background: '#1F6FEB', color: '#fff',
+                  fontWeight: 700, fontSize: 14, textDecoration: 'none',
+                  boxShadow: '0 2px 12px rgba(31,111,235,0.35)',
+                }}>
+                  Log a Game Entry
+                </Link>
+                <DashboardSpecialVisitButton />
                 <Link href="/trips" style={{
                   display: 'block', width: '100%', textAlign: 'center',
                   padding: '9px 0', borderRadius: 999,
@@ -331,7 +341,6 @@ export default async function DashboardPage() {
                 }}>
                   Plan Road Trip
                 </Link>
-                <DashboardSpecialVisitButton />
               </div>
             </div>
           </div>
