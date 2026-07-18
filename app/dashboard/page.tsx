@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
-import { MILESTONES } from '@/lib/milestones'
 import type { Stadium, StadiumVisit, BaseballLifeEntry, Trip } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
@@ -152,7 +151,6 @@ export default async function DashboardPage() {
   const visitedIds   = new Set(allVisits.map(v => v.stadium_id))
   const visitedCount = visitedIds.size
   const tier = getTier(visitedCount)
-  const earnedMilestones = MILESTONES.filter(m => m.check(allVisits, allStadiums, [], allBaseballLife))
   const pct = Math.round((visitedCount / 30) * 100)
 
   // Ring dots — visited stadiums in chronological visit order, then empty slots
@@ -302,13 +300,6 @@ export default async function DashboardPage() {
                 <span style={{ fontSize: 12, fontWeight: 700, color: tier.textColor, textTransform: 'uppercase', letterSpacing: '0.22em' }}>
                   THE CHASE
                 </span>
-                <span style={{
-                  fontSize: 11, fontWeight: 800, color: tier.textColor,
-                  border: `1px solid ${tier.textColor}55`, borderRadius: 999,
-                  padding: '1px 8px', textTransform: 'uppercase', letterSpacing: '0.08em',
-                }}>
-                  {tier.label} Tier
-                </span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
@@ -328,21 +319,6 @@ export default async function DashboardPage() {
                 {visitedCount === 30
                   ? 'Hall of Famer status achieved!'
                   : `${pct}% of the way to all 30`}
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: tier.textColor, boxShadow: `0 0 5px ${tier.glow}` }}/>
-                  <span style={{ fontSize: 12, color: tier.textColor, fontWeight: 700 }}>{pct}% complete</span>
-                </div>
-                <span style={{ color: '#21262D', fontSize: 14 }}>|</span>
-                <Link href="/milestones" style={{ fontSize: 12, color: '#1F6FEB', fontWeight: 600, textDecoration: 'none' }}>
-                  {earnedMilestones.length} milestone{earnedMilestones.length !== 1 ? 's' : ''} earned →
-                </Link>
-                <span style={{ color: '#21262D', fontSize: 14 }}>|</span>
-                <Link href="/passport" style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textDecoration: 'none' }}>
-                  View Passport →
-                </Link>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%', maxWidth: 300, margin: '0 auto' }}>
