@@ -315,7 +315,7 @@ export default async function DashboardPage() {
                   ? 'The journey begins with one ballpark'
                   : `${30 - visitedCount} park${30 - visitedCount !== 1 ? 's' : ''} to go`}
               </div>
-              <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 10 }}>
+              <div style={{ fontSize: 13, color: '#F5A623', marginBottom: 10 }}>
                 {visitedCount === 30
                   ? 'Hall of Famer status achieved!'
                   : `${pct}% of the way to all 30`}
