@@ -125,8 +125,8 @@ export default function AppShell({ children, nextTrip, visitedCount, rankName, r
 
       {/* Main area (offset by sidebar on desktop) */}
       <div className="md:ml-64">
-        {/* Mobile sticky header */}
-        <header className="flex md:hidden items-center justify-between" style={{ position: 'sticky', top: 0, zIndex: 30, height: 48, backgroundColor: 'rgba(11,17,23,0.97)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: '1px solid #30363D', padding: '0 16px' }}>
+        {/* Mobile header (scrolls with content) */}
+        <header className="flex md:hidden items-center justify-between" style={{ height: 48, backgroundColor: 'rgba(11,17,23,0.97)', borderBottom: '1px solid #30363D', padding: '0 16px' }}>
           <div style={{ fontSize: '1rem', fontWeight: 900, color: '#E6EDF3' }}>⚾ Chasing 30</div>
           <button
             onClick={() => setProfileOpen(v => !v)}
@@ -137,21 +137,25 @@ export default function AppShell({ children, nextTrip, visitedCount, rankName, r
         </header>
 
         {/* Page content */}
-        <div style={{ paddingBottom: 56 }} className="appshell-content">
+        <div style={{ paddingBottom: 'calc(66px + env(safe-area-inset-bottom, 0px))' }} className="appshell-content">
           {children}
         </div>
 
         {/* Mobile bottom tab bar */}
-        <nav className="flex md:hidden" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, height: 56, backgroundColor: 'rgba(11,17,23,0.75)', borderTop: '1px solid rgba(48,54,61,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-          {MOBILE_NAV.map(({ href, label, icon: Icon }) => {
-            const active = isActive(href, pathname)
-            return (
-              <Link key={href} href={href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', padding: '8px 0', gap: 3, color: active ? '#1F6FEB' : 'rgba(230,237,243,0.6)' }}>
-                <Icon size={21} strokeWidth={active ? 2.5 : 1.8} />
-                {active && <span style={{ fontSize: '0.6rem', fontWeight: 700, lineHeight: 1 }}>{label}</span>}
-              </Link>
-            )
-          })}
+        <nav className="flex md:hidden" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, flexDirection: 'column', backgroundColor: 'rgba(11,17,23,0.9)', borderTop: '1px solid rgba(48,54,61,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+          <div style={{ display: 'flex', height: 66 }}>
+            {MOBILE_NAV.map(({ href, label, icon: Icon }) => {
+              const active = isActive(href, pathname)
+              return (
+                <Link key={href} href={href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', gap: 4, color: active ? '#1F6FEB' : 'rgba(230,237,243,0.6)' }}>
+                  <Icon size={26} strokeWidth={active ? 2.5 : 1.8} />
+                  {active && <span style={{ fontSize: '0.65rem', fontWeight: 700, lineHeight: 1 }}>{label}</span>}
+                </Link>
+              )
+            })}
+          </div>
+          {/* Safe-area spacer — kept separate so tab icons stay centered in the visible bar, not pushed down into the home-indicator zone */}
+          <div style={{ height: 'env(safe-area-inset-bottom, 0px)' }} />
         </nav>
       </div>
 
@@ -174,7 +178,7 @@ export default function AppShell({ children, nextTrip, visitedCount, rankName, r
 
       <style>{`
         @media (min-width: 768px) { .appshell-content { padding-bottom: 0 !important; } }
-        .appshell-content { padding-bottom: 56px; }
+        .appshell-content { padding-bottom: calc(66px + env(safe-area-inset-bottom, 0px)); }
       `}</style>
     </>
   )
