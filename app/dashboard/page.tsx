@@ -333,11 +333,12 @@ export default async function DashboardPage() {
                 </Link>
                 <DashboardSpecialVisitButton />
                 <Link href="/trips" style={{
-                  display: 'block', width: '100%', textAlign: 'center',
-                  padding: '9px 0', borderRadius: 999,
-                  background: '#1F6FEB', color: '#fff',
-                  fontWeight: 700, fontSize: 14, textDecoration: 'none',
-                  boxShadow: '0 2px 12px rgba(31,111,235,0.35)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  padding: '8px 0', borderRadius: 999, width: '80%',
+                  background: 'transparent',
+                  border: '1.5px solid rgba(201,209,217,0.2)',
+                  color: '#8B949E', fontWeight: 600, fontSize: 13, textDecoration: 'none',
+                  marginTop: 8,
                 }}>
                   Plan Road Trip
                 </Link>
