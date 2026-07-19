@@ -31,9 +31,33 @@ function daysUntil(dateStr: string, tz: string): number {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
   const cookieStore = await cookies()
   const tz = cookieStore.get('chasing30_tz')?.value || 'America/Los_Angeles'
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: tz })
+
+  // Auth check and data queries run together — RLS allows any authenticated
+  // user to read all rows (no per-user isolation), so these reads don't
+  // depend on the getUser() result and don't need to wait for it. This
+  // layout wraps every route, so the saved round trip compounds across
+  // every navigation in the app.
+  const [
+    { data: { user } },
+    { data: trips },
+    { data: visits },
+    { data: stadiums },
+    { data: bleEntries },
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from('trips')
+      .select('id, name, start_date, stadium:stadiums(name, abbreviation)')
+      .eq('status', 'planned')
+      .gte('start_date', today)
+      .order('start_date', { ascending: true, nullsFirst: false })
+      .limit(1),
+    supabase.from('stadium_visits').select('*'),
+    supabase.from('stadiums').select('*'),
+    supabase.from('baseball_life_entries').select('id, category'),
+  ])
 
   const sharedHead = (
     <>
@@ -61,20 +85,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </html>
     )
   }
-
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: tz })
-
-  const [{ data: trips }, { data: visits }, { data: stadiums }, { data: bleEntries }] = await Promise.all([
-    supabase.from('trips')
-      .select('id, name, start_date, stadium:stadiums(name, abbreviation)')
-      .eq('status', 'planned')
-      .gte('start_date', today)
-      .order('start_date', { ascending: true, nullsFirst: false })
-      .limit(1),
-    supabase.from('stadium_visits').select('*'),
-    supabase.from('stadiums').select('*'),
-    supabase.from('baseball_life_entries').select('id, category'),
-  ])
 
   const allVisits: StadiumVisit[] = visits ?? []
   const allStadiums: Stadium[] = stadiums ?? []
