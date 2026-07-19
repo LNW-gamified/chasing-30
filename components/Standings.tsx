@@ -118,19 +118,24 @@ export default function Standings({ favAbbr }: Props) {
     setLoading(false)
   }, [])
 
+  // Only poll while the panel is actually expanded — it defaults to
+  // collapsed (nothing from `leagues`/`loading` renders in that state), so
+  // fetching on mount and every 5 minutes regardless was pure wasted work
+  // for as long as the dashboard tab stayed open and unexpanded.
   useEffect(() => {
+    if (collapsed) return
     poll()
     const id = setInterval(poll, 5 * 60 * 1000)
     return () => clearInterval(id)
-  }, [poll])
+  }, [poll, collapsed])
 
   useEffect(() => {
-    if (!lastUpdated) return
+    if (collapsed || !lastUpdated) return
     const id = setInterval(() => {
       setMinsAgo(Math.floor((Date.now() - lastUpdated.getTime()) / 60000))
     }, 30_000)
     return () => clearInterval(id)
-  }, [lastUpdated])
+  }, [collapsed, lastUpdated])
 
   const updatedLabel = lastUpdated
     ? minsAgo === 0 ? 'Updated just now' : `Updated ${minsAgo}m ago`

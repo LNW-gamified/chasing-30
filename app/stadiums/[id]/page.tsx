@@ -1,23 +1,27 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import GameDayForm from '@/components/GameDayForm'
 import BoxScore from '@/components/BoxScore'
 import { formatDate } from '@/lib/utils'
 import type { Stadium, StadiumVisit, RetiredNumber, StadiumTrendingFood, StadiumSouvenir, StadiumWeather } from '@/types'
 import { MILESTONES } from '@/lib/milestones'
-import { fetchUpcomingHomeGames, fetchVenueDimensions, fetchTeamSeasonStats, fetchTeamRoster, fetchRecentTransactions, fetchMinorLeagueAffiliates, type UpcomingGame, type VenueDimensions, type TeamSeasonStats, type RosterPlayer, type Transaction, type MiLBAffiliate } from '@/lib/mlb-api'
-import { fetchStadiumPhoto, fetchStadiumSummary } from '@/lib/stadium-wikipedia'
-import { fetchTeamNews, type ESPNNewsItem } from '@/lib/espn-api'
+import { type UpcomingGame, type VenueDimensions, type TeamSeasonStats, type RosterPlayer, type Transaction, type MiLBAffiliate } from '@/lib/mlb-api'
+import { type ESPNNewsItem } from '@/lib/espn-api'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Loader2, Users, CalendarDays, Trophy, Share2, Hash, Building2, Map, ChevronRight, CloudRain, Wind } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 import { MLB_TEAMS } from '@/lib/teams'
 import { TEAM_BTN_COLOR, TEAM_GRADIENTS, darkerOf } from '@/lib/team-colors'
-import GiveawayFoodEditor, { type EditorItem } from '@/components/GiveawayFoodEditor'
-import CollectibleLightbox from '@/components/CollectibleLightbox'
+import { type EditorItem } from '@/components/GiveawayFoodEditor'
+
+// Large forms/editors only ever shown behind a click — load them on
+// demand instead of shipping their code in this route's initial bundle.
+const GameDayForm         = dynamic(() => import('@/components/GameDayForm'),         { ssr: false })
+const GiveawayFoodEditor  = dynamic(() => import('@/components/GiveawayFoodEditor'),  { ssr: false })
+const CollectibleLightbox = dynamic(() => import('@/components/CollectibleLightbox'), { ssr: false })
 
 const MLB_SCHEDULE_SLUG: Record<string, string> = {
   ARI: 'dbacks',       ATL: 'braves',      BAL: 'orioles',    BOS: 'red-sox',
@@ -241,13 +245,20 @@ export default function StadiumDetailPage() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchCollection() }, [fetchCollection])
 
-  const visitsByYear = visits.reduce<Record<string, typeof visits>>((acc, v) => {
+  // This component holds ~25 pieces of state (tabs, lightbox, forms,
+  // tickets, weather, etc.), so it re-renders on unrelated interactions
+  // far more often than `visits` actually changes — memoize the grouping
+  // so it doesn't reduce/sort the full visit list on every one of them.
+  const visitsByYear = useMemo(() => visits.reduce<Record<string, typeof visits>>((acc, v) => {
     const year = v.visit_date.slice(0, 4)
     if (!acc[year]) acc[year] = []
     acc[year].push(v)
     return acc
-  }, {})
-  const sortedYears = Object.keys(visitsByYear).sort((a, b) => Number(b) - Number(a))
+  }, {}), [visits])
+  const sortedYears = useMemo(
+    () => Object.keys(visitsByYear).sort((a, b) => Number(b) - Number(a)),
+    [visitsByYear]
+  )
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -324,15 +335,19 @@ export default function StadiumDetailPage() {
 
   useEffect(() => {
     if (!stadium) return
-    fetchUpcomingHomeGames(stadium.abbreviation).then(setUpcomingGames)
-    fetchStadiumPhoto(stadium.abbreviation).then(setStadiumPhoto)
-    fetchVenueDimensions(stadium.abbreviation).then(setVenueDimensions)
-    fetchTeamSeasonStats(stadium.abbreviation).then(setTeamStats)
-    fetchTeamRoster(stadium.abbreviation).then(setRoster)
-    fetchRecentTransactions(stadium.abbreviation).then(setTransactions)
-    fetchStadiumSummary(stadium.abbreviation).then(setStadiumSummary)
-    fetchTeamNews(stadium.abbreviation).then(setTeamNews)
-    fetchMinorLeagueAffiliates(stadium.abbreviation).then(setAffiliates)
+    fetch(`/api/stadium-detail?abbr=${stadium.abbreviation}`)
+      .then(r => r.json())
+      .then(d => {
+        setUpcomingGames(d.upcomingGames ?? [])
+        setStadiumPhoto(d.photo ?? null)
+        setVenueDimensions(d.venueDimensions ?? null)
+        setTeamStats(d.teamStats ?? null)
+        setRoster(d.roster ?? [])
+        setTransactions(d.transactions ?? [])
+        setStadiumSummary(d.summary ?? null)
+        setTeamNews(d.teamNews ?? [])
+        setAffiliates(d.affiliates ?? [])
+      })
     fetch(`/api/youtube-search?q=${encodeURIComponent(stadium.name + ' ballpark tour')}`)
       .then(r => r.json()).then(d => setTourVideoId(d.videoId ?? null))
   }, [stadium])

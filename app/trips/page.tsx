@@ -1,9 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase'
-import TripForm from '@/components/TripForm'
-import DestinationTripForm from '@/components/DestinationTripForm'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip } from '@/types'
 import Link from 'next/link'
@@ -12,6 +11,11 @@ import { getTeamLogoUrl, LIGHT_BG_LOGO_TEAMS, getTeamAbbrById } from '@/lib/team
 import TeamLogo from '@/components/TeamLogo'
 import { TEAM_GRADIENTS as TEAM_COLORS, TEAM_BTN_COLOR, TEAM_LOGO_BG } from '@/lib/team-colors'
 import { DESTINATION_BY_SLUG } from '@/lib/destinations'
+
+// Large forms only ever shown behind a click — load them on demand
+// instead of shipping their code in this route's initial bundle.
+const TripForm            = dynamic(() => import('@/components/TripForm'),            { ssr: false })
+const DestinationTripForm = dynamic(() => import('@/components/DestinationTripForm'), { ssr: false })
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

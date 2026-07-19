@@ -1,9 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import BaseballLifeForm from '@/components/BaseballLifeForm'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
+
+// Large form only ever shown behind a click — load it on demand instead
+// of shipping its code wherever this button is used.
+const BaseballLifeForm = dynamic(() => import('@/components/BaseballLifeForm'), { ssr: false })
 
 export default function SpecialVisitButton({ label = 'Log Beyond the 30 Entry', variant = 'primary' }: { label?: string; variant?: 'primary' | 'secondary' }) {
   const [open, setOpen] = useState(false)

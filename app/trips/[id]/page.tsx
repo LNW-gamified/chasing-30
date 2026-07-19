@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import TripForm from '@/components/TripForm'
 import TeamLogo from '@/components/TeamLogo'
 import { getTeamLogoUrlById, getTeamLogoUrl, getTeamAbbrById, LIGHT_BG_LOGO_TEAMS } from '@/lib/team-logos'
 import { formatDate, formatCurrency } from '@/lib/utils'
@@ -14,6 +14,10 @@ import StopChecklist from '@/components/StopChecklist'
 import { DESTINATION_BY_SLUG, destinationLocation, EXPERIENCE_TYPES } from '@/lib/destinations'
 import { fetchForecastWeather, fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
 import { TEAM_PRIMARY, TEAM_GRADIENTS as TEAM_COLORS, TEAM_BTN_COLOR, TEAM_LOGO_BG } from '@/lib/team-colors'
+
+// Large form only ever shown behind a click — load it on demand instead
+// of shipping its code in this route's initial bundle.
+const TripForm = dynamic(() => import('@/components/TripForm'), { ssr: false })
 
 type TripWithStadium = Trip & { stadium: Stadium | null }
 
@@ -183,11 +187,22 @@ export default function TripDetailPage() {
   useEffect(() => { load() }, [id])
 
 
+  // Mirrors stopWeather without being a dependency below — reading state
+  // via ref keeps the effect from re-running (and re-fetching) merely
+  // because a fetch it triggered resolved.
+  const stopWeatherRef = useRef(stopWeather)
+  useEffect(() => { stopWeatherRef.current = stopWeather }, [stopWeather])
+
   useEffect(() => {
     if (stops.length === 0) return
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
     const maxForecastDate = new Date(Date.now() + 16 * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
     stops.forEach(stop => {
+      // Already have weather for this stop — skip. Without this, any
+      // unrelated stop mutation (promo photo upload/remove, reorder) gives
+      // the `stops` array a new identity and re-fetches weather for every
+      // stop in the trip, not just the one that changed.
+      if (stopWeatherRef.current[stop.id]) return
       const date = stop.game_date
       const stadium = stop.stadium as Stadium | null
       if (!date || !stadium?.lat || !stadium?.lng) return

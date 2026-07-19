@@ -64,3 +64,26 @@ export async function fetchStadiumPhoto(abbreviation: string): Promise<string | 
     return null
   }
 }
+
+// Combined lookup — summary and photo come from the same Wikipedia
+// response, so callers that need both (the stadium detail page) should use
+// this instead of calling fetchStadiumSummary + fetchStadiumPhoto
+// separately, which fires the identical request to Wikipedia twice.
+export async function fetchStadiumWiki(abbreviation: string): Promise<{ summary: string | null; photo: string | null }> {
+  const article = STADIUM_WIKI_ARTICLES[abbreviation]
+  if (!article) return { summary: null, photo: null }
+  try {
+    const res = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(article)}`,
+      { headers: { 'Accept': 'application/json' }, next: { revalidate: 604800 } }
+    )
+    if (!res.ok) return { summary: null, photo: null }
+    const data = await res.json()
+    return {
+      summary: data?.extract ?? null,
+      photo:   data?.originalimage?.source ?? data?.thumbnail?.source ?? null,
+    }
+  } catch {
+    return { summary: null, photo: null }
+  }
+}

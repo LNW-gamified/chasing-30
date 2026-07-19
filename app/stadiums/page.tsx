@@ -1,16 +1,19 @@
 'use client'
 
 import { useEffect, useState, useMemo, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase'
 import PassportGrid, { type StampData } from '@/components/PassportGrid'
 import Link from 'next/link'
 import { Search, X, ChevronRight, CalendarDays, MapPin, ExternalLink } from 'lucide-react'
 import type { Stadium } from '@/types'
 import TeamLogo from '@/components/TeamLogo'
-import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
-import BaseballLifeForm from '@/components/BaseballLifeForm'
 import MiLBLogo from '@/components/MiLBLogo'
 import type { BaseballLifeCategory } from '@/types'
+
+// Large form only ever shown behind a click — load it on demand instead
+// of shipping its code in this route's initial bundle.
+const BaseballLifeForm = dynamic(() => import('@/components/BaseballLifeForm'), { ssr: false })
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -396,9 +399,11 @@ export default function StadiumsPage() {
       setBleEntries((ble ?? []) as BleEntry[])
       setLoading(false)
       ;(s ?? []).forEach((stadium: Stadium) => {
-        fetchStadiumPhoto(stadium.abbreviation).then(url => {
-          if (url) setPhotos(prev => ({ ...prev, [stadium.abbreviation]: url }))
-        })
+        fetch(`/api/stadium-photo?abbr=${stadium.abbreviation}`)
+          .then(r => r.json())
+          .then(({ photo }) => {
+            if (photo) setPhotos(prev => ({ ...prev, [stadium.abbreviation]: photo }))
+          })
       })
     })
   }, [])

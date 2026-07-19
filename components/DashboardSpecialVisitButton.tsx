@@ -1,9 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import BaseballLifeForm from '@/components/BaseballLifeForm'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { ClipboardList } from 'lucide-react'
+
+// Large form only ever shown behind a click — load it on demand instead
+// of shipping its code in the dashboard's initial bundle.
+const BaseballLifeForm = dynamic(() => import('@/components/BaseballLifeForm'), { ssr: false })
 
 export default function DashboardSpecialVisitButton() {
   const [open, setOpen] = useState(false)

@@ -1,11 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
-import BaseballLifeForm from '@/components/BaseballLifeForm'
 import type { BaseballLifeCategory } from '@/types'
+
+// Large form only ever shown behind a click — load it on demand instead
+// of shipping its code in this route's initial bundle.
+const BaseballLifeForm = dynamic(() => import('@/components/BaseballLifeForm'), { ssr: false })
 
 interface BaseballEvent {
   id: string; name: string; slug: string; category: string; description: string | null

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { Check, X, Share2, Calendar, MapPin, Search, ChevronRight, Zap, Hand, Plus, Pencil } from 'lucide-react'
 import type { SerializableMilestone, StadiumVisit, Stadium, SpecialEvent, BaseballLifeEntry } from '@/types'
 import { createClient } from '@/lib/supabase'
@@ -10,8 +11,12 @@ import { STATIC_EXPERIENCES, type StaticExperience } from '@/lib/static-experien
 import SpecialVisitButton from '@/components/SpecialVisitButton'
 import { classifyDayNightHeuristic } from '@/lib/sunrise-sunset'
 import { MILESTONE_POINTS } from '@/lib/ranks'
-import GiveawayFoodEditor, { type EditorItem } from '@/components/GiveawayFoodEditor'
-import CollectibleLightbox from '@/components/CollectibleLightbox'
+import { type EditorItem } from '@/components/GiveawayFoodEditor'
+
+// Large editors only ever shown behind a click — load them on demand
+// instead of shipping their code in this route's initial bundle.
+const GiveawayFoodEditor  = dynamic(() => import('@/components/GiveawayFoodEditor'),  { ssr: false })
+const CollectibleLightbox = dynamic(() => import('@/components/CollectibleLightbox'), { ssr: false })
 
 // ── Constants ──────────────────────────────────────────────────────────────
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
@@ -10,15 +11,19 @@ import {
 } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 import MiLBLogo from '@/components/MiLBLogo'
-import BaseballLifeForm from '@/components/BaseballLifeForm'
 import { TEAM_BTN_COLOR, TEAM_GRADIENTS, darkerOf } from '@/lib/team-colors'
 import { formatDate } from '@/lib/utils'
 import { fetchScoringPlays, type ScoringPlay } from '@/lib/mlb-api'
 import { getUserTimezone } from '@/lib/user-timezone'
-import GiveawayFoodEditor, { type EditorItem } from '@/components/GiveawayFoodEditor'
-import CollectibleLightbox from '@/components/CollectibleLightbox'
+import { type EditorItem } from '@/components/GiveawayFoodEditor'
 
 const userTz = getUserTimezone()
+
+// Large forms/editors only ever shown behind a click — load them on
+// demand instead of shipping their code in this route's initial bundle.
+const BaseballLifeForm     = dynamic(() => import('@/components/BaseballLifeForm'),     { ssr: false })
+const GiveawayFoodEditor   = dynamic(() => import('@/components/GiveawayFoodEditor'),   { ssr: false })
+const CollectibleLightbox  = dynamic(() => import('@/components/CollectibleLightbox'),  { ssr: false })
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
