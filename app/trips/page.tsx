@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase'
 import { formatDate, formatCurrency } from '@/lib/utils'
@@ -84,6 +84,12 @@ function tripDays(trip: TripWithExtras): number | null {
 
 const MONTH_ABBR = ['Jan.', 'Feb.', 'March', 'April', 'May', 'June', 'July', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.']
 function fmtDate(d: Date): string { return `${MONTH_ABBR[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}` }
+
+function tripYear(trip: TripWithExtras): number | null {
+  const dateStr = trip.start_date ?? trip.trip_date ?? trip.end_date
+  if (!dateStr) return null
+  return new Date(dateStr + 'T12:00:00').getFullYear()
+}
 
 function tripDateRange(trip: TripWithExtras): string | null {
   if (trip.start_date && trip.end_date) {
@@ -171,7 +177,7 @@ export default function TripsPage() {
 
   return (
     <div>
-      <div style={{ maxWidth: 800, margin: '0 auto', padding: '28px 16px 0' }}>
+      <div style={{ maxWidth: 800, margin: '0 auto', padding: '28px 16px 48px' }}>
 
           {/* ── Header ─────────────────────────────────────────────── */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
@@ -317,7 +323,12 @@ export default function TripsPage() {
 
                   {/* 1-col mobile / 2-col desktop */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {list.map(trip => {
+                    {(() => {
+                      let lastYear: number | null = null
+                      return list.map(trip => {
+                      const year = tripYear(trip)
+                      const showYearSeparator = year !== null && year !== lastYear
+                      lastYear = year
                       const isDestination = (trip as any).trip_type === 'destination'
                       const abbrs      = tripAbbrs(trip)
                       const stadCount  = tripStadiumCount(trip)
@@ -345,7 +356,18 @@ export default function TripsPage() {
                           : heroGradient(trip.status, abbrs)
 
                       return (
-                        <div key={trip.id} style={{
+                        <Fragment key={trip.id}>
+                        {showYearSeparator && (
+                          <div style={{
+                            gridColumn: '1 / -1',
+                            display: 'flex', alignItems: 'center', gap: 12,
+                            margin: '4px 0 0',
+                          }}>
+                            <span style={{ fontSize: 14, fontWeight: 800, color: '#8B949E', letterSpacing: '0.04em' }}>{year}</span>
+                            <div style={{ flex: 1, height: 1, backgroundColor: '#30363D' }} />
+                          </div>
+                        )}
+                        <div style={{
                           backgroundColor: '#161B22', borderRadius: 16,
                           border: isUndated ? '1.5px dashed rgba(139,148,158,0.35)' : '1px solid #30363D',
                           overflow: 'hidden',
@@ -602,8 +624,10 @@ export default function TripsPage() {
                             </div>
                           </div>
                         </div>
+                        </Fragment>
                       )
-                    })}
+                    })
+                    })()}
                   </div>
                 </div>
               ))}
