@@ -11,7 +11,7 @@ import DashboardSpecialVisitButton from '@/components/DashboardSpecialVisitButto
 import OnThisDay, { type HistoryFact } from '@/components/OnThisDay'
 import HeroRing, { type RingDot } from '@/components/HeroRing'
 import TeamLogo from '@/components/TeamLogo'
-import { fetchPlayoffPicture, type PlayoffPicture, fetchMinorLeagueAffiliates, fetchFarmSystemToday, type FarmGame } from '@/lib/mlb-api'
+import { fetchPlayoffPicture, fetchMinorLeagueAffiliates, fetchFarmSystemToday, type FarmGame } from '@/lib/mlb-api'
 import PennantRace from '@/components/PennantRace'
 import { getTeamAbbrById, getTeamLogoUrl } from '@/lib/team-logos'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
@@ -176,9 +176,6 @@ export default async function DashboardPage() {
   const nextPlannedTrip = allTrips.find((t: any) =>
     t.status === 'planned' && t.start_date && t.start_date >= todayISO
   ) as any | undefined
-  const nextGamePhoto = nextPlannedTrip?.stadium?.abbreviation
-    ? await fetchStadiumPhoto(nextPlannedTrip.stadium.abbreviation)
-    : null
 
   // Stats
   const favAbbr            = (userSettings as any)?.favorite_team_abbr ?? null
@@ -232,16 +229,21 @@ export default async function DashboardPage() {
     return last === 'Sox' ? `${words[words.length - 2]} Sox` : last
   })()
 
-  const todayGames   = await fetchTodayGames(favAbbr, tz)
-  const playoffPic: PlayoffPicture | null = favAbbr ? await fetchPlayoffPicture(favAbbr) : null
-  const affiliates = favAbbr ? await fetchMinorLeagueAffiliates(favAbbr) : []
-  const farmGames: FarmGame[] = affiliates.length > 0 ? await fetchFarmSystemToday(affiliates, tz, supabase) : []
-
   // Fav team stadium
   const favStadium = favAbbr ? allStadiums.find(s => s.abbreviation === favAbbr) ?? null : null
   const favStadiumVisited = favStadium ? visitedIds.has(favStadium.id) : false
-  const chasePhoto = favStadium ? await fetchStadiumPhoto(favStadium.abbreviation) : null
   const chaseGradient = favAbbr && TEAM_GRADIENTS[favAbbr] ? TEAM_GRADIENTS[favAbbr] : null
+
+  // External MLB/Wikipedia calls — run in parallel rather than one after
+  // another, since none of these depend on each other's results
+  const [todayGames, playoffPic, affiliates, nextGamePhoto, chasePhoto] = await Promise.all([
+    fetchTodayGames(favAbbr, tz),
+    favAbbr ? fetchPlayoffPicture(favAbbr) : Promise.resolve(null),
+    favAbbr ? fetchMinorLeagueAffiliates(favAbbr) : Promise.resolve([]),
+    nextPlannedTrip?.stadium?.abbreviation ? fetchStadiumPhoto(nextPlannedTrip.stadium.abbreviation) : Promise.resolve(null),
+    favStadium ? fetchStadiumPhoto(favStadium.abbreviation) : Promise.resolve(null),
+  ])
+  const farmGames: FarmGame[] = affiliates.length > 0 ? await fetchFarmSystemToday(affiliates, tz, supabase) : []
 
   // ─── Shared styles ──────────────────────────────────────────────────────────
 

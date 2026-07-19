@@ -39,7 +39,7 @@ export async function fetchStadiumSummary(abbreviation: string): Promise<string 
   try {
     const res = await fetch(
       `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(article)}`,
-      { headers: { 'Accept': 'application/json' } }
+      { headers: { 'Accept': 'application/json' }, next: { revalidate: 604800 } }
     )
     if (!res.ok) return null
     const data = await res.json()
@@ -55,7 +55,7 @@ export async function fetchStadiumPhoto(abbreviation: string): Promise<string | 
   try {
     const res = await fetch(
       `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(article)}`,
-      { headers: { 'Accept': 'application/json' } }
+      { headers: { 'Accept': 'application/json' }, next: { revalidate: 604800 } }
     )
     if (!res.ok) return null
     const data = await res.json()

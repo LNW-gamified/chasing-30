@@ -57,7 +57,7 @@ export async function fetchUpcomingHomeGames(teamAbbr: string, days = 180): Prom
   const url = `https://statsapi.mlb.com/api/v1/schedule?teamId=${teamId}&startDate=${today}&endDate=${end}&sportId=1&hydrate=team,venue,game(promotions)`
 
   try {
-    const res = await fetch(url)
+    const res = await fetch(url, { next: { revalidate: 1800 } })
     if (!res.ok) return []
     const data = await res.json()
 
@@ -151,13 +151,13 @@ export async function fetchVenueDimensions(teamAbbr: string): Promise<VenueDimen
   const teamId = MLB_TEAM_IDS[teamAbbr]
   if (!teamId) return null
   try {
-    const teamRes = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}`)
+    const teamRes = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}`, { next: { revalidate: 604800 } })
     if (!teamRes.ok) return null
     const teamData = await teamRes.json()
     const venueId: number | undefined = teamData.teams?.[0]?.venue?.id
     if (!venueId) return null
 
-    const venueRes = await fetch(`https://statsapi.mlb.com/api/v1/venues/${venueId}?hydrate=fieldInfo`)
+    const venueRes = await fetch(`https://statsapi.mlb.com/api/v1/venues/${venueId}?hydrate=fieldInfo`, { next: { revalidate: 604800 } })
     if (!venueRes.ok) return null
     const venueData = await venueRes.json()
     const fi = venueData.venues?.[0]?.fieldInfo
@@ -196,9 +196,9 @@ export async function fetchTeamSeasonStats(teamAbbr: string): Promise<TeamSeason
   const year = new Date().getFullYear()
   try {
     const [hitRes, pitchRes, standRes] = await Promise.all([
-      fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}/stats?stats=season&group=hitting&season=${year}`),
-      fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}/stats?stats=season&group=pitching&season=${year}`),
-      fetch(`https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=${year}&standingsType=regularSeason`),
+      fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}/stats?stats=season&group=hitting&season=${year}`, { next: { revalidate: 300 } }),
+      fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}/stats?stats=season&group=pitching&season=${year}`, { next: { revalidate: 300 } }),
+      fetch(`https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=${year}&standingsType=regularSeason`, { next: { revalidate: 300 } }),
     ])
     const hitData   = hitRes.ok   ? await hitRes.json()   : null
     const pitchData = pitchRes.ok ? await pitchRes.json() : null
@@ -266,7 +266,7 @@ function pickThumbnail(image: { cuts?: ImageCut[] } | undefined): string | null 
 
 export async function fetchGameContent(gamePk: number): Promise<GameContent | null> {
   try {
-    const res = await fetch(`https://statsapi.mlb.com/api/v1/game/${gamePk}/content`)
+    const res = await fetch(`https://statsapi.mlb.com/api/v1/game/${gamePk}/content`, { next: { revalidate: 600 } })
     if (!res.ok) return null
     const data = await res.json()
     const recap = data.editorial?.recap?.mlb?.blurb ?? data.editorial?.recap?.mlb?.seoTitle ?? null
@@ -303,7 +303,8 @@ export async function fetchTeamRoster(teamAbbr: string): Promise<RosterPlayer[]>
   if (!teamId) return []
   try {
     const res = await fetch(
-      `https://statsapi.mlb.com/api/v1/teams/${teamId}/roster?rosterType=active`
+      `https://statsapi.mlb.com/api/v1/teams/${teamId}/roster?rosterType=active`,
+      { next: { revalidate: 3600 } }
     )
     if (!res.ok) return []
     const data = await res.json()
@@ -334,7 +335,8 @@ export async function fetchRecentTransactions(teamAbbr: string): Promise<Transac
   const startDate = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]
   try {
     const res = await fetch(
-      `https://statsapi.mlb.com/api/v1/transactions?teamId=${teamId}&startDate=${startDate}&endDate=${endDate}`
+      `https://statsapi.mlb.com/api/v1/transactions?teamId=${teamId}&startDate=${startDate}&endDate=${endDate}`,
+      { next: { revalidate: 1800 } }
     )
     if (!res.ok) return []
     const data = await res.json()
@@ -365,7 +367,8 @@ export async function fetchScoringPlays(gamePk: number): Promise<ScoringPlay[]> 
   try {
     const res = await fetch(
       `https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live` +
-      `?fields=liveData,plays,scoringPlays,allPlays,about,result,inning,halfInning,awayScore,homeScore,description,event`
+      `?fields=liveData,plays,scoringPlays,allPlays,about,result,inning,halfInning,awayScore,homeScore,description,event`,
+      { next: { revalidate: 30 } }
     )
     if (!res.ok) return []
     const data  = await res.json()
@@ -451,7 +454,7 @@ export async function fetchMinorLeagueAffiliates(teamAbbr: string): Promise<MiLB
   if (!teamId) return []
   const year = new Date().getFullYear()
   try {
-    const res = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}/affiliates?season=${year}`)
+    const res = await fetch(`https://statsapi.mlb.com/api/v1/teams/${teamId}/affiliates?season=${year}`, { next: { revalidate: 86400 } })
     if (!res.ok) return []
     const data = await res.json()
     const LEVELS: Record<string, string> = {
@@ -508,7 +511,8 @@ export async function fetchFarmSystemToday(
     if (!aff.id || !aff.sportId) return null
     try {
       const res = await fetch(
-        `https://statsapi.mlb.com/api/v1/schedule?sportId=${aff.sportId}&teamId=${aff.id}&date=${today}&hydrate=linescore`
+        `https://statsapi.mlb.com/api/v1/schedule?sportId=${aff.sportId}&teamId=${aff.id}&date=${today}&hydrate=linescore`,
+        { next: { revalidate: 300 } }
       )
       if (!res.ok) return null
       const data = await res.json()

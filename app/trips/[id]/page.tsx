@@ -62,10 +62,6 @@ export default function TripDetailPage() {
     setVisitedStadiumIds(new Set((sv ?? []).map((r: any) => r.stadium_id)))
     const loadedStops = (st as unknown as TripStop[]) ?? []
     setStops(loadedStops)
-    // Always assign sort_order based on array position to ensure they're unique
-    await Promise.all(loadedStops.map((s, i) =>
-      supabase.from('trip_stops').update({ sort_order: i }).eq('id', s.id)
-    ))
     if (loadedStops.length > 0) {
       const stopIds = loadedStops.map(s => s.id)
       const { data: cl } = await supabase
@@ -74,6 +70,16 @@ export default function TripDetailPage() {
       setChecklistItems((cl as StopChecklistItem[]) ?? [])
     }
     setLoading(false)
+
+    // Repair sort_order if it's drifted from array position (e.g. legacy
+    // duplicate values) — skip the write round trip on the common case
+    // where it's already correct, so a normal visit doesn't do N writes.
+    const needsReorder = loadedStops.some((s, i) => s.sort_order !== i)
+    if (needsReorder) {
+      await Promise.all(loadedStops.map((s, i) =>
+        supabase.from('trip_stops').update({ sort_order: i }).eq('id', s.id)
+      ))
+    }
 
     await calculateDrivingDistance(loadedStops)
   }
