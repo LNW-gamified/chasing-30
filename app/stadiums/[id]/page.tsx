@@ -90,6 +90,12 @@ export default function StadiumDetailPage() {
   const [showAllUpcoming, setShowAllUpcoming] = useState(false)
   const [showAllMoves, setShowAllMoves] = useState(false)
   const [upcomingGames, setUpcomingGames] = useState<UpcomingGame[]>([])
+
+  // Ticket flagging
+  const [myTickets,   setMyTickets]   = useState<Set<string>>(new Set())
+  const [ticketGames, setTicketGames] = useState<Array<{
+    game_pk: number; game_date: string; opponent: string; time_str: string | null; promotions: string[]
+  }>>([])
   const [fetchingStats, setFetchingStats] = useState<string | null>(null)
   const [statsError, setStatsError] = useState<Record<string, string>>({})
   const [autofillState, setAutofillState] = useState<
@@ -261,6 +267,61 @@ export default function StadiumDetailPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, stadium])
 
+  async function loadTickets() {
+    if (!stadium) return
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('mlb_tickets')
+      .select('*')
+      .eq('stadium_id', stadium.id)
+      .gte('game_date', new Date().toISOString().split('T')[0])
+      .order('game_date', { ascending: true })
+    if (error) { console.error('loadTickets error:', error); return }
+    if (data) {
+      setMyTickets(new Set(data.map((t: any) => String(t.game_pk))))
+      setTicketGames(data.map((t: any) => ({
+        game_pk:    t.game_pk,
+        game_date:  t.game_date,
+        opponent:   t.opponent,
+        time_str:   t.time_str,
+        promotions: t.promotions ?? [],
+      })))
+    }
+  }
+
+  async function toggleTicket(g: UpcomingGame) {
+    if (!stadium) return
+    const supabase = createClient()
+    if (myTickets.has(String(g.gamePk))) {
+      const { error } = await supabase.from('mlb_tickets').delete()
+        .eq('game_pk', g.gamePk)
+        .eq('stadium_id', stadium.id)
+      if (error) { console.error('ticket delete error:', error); return }
+    } else {
+      const timeStr = new Date(g.gameDate).toLocaleTimeString('en-US', {
+        hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles',
+      })
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { error } = await supabase.from('mlb_tickets').insert({
+        user_id:    user.id,
+        stadium_id: stadium.id,
+        game_pk:    g.gamePk,
+        game_date: new Date(g.gameDate).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }),
+        opponent:   g.awayTeam,
+        time_str:   timeStr,
+        promotions: g.promotions,
+      })
+      if (error) { console.error('ticket insert error:', error); return }
+    }
+    await loadTickets()
+  }
+
+  useEffect(() => {
+    if (stadium) loadTickets()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stadium?.id])
+
   useEffect(() => {
     if (!stadium) return
     fetchUpcomingHomeGames(stadium.abbreviation).then(setUpcomingGames)
@@ -400,7 +461,7 @@ export default function StadiumDetailPage() {
 
   const TABS: { key: ActiveTab; label: string }[] = [
     { key: 'games-attended',  label: 'Games Attended'   },
-    { key: 'upcoming-games',  label: 'Upcoming Games'   },
+    { key: 'upcoming-games',  label: 'Schedule'         },
     { key: 'stadium-info',    label: 'Stadium Detail'   },
     { key: 'roster',          label: 'Team Hub'         },
   ]
@@ -637,6 +698,43 @@ export default function StadiumDetailPage() {
             {/* ── GAMES ATTENDED TAB ───────────────────────────────── */}
             {activeTab === 'games-attended' && (
               <section>
+                {ticketGames.length > 0 && (
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                      🎟️ Your Upcoming Tickets
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {ticketGames.map(t => {
+                        const dt      = new Date(t.game_date + 'T12:00:00')
+                        const dateStr = dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                        const daysAway = Math.round((dt.getTime() - new Date().setHours(0, 0, 0, 0)) / 86400000)
+                        return (
+                          <div key={t.game_pk} style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '12px 14px', borderRadius: 12,
+                            backgroundColor: '#161B22', border: '1px solid rgba(63,185,80,0.2)',
+                          }}>
+                            <div>
+                              <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3' }}>vs {t.opponent}</div>
+                              <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
+                                {dateStr}{t.time_str ? ` · ${t.time_str} PT` : ''}
+                              </div>
+                              {t.promotions.length > 0 && (
+                                <div style={{ fontSize: 13, color: '#F5A623', marginTop: 2 }}>🎁 {t.promotions[0]}</div>
+                              )}
+                            </div>
+                            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                              <div style={{ fontSize: 16, fontWeight: 800, color: '#F5A623', lineHeight: 1 }}>
+                                {daysAway === 0 ? 'Today' : daysAway === 1 ? '1' : daysAway}
+                              </div>
+                              {daysAway > 1 && <div style={{ fontSize: 13, color: '#8B949E' }}>days</div>}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
                 {visits.length === 0 ? (
                   <div style={{
                     background: `linear-gradient(160deg, ${colors[0]}22 0%, ${colors[1]}18 100%), #161B22`,
@@ -1079,12 +1177,18 @@ export default function StadiumDetailPage() {
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                 <div style={{ fontSize: 13, color: '#E6EDF3' }}>{timeStr} PT</div>
-                                <Link
-                                  href="/trips"
-                                  style={{ fontSize: 13, fontWeight: 700, color: '#1F6FEB', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                                <button
+                                  onClick={() => toggleTicket(g)}
+                                  style={{
+                                    background: myTickets.has(String(g.gamePk)) ? 'rgba(63,185,80,0.15)' : 'rgba(139,148,158,0.1)',
+                                    border: `1px solid ${myTickets.has(String(g.gamePk)) ? 'rgba(63,185,80,0.4)' : '#30363D'}`,
+                                    borderRadius: 8, padding: '4px 10px', cursor: 'pointer',
+                                    fontSize: 13, color: myTickets.has(String(g.gamePk)) ? '#3FB950' : '#8B949E',
+                                    fontWeight: 600, whiteSpace: 'nowrap',
+                                  }}
                                 >
-                                  Plan Trip →
-                                </Link>
+                                  {myTickets.has(String(g.gamePk)) ? '🎟️ Got it' : '+ Tickets'}
+                                </button>
                               </div>
                             </div>
                           )
