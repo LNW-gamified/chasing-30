@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
 import type { Stadium, StadiumVisit, BaseballLifeEntry, Trip } from '@/types'
@@ -11,12 +12,23 @@ import DashboardSpecialVisitButton from '@/components/DashboardSpecialVisitButto
 import OnThisDay, { type HistoryFact } from '@/components/OnThisDay'
 import HeroRing, { type RingDot } from '@/components/HeroRing'
 import TeamLogo from '@/components/TeamLogo'
-import { fetchPlayoffPicture, fetchMinorLeagueAffiliates, fetchFarmSystemToday, type FarmGame } from '@/lib/mlb-api'
+import { fetchPlayoffPicture, fetchMinorLeagueAffiliates, fetchFarmSystemToday } from '@/lib/mlb-api'
 import PennantRace from '@/components/PennantRace'
 import { getTeamAbbrById, getTeamLogoUrl } from '@/lib/team-logos'
 import { fetchStadiumPhoto } from '@/lib/stadium-wikipedia'
 import { getTier } from '@/lib/tiers'
 import { TEAM_GRADIENTS } from '@/lib/team-colors'
+
+// ─── Shared styles ──────────────────────────────────────────────────────────
+
+const card: React.CSSProperties = {
+  background: '#161B22',
+  borderRadius: 16,
+  border: '1px solid #21262D',
+  boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+}
+
+const SECTION_GAP = '2rem'
 
 // ─── MLB API ──────────────────────────────────────────────────────────────────
 
@@ -99,6 +111,90 @@ function SectionHeader({ label, right }: { label: string; right?: React.ReactNod
         {label}
       </span>
       {right}
+    </div>
+  )
+}
+
+// ─── Streamed sections ─────────────────────────────────────────────────────
+// Each of these does its own slow external fetch and is rendered inside a
+// <Suspense> boundary so it doesn't block the rest of the page (which only
+// needs fast Supabase data) from painting first.
+
+async function PlayoffPictureSection({ favStadium }: { favStadium: Stadium }) {
+  const favAbbr = favStadium.abbreviation
+  const playoffPic = await fetchPlayoffPicture(favAbbr)
+  if (!playoffPic) return null
+
+  return (
+    <div className="dash-card" style={{ ...card, marginBottom: SECTION_GAP, padding: '16px 20px', position: 'relative', overflow: 'hidden' }}>
+      {/* Header + stats zone — watermark anchors here, not to the whole
+          card, since Standings below makes the card's height variable */}
+      <div style={{ position: 'relative' }}>
+        <div className="hidden md:block" style={{
+          position: 'absolute', right: -20, top: '50%', transform: 'translateY(-50%)',
+          width: 160, height: 160, borderRadius: '50%',
+          background: `radial-gradient(circle, ${TEAM_GRADIENTS[favStadium.abbreviation]?.[0] ?? '#1F6FEB'}33 0%, transparent 70%)`,
+          pointerEvents: 'none',
+        }} />
+        <div className="hidden md:block" style={{ position: 'absolute', right: -10, top: '50%', transform: 'translateY(-50%)', opacity: 0.3, pointerEvents: 'none' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={getTeamLogoUrl(favStadium.abbreviation)} alt="" width={120} height={120} style={{ objectFit: 'contain', display: 'block' }} />
+        </div>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <TeamLogo abbreviation={favStadium.abbreviation} size={28} />
+          <span style={{ fontSize: 14, fontWeight: 800, color: '#E6EDF3' }}>{favStadium.team}</span>
+          <span style={{ fontSize: 12, color: '#8B949E', marginLeft: 2 }}>· Playoff Picture</span>
+          {playoffPic.clinched && (
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', padding: '2px 8px', borderRadius: 10 }}>✓ CLINCHED</span>
+          )}
+        </div>
+        <div style={{ position: 'relative', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          {[
+            { label: 'Record',   value: `${playoffPic.wins}–${playoffPic.losses}` },
+            { label: 'Win %',    value: playoffPic.pct },
+            { label: `${playoffPic.divisionName} Rank`, value: `#${playoffPic.divisionRank}` },
+            playoffPic.gamesBack !== '—'
+              ? { label: 'GB',   value: playoffPic.gamesBack }
+              : { label: 'Division', value: 'Leader' },
+            playoffPic.wildCardRank
+              ? { label: 'Wild Card', value: `#${playoffPic.wildCardRank}` }
+              : null,
+            playoffPic.magicNumber
+              ? { label: 'Magic #', value: playoffPic.magicNumber }
+              : null,
+            playoffPic.eliminationNumber
+              ? { label: 'Elim #', value: playoffPic.eliminationNumber }
+              : null,
+          ].filter(Boolean).map(stat => (
+            <div key={stat!.label}>
+              <div style={{ fontSize: 12, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{stat!.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3' }}>{stat!.value}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Standings, nested here so it reads as part of the playoff-picture story */}
+      <div style={{ position: 'relative', marginTop: 16, paddingTop: 14, borderTop: '1px solid #30363D' }}>
+        <Standings favAbbr={favAbbr} />
+      </div>
+    </div>
+  )
+}
+
+async function FarmSystemSection({ favAbbr, tz }: { favAbbr: string; tz: string }) {
+  const supabase = await createClient()
+  const affiliates = await fetchMinorLeagueAffiliates(favAbbr)
+  if (affiliates.length === 0) return null
+  const farmGames = await fetchFarmSystemToday(affiliates, tz, supabase)
+  if (farmGames.length === 0) return null
+
+  return (
+    <div className="dash-card" style={{ ...card, marginBottom: SECTION_GAP, padding: '16px 20px' }}>
+      <div style={{ fontSize: 14, fontWeight: 800, color: '#E6EDF3', marginBottom: 12 }}>
+        Your Farm System Today
+      </div>
+      <FarmSystemToday initialGames={farmGames} favAbbr={favAbbr} />
     </div>
   )
 }
@@ -235,26 +331,14 @@ export default async function DashboardPage() {
   const chaseGradient = favAbbr && TEAM_GRADIENTS[favAbbr] ? TEAM_GRADIENTS[favAbbr] : null
 
   // External MLB/Wikipedia calls — run in parallel rather than one after
-  // another, since none of these depend on each other's results
-  const [todayGames, playoffPic, affiliates, nextGamePhoto, chasePhoto] = await Promise.all([
+  // another, since none of these depend on each other's results. Playoff
+  // picture and farm system data are fetched separately inside their own
+  // Suspense-streamed sections below, so they don't block this page render.
+  const [todayGames, nextGamePhoto, chasePhoto] = await Promise.all([
     fetchTodayGames(favAbbr, tz),
-    favAbbr ? fetchPlayoffPicture(favAbbr) : Promise.resolve(null),
-    favAbbr ? fetchMinorLeagueAffiliates(favAbbr) : Promise.resolve([]),
     nextPlannedTrip?.stadium?.abbreviation ? fetchStadiumPhoto(nextPlannedTrip.stadium.abbreviation) : Promise.resolve(null),
     favStadium ? fetchStadiumPhoto(favStadium.abbreviation) : Promise.resolve(null),
   ])
-  const farmGames: FarmGame[] = affiliates.length > 0 ? await fetchFarmSystemToday(affiliates, tz, supabase) : []
-
-  // ─── Shared styles ──────────────────────────────────────────────────────────
-
-  const card: React.CSSProperties = {
-    background: '#161B22',
-    borderRadius: 16,
-    border: '1px solid #21262D',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
-  }
-
-  const SECTION_GAP = '2rem'
 
   return (
     <div style={{ color: '#E6EDF3', overflowX: 'hidden', maxWidth: '100%' }}>
@@ -429,71 +513,18 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* ── Playoff Picture ─────────────────────────────────────────── */}
-        {playoffPic && favStadium && (
-          <div className="dash-card" style={{ ...card, marginBottom: SECTION_GAP, padding: '16px 20px', position: 'relative', overflow: 'hidden' }}>
-            {/* Header + stats zone — watermark anchors here, not to the whole
-                card, since Standings below makes the card's height variable */}
-            <div style={{ position: 'relative' }}>
-              <div className="hidden md:block" style={{
-                position: 'absolute', right: -20, top: '50%', transform: 'translateY(-50%)',
-                width: 160, height: 160, borderRadius: '50%',
-                background: `radial-gradient(circle, ${TEAM_GRADIENTS[favStadium.abbreviation]?.[0] ?? '#1F6FEB'}33 0%, transparent 70%)`,
-                pointerEvents: 'none',
-              }} />
-              <div className="hidden md:block" style={{ position: 'absolute', right: -10, top: '50%', transform: 'translateY(-50%)', opacity: 0.3, pointerEvents: 'none' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={getTeamLogoUrl(favStadium.abbreviation)} alt="" width={120} height={120} style={{ objectFit: 'contain', display: 'block' }} />
-              </div>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                <TeamLogo abbreviation={favStadium.abbreviation} size={28} />
-                <span style={{ fontSize: 14, fontWeight: 800, color: '#E6EDF3' }}>{favStadium.team}</span>
-                <span style={{ fontSize: 12, color: '#8B949E', marginLeft: 2 }}>· Playoff Picture</span>
-                {playoffPic.clinched && (
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', padding: '2px 8px', borderRadius: 10 }}>✓ CLINCHED</span>
-                )}
-              </div>
-              <div style={{ position: 'relative', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                {[
-                  { label: 'Record',   value: `${playoffPic.wins}–${playoffPic.losses}` },
-                  { label: 'Win %',    value: playoffPic.pct },
-                  { label: `${playoffPic.divisionName} Rank`, value: `#${playoffPic.divisionRank}` },
-                  playoffPic.gamesBack !== '—'
-                    ? { label: 'GB',   value: playoffPic.gamesBack }
-                    : { label: 'Division', value: 'Leader' },
-                  playoffPic.wildCardRank
-                    ? { label: 'Wild Card', value: `#${playoffPic.wildCardRank}` }
-                    : null,
-                  playoffPic.magicNumber
-                    ? { label: 'Magic #', value: playoffPic.magicNumber }
-                    : null,
-                  playoffPic.eliminationNumber
-                    ? { label: 'Elim #', value: playoffPic.eliminationNumber }
-                    : null,
-                ].filter(Boolean).map(stat => (
-                  <div key={stat!.label}>
-                    <div style={{ fontSize: 12, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{stat!.label}</div>
-                    <div style={{ fontSize: 20, fontWeight: 900, color: '#E6EDF3' }}>{stat!.value}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Standings, nested here so it reads as part of the playoff-picture story */}
-            <div style={{ position: 'relative', marginTop: 16, paddingTop: 14, borderTop: '1px solid #30363D' }}>
-              <Standings favAbbr={favAbbr} />
-            </div>
-          </div>
+        {/* ── Playoff Picture (streamed — doesn't block the rest of the page) ── */}
+        {favStadium && (
+          <Suspense fallback={null}>
+            <PlayoffPictureSection favStadium={favStadium} />
+          </Suspense>
         )}
 
-        {/* ── Farm System Today ────────────────────────────────────────── */}
-        {farmGames.length > 0 && (
-          <div className="dash-card" style={{ ...card, marginBottom: SECTION_GAP, padding: '16px 20px' }}>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#E6EDF3', marginBottom: 12 }}>
-              Your Farm System Today
-            </div>
-            <FarmSystemToday initialGames={farmGames} favAbbr={favAbbr} />
-          </div>
+        {/* ── Farm System Today (streamed — doesn't block the rest of the page) ── */}
+        {favAbbr && (
+          <Suspense fallback={null}>
+            <FarmSystemSection favAbbr={favAbbr} tz={tz} />
+          </Suspense>
         )}
 
         {/* ── Pennant Race (Aug 1 – end of regular season) ─────────────── */}
