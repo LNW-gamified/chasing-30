@@ -12,7 +12,6 @@ import TeamLogo from '@/components/TeamLogo'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { X, Navigation, ChevronLeft, Info } from 'lucide-react'
-import { TEAM_PRIMARY } from '@/lib/team-colors'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -84,8 +83,7 @@ function makeSpecialLocationIcon(icon: string, visited: boolean): L.DivIcon {
 // ── Stadium pin icon factory ────────────────────────────────────────────────
 
 function makeStadiumIcon(logoUrl: string, visited: boolean, abbr: string): L.DivIcon {
-  const teamColor = TEAM_PRIMARY[abbr] ?? '#8B949E'
-  const ring  = visited ? '#3FB950' : teamColor
+  const ring  = visited ? '#3FB950' : '#C9D1D9'
   const badge = visited
     ? `<div style="position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:#3FB950;border:2px solid #0B1117;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:900;line-height:1;">✓</div>`
     : ''
