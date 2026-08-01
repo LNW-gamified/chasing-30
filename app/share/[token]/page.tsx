@@ -112,7 +112,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
     return (
       <div
         className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: '#0B1117', color: '#8B949E' }}
+        style={{ color: '#8B949E' }}
       >
         <div className="text-center p-8">
           <div className="text-4xl mb-4">🔒</div>
@@ -149,7 +149,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
   return (
     <div
       className="min-h-screen"
-      style={{ backgroundColor: '#0B1117', color: '#E6EDF3', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
+      style={{ color: '#E6EDF3', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
     >
       {/* Header */}
       <div

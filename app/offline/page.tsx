@@ -1,7 +1,7 @@
 export default function OfflinePage() {
   return (
     <div style={{
-      minHeight: '100vh', backgroundColor: '#0a0e1a', color: '#E6EDF3',
+      minHeight: '100vh', color: '#E6EDF3',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '32px 24px', textAlign: 'center',
     }}>

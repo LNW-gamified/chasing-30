@@ -43,7 +43,7 @@ export default async function PassportPage() {
   const passportNo = 'USR-' + uid.replace(/-/g, '').slice(0, 8).toUpperCase()
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0B1117', color: '#E6EDF3', paddingTop: 24 }}>
+    <div style={{ minHeight: '100vh', color: '#E6EDF3', paddingTop: 24 }}>
       <PassportGrid
         stamps={stamps}
         userName={userName}
