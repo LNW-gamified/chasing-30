@@ -21,12 +21,12 @@ const ABBR_TO_ID = Object.fromEntries(Object.entries(ID_TO_ABBR).map(([id, abbr]
 
 // division id → { league, name }
 const DIV: Record<number, { league: 'AL' | 'NL'; name: string }> = {
-  200: { league: 'AL', name: 'AL East'    },
-  201: { league: 'AL', name: 'AL Central' },
-  202: { league: 'AL', name: 'AL West'    },
-  203: { league: 'NL', name: 'NL East'    },
-  204: { league: 'NL', name: 'NL Central' },
-  205: { league: 'NL', name: 'NL West'    },
+  200: { league: 'AL', name: 'AL West'    },
+  201: { league: 'AL', name: 'AL East'    },
+  202: { league: 'AL', name: 'AL Central' },
+  203: { league: 'NL', name: 'NL West'    },
+  204: { league: 'NL', name: 'NL East'    },
+  205: { league: 'NL', name: 'NL Central' },
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
