@@ -14,8 +14,8 @@ const DIVISION_META: Record<number, { league: 'AL' | 'NL'; name: string }> = {
   205: { league: 'NL', name: 'NL Central' },
 }
 
-// Standard division display order within a league
-const DIVISION_ORDER = ['East', 'Central', 'West']
+// Display order within a league box
+const DIVISION_ORDER = ['West', 'Central', 'East']
 
 const ID_TO_ABBR: Record<number, string> = {
   108: 'LAA', 109: 'ARI', 110: 'BAL', 111: 'BOS', 112: 'CHC',
