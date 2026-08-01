@@ -5,14 +5,17 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 import { TEAM_PRIMARY } from '@/lib/team-colors'
 
-const DIVISION_META: Record<number, { league: 'AL' | 'NL' }> = {
-  200: { league: 'AL' },
-  201: { league: 'AL' },
-  202: { league: 'AL' },
-  203: { league: 'NL' },
-  204: { league: 'NL' },
-  205: { league: 'NL' },
+const DIVISION_META: Record<number, { league: 'AL' | 'NL'; name: string }> = {
+  200: { league: 'AL', name: 'AL West'    },
+  201: { league: 'AL', name: 'AL East'    },
+  202: { league: 'AL', name: 'AL Central' },
+  203: { league: 'NL', name: 'NL West'    },
+  204: { league: 'NL', name: 'NL East'    },
+  205: { league: 'NL', name: 'NL Central' },
 }
+
+// Standard division display order within a league
+const DIVISION_ORDER = ['East', 'Central', 'West']
 
 const ID_TO_ABBR: Record<number, string> = {
   108: 'LAA', 109: 'ARI', 110: 'BAL', 111: 'BOS', 112: 'CHC',
@@ -34,9 +37,15 @@ interface TeamRow {
   winPct: string
 }
 
+interface DivisionData {
+  id: number
+  name: string
+  teams: TeamRow[]
+}
+
 interface LeagueData {
   league: 'AL' | 'NL'
-  teams: TeamRow[]
+  divisions: DivisionData[]
 }
 
 function fmtPct(raw: any): string {
@@ -56,17 +65,21 @@ async function loadStandings(): Promise<LeagueData[]> {
     if (!res.ok) return []
     const data = await res.json()
 
-    const alTeams: TeamRow[] = []
-    const nlTeams: TeamRow[] = []
+    const alDivisions: DivisionData[] = []
+    const nlDivisions: DivisionData[] = []
 
+    // Each API record is already scoped to a single division, so teams only
+    // need to be ranked within that record — no separate re-bucketing step.
     for (const record of (data.records ?? [])) {
-      const meta = DIVISION_META[record.division?.id as number]
+      const divId = record.division?.id as number
+      const meta = DIVISION_META[divId]
       if (!meta) continue
-      for (const tr of (record.teamRecords ?? [])) {
+
+      const teams: TeamRow[] = (record.teamRecords ?? []).map((tr: any) => {
         const teamId: number = tr.team?.id
         const wins   = (tr.wins   as number) ?? 0
         const losses = (tr.losses as number) ?? 0
-        const row: TeamRow = {
+        return {
           rank:     0,
           teamId,
           teamAbbr: ID_TO_ABBR[teamId] ?? '',
@@ -75,22 +88,25 @@ async function loadStandings(): Promise<LeagueData[]> {
           losses,
           winPct:   fmtPct(tr.winningPercentage ?? (wins + losses > 0 ? wins / (wins + losses) : 0)),
         }
-        if (meta.league === 'AL') alTeams.push(row)
-        else                      nlTeams.push(row)
-      }
+      })
+
+      teams.sort((a, b) => {
+        const d = parseFloat(b.winPct) - parseFloat(a.winPct)
+        return d !== 0 ? d : b.wins - a.wins
+      })
+      teams.forEach((t, i) => { t.rank = i + 1 })
+
+      const division: DivisionData = { id: divId, name: meta.name, teams }
+      if (meta.league === 'AL') alDivisions.push(division)
+      else                      nlDivisions.push(division)
     }
 
-    const rank = (teams: TeamRow[]) =>
-      [...teams]
-        .sort((a, b) => {
-          const d = parseFloat(b.winPct) - parseFloat(a.winPct)
-          return d !== 0 ? d : b.wins - a.wins
-        })
-        .map((t, i) => ({ ...t, rank: i + 1 }))
+    const byStandardOrder = (a: DivisionData, b: DivisionData) =>
+      DIVISION_ORDER.findIndex(d => a.name.endsWith(d)) - DIVISION_ORDER.findIndex(d => b.name.endsWith(d))
 
     return [
-      { league: 'AL', teams: rank(alTeams) },
-      { league: 'NL', teams: rank(nlTeams) },
+      { league: 'AL', divisions: alDivisions.sort(byStandardOrder) },
+      { league: 'NL', divisions: nlDivisions.sort(byStandardOrder) },
     ]
   } catch {
     return []
@@ -173,8 +189,8 @@ export default function Standings({ favAbbr }: Props) {
           <div style={{ color: '#8B949E', fontSize: 13, paddingTop: 8 }}>Loading standings…</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {al && <LeagueTable title="American League" teams={al.teams} favAbbr={favAbbr} />}
-            {nl && <LeagueTable title="National League"  teams={nl.teams} favAbbr={favAbbr} />}
+            {al && <LeagueTable title="American League" divisions={al.divisions} favAbbr={favAbbr} />}
+            {nl && <LeagueTable title="National League"  divisions={nl.divisions} favAbbr={favAbbr} />}
           </div>
         )
       )}
@@ -183,10 +199,10 @@ export default function Standings({ favAbbr }: Props) {
 }
 
 function LeagueTable({
-  title, teams, favAbbr,
+  title, divisions, favAbbr,
 }: {
   title: string
-  teams: TeamRow[]
+  divisions: DivisionData[]
   favAbbr: string | null
 }) {
   return (
@@ -194,7 +210,7 @@ function LeagueTable({
       background: '#161B22', border: '1px solid #30363D',
       borderRadius: 12, overflow: 'hidden',
     }}>
-      {/* Table header */}
+      {/* League header */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
         padding: '0.6rem 1rem',
@@ -209,65 +225,80 @@ function LeagueTable({
         <span style={{ width: 36, textAlign: 'right', flexShrink: 0 }}>PCT</span>
       </div>
 
-      {teams.length === 0 ? (
+      {divisions.length === 0 ? (
         <div style={{ padding: '1rem', color: '#8B949E', fontSize: 13 }}>No data available</div>
       ) : (
-        teams.map((team, i) => {
-          const isFav  = favAbbr !== null && team.teamAbbr === favAbbr
-          const accent = isFav ? (TEAM_PRIMARY[team.teamAbbr] ?? '#1F6FEB') : null
-          return (
-            <div
-              key={team.teamId}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '0.4rem 1rem',
-                borderTop: i > 0 ? '1px solid rgba(48,54,61,0.5)' : undefined,
-                borderLeft: accent ? `3px solid ${accent}` : '3px solid transparent',
-                background: accent ? `${accent}0F` : 'transparent',
-              }}
-            >
-              <span style={{
-                fontSize: 13, color: '#8B949E', width: 18,
-                flexShrink: 0, textAlign: 'right', fontVariantNumeric: 'tabular-nums',
-              }}>
-                {team.rank}
-              </span>
-
-              <TeamLogo abbreviation={team.teamAbbr} size={20} />
-
-              <span style={{
-                fontSize: 13, color: isFav ? '#E6EDF3' : '#C9D1D9',
-                fontWeight: isFav ? 700 : 400,
-                flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}>
-                {team.teamName}
-              </span>
-
-              <span style={{
-                fontSize: 12, color: '#8B949E',
-                width: 22, textAlign: 'center', flexShrink: 0,
-                fontVariantNumeric: 'tabular-nums',
-              }}>
-                {team.wins}
-              </span>
-              <span style={{
-                fontSize: 12, color: '#8B949E',
-                width: 22, textAlign: 'center', flexShrink: 0,
-                fontVariantNumeric: 'tabular-nums',
-              }}>
-                {team.losses}
-              </span>
-              <span style={{
-                fontSize: 12, color: isFav ? '#E6EDF3' : '#8B949E',
-                fontWeight: isFav ? 600 : 400,
-                width: 36, textAlign: 'right', flexShrink: 0,
-                fontVariantNumeric: 'tabular-nums',
-              }}>
-                {team.winPct}
-              </span>
+        divisions.map((division, di) => (
+          <div key={division.id}>
+            {/* Division sub-header */}
+            <div style={{
+              padding: '4px 1rem',
+              borderTop: di > 0 ? '1px solid #30363D' : undefined,
+              background: '#1C2430',
+              fontSize: 11, fontWeight: 700, color: '#8B949E',
+              textTransform: 'uppercase', letterSpacing: '0.07em',
+            }}>
+              {division.name}
             </div>
-          )
-        })
+
+            {division.teams.map((team, i) => {
+              const isFav  = favAbbr !== null && team.teamAbbr === favAbbr
+              const accent = isFav ? (TEAM_PRIMARY[team.teamAbbr] ?? '#1F6FEB') : null
+              return (
+                <div
+                  key={team.teamId}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '0.4rem 1rem',
+                    borderTop: i > 0 ? '1px solid rgba(48,54,61,0.5)' : undefined,
+                    borderLeft: accent ? `3px solid ${accent}` : '3px solid transparent',
+                    background: accent ? `${accent}0F` : 'transparent',
+                  }}
+                >
+                  <span style={{
+                    fontSize: 13, color: '#8B949E', width: 18,
+                    flexShrink: 0, textAlign: 'right', fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    {team.rank}
+                  </span>
+
+                  <TeamLogo abbreviation={team.teamAbbr} size={20} />
+
+                  <span style={{
+                    fontSize: 13, color: isFav ? '#E6EDF3' : '#C9D1D9',
+                    fontWeight: isFav ? 700 : 400,
+                    flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {team.teamName}
+                  </span>
+
+                  <span style={{
+                    fontSize: 12, color: '#8B949E',
+                    width: 22, textAlign: 'center', flexShrink: 0,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    {team.wins}
+                  </span>
+                  <span style={{
+                    fontSize: 12, color: '#8B949E',
+                    width: 22, textAlign: 'center', flexShrink: 0,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    {team.losses}
+                  </span>
+                  <span style={{
+                    fontSize: 12, color: isFav ? '#E6EDF3' : '#8B949E',
+                    fontWeight: isFav ? 600 : 400,
+                    width: 36, textAlign: 'right', flexShrink: 0,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    {team.winPct}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        ))
       )}
     </div>
   )
