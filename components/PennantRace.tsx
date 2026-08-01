@@ -153,11 +153,15 @@ async function loadPennantData(favAbbr: string): Promise<PennantData | null> {
     // Sort division by rank
     division.sort((a, b) => a.divisionRank - b.divisionRank)
 
-    // Wild card: sort all league teams by WC GB (leaders = 0), take top 6
-    const sorted = [...leagueAll].sort((a, b) => {
-      const diff = parseGB(a.wcGB) - parseGB(b.wcGB)
-      return diff !== 0 ? diff : (b.wins - b.losses) - (a.wins - a.losses)
-    })
+    // Wild card: division leaders aren't in the wild card race (API gives them
+    // wcGB "-", which parseGB would otherwise read as tied for the lead) —
+    // exclude them, then sort the rest by WC GB and take the top 6.
+    const sorted = leagueAll
+      .filter(t => t.divisionRank !== 1)
+      .sort((a, b) => {
+        const diff = parseGB(a.wcGB) - parseGB(b.wcGB)
+        return diff !== 0 ? diff : (b.wins - b.losses) - (a.wins - a.losses)
+      })
     const wildCard = sorted.slice(0, 6)
 
     return { divisionName, league: favLeague, division, wildCard, leaderMagicNumber }
