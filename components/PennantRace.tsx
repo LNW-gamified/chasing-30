@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import TeamLogo from '@/components/TeamLogo'
 import { TrendingUp, TrendingDown, Minus, RefreshCw } from 'lucide-react'
 import { TEAM_PRIMARY } from '@/lib/team-colors'
+import PlayoffBracket from '@/components/PlayoffBracket'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -453,7 +454,39 @@ function DivisionLeadersStrip({ leaders, favAbbr }: { leaders: LeaderTeam[]; fav
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
+// Once the postseason bracket exists, the regular-season race is over and
+// this section swaps to showing it instead — checked once on mount and
+// re-checked periodically since the swap happens abruptly in October.
 export default function PennantRace({ favAbbr }: { favAbbr: string }) {
+  const [postseasonActive, setPostseasonActive] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    const checkPostseason = async () => {
+      try {
+        const year = new Date().getFullYear()
+        const res = await fetch(
+          `https://statsapi.mlb.com/api/v1/schedule/postseason/series?season=${year}`,
+          { cache: 'no-store' }
+        )
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled) setPostseasonActive((data.totalItems ?? 0) > 0)
+      } catch {
+        // leave postseasonActive as-is on failure
+      }
+    }
+    checkPostseason()
+    const id = setInterval(checkPostseason, 30 * 60 * 1000)
+    return () => { cancelled = true; clearInterval(id) }
+  }, [])
+
+  if (postseasonActive) return <PlayoffBracket favAbbr={favAbbr} />
+
+  return <PennantRaceRegularSeason favAbbr={favAbbr} />
+}
+
+function PennantRaceRegularSeason({ favAbbr }: { favAbbr: string }) {
   const [data, setData]           = useState<PennantData | null>(null)
   const [loading, setLoading]     = useState(true)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
