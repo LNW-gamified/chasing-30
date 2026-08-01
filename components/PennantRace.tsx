@@ -47,6 +47,7 @@ interface PennantTeam {
   magicNumber: string | null
   eliminationNumber: string | null
   divisionRank: number
+  wildCardRank: number | null
 }
 
 interface PennantData {
@@ -62,15 +63,6 @@ interface PennantData {
 function normGB(raw: any): string {
   if (raw == null || raw === '-' || raw === '') return '—'
   return String(raw)
-}
-
-function parseGB(gb: string): number {
-  if (gb === '—') return 0
-  // A "+" prefix means games ahead of the cutoff (safely in a wild card
-  // spot), not behind — negate it so ascending sort still ranks the safest
-  // teams first, instead of tying them with teams that many games back.
-  if (gb.startsWith('+')) return -(parseFloat(gb.slice(1)) || 0)
-  return parseFloat(gb) || 0
 }
 
 async function loadPennantData(favAbbr: string): Promise<PennantData | null> {
@@ -130,6 +122,7 @@ async function loadPennantData(favAbbr: string): Promise<PennantData | null> {
         const magicNumber  = tr.magicNumber  && tr.magicNumber  !== '-' ? String(tr.magicNumber)  : null
         const elimNumber   = tr.eliminationNumber && tr.eliminationNumber !== '-' ? String(tr.eliminationNumber) : null
         const divRank      = parseInt(tr.divisionRank ?? '99')
+        const wcRank       = tr.wildCardRank != null ? parseInt(tr.wildCardRank) : null
 
         const row: PennantTeam = {
           teamId, abbr,
@@ -144,6 +137,7 @@ async function loadPennantData(favAbbr: string): Promise<PennantData | null> {
           magicNumber,
           eliminationNumber: elimNumber,
           divisionRank:      divRank,
+          wildCardRank:      wcRank != null && !isNaN(wcRank) ? wcRank : null,
         }
 
         if (divId === favDivId) {
@@ -157,16 +151,14 @@ async function loadPennantData(favAbbr: string): Promise<PennantData | null> {
     // Sort division by rank
     division.sort((a, b) => a.divisionRank - b.divisionRank)
 
-    // Wild card: division leaders aren't in the wild card race (API gives them
-    // wcGB "-", which parseGB would otherwise read as tied for the lead) —
-    // exclude them, then sort the rest by WC GB and take the top 6.
-    const sorted = leagueAll
-      .filter(t => t.divisionRank !== 1)
-      .sort((a, b) => {
-        const diff = parseGB(a.wcGB) - parseGB(b.wcGB)
-        return diff !== 0 ? diff : (b.wins - b.losses) - (a.wins - a.losses)
-      })
-    const wildCard = sorted.slice(0, 6)
+    // Wild card: use the API's own wildCardRank rather than re-deriving order
+    // from the GB strings — MLB applies tiebreakers (head-to-head, etc.) that
+    // can't be reconstructed from wins/losses alone. Division leaders have no
+    // wildCardRank (they're not in the race), which excludes them for free.
+    const wildCard = leagueAll
+      .filter(t => t.wildCardRank != null)
+      .sort((a, b) => (a.wildCardRank as number) - (b.wildCardRank as number))
+      .slice(0, 6)
 
     return { divisionName, league: favLeague, division, wildCard, leaderMagicNumber }
   } catch {
