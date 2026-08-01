@@ -66,6 +66,10 @@ function normGB(raw: any): string {
 
 function parseGB(gb: string): number {
   if (gb === '—') return 0
+  // A "+" prefix means games ahead of the cutoff (safely in a wild card
+  // spot), not behind — negate it so ascending sort still ranks the safest
+  // teams first, instead of tying them with teams that many games back.
+  if (gb.startsWith('+')) return -(parseFloat(gb.slice(1)) || 0)
   return parseFloat(gb) || 0
 }
 
