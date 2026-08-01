@@ -46,7 +46,9 @@ interface PennantTeam {
   clinchIndicator: string | null
   magicNumber: string | null
   eliminationNumber: string | null
+  wildCardEliminationNumber: string | null
   divisionRank: number
+  divisionId: number
   wildCardRank: number | null
 }
 
@@ -55,8 +57,11 @@ interface PennantData {
   league: 'AL' | 'NL'
   division: PennantTeam[]
   wildCard: PennantTeam[]
-  leaderMagicNumber: string | null
+  leaders: PennantTeam[]
 }
+
+// Display order for the division-leaders strip — matches the Standings section
+const DIVISION_DISPLAY_ORDER = ['West', 'Central', 'East']
 
 // ─── Fetch ────────────────────────────────────────────────────────────────────
 
@@ -95,7 +100,6 @@ async function loadPennantData(favAbbr: string): Promise<PennantData | null> {
 
     const division: PennantTeam[] = []
     const leagueAll: PennantTeam[] = []
-    let leaderMagicNumber: string | null = null
 
     for (const record of data.records ?? []) {
       const divId = record.division?.id as number
@@ -121,6 +125,7 @@ async function loadPennantData(favAbbr: string): Promise<PennantData | null> {
 
         const magicNumber  = tr.magicNumber  && tr.magicNumber  !== '-' ? String(tr.magicNumber)  : null
         const elimNumber   = tr.eliminationNumber && tr.eliminationNumber !== '-' ? String(tr.eliminationNumber) : null
+        const wcElimNumber = tr.wildCardEliminationNumber && tr.wildCardEliminationNumber !== '-' ? String(tr.wildCardEliminationNumber) : null
         const divRank      = parseInt(tr.divisionRank ?? '99')
         const wcRank       = tr.wildCardRank != null ? parseInt(tr.wildCardRank) : null
 
@@ -136,14 +141,13 @@ async function loadPennantData(favAbbr: string): Promise<PennantData | null> {
           clinchIndicator:   tr.clinchIndicator ?? null,
           magicNumber,
           eliminationNumber: elimNumber,
+          wildCardEliminationNumber: wcElimNumber,
           divisionRank:      divRank,
+          divisionId:        divId,
           wildCardRank:      wcRank != null && !isNaN(wcRank) ? wcRank : null,
         }
 
-        if (divId === favDivId) {
-          division.push(row)
-          if (divRank === 1 && magicNumber) leaderMagicNumber = magicNumber
-        }
+        if (divId === favDivId) division.push(row)
         leagueAll.push(row)
       }
     }
@@ -160,7 +164,16 @@ async function loadPennantData(favAbbr: string): Promise<PennantData | null> {
       .sort((a, b) => (a.wildCardRank as number) - (b.wildCardRank as number))
       .slice(0, 6)
 
-    return { divisionName, league: favLeague, division, wildCard, leaderMagicNumber }
+    // Division leaders: the #1 team in each of the league's 3 divisions,
+    // ordered to match the Standings section (West, Central, East).
+    const leaders = leagueAll
+      .filter(t => t.divisionRank === 1)
+      .sort((a, b) => {
+        const orderOf = (t: PennantTeam) => DIVISION_DISPLAY_ORDER.findIndex(d => DIV[t.divisionId]?.name.endsWith(d))
+        return orderOf(a) - orderOf(b)
+      })
+
+    return { divisionName, league: favLeague, division, wildCard, leaders }
   } catch {
     return null
   }
@@ -293,6 +306,108 @@ function TeamRow({
   )
 }
 
+function FavStatusCard({ division, divisionName, favAbbr }: { division: PennantTeam[]; divisionName: string; favAbbr: string }) {
+  const favTeam = division.find(t => t.abbr === favAbbr)
+  if (!favTeam) return null
+
+  const leader   = division[0]
+  const runnerUp = division[1]
+  const isLeader   = favTeam.divisionRank === 1
+  const clinchedDivision = favTeam.clinchIndicator === 'x' || favTeam.clinchIndicator === 'z'
+  const eliminated = favTeam.clinchIndicator === 'e'
+
+  let bigNumber: string | null = null
+  let bigLabel = ''
+  let headline = ''
+  let detail = ''
+
+  if (eliminated) {
+    headline = `${favTeam.name} eliminated`
+    detail = `Their shot at the ${divisionName} and a Wild Card spot is over for this season.`
+  } else if (clinchedDivision) {
+    headline = `${favTeam.name} clinched the ${divisionName}! 🎉`
+    detail = `Champs — on to October.`
+  } else if (isLeader) {
+    bigNumber = favTeam.magicNumber
+    bigLabel = 'Magic Number'
+    headline = `${favTeam.name} lead the ${divisionName}`
+    detail = runnerUp
+      ? `Any combination of ${favTeam.abbr} wins + ${runnerUp.abbr} losses adding up to ${favTeam.magicNumber ?? '—'} clinches it.`
+      : `${favTeam.magicNumber ?? '—'} combined wins/losses clinches the division.`
+  } else {
+    bigNumber = favTeam.eliminationNumber
+    bigLabel = 'Elimination #'
+    headline = `${favTeam.name} chasing ${leader?.name ?? 'the leader'}`
+    detail = [
+      favTeam.eliminationNumber ? `${favTeam.eliminationNumber} away from being knocked out of the ${divisionName} race.` : null,
+      favTeam.wildCardEliminationNumber ? `Wild Card elimination #: ${favTeam.wildCardEliminationNumber}.` : null,
+    ].filter(Boolean).join(' ')
+  }
+
+  return (
+    <div style={{
+      background: '#161B22', border: '1px solid #30363D', borderRadius: 12,
+      padding: 16, display: 'flex', alignItems: 'center', gap: 16,
+    }}>
+      <TeamLogo abbreviation={favTeam.abbr} size={44} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', marginBottom: 2 }}>{headline}</div>
+        <div style={{ fontSize: 12.5, color: '#8B949E', lineHeight: 1.4 }}>{detail}</div>
+      </div>
+      {bigNumber && (
+        <div style={{ textAlign: 'center', flexShrink: 0 }}>
+          <div className="rank-badge-glow" style={{ fontSize: 30, fontWeight: 900, color: '#F5A623', lineHeight: 1 }}>
+            {bigNumber}
+          </div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#8B949E', letterSpacing: '0.06em', marginTop: 2 }}>
+            {bigLabel}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DivisionLeadersStrip({ leaders, favAbbr }: { leaders: PennantTeam[]; favAbbr: string }) {
+  return (
+    <div style={{ background: '#161B22', border: '1px solid #30363D', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ padding: '8px 12px', borderBottom: '1px solid #30363D', background: '#1C2430' }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3' }}>Division Leaders</span>
+      </div>
+      {leaders.map((team, i) => {
+        const isFav   = team.abbr === favAbbr
+        const accent  = isFav ? (TEAM_PRIMARY[team.abbr] ?? '#1F6FEB') : null
+        const divName = DIV[team.divisionId]?.name ?? ''
+        return (
+          <div
+            key={team.teamId}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '6px 12px',
+              borderTop: i > 0 ? '1px solid rgba(48,54,61,0.5)' : undefined,
+              borderLeft: accent ? `3px solid ${accent}` : '3px solid transparent',
+              background: accent ? `${accent}12` : 'transparent',
+            }}
+          >
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', width: 72, flexShrink: 0 }}>{divName}</span>
+            <TeamLogo abbreviation={team.abbr} size={20} />
+            <span style={{
+              fontSize: 13, fontWeight: isFav ? 700 : 500,
+              color: isFav ? '#E6EDF3' : '#C9D1D9', flex: 1,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {team.name}
+            </span>
+            <span style={{ fontSize: 12, color: '#8B949E', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+              {team.wins}-{team.losses}
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function PennantRace({ favAbbr }: { favAbbr: string }) {
@@ -362,38 +477,11 @@ export default function PennantRace({ favAbbr }: { favAbbr: string }) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-          {/* ── Division ──────────────────────────────────────── */}
-          <div style={{ background: '#161B22', border: '1px solid #30363D', borderRadius: 12, overflow: 'hidden' }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '8px 12px', borderBottom: '1px solid #30363D',
-              background: '#1C2430',
-            }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3' }}>
-                {data.divisionName}
-              </span>
-              {data.leaderMagicNumber && (
-                <span style={{
-                  fontSize: 13, fontWeight: 700,
-                  color: '#F5A623', background: 'rgba(245,166,35,0.12)',
-                  border: '1px solid rgba(245,166,35,0.3)',
-                  borderRadius: 20, padding: '2px 10px',
-                }}>
-                  Magic #: {data.leaderMagicNumber}
-                </span>
-              )}
-            </div>
-            <TableHeader gbLabel="GB" />
-            {data.division.map(team => (
-              <TeamRow
-                key={team.teamId}
-                team={team}
-                isFav={team.abbr === favAbbr}
-                gbValue={team.divGB}
-                showCutline={false}
-              />
-            ))}
-          </div>
+          {/* ── Fav team status: magic number / elimination countdown ── */}
+          <FavStatusCard division={data.division} divisionName={data.divisionName} favAbbr={favAbbr} />
+
+          {/* ── Division Leaders ─────────────────────────────────── */}
+          <DivisionLeadersStrip leaders={data.leaders} favAbbr={favAbbr} />
 
           {/* ── Wild Card ─────────────────────────────────────── */}
           <div style={{ background: '#161B22', border: '1px solid #30363D', borderRadius: 12, overflow: 'hidden' }}>
