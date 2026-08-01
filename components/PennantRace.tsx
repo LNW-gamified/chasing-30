@@ -87,7 +87,7 @@ async function loadPennantData(favAbbr: string): Promise<PennantData | null> {
       if (found) {
         favDivId   = record.division?.id ?? -1
         favLeague  = DIV[favDivId]?.league ?? null
-        divisionName = record.division?.name ?? ''
+        divisionName = DIV[favDivId]?.name ?? ''
         break
       }
     }
