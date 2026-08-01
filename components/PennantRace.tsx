@@ -403,30 +403,47 @@ function DivisionLeadersStrip({ leaders, favAbbr }: { leaders: LeaderTeam[]; fav
       {leaders.map((team, i) => {
         const isFav   = team.abbr === favAbbr
         const accent  = isFav ? (TEAM_PRIMARY[team.abbr] ?? '#1F6FEB') : null
-        const divName = DIV[team.divisionId]?.name ?? ''
+        const divMeta = DIV[team.divisionId]
+        const divName = divMeta?.name ?? ''
+        // Leaders are grouped fav-league-first, 3 per league — a new league
+        // group starts at index 0 and again at index 3.
+        const isNewLeague = i === 0 || i === 3
+
         return (
-          <div
-            key={team.teamId}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '6px 12px',
-              borderTop: i > 0 ? '1px solid rgba(48,54,61,0.5)' : undefined,
-              borderLeft: accent ? `3px solid ${accent}` : '3px solid transparent',
-              background: accent ? `${accent}12` : 'transparent',
-            }}
-          >
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', width: 72, flexShrink: 0 }}>{divName}</span>
-            <TeamLogo abbreviation={team.abbr} size={20} />
-            <span style={{
-              fontSize: 13, fontWeight: isFav ? 700 : 500,
-              color: isFav ? '#E6EDF3' : '#C9D1D9', flex: 1,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>
-              {team.name}
-            </span>
-            <span style={{ fontSize: 12, color: '#8B949E', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-              {team.wins}-{team.losses}
-            </span>
+          <div key={team.teamId}>
+            {isNewLeague && (
+              <div style={{
+                padding: '4px 12px',
+                borderTop: i > 0 ? '1px solid #30363D' : undefined,
+                background: '#1C2430',
+                fontSize: 11, fontWeight: 700, color: '#8B949E',
+                textTransform: 'uppercase', letterSpacing: '0.07em',
+              }}>
+                {divMeta?.league === 'AL' ? 'American League' : 'National League'}
+              </div>
+            )}
+            <div
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '6px 12px',
+                borderTop: (i > 0 && !isNewLeague) ? '1px solid rgba(48,54,61,0.5)' : undefined,
+                borderLeft: accent ? `3px solid ${accent}` : '3px solid transparent',
+                background: accent ? `${accent}12` : 'transparent',
+              }}
+            >
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', width: 72, flexShrink: 0 }}>{divName}</span>
+              <TeamLogo abbreviation={team.abbr} size={20} />
+              <span style={{
+                fontSize: 13, fontWeight: isFav ? 700 : 500,
+                color: isFav ? '#E6EDF3' : '#C9D1D9', flex: 1,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {team.name}
+              </span>
+              <span style={{ fontSize: 12, color: '#8B949E', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                {team.wins}-{team.losses}
+              </span>
+            </div>
           </div>
         )
       })}
