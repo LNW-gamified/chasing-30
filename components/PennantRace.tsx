@@ -52,12 +52,21 @@ interface PennantTeam {
   wildCardRank: number | null
 }
 
+interface LeaderTeam {
+  teamId: number
+  abbr: string
+  name: string
+  wins: number
+  losses: number
+  divisionId: number
+}
+
 interface PennantData {
   divisionName: string
   league: 'AL' | 'NL'
   division: PennantTeam[]
   wildCard: PennantTeam[]
-  leaders: PennantTeam[]
+  leaders: LeaderTeam[]
 }
 
 // Display order for the division-leaders strip — matches the Standings section
@@ -164,14 +173,31 @@ async function loadPennantData(favAbbr: string): Promise<PennantData | null> {
       .sort((a, b) => (a.wildCardRank as number) - (b.wildCardRank as number))
       .slice(0, 6)
 
-    // Division leaders: the #1 team in each of the league's 3 divisions,
-    // ordered to match the Standings section (West, Central, East).
-    const leaders = leagueAll
-      .filter(t => t.divisionRank === 1)
-      .sort((a, b) => {
-        const orderOf = (t: PennantTeam) => DIVISION_DISPLAY_ORDER.findIndex(d => DIV[t.divisionId]?.name.endsWith(d))
-        return orderOf(a) - orderOf(b)
+    // Division leaders across all of MLB (not just the fav league) — the fav
+    // league's 3 leaders first, then the other league's 3, each in West,
+    // Central, East order to match the Standings section.
+    const allLeaders: LeaderTeam[] = []
+    for (const record of data.records ?? []) {
+      const divId = record.division?.id as number
+      if (!DIV[divId]) continue
+      const leaderTr = (record.teamRecords ?? []).find((tr: any) => parseInt(tr.divisionRank ?? '99') === 1)
+      if (!leaderTr) continue
+      const teamId = leaderTr.team?.id as number
+      allLeaders.push({
+        teamId,
+        abbr: ID_TO_ABBR[teamId] ?? '',
+        name: leaderTr.team?.name ?? '',
+        wins: (leaderTr.wins as number) ?? 0,
+        losses: (leaderTr.losses as number) ?? 0,
+        divisionId: divId,
       })
+    }
+    const orderOf = (t: LeaderTeam) => {
+      const leagueRank = DIV[t.divisionId]?.league === favLeague ? 0 : 1
+      const divRank = DIVISION_DISPLAY_ORDER.findIndex(d => DIV[t.divisionId]?.name.endsWith(d))
+      return leagueRank * 10 + divRank
+    }
+    const leaders = allLeaders.sort((a, b) => orderOf(a) - orderOf(b))
 
     return { divisionName, league: favLeague, division, wildCard, leaders }
   } catch {
@@ -368,7 +394,7 @@ function FavStatusCard({ division, divisionName, favAbbr }: { division: PennantT
   )
 }
 
-function DivisionLeadersStrip({ leaders, favAbbr }: { leaders: PennantTeam[]; favAbbr: string }) {
+function DivisionLeadersStrip({ leaders, favAbbr }: { leaders: LeaderTeam[]; favAbbr: string }) {
   return (
     <div style={{ background: '#161B22', border: '1px solid #30363D', borderRadius: 12, overflow: 'hidden' }}>
       <div style={{ padding: '8px 12px', borderBottom: '1px solid #30363D', background: '#1C2430' }}>
