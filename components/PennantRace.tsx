@@ -480,29 +480,31 @@ export default function PennantRace({ favAbbr }: { favAbbr: string }) {
           {/* ── Fav team status: magic number / elimination countdown ── */}
           <FavStatusCard division={data.division} divisionName={data.divisionName} favAbbr={favAbbr} />
 
-          {/* ── Division Leaders ─────────────────────────────────── */}
-          <DivisionLeadersStrip leaders={data.leaders} favAbbr={favAbbr} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {/* ── Division Leaders ───────────────────────────────── */}
+            <DivisionLeadersStrip leaders={data.leaders} favAbbr={favAbbr} />
 
-          {/* ── Wild Card ─────────────────────────────────────── */}
-          <div style={{ background: '#161B22', border: '1px solid #30363D', borderRadius: 12, overflow: 'hidden' }}>
-            <div style={{
-              padding: '8px 12px', borderBottom: '1px solid #30363D',
-              background: '#1C2430',
-            }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3' }}>
-                {data.league} Wild Card
-              </span>
+            {/* ── Wild Card ──────────────────────────────────────── */}
+            <div style={{ background: '#161B22', border: '1px solid #30363D', borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{
+                padding: '8px 12px', borderBottom: '1px solid #30363D',
+                background: '#1C2430',
+              }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#E6EDF3' }}>
+                  {data.league} Wild Card
+                </span>
+              </div>
+              <TableHeader gbLabel="WC GB" />
+              {data.wildCard.map((team, i) => (
+                <TeamRow
+                  key={team.teamId}
+                  team={team}
+                  isFav={team.abbr === favAbbr}
+                  gbValue={team.wcGB}
+                  showCutline={i === 3}
+                />
+              ))}
             </div>
-            <TableHeader gbLabel="WC GB" />
-            {data.wildCard.map((team, i) => (
-              <TeamRow
-                key={team.teamId}
-                team={team}
-                isFav={team.abbr === favAbbr}
-                gbValue={team.wcGB}
-                showCutline={i === 3}
-              />
-            ))}
           </div>
         </div>
       )}
