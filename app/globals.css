@@ -73,7 +73,7 @@ html { font-size: 16px; }
 
 body {
   background-color: var(--color-bg-primary);
-  background-image: linear-gradient(rgba(11,17,23,0.86), rgba(11,17,23,0.86)), url('/chasing-30-bg.png');
+  background-image: linear-gradient(rgba(11,17,23,0.35), rgba(11,17,23,0.35)), url('/chasing-30-bg.png');
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
