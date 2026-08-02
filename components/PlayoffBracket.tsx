@@ -55,7 +55,7 @@ interface BracketData {
 // ─── Fetch ────────────────────────────────────────────────────────────────────
 
 async function loadBracket(): Promise<BracketData | null> {
-  const year = 2025 // TEMP PREVIEW: force last year's completed postseason — revert to new Date().getFullYear()
+  const year = new Date().getFullYear()
   try {
     const res = await fetch(
       `https://statsapi.mlb.com/api/v1/schedule/postseason/series?season=${year}`,

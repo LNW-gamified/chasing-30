@@ -464,7 +464,7 @@ export default function PennantRace({ favAbbr }: { favAbbr: string }) {
     let cancelled = false
     const checkPostseason = async () => {
       try {
-        const year = 2025 // TEMP PREVIEW: force last year's completed postseason — revert to new Date().getFullYear()
+        const year = new Date().getFullYear()
         const res = await fetch(
           `https://statsapi.mlb.com/api/v1/schedule/postseason/series?season=${year}`,
           { cache: 'no-store' }
