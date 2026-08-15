@@ -7,15 +7,6 @@ import { TEAM_PRIMARY } from '@/lib/team-colors'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const ABBR_LEAGUE: Record<string, 'AL' | 'NL'> = {
-  HOU: 'AL', TEX: 'AL', SEA: 'AL', OAK: 'AL', LAA: 'AL',
-  NYY: 'AL', BOS: 'AL', TB: 'AL', TOR: 'AL', BAL: 'AL',
-  CWS: 'AL', MIN: 'AL', CLE: 'AL', DET: 'AL', KC: 'AL',
-  LAD: 'NL', ARI: 'NL', SD: 'NL', SF: 'NL', COL: 'NL',
-  ATL: 'NL', PHI: 'NL', MIA: 'NL', WSH: 'NL', NYM: 'NL',
-  MIL: 'NL', CHC: 'NL', PIT: 'NL', STL: 'NL', CIN: 'NL',
-}
-
 const ID_TO_ABBR: Record<number, string> = {
   108: 'LAA', 109: 'ARI', 110: 'BAL', 111: 'BOS', 112: 'CHC',
   113: 'CIN', 114: 'CLE', 115: 'COL', 116: 'DET', 117: 'HOU',
@@ -46,6 +37,7 @@ interface SeriesMatchup {
   gameType: string
   teamA: SeriesTeam
   teamB: SeriesTeam
+  league: 'AL' | 'NL' | null
 }
 
 interface BracketData {
@@ -88,7 +80,16 @@ async function loadBracket(): Promise<BracketData | null> {
       }
 
       const [teamA, teamB] = order.map(id => winsByTeam[id])
-      return { id: s.series?.id ?? '', gameType: s.series?.gameType ?? '', teamA, teamB }
+      // Team ids are unreliable for league grouping: MLB fills unplayed
+      // rounds with placeholder teams ("AL 3/6 Winner", "NL #1 Seed") whose
+      // ids don't map to any real team abbreviation. seriesDescription
+      // ("AL Division Series", "NL Championship Series") is present on
+      // every game, placeholder or not, and is a reliable league signal —
+      // the World Series alone has no league.
+      const seriesDesc: string = games[0]?.seriesDescription ?? ''
+      const league: 'AL' | 'NL' | null =
+        seriesDesc.startsWith('AL') ? 'AL' : seriesDesc.startsWith('NL') ? 'NL' : null
+      return { id: s.series?.id ?? '', gameType: s.series?.gameType ?? '', teamA, teamB, league }
     }).filter(m => m.teamA && m.teamB)
 
     const byRound = new Map<string, SeriesMatchup[]>()
@@ -98,7 +99,7 @@ async function loadBracket(): Promise<BracketData | null> {
     }
 
     // Within a round, fav-league-agnostic order: AL series first, then NL, then World Series (no league)
-    const leagueOrder = (m: SeriesMatchup) => (ABBR_LEAGUE[m.teamA.abbr] === 'AL' ? 0 : 1)
+    const leagueOrder = (m: SeriesMatchup) => (m.league === 'AL' ? 0 : 1)
 
     const rounds = Array.from(byRound.entries())
       .map(([gameType, ms]) => ({
@@ -153,7 +154,7 @@ function rowCenterY(row: number): number {
 
 function buildLeagueColumns(league: 'AL' | 'NL', rounds: BracketData['rounds']): BracketColumn[] {
   const forLeague = (gt: RoundType) =>
-    rounds.find(r => r.gameType === gt)?.matchups.filter(m => ABBR_LEAGUE[m.teamA.abbr] === league) ?? []
+    rounds.find(r => r.gameType === gt)?.matchups.filter(m => m.league === league) ?? []
 
   const wc  = forLeague('F')
   const lds = forLeague('D')

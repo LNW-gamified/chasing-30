@@ -471,7 +471,23 @@ export default function PennantRace({ favAbbr }: { favAbbr: string }) {
         )
         if (!res.ok) return
         const data = await res.json()
-        if (!cancelled) setPostseasonActive((data.totalItems ?? 0) > 0)
+        // MLB publishes the full postseason bracket (Wild Card through World
+        // Series) as soon as the season's schedule is set, months before the
+        // regular season even ends — every slot filled with placeholder
+        // teams like "AL Wild Card #3" whose ids aren't real teams. So
+        // totalItems > 0 year-round and isn't a signal of anything. Only
+        // flip to the bracket once at least one series has two real,
+        // seeded teams (both ids resolve via ID_TO_ABBR) — i.e. seeding has
+        // actually happened.
+        const series: any[] = data.series ?? []
+        const hasRealMatchup = series.some(s =>
+          (s.games ?? []).some((g: any) => {
+            const awayId = g.teams?.away?.team?.id
+            const homeId = g.teams?.home?.team?.id
+            return ID_TO_ABBR[awayId] != null && ID_TO_ABBR[homeId] != null
+          })
+        )
+        if (!cancelled) setPostseasonActive(hasRealMatchup)
       } catch {
         // leave postseasonActive as-is on failure
       }

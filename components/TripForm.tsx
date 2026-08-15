@@ -230,16 +230,28 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     ))
 
     try {
-      const now     = new Date()
-      const today   = now.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
-      const year    = now.getFullYear()
-      const endDate = `${year + 2}-12-31`
-      const url     = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=${teamId}&gameType=R&startDate=${year}-03-01&endDate=${endDate}&hydrate=game(promotions)`
-      const res   = await fetch(url)
-      const json  = await res.json()
+      const now   = new Date()
+      const today = now.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+      const year  = now.getFullYear()
+
+      // MLB's schedule endpoint scopes results to the season containing
+      // startDate — widening endDate does NOT pull in a future season, so
+      // once next year's schedule is published it has to be requested as
+      // its own call rather than as a wider range on this one.
+      const seasonRanges = [
+        { startDate: `${year}-03-01`,     endDate: `${year}-12-31` },
+        { startDate: `${year + 1}-01-01`, endDate: `${year + 1}-12-31` },
+      ]
+      const allDates = (await Promise.all(seasonRanges.map(async ({ startDate, endDate }) => {
+        const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=${teamId}&gameType=R&startDate=${startDate}&endDate=${endDate}&hydrate=game(promotions)`
+        const res  = await fetch(url)
+        if (!res.ok) return []
+        const json = await res.json()
+        return json.dates ?? []
+      }))).flat()
 
       const games: GameOption[] = []
-      for (const date of json.dates ?? []) {
+      for (const date of allDates) {
         for (const game of date.games ?? []) {
           const homeTeamId = game.teams?.home?.team?.id as number | undefined
           if (homeTeamId !== teamId) continue
