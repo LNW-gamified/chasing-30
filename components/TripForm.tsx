@@ -936,6 +936,18 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                         ) : (() => {
                           const upcoming = ss.games.filter(g => !g.isPast)
                           const past     = ss.games.filter(g => g.isPast).slice().reverse()
+
+                          // Group upcoming games by season year so a switch
+                          // to next year's schedule shows up as its own
+                          // labeled section instead of blending into one list.
+                          const upcomingBySeason = new Map<string, GameOption[]>()
+                          for (const g of upcoming) {
+                            const season = g.gameDate.slice(0, 4)
+                            if (!upcomingBySeason.has(season)) upcomingBySeason.set(season, [])
+                            upcomingBySeason.get(season)!.push(g)
+                          }
+                          const seasons = [...upcomingBySeason.keys()]
+
                           return (
                             <select
                               style={inputStyle}
@@ -943,15 +955,18 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                               onChange={e => selectGame(i, e.target.value)}
                             >
                               <option value="">— pick a game (optional) —</option>
-                              {upcoming.length > 0 && (
-                                <optgroup label="── Upcoming Games ──">
-                                  {upcoming.map(g => (
+                              {seasons.map(season => (
+                                <optgroup
+                                  key={season}
+                                  label={seasons.length > 1 ? `── ${season} Season ──` : '── Upcoming Games ──'}
+                                >
+                                  {upcomingBySeason.get(season)!.map(g => (
                                     <option key={g.gamePk} value={g.gamePk.toString()}>
                                       {g.displayDate} · {g.opponent} · {g.firstPitch}
                                     </option>
                                   ))}
                                 </optgroup>
-                              )}
+                              ))}
                               {past.length > 0 && (
                                 <optgroup label="── Past Games ──">
                                   {past.map(g => (
