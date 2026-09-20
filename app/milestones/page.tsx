@@ -37,16 +37,32 @@ function computeEarnDate(
   allBle: BaseballLifeEntry[],
   allDestVisits: DestinationVisit[]
 ): string | null {
-  const sorted = [...allVisits].sort((a, b) => a.visit_date.localeCompare(b.visit_date))
-  for (let i = 0; i < sorted.length; i++) {
-    if (m.check(sorted.slice(0, i + 1), allStadiums, [], allBle, allDestVisits)) {
-      return sorted[i].visit_date
+  // Build one unified, date-sorted timeline across all three sources of
+  // "things that could earn an achievement" (stadium visits, baseball-life
+  // entries like pilgrimages/special events, and destination visits), then
+  // walk it progressively, filtering ALL THREE arrays down to "as of this
+  // date" at each step. The previous version only sliced allVisits while
+  // passing allBle/allDestVisits in full every iteration, so any
+  // achievement actually earned via a BLE entry (a pilgrimage like the
+  // Babe Ruth Museum, a special event, etc.) always matched on the very
+  // first iteration and reported the date of the first stadium visit ever
+  // logged, not the real date the achievement was earned.
+  type TimelineDate = string
+  const dates: TimelineDate[] = Array.from(new Set([
+    ...allVisits.map(v => v.visit_date),
+    ...allBle.map(b => b.visit_date),
+    ...allDestVisits.map(d => d.visit_date).filter((d): d is string => !!d),
+  ])).sort((a, b) => a.localeCompare(b))
+
+  for (const date of dates) {
+    const visitsUpTo = allVisits.filter(v => v.visit_date <= date)
+    const bleUpTo     = allBle.filter(b => b.visit_date <= date)
+    const destUpTo    = allDestVisits.filter(d => (d.visit_date ?? '') <= date)
+    if (m.check(visitsUpTo, allStadiums, [], bleUpTo, destUpTo)) {
+      return date
     }
   }
-  const bleDate = [...allBle].sort((a, b) => a.visit_date.localeCompare(b.visit_date))[0]?.visit_date
-  const dvDate = [...allDestVisits].sort((a, b) => (a.visit_date ?? '').localeCompare(b.visit_date ?? ''))[0]?.visit_date
-  const fallback = [bleDate, dvDate].filter(Boolean).sort()[0]
-  return fallback ?? null
+  return null
 }
 
 function toSerializable(

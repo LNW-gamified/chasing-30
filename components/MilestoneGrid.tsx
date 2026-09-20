@@ -92,7 +92,8 @@ function getSerializableMilestoneContext(
   milestone: SerializableMilestone,
   allVisits: StadiumVisit[],
   allStadiums: Stadium[],
-  allEvents: SpecialEvent[]
+  allEvents: SpecialEvent[],
+  allBle: BaseballLifeEntry[]
 ): EarningContext | null {
   const sv = [...allVisits].sort((a, b) => a.visit_date.localeCompare(b.visit_date))
   const se = [...allEvents].sort((a, b) => a.event_date.localeCompare(b.event_date))
@@ -138,7 +139,16 @@ function getSerializableMilestoneContext(
     case 'history_maker':      { const v = sv.find(v => v.game_events?.includes('milestone_hr'));        return v ? { date: v.visit_date, location: sn(v.stadium_id) } : null }
     case 'run_factory':        { const v = sv.find(v => v.game_events?.includes('run_factory'));         return v ? { date: v.visit_date, location: sn(v.stadium_id) } : null }
     case 'pitchers_duel':      { const v = sv.find(v => v.game_events?.includes('pitchers_duel'));       return v ? { date: v.visit_date, location: sn(v.stadium_id) } : null }
-    default: return null
+    default: {
+      // Generic fallback for baseball-life-entry milestones (pilgrimages,
+      // spring training, historic tours, etc.) that don't have a specific
+      // case above — 22 of them share this gap. earnDate is already the
+      // correct date (computeEarnDate fixed server-side), so find the BLE
+      // entry that actually happened on that date and use its venue.
+      if (!milestone.earnDate) return null
+      const entry = allBle.find(b => b.visit_date === milestone.earnDate)
+      return entry ? { date: milestone.earnDate, location: entry.venue ?? undefined } : { date: milestone.earnDate }
+    }
   }
 }
 
@@ -547,7 +557,7 @@ export default function MilestoneGrid({
   }, [showStatics, filter, search, claims, hasBobbleheadGiveaway])
 
   const milestoneContext = selected?.type === 'milestone' && selected.isEarned
-    ? getSerializableMilestoneContext(selected.milestone, allVisits, allStadiums, allEvents)
+    ? getSerializableMilestoneContext(selected.milestone, allVisits, allStadiums, allEvents, allBle)
     : null
 
   const sortedVisits = [...allVisits].sort((a, b) => b.visit_date.localeCompare(a.visit_date))
