@@ -187,7 +187,7 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
       ...prev,
       visit_date:     dateStr,
       visiting_team:  game.awayTeam,
-      first_pitch_time: game.isFinal ? prev.first_pitch_time : timeStr,
+      first_pitch_time: (game.isFinal && prev.first_pitch_time) ? prev.first_pitch_time : timeStr,
     }))
   }
 
