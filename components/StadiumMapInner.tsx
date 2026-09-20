@@ -45,6 +45,7 @@ const STAR_POINTS = '20,3 23.63,13.93 35.31,14.37 26.39,21.62 29.51,32.75 20,27 
 
 function makeSpecialLocationIcon(icon: string, visited: boolean): L.DivIcon {
   const fillColor = visited ? '#F5A623' : '#FFD166'
+  const borderColor = visited ? '#3FB950' : 'white'
   const badge = visited
     ? `<div style="position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:#3FB950;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:900;line-height:1;">✓</div>`
     : ''
@@ -52,11 +53,11 @@ function makeSpecialLocationIcon(icon: string, visited: boolean): L.DivIcon {
     html: `
       <div style="position:relative;width:40px;height:40px;">
         <svg width="40" height="40" viewBox="0 0 40 40" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
-          <!-- White backing for contrast -->
+          <!-- Backing for contrast — turns green once visited -->
           <polygon
             points="${STAR_POINTS}"
-            fill="white"
-            stroke="white"
+            fill="${borderColor}"
+            stroke="${borderColor}"
             stroke-width="6"
             stroke-linejoin="round"
           />
@@ -212,9 +213,13 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
       >
-        {/* CartoDB Positron — light mode base map */}
+        {/* CartoDB Positron — light mode base map. CARTO started requiring
+            a free API key on their raster tiles in late Aug 2026; without
+            one, tiles render with an "API KEY REQUIRED" watermark. Appends
+            the key from env when set, and falls back to the bare URL
+            (watermarked, but still functional) if it isn't configured. */}
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          url={`https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png${process.env.NEXT_PUBLIC_CARTO_API_KEY ? `?key=${process.env.NEXT_PUBLIC_CARTO_API_KEY}` : ''}`}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
 

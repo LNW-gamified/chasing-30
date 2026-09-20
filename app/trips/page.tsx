@@ -145,9 +145,10 @@ export default function TripsPage() {
     const supabase = createClient()
     const [{ data: t }, { data: s }, { data: v }, { data: dv }] = await Promise.all([
       supabase.from('trips')
-        .select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, is_mlb_event), trip_stops(id, stadium_id, destination_id, stop_type, experience_type, opponent_team_id, stadium:stadiums(id, abbreviation, name))')
+        .select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, is_mlb_event), trip_stops(id, stadium_id, destination_id, stop_type, experience_type, opponent_team_id, sort_order, stadium:stadiums(id, abbreviation, name))')
         .order('start_date', { ascending: true, nullsFirst: false })
-        .order('created_at', { ascending: false }),
+        .order('created_at', { ascending: false })
+        .order('sort_order', { referencedTable: 'trip_stops', ascending: true }),
       supabase.from('stadiums').select('*').order('name'),
       supabase.from('stadium_visits').select('stadium_id'),
       supabase.from('destination_visits').select('destination_id'),
