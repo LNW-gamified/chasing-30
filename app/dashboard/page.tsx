@@ -222,7 +222,7 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     supabase.from('stadiums').select('*').order('league').order('division').order('name'),
     supabase.from('stadium_visits').select('*').order('visit_date', { ascending: false }),
-    supabase.from('trips').select('*, stadium:stadiums(*), stops:trip_stops(actual_tickets, actual_food, actual_parking)').order('start_date', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false }),
+    supabase.from('trips').select('*, stadium:stadiums(*), stops:trip_stops(id, game_date, stadium_id, actual_tickets, actual_food, actual_parking)').order('start_date', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false }),
     supabase.auth.getUser(),
     supabase.from('baseball_life_entries').select('id, category'),
     supabase.from('destination_visits').select('destination_id'),
@@ -268,10 +268,22 @@ export default async function DashboardPage() {
     return { abbr: null, visited: false }
   })
 
-  // Next planned trip
-  const nextPlannedTrip = allTrips.find((t: any) =>
-    t.status === 'planned' && t.start_date && t.start_date >= todayISO
-  ) as any | undefined
+  // Next planned trip — looks at individual stops across all trips, not
+  // just each trip's overall status/start_date. A multi-stop trip (like a
+  // DC + Baltimore road trip logged as one trip) can have its first stop
+  // completed and get marked "completed" as a whole, while a later stop
+  // (Baltimore) is still genuinely upcoming. Checking stops directly means
+  // that later stop still surfaces instead of getting hidden.
+  const nextStop = allTrips
+    .flatMap((t: any) => (t.stops ?? []).map((s: any) => ({ ...s, tripId: t.id })))
+    .filter((s: any) => s.stadium_id && s.game_date && s.game_date >= todayISO)
+    .sort((a: any, b: any) => a.game_date.localeCompare(b.game_date))[0] as any | undefined
+  const nextStopStadium = nextStop ? allStadiums.find(s => s.id === nextStop.stadium_id) ?? null : null
+  const nextPlannedTrip = nextStop && nextStopStadium ? {
+    id: nextStop.tripId,
+    stadium: nextStopStadium,
+    start_date: nextStop.game_date,
+  } as any : undefined
 
   // Stats
   const favAbbr            = (userSettings as any)?.favorite_team_abbr ?? null

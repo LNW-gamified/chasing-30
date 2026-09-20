@@ -42,17 +42,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // every navigation in the app.
   const [
     { data: { user } },
-    { data: trips },
+    { data: upcomingStops },
     { data: visits },
     { data: stadiums },
     { data: bleEntries },
   ] = await Promise.all([
     supabase.auth.getUser(),
-    supabase.from('trips')
-      .select('id, name, start_date, stadium:stadiums(name, abbreviation)')
-      .eq('status', 'planned')
-      .gte('start_date', today)
-      .order('start_date', { ascending: true, nullsFirst: false })
+    supabase.from('trip_stops')
+      .select('id, trip_id, game_date, stadium:stadiums(name, abbreviation)')
+      .not('stadium_id', 'is', null)
+      .gte('game_date', today)
+      .order('game_date', { ascending: true, nullsFirst: false })
       .limit(1),
     supabase.from('stadium_visits').select('*'),
     supabase.from('stadiums').select('*'),
@@ -107,13 +107,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const xpNext = RANK_TIERS.find(r => r.minPts > xp) ?? null
   const xpMin = rank.minPts
 
-  const nextTripRaw = trips?.[0] ?? null
+  const nextTripRaw = upcomingStops?.[0] ?? null
   const stadium = nextTripRaw ? (nextTripRaw as any).stadium : null
   const nextTrip = nextTripRaw && stadium ? {
-    id: nextTripRaw.id,
+    id: nextTripRaw.trip_id,
     stadiumName: stadium.name,
     stadiumAbbr: stadium.abbreviation,
-    daysAway: daysUntil(nextTripRaw.start_date, tz),
+    daysAway: daysUntil(nextTripRaw.game_date, tz),
   } : null
 
   const userInitial = user.email?.[0]?.toUpperCase() ?? '?'
