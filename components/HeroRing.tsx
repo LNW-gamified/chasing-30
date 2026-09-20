@@ -20,7 +20,7 @@ interface Props {
 // Row layout tapering from the wide "back" of the plate down to a single
 // point, matching real home-plate proportions (flat top, two straight
 // sides, two angled sides meeting at the tip). Sums to 30.
-const ROWS = [6, 6, 6, 5, 4, 2, 1]
+const ROWS = [7, 7, 7, 5, 3, 1]
 
 export default function HeroRing({ visited, total, dots, gradient, glow }: Props) {
   const [mounted, setMounted] = useState(false)
