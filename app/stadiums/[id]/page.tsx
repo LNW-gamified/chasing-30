@@ -130,7 +130,7 @@ export default function StadiumDetailPage() {
   const [visitPromos, setVisitPromos]           = useState<Record<string, { promotions: string[]; promotion_photos: Record<string, string> }>>({})
   const [lightboxUrl, setLightboxUrl]           = useState<string | null>(null)
   const [lightboxZoomed, setLightboxZoomed]     = useState(false)
-  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; giveaway_type: string | null; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; stadium_visit_id: string | null }>>([])
+  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; giveaway_type: string | null; giveaway_quantity: string | null; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; stadium_visit_id: string | null }>>([])
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
   const [viewingItem, setViewingItem] = useState<EditorItem | null>(null)
   const [collectionTypeFilter, setCollectionTypeFilter] = useState<string>('all')
@@ -236,7 +236,7 @@ export default function StadiumDetailPage() {
     const supabase = createClient()
     const { data: collectibles } = await supabase
       .from('collectible_log')
-      .select('id, name, category, giveaway_type, photo_url, signed_by, acquired_from, rating, price, stadium_visit_id')
+      .select('id, name, category, giveaway_type, giveaway_quantity, photo_url, signed_by, acquired_from, rating, price, stadium_visit_id')
       .in('stadium_visit_id', visitIds)
       .order('created_at', { ascending: false })
     if (collectibles) setStadiumCollectibles(collectibles)
@@ -1030,6 +1030,7 @@ export default function StadiumDetailPage() {
                             name: c.name,
                             category: c.category,
                             giveawayType: c.giveaway_type,
+                            giveawayQuantity: c.giveaway_quantity,
                             photoUrl: c.photo_url,
                             signedBy: c.signed_by,
                             acquiredFrom: c.acquired_from,
@@ -1055,6 +1056,9 @@ export default function StadiumDetailPage() {
                             <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize', marginBottom: 6 }}>
                               {c.category === 'giveaway' && c.giveaway_type ? (giveawayTypeLabels[c.giveaway_type] ?? c.category) : c.category}
                             </div>
+                            {c.category === 'giveaway' && c.giveaway_quantity && (
+                              <div style={{ fontSize: 11, color: '#8B949E', marginBottom: 6 }}>{c.giveaway_quantity}</div>
+                            )}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                               <TeamLogo abbreviation={stadium.abbreviation} size={20} />
                               <span style={{ fontSize: 12, color: '#E6EDF3' }}>{stadium.name}</span>

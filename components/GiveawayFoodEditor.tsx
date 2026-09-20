@@ -23,6 +23,7 @@ export interface EditorItem {
   name: string
   category: string
   giveawayType?: string | null
+  giveawayQuantity?: string | null
   photoUrl: string | null
   rating?: number | null
   price?: number | null
@@ -57,6 +58,7 @@ export default function GiveawayFoodEditor({ item, onClose, onSaved, onDeleted }
   const [name, setName] = useState(item.name)
   const [category, setCategory] = useState(item.category)
   const [giveawayType, setGiveawayType] = useState<string>(item.giveawayType ?? 'other')
+  const [giveawayQuantity, setGiveawayQuantity] = useState<string>(item.giveawayQuantity ?? '')
   const [rating, setRating] = useState<number | null>(item.rating ?? null)
   const [price, setPrice] = useState<string>(item.price != null ? String(item.price) : '')
   const [photoUrl, setPhotoUrl] = useState<string | null>(item.photoUrl)
@@ -64,6 +66,7 @@ export default function GiveawayFoodEditor({ item, onClose, onSaved, onDeleted }
   const [acquiredFrom, setAcquiredFrom] = useState<string>(item.acquiredFrom ?? '')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [photoError, setPhotoError] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -118,12 +121,27 @@ export default function GiveawayFoodEditor({ item, onClose, onSaved, onDeleted }
   }
 
   async function uploadPhoto(file: File) {
+    setPhotoError('')
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
+    const isRaw = file.type === 'image/x-adobe-dng' || ['dng', 'raw', 'cr2', 'nef', 'arw'].includes(ext)
+    if (isRaw) {
+      setPhotoError(
+        `"${file.name}" is a RAW photo format (DNG), which can't be displayed on the web. ` +
+        `Check if ProRAW is turned on for your camera and try a regular photo instead, ` +
+        `or take a screenshot of it and upload that.`
+      )
+      return
+    }
     setUploading(true)
     const supabase = createClient()
-    const ext = file.name.split('.').pop()
     const path = `${isNew ? tempId : item.id}-${Date.now()}.${ext}`
     const { data, error } = await supabase.storage.from('achievement-photos').upload(path, file, { upsert: true })
-    if (!error && data) {
+    if (error) {
+      setPhotoError(`Photo upload failed: ${error.message}`)
+      setUploading(false)
+      return
+    }
+    if (data) {
       const { data: urlData } = supabase.storage.from('achievement-photos').getPublicUrl(data.path)
       setPhotoUrl(urlData.publicUrl)
     }
@@ -145,6 +163,7 @@ export default function GiveawayFoodEditor({ item, onClose, onSaved, onDeleted }
       name: name.trim(),
       category,
       giveaway_type: isGiveaway ? giveawayType : null,
+      giveaway_quantity: isGiveaway && giveawayQuantity.trim() ? giveawayQuantity.trim() : null,
       rating: isFood ? rating : null,
       price: isFood && price.trim() ? Number(price) : null,
       photo_url: photoUrl,
@@ -255,6 +274,11 @@ export default function GiveawayFoodEditor({ item, onClose, onSaved, onDeleted }
               onChange={e => { const f = e.target.files?.[0]; if (f) uploadPhoto(f) }}
             />
           </label>
+          {photoError && (
+            <div style={{ marginTop: 8, padding: '8px 10px', borderRadius: 8, backgroundColor: 'rgba(248,81,73,0.1)', color: '#F85149', fontSize: 12, textAlign: 'left' }}>
+              {photoError}
+            </div>
+          )}
         </div>
 
         <div style={{ marginBottom: 12 }}>
@@ -291,6 +315,18 @@ export default function GiveawayFoodEditor({ item, onClose, onSaved, onDeleted }
                 <option key={t.value} value={t.value}>{t.emoji} {t.label}</option>
               ))}
             </select>
+          </div>
+        )}
+
+        {isGiveaway && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Quantity / Eligibility (optional)</div>
+            <input
+              value={giveawayQuantity}
+              onChange={e => setGiveawayQuantity(e.target.value)}
+              placeholder="e.g. First 15,000 fans (21+)"
+              style={{ width: '100%', backgroundColor: '#0D1117', border: '1px solid #30363D', borderRadius: 8, padding: '8px 10px', color: '#E6EDF3', fontSize: 14, boxSizing: 'border-box' }}
+            />
           </div>
         )}
 

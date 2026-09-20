@@ -242,7 +242,7 @@ export default function MinorLeagueDetailPage() {
   }>>([])
 
   const [lightboxUrl,    setLightboxUrl]    = useState<string | null>(null)
-  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; giveaway_type: string | null; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; baseball_life_entry_id: string | null }>>([])
+  const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; giveaway_type: string | null; giveaway_quantity: string | null; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; baseball_life_entry_id: string | null }>>([])
   const [opponentLogos, setOpponentLogos] = useState<Record<string, { milbTeamId: number | null; logoUrl: string | null; affiliate: string | null }>>({})
   const [scoringPlaysByVisit, setScoringPlaysByVisit] = useState<Record<string, ScoringPlay[]>>({})
   const [editingItem, setEditingItem] = useState<EditorItem | null>(null)
@@ -366,7 +366,7 @@ export default function MinorLeagueDetailPage() {
     const supabase = createClient()
     const { data: collectibles } = await supabase
       .from('collectible_log')
-      .select('id, name, category, giveaway_type, photo_url, signed_by, acquired_from, rating, price, baseball_life_entry_id')
+      .select('id, name, category, giveaway_type, giveaway_quantity, photo_url, signed_by, acquired_from, rating, price, baseball_life_entry_id')
       .in('baseball_life_entry_id', entryIds)
       .order('created_at', { ascending: false })
     if (collectibles) setStadiumCollectibles(collectibles)
@@ -1211,6 +1211,7 @@ export default function MinorLeagueDetailPage() {
                                               name: c.name,
                                               category: c.category,
                                               giveawayType: c.giveaway_type,
+                                              giveawayQuantity: c.giveaway_quantity,
                                               photoUrl: c.photo_url,
                                               signedBy: c.signed_by,
                                               acquiredFrom: c.acquired_from,
@@ -1296,6 +1297,7 @@ export default function MinorLeagueDetailPage() {
                             name: c.name,
                             category: c.category,
                             giveawayType: c.giveaway_type,
+                            giveawayQuantity: c.giveaway_quantity,
                             photoUrl: c.photo_url,
                             signedBy: c.signed_by,
                             acquiredFrom: c.acquired_from,
@@ -1321,6 +1323,9 @@ export default function MinorLeagueDetailPage() {
                             <div style={{ fontSize: 12, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize', marginBottom: 6 }}>
                               {c.category === 'giveaway' && c.giveaway_type ? (giveawayTypeLabels[c.giveaway_type] ?? c.category) : c.category}
                             </div>
+                            {c.category === 'giveaway' && c.giveaway_quantity && (
+                              <div style={{ fontSize: 11, color: '#8B949E', marginBottom: 6 }}>{c.giveaway_quantity}</div>
+                            )}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                               <MiLBLogo milbTeamId={stadium.milb_team_id} fallbackAbbr={stadium.affiliate} logoUrl={stadium.logo_url} size={20} />
                               <span style={{ fontSize: 12, color: '#E6EDF3' }}>{stadium.name}</span>
