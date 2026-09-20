@@ -13,9 +13,14 @@ interface Props {
   visited: number
   total: number
   dots: RingDot[]
-  gradient?: [string, string]   // tier-driven ring color, defaults to blue-green
-  glow?: string                 // tier-driven glow color for the tip + fill
+  gradient?: [string, string]   // tier-driven frame color, defaults to blue-green
+  glow?: string                 // tier-driven glow color
 }
+
+// Row layout tapering from the wide "back" of the plate down to a single
+// point, matching real home-plate proportions (flat top, two straight
+// sides, two angled sides meeting at the tip). Sums to 30.
+const ROWS = [6, 6, 6, 5, 4, 2, 1]
 
 export default function HeroRing({ visited, total, dots, gradient, glow }: Props) {
   const [mounted, setMounted] = useState(false)
@@ -27,84 +32,78 @@ export default function HeroRing({ visited, total, dots, gradient, glow }: Props
   const [gradFrom, gradTo] = gradient ?? ['#1F6FEB', '#3FB950']
   const glowColor = glow ?? 'rgba(63,185,80,0.8)'
 
-  const size    = 200
-  const sw      = 12
-  const r       = (size - sw * 2) / 2   // 88
-  const circ    = 2 * Math.PI * r
-  const pct     = total > 0 ? visited / total : 0
-  const offset  = circ - Math.max(pct, visited > 0 ? 0.025 : 0) * circ
-  const dotPx   = 22
-  const dotHalf = dotPx / 2
+  const dotPx = 26
+  const gap   = 7
+  const step  = dotPx + gap
 
-  // Arc tip position in SVG-local coords (before the -90deg CSS rotation)
-  // Arc starts at 0-rad (rightmost point) and goes clockwise
-  const effectivePct = visited > 0 ? Math.max(pct, 0.025) : pct
-  const tipAngle = effectivePct * 2 * Math.PI
-  const tipX = size / 2 + r * Math.cos(tipAngle)
-  const tipY = size / 2 + r * Math.sin(tipAngle)
+  const maxRowCount = Math.max(...ROWS)
+  const width  = maxRowCount * dotPx + (maxRowCount - 1) * gap + 28   // + side padding
+  const height = ROWS.length * step - gap + 28                        // + top/bottom padding
+
+  // Precompute each dot's (x, y), row-major, centered per row
+  const positions: { x: number; y: number }[] = []
+  ROWS.forEach((count, rowIdx) => {
+    const rowWidth = count * dotPx + (count - 1) * gap
+    const startX   = (width - rowWidth) / 2
+    const y        = 14 + rowIdx * step
+    for (let i = 0; i < count; i++) {
+      positions.push({ x: startX + i * step, y })
+    }
+  })
+
+  // Home-plate pentagon: flat top edge, straight sides down through the
+  // first three (full-width) rows, then angled sides converging to a
+  // point below the last row.
+  const cornerY = 14 + 3 * step - gap / 2
+  const apexY   = height - 4
+  const plateD  = `M 2,2 L ${width - 2},2 L ${width - 2},${cornerY} L ${width / 2},${apexY} L 2,${cornerY} Z`
+
+  const pct = total > 0 ? visited / total : 0
+  const effectivePct = visited > 0 ? Math.max(pct, 0.03) : 0
 
   return (
-    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
-      {/* Progress ring SVG */}
+    <div style={{ position: 'relative', width, flexShrink: 0 }}>
+      {/* Home-plate frame */}
       <svg
-        width={size} height={size}
-        style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}
+        width={width} height={height}
+        style={{ position: 'absolute', inset: 0 }}
       >
         <defs>
-          {/* Tier-driven gradient following the arc bounding box */}
-          <linearGradient id="arcGrad" x1="1" y1="0" x2="0" y2="1">
+          <linearGradient id="plateGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%"   stopColor={gradFrom} />
             <stop offset="100%" stopColor={gradTo} />
           </linearGradient>
-          {/* Glow filter for arc tip */}
-          <filter id="tipGlow" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
         </defs>
 
-        {/* Track */}
-        <circle cx={size / 2} cy={size / 2} r={r}
-          fill="none" stroke="#1C2430" strokeWidth={sw} />
+        {/* Track — full outline, dim */}
+        <path d={plateD} fill="none" stroke="#1C2430" strokeWidth={3} strokeLinejoin="round" />
 
-        {/* Fill arc — gradient stroke */}
-        <circle
-          cx={size / 2} cy={size / 2} r={r}
-          fill="none" stroke="url(#arcGrad)" strokeWidth={sw} strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={mounted ? offset : circ}
+        {/* Progress trace — gradient portion of the outline, proportional
+            to visited/total. pathLength="1" lets the dash math work in a
+            normalized 0–1 range regardless of the path's real length. */}
+        <path
+          d={plateD} pathLength={1}
+          fill="none" stroke="url(#plateGrad)" strokeWidth={3} strokeLinejoin="round" strokeLinecap="round"
+          strokeDasharray={1}
+          strokeDashoffset={mounted ? 1 - effectivePct : 1}
           style={{
             transition: 'stroke-dashoffset 1.4s cubic-bezier(0.22,1,0.36,1)',
-            filter: `drop-shadow(0 0 6px ${glowColor}) drop-shadow(0 0 16px ${glowColor})`,
+            filter: `drop-shadow(0 0 5px ${glowColor})`,
           }}
         />
-
-        {/* Glow circle at arc tip */}
-        {mounted && visited > 0 && (
-          <circle
-            cx={tipX} cy={tipY}
-            r={sw / 2 + 2}
-            fill={gradTo}
-            filter="url(#tipGlow)"
-            style={{ opacity: 0.9 }}
-          />
-        )}
       </svg>
 
       {/* Stadium slots — ghost outline for unvisited, filled logo for visited */}
       {dots.map(({ abbr, visited: v, visitDate }, i) => {
-        const angle = (i / dots.length) * 2 * Math.PI - Math.PI / 2
-        const x = size / 2 + r * Math.cos(angle) - dotHalf
-        const y = size / 2 + r * Math.sin(angle) - dotHalf
+        const pos = positions[i]
+        if (!pos) return null
 
         if (!v || !abbr) {
-          // Unvisited slot — faint ghost outline so the ring reads as
-          // "30 slots to fill" even early on, instead of empty track.
           return (
             <div
               key={i}
               style={{
-                position: 'absolute', left: x, top: y,
+                position: 'absolute', left: pos.x, top: pos.y,
                 width: dotPx, height: dotPx,
                 borderRadius: '50%',
                 border: '1.5px dashed rgba(139,148,158,0.28)',
@@ -123,33 +122,30 @@ export default function HeroRing({ visited, total, dots, gradient, glow }: Props
             key={i}
             title={tooltipText}
             style={{
-              position: 'absolute', left: x, top: y,
+              position: 'absolute', left: pos.x, top: pos.y,
               width: dotPx, height: dotPx,
               borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               border: `2px solid ${gradTo}`,
               boxShadow: `0 0 8px ${glowColor}`,
               zIndex: 2, cursor: 'help',
             }}
           >
-            <TeamLogo abbreviation={abbr} size={dotPx} style={{ borderRadius: '50%', width: dotPx, height: dotPx }} />
+            <TeamLogo abbreviation={abbr} size={dotPx} style={{ border: 'none' }} />
           </div>
         )
       })}
 
-      {/* Center stats */}
+      {/* Count — sits below the plate shape now, since a pentagon has no
+          natural hollow center the way a ring does */}
       <div style={{
-        position: 'absolute', inset: 0, zIndex: 3,
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        gap: 0, pointerEvents: 'none',
+        position: 'relative', marginTop: height, paddingTop: 6,
+        display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4,
       }}>
-        <span style={{
-          fontSize: 64, fontWeight: 900, color: '#E6EDF3',
-          lineHeight: 1, letterSpacing: '-3px',
-        }}>
+        <span style={{ fontSize: 44, fontWeight: 900, color: '#E6EDF3', lineHeight: 1, letterSpacing: '-2px' }}>
           {visited}
         </span>
-        <span style={{ fontSize: 20, color: '#8B949E', fontWeight: 600, lineHeight: 1, marginTop: 2 }}>
+        <span style={{ fontSize: 16, color: '#8B949E', fontWeight: 600, lineHeight: 1 }}>
           / {total}
         </span>
       </div>
