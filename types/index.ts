@@ -108,6 +108,9 @@ export interface TripStop {
   ticket_confirmation: string | null
   promotions: string[] | null
   promotion_photos: Record<string, string> | null
+  stadium_visit_id: string | null
+  destination_visit_id: string | null
+  baseball_life_entry_id: string | null
   created_at: string
   stadium?: Stadium
   destination?: Destination

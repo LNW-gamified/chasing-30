@@ -41,8 +41,12 @@ export default function TripDetailPage() {
   const [completeError,  setCompleteError]  = useState('')
   const [checklistItems, setChecklistItems] = useState<StopChecklistItem[]>([])
   const [showDeleteMenu,  setShowDeleteMenu]  = useState(false)
-  const [visitedStadiumIds, setVisitedStadiumIds] = useState<Set<string>>(new Set())
   const [stopWeather, setStopWeather]             = useState<Record<string, WeatherData>>({})
+  const [markingStopId,   setMarkingStopId]   = useState<string | null>(null)
+  const [markStopError,   setMarkStopError]   = useState<Record<string, string>>({})
+  const [linkPickerStopId, setLinkPickerStopId] = useState<string | null>(null)
+  const [linkCandidates,   setLinkCandidates]   = useState<{ id: string; label: string }[]>([])
+  const [linkLoading,      setLinkLoading]      = useState(false)
   const [totalDrivingMiles, setTotalDrivingMiles] = useState<number | null>(null)
   const [segmentMiles, setSegmentMiles]           = useState<number[]>([])
   const [loadingMiles, setLoadingMiles]           = useState(false)
@@ -50,20 +54,19 @@ export default function TripDetailPage() {
 
   async function load() {
     const supabase = createClient()
-    const [{ data: t }, { data: s }, { data: st }, { data: sv }] = await Promise.all([
+    const [{ data: t }, { data: s }, { data: st }] = await Promise.all([
       supabase.from('trips').select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, description, lat, lng, is_mlb_event, website_url)').eq('id', id).single(),
       supabase.from('stadiums').select('*').order('name'),
       supabase.from('trip_stops').select(
         'id, trip_id, stop_type, stadium_id, destination_id, sort_order, game_date, game_time, opponent, opponent_team_id, ' +
         'experience_type, est_tickets, est_food, est_parking, actual_tickets, actual_food, actual_parking, notes, ' +
         'ticket_section, ticket_row, ticket_seats, ticket_confirmation, promotions, promotion_photos, created_at, ' +
+        'stadium_visit_id, destination_visit_id, baseball_life_entry_id, ' +
         'stadium:stadiums(*), destination:destinations(*)'
       ).eq('trip_id', id).order('sort_order'),
-      supabase.from('stadium_visits').select('stadium_id'),
     ])
     setTrip(t as TripWithStadium)
     setStadiums(s ?? [])
-    setVisitedStadiumIds(new Set((sv ?? []).map((r: any) => r.stadium_id)))
     const loadedStops = (st as unknown as TripStop[]) ?? []
     setStops(loadedStops)
     if (loadedStops.length > 0) {
@@ -223,6 +226,165 @@ export default function TripDetailPage() {
     const supabase = createClient()
     await supabase.from('trips').delete().eq('id', id)
     router.push('/trips')
+  }
+
+  async function handleLogStop(stopId: string) {
+    setMarkingStopId(stopId)
+    setMarkStopError(prev => ({ ...prev, [stopId]: '' }))
+    try {
+      const res = await fetch('/api/complete-stop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stopId, action: 'log' }),
+      })
+      const result = await res.json()
+      if (!res.ok) {
+        setMarkStopError(prev => ({ ...prev, [stopId]: result.error ?? `Request failed (${res.status})` }))
+        return
+      }
+      await load()
+    } catch {
+      setMarkStopError(prev => ({ ...prev, [stopId]: 'Something went wrong, please try again' }))
+    } finally {
+      setMarkingStopId(null)
+    }
+  }
+
+  async function openLinkPicker(stop: TripStop) {
+    setLinkPickerStopId(stop.id)
+    setLinkLoading(true)
+    setLinkCandidates([])
+    const supabase = createClient()
+    try {
+      if (stop.destination_id) {
+        const { data } = await supabase
+          .from('destination_visits')
+          .select('id, visit_date')
+          .eq('destination_id', stop.destination_id)
+          .order('visit_date', { ascending: false })
+          .limit(10)
+        setLinkCandidates((data ?? []).map((d: any) => ({ id: d.id, label: d.visit_date ? formatDate(d.visit_date) : 'Undated visit' })))
+      } else if (stop.stadium_id) {
+        const { data } = await supabase
+          .from('stadium_visits')
+          .select('id, visit_date, visiting_team')
+          .eq('stadium_id', stop.stadium_id)
+          .order('visit_date', { ascending: false })
+          .limit(10)
+        setLinkCandidates((data ?? []).map((v: any) => ({ id: v.id, label: `${formatDate(v.visit_date)}${v.visiting_team ? ` vs ${v.visiting_team}` : ''}` })))
+      }
+    } finally {
+      setLinkLoading(false)
+    }
+  }
+
+  async function handleLinkStop(stop: TripStop, entryId: string) {
+    setMarkingStopId(stop.id)
+    setMarkStopError(prev => ({ ...prev, [stop.id]: '' }))
+    try {
+      const res = await fetch('/api/complete-stop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stopId: stop.id,
+          action: 'link',
+          ...(stop.destination_id ? { destinationVisitId: entryId } : { stadiumVisitId: entryId }),
+        }),
+      })
+      const result = await res.json()
+      if (!res.ok) {
+        setMarkStopError(prev => ({ ...prev, [stop.id]: result.error ?? `Request failed (${res.status})` }))
+        return
+      }
+      setLinkPickerStopId(null)
+      await load()
+    } catch {
+      setMarkStopError(prev => ({ ...prev, [stop.id]: 'Something went wrong, please try again' }))
+    } finally {
+      setMarkingStopId(null)
+    }
+  }
+
+  function renderMarkDone(stop: TripStop) {
+    const isDone = !!(stop.stadium_visit_id || stop.destination_visit_id || stop.baseball_life_entry_id)
+    if (isDone) {
+      return (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 6, marginTop: 12,
+          fontSize: 12, fontWeight: 700, color: '#3FB950',
+        }}>
+          <CheckCircle size={13} /> Logged
+        </div>
+      )
+    }
+    const isMarking = markingStopId === stop.id
+    const isPicking = linkPickerStopId === stop.id
+    return (
+      <div style={{ marginTop: 12 }}>
+        {!isPicking ? (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => handleLogStop(stop.id)}
+              disabled={isMarking}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(63,185,80,0.35)',
+                backgroundColor: 'rgba(63,185,80,0.08)', color: '#3FB950',
+                fontSize: 12, fontWeight: 700, cursor: isMarking ? 'default' : 'pointer', opacity: isMarking ? 0.6 : 1,
+              }}
+            >
+              {isMarking ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />}
+              Mark Done
+            </button>
+            <button
+              onClick={() => openLinkPicker(stop)}
+              disabled={isMarking}
+              style={{
+                padding: '7px 12px', borderRadius: 8, border: '1px solid #30363D',
+                backgroundColor: 'transparent', color: '#8B949E',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              Already logged this
+            </button>
+          </div>
+        ) : (
+          <div style={{ padding: 12, borderRadius: 10, border: '1px solid #30363D', backgroundColor: '#1C2430' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#8B949E' }}>Link an existing entry</span>
+              <button onClick={() => setLinkPickerStopId(null)} style={{ background: 'none', border: 'none', color: '#8B949E', cursor: 'pointer' }}>
+                <X size={14} />
+              </button>
+            </div>
+            {linkLoading ? (
+              <div style={{ fontSize: 12, color: '#8B949E' }}>Loading…</div>
+            ) : linkCandidates.length === 0 ? (
+              <div style={{ fontSize: 12, color: '#8B949E' }}>No existing entries found for this one.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {linkCandidates.map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => handleLinkStop(stop, c.id)}
+                    disabled={isMarking}
+                    style={{
+                      textAlign: 'left', padding: '7px 10px', borderRadius: 8,
+                      border: '1px solid #30363D', backgroundColor: '#161B22',
+                      color: '#E6EDF3', fontSize: 12, cursor: 'pointer',
+                    }}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {markStopError[stop.id] && (
+          <div style={{ fontSize: 12, color: '#F85149', marginTop: 6 }}>{markStopError[stop.id]}</div>
+        )}
+      </div>
+    )
   }
 
   async function handleMarkComplete() {
@@ -544,7 +706,7 @@ export default function TripDetailPage() {
           )}
 
           {/* ── All stops visited prompt ───────────────────────────── */}
-          {trip.status === 'planned' && stops.length > 0 && stops.every(s => s.stadium_id && visitedStadiumIds.has(s.stadium_id)) && !showComplete && (
+          {trip.status === 'planned' && stops.length > 0 && stops.every(s => s.stadium_visit_id || s.destination_visit_id || s.baseball_life_entry_id) && !showComplete && (
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               padding: '12px 16px', borderRadius: 12, marginBottom: 16,
@@ -858,6 +1020,10 @@ export default function TripDetailPage() {
                           items={checklistItems.filter(c => c.stop_id === stop.id)}
                           onReload={reloadChecklist}
                         />
+
+                        <div style={{ padding: '0 20px 16px' }}>
+                          {renderMarkDone(stop)}
+                        </div>
                       </div>
                     )
 
@@ -1151,6 +1317,8 @@ export default function TripDetailPage() {
                         items={checklistItems.filter(c => c.stop_id === stop.id)}
                         onReload={reloadChecklist}
                       />
+
+                      {renderMarkDone(stop)}
                     </div>
                   )
 
