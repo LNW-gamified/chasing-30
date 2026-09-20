@@ -9,7 +9,7 @@ import TeamLogo from '@/components/TeamLogo'
 import MiLBLogo from '@/components/MiLBLogo'
 import { STATIC_EXPERIENCES, type StaticExperience } from '@/lib/static-experiences'
 import SpecialVisitButton from '@/components/SpecialVisitButton'
-import { classifyDayNightHeuristic } from '@/lib/sunrise-sunset'
+import { classifyDayNight, type DayNight } from '@/lib/sunrise-sunset'
 import { MILESTONE_POINTS } from '@/lib/ranks'
 import { type EditorItem } from '@/components/GiveawayFoodEditor'
 
@@ -278,6 +278,7 @@ export default function MilestoneGrid({
   const [filter, setFilter]     = useState<CategoryKey>('all')
   const [search, setSearch]     = useState('')
   const [selected, setSelected] = useState<SelectedItem | null>(null)
+  const [dayNightCounts, setDayNightCounts] = useState<{ day: number; night: number; twilight: number } | null>(null)
   const [confetti, setConfetti] = useState<{ id: number; color: string; left: number; delay: number; size: number }[]>([])
   const confettiIdRef           = useRef(0)
 
@@ -333,6 +334,36 @@ export default function MilestoneGrid({
   }, [])
 
   useEffect(() => { fetchClaims() }, [fetchClaims])
+
+  // Real, sunset-aware day/night breakdown — replaces the old clock-time-only
+  // heuristic, which classified purely by hour with no regard for the
+  // stadium's actual location or the date's real sunset time (e.g. it called
+  // a 6:42 PM Seattle game in May "twilight" when it was still broad
+  // daylight there). classifyDayNight is async (it looks up real sunset
+  // times), so this runs as its own effect rather than inside the
+  // synchronous personalRecords memo above.
+  useEffect(() => {
+    let cancelled = false
+    async function run() {
+      const withTime = allVisits.filter(v => v.first_pitch_time)
+      if (withTime.length === 0) { setDayNightCounts({ day: 0, night: 0, twilight: 0 }); return }
+      const results = await Promise.all(withTime.map(v => {
+        const stadium = allStadiums.find(s => s.id === v.stadium_id)
+        if (!stadium) return Promise.resolve(null as DayNight)
+        return classifyDayNight(v.first_pitch_time, v.visit_date, stadium.abbreviation, stadium.lat, stadium.lng)
+      }))
+      if (cancelled) return
+      const counts = { day: 0, night: 0, twilight: 0 }
+      for (const dn of results) {
+        if (dn === 'day') counts.day++
+        else if (dn === 'night') counts.night++
+        else if (dn === 'twilight') counts.twilight++
+      }
+      setDayNightCounts(counts)
+    }
+    run()
+    return () => { cancelled = true }
+  }, [allVisits, allStadiums])
   useEffect(() => { fetchCollectibles() }, [fetchCollectibles])
   useEffect(() => { fetchMilbStadiums() }, [fetchMilbStadiums])
 
@@ -613,15 +644,6 @@ export default function MilestoneGrid({
     const byYear = Object.entries(yearCounts).sort((a, b) => a[0].localeCompare(b[0]))
     const maxYearCount = Math.max(...byYear.map(([, c]) => c), 1)
 
-    // Day / night breakdown
-    let dayGames = 0, nightGames = 0, twilightGames = 0
-    for (const v of allVisits) {
-      const dn = classifyDayNightHeuristic(v.first_pitch_time)
-      if (dn === 'day') dayGames++
-      else if (dn === 'night') nightGames++
-      else if (dn === 'twilight') twilightGames++
-    }
-
     const fmtDate = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     const fmtScore = (v: StadiumVisit) => `${v.away_runs}–${v.home_runs}`
     const fmtMatchup = (v: StadiumVisit) => {
@@ -639,7 +661,6 @@ export default function MilestoneGrid({
       biggestCrowd, hottestGame, coldestGame,
       topStadium, topStadiumCount, topOpponentName, topOpponentCount,
       byYear, maxYearCount,
-      dayGames, nightGames, twilightGames,
       fmtDate, fmtScore, fmtMatchup, stadiumFor,
     }
   }, [allVisits, allStadiums])
@@ -908,14 +929,14 @@ export default function MilestoneGrid({
                 )}
 
                 {/* ── Day / Night ── */}
-                {(personalRecords.dayGames + personalRecords.nightGames + personalRecords.twilightGames) > 0 && (
+                {dayNightCounts && (dayNightCounts.day + dayNightCounts.night + dayNightCounts.twilight) > 0 && (
                   <div style={{ marginTop: 24 }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>🌙 Day vs Night</div>
                     <div className="grid grid-cols-3" style={{ gap: 10 }}>
                       {[
-                        { label: 'Day Games',    value: personalRecords.dayGames,      emoji: '🌅', color: '#F5A623' },
-                        { label: 'Twilight',     value: personalRecords.twilightGames, emoji: '🌇', color: '#F5A623' },
-                        { label: 'Night Games',  value: personalRecords.nightGames,    emoji: '🌙', color: '#58A6FF' },
+                        { label: 'Day Games',    value: dayNightCounts.day,      emoji: '🌅', color: '#F5A623' },
+                        { label: 'Twilight',     value: dayNightCounts.twilight, emoji: '🌇', color: '#F5A623' },
+                        { label: 'Night Games',  value: dayNightCounts.night,    emoji: '🌙', color: '#58A6FF' },
                       ].map(({ label, value, emoji, color }) => (
                         <div key={label} style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 14, padding: '14px 8px', textAlign: 'center' }}>
                           <div style={{ fontSize: 22, marginBottom: 6 }}>{emoji}</div>
