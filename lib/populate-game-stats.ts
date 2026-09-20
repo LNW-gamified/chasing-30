@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase-server'
-import { MLB_TEAM_IDS } from '@/lib/mlb-api'
+import { MLB_TEAM_IDS, STADIUM_TZ, TZ_LABEL } from '@/lib/mlb-api'
 
 interface StarterStats {
   name: string | null
@@ -102,13 +102,15 @@ export async function populateGameStats(
       officials.find(u => u.officialType === type)?.official?.fullName ?? null
 
     let firstPitchTime: string | null = null
-    const fpUtc = gameData.datetime?.firstPitch
+    const fpUtc = gameData.datetime?.dateTime
     if (fpUtc) {
       try {
+        const tz = STADIUM_TZ[stadiumAbbr] ?? 'America/Los_Angeles'
+        const tzLabel = TZ_LABEL[tz] ?? 'PT'
         firstPitchTime = new Date(fpUtc).toLocaleTimeString('en-US', {
           hour: 'numeric', minute: '2-digit', hour12: true,
-          timeZone: 'America/Los_Angeles',
-        }) + ' PT'
+          timeZone: tz,
+        }) + ` ${tzLabel}`
       } catch {}
     }
 
