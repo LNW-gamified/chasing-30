@@ -10,10 +10,13 @@ import type { Stadium } from '@/types'
 import TeamLogo from '@/components/TeamLogo'
 import MiLBLogo from '@/components/MiLBLogo'
 import type { BaseballLifeCategory } from '@/types'
+import { getUserTimezone } from '@/lib/user-timezone'
 
 // Large form only ever shown behind a click — load it on demand instead
 // of shipping its code in this route's initial bundle.
 const BaseballLifeForm = dynamic(() => import('@/components/BaseballLifeForm'), { ssr: false })
+
+const userTz = getUserTimezone()
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -384,7 +387,7 @@ export default function StadiumsPage() {
     Promise.all([
       supabase.from('stadiums').select('*').order('team'),
       supabase.from('stadium_visits').select('stadium_id, visit_date').order('visit_date', { ascending: false }),
-      fetch('/api/next-games').then(r => r.ok ? r.json() : {}),
+      fetch(`/api/next-games?tz=${encodeURIComponent(userTz)}`).then(r => r.ok ? r.json() : {}),
       supabase.from('baseball_events').select('*').order('sort_order'),
       supabase.from('baseball_experiences').select('*').order('sort_order'),
       supabase.from('minor_league_stadiums').select('id,name,team,abbreviation,city,state,level,affiliate,affiliate_full,description,milb_team_id,image_url,logo_url').order('sort_order'),

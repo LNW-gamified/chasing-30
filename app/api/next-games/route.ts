@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { MLB_ID_TO_ABBR as ID_TO_ABBR } from '@/lib/mlb-api'
 
 export const revalidate = 3600
@@ -11,11 +11,11 @@ function fmtGameDate(dateStr: string): string {
   return `${months[m - 1]} ${d}`
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const now = new Date()
-    const startDate = now.toISOString().slice(0, 10)
-    const endDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    const tz = req.nextUrl.searchParams.get('tz') || 'America/Los_Angeles'
+    const startDate = new Date().toLocaleDateString('en-CA', { timeZone: tz })
+    const endDate = new Date(new Date().getTime() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('en-CA', { timeZone: tz })
 
     const res = await fetch(
       `https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate=${startDate}&endDate=${endDate}&gameType=R`,
