@@ -395,13 +395,17 @@ export default function StadiumsPage() {
       // Tickets take priority (a ticket means you've actually committed to
       // that specific game); a planned trip stop is the fallback. Both
       // arrays are already sorted soonest-first, so the first match per
-      // stadium is the one to show.
+      // stadium is the one to show. The two sources store opponent
+      // differently — trip_stops already has "vs " baked in, mlb_tickets
+      // doesn't — so strip any existing prefix here and let the render
+      // add exactly one, instead of getting "vs vs Team" for one source.
+      const stripVs = (name: string) => name.replace(/^vs\s+/i, '')
       const nextGameMap: Record<string, NextGameInfo> = {}
       for (const t of (stops ?? []) as { stadium_id: string; game_date: string; opponent: string | null }[]) {
-        if (!nextGameMap[t.stadium_id]) nextGameMap[t.stadium_id] = { date: fmtGameDateShort(t.game_date), opponentName: t.opponent ?? 'TBD' }
+        if (!nextGameMap[t.stadium_id]) nextGameMap[t.stadium_id] = { date: fmtGameDateShort(t.game_date), opponentName: t.opponent ? stripVs(t.opponent) : 'TBD' }
       }
       for (const t of (tickets ?? []) as { stadium_id: string; game_date: string; opponent: string | null }[]) {
-        nextGameMap[t.stadium_id] = { date: fmtGameDateShort(t.game_date), opponentName: t.opponent ?? 'TBD' }
+        nextGameMap[t.stadium_id] = { date: fmtGameDateShort(t.game_date), opponentName: t.opponent ? stripVs(t.opponent) : 'TBD' }
       }
       setNextGames(nextGameMap)
 
