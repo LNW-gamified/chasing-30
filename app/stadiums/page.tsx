@@ -153,16 +153,16 @@ function StadiumCard({ stadium, visited, visitDate, visitCount, nextGame, photo 
           {photo && <img src={photo} alt={stadium.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55 }} />}
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)' }} />
           {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#0B1117', fontWeight: 900 }}>✓</div>}
-          {visited && visitDate && (
-            <div style={{ position: 'absolute', top: '50%', right: 10, transform: 'translateY(-50%)', zIndex: 2 }}>
-              <PostmarkStamp stadiumName={stadium.name} city={stadium.city} state={stadium.state} visitDate={visitDate} size={62} />
-            </div>
-          )}
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
             <TeamLogo abbreviation={stadium.abbreviation} size={80} />
           </div>
         </div>
-        <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 2 }}>
+        <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 2, position: 'relative' }}>
+          {visited && visitDate && (
+            <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 2 }}>
+              <PostmarkStamp stadiumName={stadium.name} city={stadium.city} state={stadium.state} visitDate={visitDate} size={56} />
+            </div>
+          )}
           <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{stadium.team}</div>
           <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{stadium.name}</div>
           <div style={{ fontSize: 13, color: '#8B949E' }}>{stadium.city}</div>
