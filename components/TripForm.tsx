@@ -61,9 +61,13 @@ interface StopDraft {
   est_tickets: string
   est_food: string
   est_parking: string
+  est_hotel: string
+  est_local_transport: string
   actual_tickets: string
   actual_food: string
   actual_parking: string
+  actual_hotel: string
+  actual_local_transport: string
   notes: string
   promotions: string[]
   promotion_photos: Record<string, string>
@@ -97,9 +101,11 @@ interface Props {
 }
 
 const STOP_CATS = [
-  { key: 'tickets', label: 'Tickets', icon: '🎟' },
-  { key: 'food',    label: 'Food',    icon: '🌭' },
-  { key: 'parking', label: 'Parking', icon: '🚗' },
+  { key: 'tickets',         label: 'Tickets',         icon: '🎟' },
+  { key: 'food',            label: 'Food',            icon: '🌭' },
+  { key: 'parking',         label: 'Parking',         icon: '🚗' },
+  { key: 'hotel',           label: 'Hotel',           icon: '🏨' },
+  { key: 'local_transport', label: 'Local Transport', icon: '🚕' },
 ]
 
 function defaultStop(stadiums: Stadium[]): StopDraft {
@@ -107,8 +113,8 @@ function defaultStop(stadiums: Stadium[]): StopDraft {
     stop_type: 'stadium',
     stadium_id: stadiums[0]?.id ?? '',
     game_date: '', game_time: '', opponent: '', opponent_team_id: '',
-    est_tickets: '0', est_food: '0', est_parking: '0',
-    actual_tickets: '0', actual_food: '0', actual_parking: '0',
+    est_tickets: '0', est_food: '0', est_parking: '0', est_hotel: '0', est_local_transport: '0',
+    actual_tickets: '0', actual_food: '0', actual_parking: '0', actual_hotel: '0', actual_local_transport: '0',
     notes: '',
     ticket_section: '', ticket_row: '', ticket_seats: [], ticket_confirmation: '',
     destination_id: '', experience_type: '',
@@ -121,8 +127,8 @@ function defaultDestStop(): StopDraft {
     stop_type: 'destination',
     stadium_id: '',
     game_date: '', game_time: '', opponent: '', opponent_team_id: '',
-    est_tickets: '0', est_food: '0', est_parking: '0',
-    actual_tickets: '0', actual_food: '0', actual_parking: '0',
+    est_tickets: '0', est_food: '0', est_parking: '0', est_hotel: '0', est_local_transport: '0',
+    actual_tickets: '0', actual_food: '0', actual_parking: '0', actual_hotel: '0', actual_local_transport: '0',
     notes: '',
     ticket_section: '', ticket_row: '', ticket_seats: [], ticket_confirmation: '',
     destination_id: '', experience_type: '',
@@ -141,9 +147,7 @@ function defaultForm(trip?: Trip) {
     end_date:      trip?.end_date      ?? '',
     status:       (trip?.status        ?? 'planned') as Trip['status'],
     est_travel:    trip?.est_travel?.toString()    ?? '0',
-    est_hotel:     trip?.est_hotel?.toString()     ?? '0',
     actual_travel: trip?.actual_travel?.toString() ?? '0',
-    actual_hotel:  trip?.actual_hotel?.toString()  ?? '0',
     notes:         trip?.notes         ?? '',
   }
 }
@@ -180,9 +184,13 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
         est_tickets:      s.est_tickets.toString(),
         est_food:         s.est_food.toString(),
         est_parking:      s.est_parking.toString(),
+        est_hotel:        (s.est_hotel ?? 0).toString(),
+        est_local_transport: (s.est_local_transport ?? 0).toString(),
         actual_tickets:   s.actual_tickets.toString(),
         actual_food:      s.actual_food.toString(),
         actual_parking:   s.actual_parking.toString(),
+        actual_hotel:     (s.actual_hotel ?? 0).toString(),
+        actual_local_transport: (s.actual_local_transport ?? 0).toString(),
         notes:            s.notes            ?? '',
         ticket_section:      s.ticket_section      ?? '',
         ticket_row:          s.ticket_row          ?? '',
@@ -413,8 +421,8 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
         if (oldPaths.length > 0) createClient().storage.from('promo-photos').remove(oldPaths)
       }
       return type === 'stadium'
-        ? { ...defaultStop(stadiums), id: s.id, sort_order: i, est_tickets: s.est_tickets, est_food: s.est_food, est_parking: s.est_parking }
-        : { ...defaultDestStop(),     id: s.id, sort_order: i, est_tickets: s.est_tickets, est_food: s.est_food, est_parking: s.est_parking }
+        ? { ...defaultStop(stadiums), id: s.id, sort_order: i, est_tickets: s.est_tickets, est_food: s.est_food, est_parking: s.est_parking, est_hotel: s.est_hotel, est_local_transport: s.est_local_transport, actual_tickets: s.actual_tickets, actual_food: s.actual_food, actual_parking: s.actual_parking, actual_hotel: s.actual_hotel, actual_local_transport: s.actual_local_transport }
+        : { ...defaultDestStop(),     id: s.id, sort_order: i, est_tickets: s.est_tickets, est_food: s.est_food, est_parking: s.est_parking, est_hotel: s.est_hotel, est_local_transport: s.est_local_transport, actual_tickets: s.actual_tickets, actual_food: s.actual_food, actual_parking: s.actual_parking, actual_hotel: s.actual_hotel, actual_local_transport: s.actual_local_transport }
     }))
     if (type === 'stadium') {
       const newStadiumId = stadiums[0]?.id ?? ''
@@ -433,11 +441,11 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
   }
 
   const stopEst     = stops.reduce((sum, s) =>
-    sum + (parseFloat(s.est_tickets) || 0) + (parseFloat(s.est_food) || 0) + (parseFloat(s.est_parking) || 0), 0)
+    sum + (parseFloat(s.est_tickets) || 0) + (parseFloat(s.est_food) || 0) + (parseFloat(s.est_parking) || 0) + (parseFloat(s.est_hotel) || 0) + (parseFloat(s.est_local_transport) || 0), 0)
   const stopActual  = stops.reduce((sum, s) =>
-    sum + (parseFloat(s.actual_tickets) || 0) + (parseFloat(s.actual_food) || 0) + (parseFloat(s.actual_parking) || 0), 0)
-  const tripEst     = (parseFloat(form.est_travel) || 0) + (parseFloat(form.est_hotel) || 0)
-  const tripActual  = (parseFloat(form.actual_travel) || 0) + (parseFloat(form.actual_hotel) || 0)
+    sum + (parseFloat(s.actual_tickets) || 0) + (parseFloat(s.actual_food) || 0) + (parseFloat(s.actual_parking) || 0) + (parseFloat(s.actual_hotel) || 0) + (parseFloat(s.actual_local_transport) || 0), 0)
+  const tripEst     = parseFloat(form.est_travel) || 0
+  const tripActual  = parseFloat(form.actual_travel) || 0
   const grandEst    = stopEst + tripEst
   const grandActual = stopActual + tripActual
 
@@ -471,12 +479,12 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       trip_date:      trip?.trip_date ?? null,
       est_tickets:    0,
       est_travel:     parseFloat(form.est_travel)    || 0,
-      est_hotel:      parseFloat(form.est_hotel)     || 0,
+      est_hotel:      0,
       est_food:       0,
       est_parking:    0,
       actual_tickets: 0,
       actual_travel:  parseFloat(form.actual_travel) || 0,
-      actual_hotel:   parseFloat(form.actual_hotel)  || 0,
+      actual_hotel:   0,
       actual_food:    0,
       actual_parking: 0,
       notes:          form.notes || null,
@@ -520,9 +528,13 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
         est_tickets:         parseFloat(stop.est_tickets)    || 0,
         est_food:            parseFloat(stop.est_food)       || 0,
         est_parking:         parseFloat(stop.est_parking)    || 0,
+        est_hotel:           parseFloat(stop.est_hotel)      || 0,
+        est_local_transport: parseFloat(stop.est_local_transport) || 0,
         actual_tickets:      parseFloat(stop.actual_tickets) || 0,
         actual_food:         parseFloat(stop.actual_food)    || 0,
         actual_parking:      parseFloat(stop.actual_parking) || 0,
+        actual_hotel:        parseFloat(stop.actual_hotel)   || 0,
+        actual_local_transport: parseFloat(stop.actual_local_transport) || 0,
         notes:               stop.notes || null,
         ticket_section:      isStadium ? (stop.ticket_section     || null) : null,
         ticket_row:          isStadium ? (stop.ticket_row         || null) : null,
@@ -1232,7 +1244,6 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {([
                 { key: 'travel', label: 'Travel', icon: '✈️' },
-                { key: 'hotel',  label: 'Hotel',  icon: '🏨' },
               ] as const).map(cat => (
                 <div key={cat.key} style={{
                   padding: '12px 14px', borderRadius: 10,

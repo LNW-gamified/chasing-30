@@ -98,9 +98,13 @@ export interface TripStop {
   est_tickets: number
   est_food: number
   est_parking: number
+  est_hotel: number
+  est_local_transport: number
   actual_tickets: number
   actual_food: number
   actual_parking: number
+  actual_hotel: number
+  actual_local_transport: number
   notes: string | null
   ticket_section: string | null
   ticket_row: string | null

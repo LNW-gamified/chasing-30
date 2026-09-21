@@ -9,7 +9,7 @@ import { getTeamLogoUrlById, getTeamLogoUrl, getTeamAbbrById, LIGHT_BG_LOGO_TEAM
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip, TripStop, StopChecklistItem } from '@/types'
 import Link from 'next/link'
-import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink, MoreHorizontal, FileText, Ticket, Utensils, Car, Plane, BedDouble, Camera, Loader2 } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink, MoreHorizontal, FileText, Ticket, Utensils, Car, CarTaxiFront, Plane, BedDouble, Camera, Loader2 } from 'lucide-react'
 import StopChecklist from '@/components/StopChecklist'
 import { DESTINATION_BY_SLUG, destinationLocation, EXPERIENCE_TYPES } from '@/lib/destinations'
 import { fetchForecastWeather, fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
@@ -60,7 +60,7 @@ export default function TripDetailPage() {
       supabase.from('stadiums').select('*').order('name'),
       supabase.from('trip_stops').select(
         'id, trip_id, stop_type, stadium_id, destination_id, sort_order, game_date, game_time, opponent, opponent_team_id, ' +
-        'experience_type, est_tickets, est_food, est_parking, actual_tickets, actual_food, actual_parking, notes, ' +
+        'experience_type, est_tickets, est_food, est_parking, est_hotel, est_local_transport, actual_tickets, actual_food, actual_parking, actual_hotel, actual_local_transport, notes, ' +
         'ticket_section, ticket_row, ticket_seats, ticket_confirmation, promotions, promotion_photos, created_at, ' +
         'stadium_visit_id, destination_visit_id, baseball_life_entry_id, ' +
         'stadium:stadiums(*), destination:destinations(*)'
@@ -482,10 +482,10 @@ export default function TripDetailPage() {
     return a.game_date.localeCompare(b.game_date)
   })
 
-  const stopEstTotal  = stops.reduce((sum, s) => sum + s.est_tickets + s.est_food + s.est_parking, 0)
-  const stopActTotal  = stops.reduce((sum, s) => sum + s.actual_tickets + s.actual_food + s.actual_parking, 0)
-  const tripEst       = trip.est_travel + trip.est_hotel
-  const tripActual    = trip.actual_travel + trip.actual_hotel
+  const stopEstTotal  = stops.reduce((sum, s) => sum + s.est_tickets + s.est_food + s.est_parking + s.est_hotel + s.est_local_transport, 0)
+  const stopActTotal  = stops.reduce((sum, s) => sum + s.actual_tickets + s.actual_food + s.actual_parking + s.actual_hotel + s.actual_local_transport, 0)
+  const tripEst       = trip.est_travel
+  const tripActual    = trip.actual_travel
   const estTotal      = stopEstTotal + tripEst
   const actualTotal   = stopActTotal + tripActual
   const overBudget    = actualTotal > estTotal && actualTotal > 0
@@ -915,8 +915,8 @@ export default function TripDetailPage() {
                 {sortedStops.map((stop, i) => {
                   const isDestinationStop = stop.stop_type === 'destination' || (!stop.stadium_id && !!stop.destination_id)
                   const stadium     = stop.stadium as Stadium | undefined
-                  const stopEst     = stop.est_tickets + stop.est_food + stop.est_parking
-                  const stopAct     = stop.actual_tickets + stop.actual_food + stop.actual_parking
+                  const stopEst     = stop.est_tickets + stop.est_food + stop.est_parking + stop.est_hotel + stop.est_local_transport
+                  const stopAct     = stop.actual_tickets + stop.actual_food + stop.actual_parking + stop.actual_hotel + stop.actual_local_transport
                   const hasBudget   = stopEst > 0 || stopAct > 0
 
                   // ── Destination stop card ────────────────────────────
@@ -1016,13 +1016,19 @@ export default function TripDetailPage() {
                         </div>
 
                         {hasBudget && (
-                          <div style={{ display: 'flex', borderTop: '1px solid #30363D', backgroundColor: '#1C2430' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: '1px solid #30363D', backgroundColor: '#1C2430' }}>
                             {([
-                              { label: 'Tickets', Icon: Ticket,   est: stop.est_tickets, actual: stop.actual_tickets },
-                              { label: 'Food',    Icon: Utensils, est: stop.est_food,    actual: stop.actual_food    },
-                              { label: 'Parking', Icon: Car,      est: stop.est_parking, actual: stop.actual_parking },
-                            ] as const).map(({ label, Icon, est, actual }, ci) => (
-                              <div key={label} style={{ flex: 1, padding: '10px 12px', borderRight: ci < 2 ? '1px solid #30363D' : 'none' }}>
+                              { label: 'Tickets', Icon: Ticket,       est: stop.est_tickets, actual: stop.actual_tickets },
+                              { label: 'Food',    Icon: Utensils,     est: stop.est_food,    actual: stop.actual_food    },
+                              { label: 'Parking', Icon: Car,          est: stop.est_parking, actual: stop.actual_parking },
+                              { label: 'Hotel',   Icon: BedDouble,    est: stop.est_hotel,   actual: stop.actual_hotel   },
+                              { label: 'Local Transport', Icon: CarTaxiFront, est: stop.est_local_transport, actual: stop.actual_local_transport },
+                            ] as const).filter(c => c.est > 0 || c.actual > 0).map(({ label, Icon, est, actual }, ci, arr) => (
+                              <div key={label} style={{
+                                padding: '10px 12px',
+                                borderRight: (ci + 1) % 3 !== 0 && ci < arr.length - 1 ? '1px solid #30363D' : 'none',
+                                borderTop: ci >= 3 ? '1px solid #30363D' : 'none',
+                              }}>
                                 <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 3 }}>
                                   <Icon size={10} strokeWidth={2} /> {label}
                                 </div>
@@ -1278,28 +1284,33 @@ export default function TripDetailPage() {
                       {/* Budget strip */}
                       {hasBudget ? (
                         <div style={{ display: 'flex', borderTop: '1px solid #30363D', backgroundColor: '#1C2430' }}>
-                          {([
-                            { label: 'Tickets', Icon: Ticket,   est: stop.est_tickets, actual: stop.actual_tickets },
-                            { label: 'Food',    Icon: Utensils, est: stop.est_food,    actual: stop.actual_food    },
-                            { label: 'Parking', Icon: Car,      est: stop.est_parking, actual: stop.actual_parking },
-                          ] as const).map(({ label, Icon, est, actual }, ci) => (
-                            <div key={label} style={{
-                              flex: 1, padding: '10px 12px',
-                              borderRight: ci < 2 ? '1px solid #30363D' : 'none',
-                            }}>
-                              <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 3 }}>
-                                <Icon size={10} strokeWidth={2} /> {label}
-                              </div>
-                              <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>
-                                {formatCurrency(est)}
-                              </div>
-                              {actual > 0 && (
-                                <div style={{ fontSize: 13, color: actual > est ? '#F85149' : '#3FB950', marginTop: 1 }}>
-                                  {formatCurrency(actual)}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', flex: 1 }}>
+                            {([
+                              { label: 'Tickets', Icon: Ticket,       est: stop.est_tickets, actual: stop.actual_tickets },
+                              { label: 'Food',    Icon: Utensils,     est: stop.est_food,    actual: stop.actual_food    },
+                              { label: 'Parking', Icon: Car,          est: stop.est_parking, actual: stop.actual_parking },
+                              { label: 'Hotel',   Icon: BedDouble,    est: stop.est_hotel,   actual: stop.actual_hotel   },
+                              { label: 'Local Transport', Icon: CarTaxiFront, est: stop.est_local_transport, actual: stop.actual_local_transport },
+                            ] as const).filter(c => c.est > 0 || c.actual > 0).map(({ label, Icon, est, actual }, ci, arr) => (
+                              <div key={label} style={{
+                                padding: '10px 12px',
+                                borderRight: (ci + 1) % 3 !== 0 && ci < arr.length - 1 ? '1px solid #30363D' : 'none',
+                                borderTop: ci >= 3 ? '1px solid #30363D' : 'none',
+                              }}>
+                                <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 3 }}>
+                                  <Icon size={10} strokeWidth={2} /> {label}
                                 </div>
-                              )}
-                            </div>
-                          ))}
+                                <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3' }}>
+                                  {formatCurrency(est)}
+                                </div>
+                                {actual > 0 && (
+                                  <div style={{ fontSize: 13, color: actual > est ? '#F85149' : '#3FB950', marginTop: 1 }}>
+                                    {formatCurrency(actual)}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                           <div style={{
                             padding: '10px 12px', borderLeft: '1px solid #30363D', flexShrink: 0,
                             display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-end',
@@ -1435,26 +1446,22 @@ export default function TripDetailPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedStops.map((stop, i) => {
-                      const stadium = stop.stadium as Stadium | undefined
-                      const est     = stop.est_tickets + stop.est_food + stop.est_parking
-                      const actual  = stop.actual_tickets + stop.actual_food + stop.actual_parking
+                    {([
+                      { label: 'Tickets',         Icon: Ticket,       est: stops.reduce((s, x) => s + x.est_tickets, 0),         actual: stops.reduce((s, x) => s + x.actual_tickets, 0) },
+                      { label: 'Food',            Icon: Utensils,     est: stops.reduce((s, x) => s + x.est_food, 0),            actual: stops.reduce((s, x) => s + x.actual_food, 0) },
+                      { label: 'Parking',         Icon: Car,          est: stops.reduce((s, x) => s + x.est_parking, 0),         actual: stops.reduce((s, x) => s + x.actual_parking, 0) },
+                      { label: 'Hotel',           Icon: BedDouble,    est: stops.reduce((s, x) => s + x.est_hotel, 0),           actual: stops.reduce((s, x) => s + x.actual_hotel, 0) },
+                      { label: 'Local Transport', Icon: CarTaxiFront, est: stops.reduce((s, x) => s + x.est_local_transport, 0), actual: stops.reduce((s, x) => s + x.actual_local_transport, 0) },
+                      { label: 'Travel',          Icon: Plane,        est: trip.est_travel,                                     actual: trip.actual_travel },
+                    ] as const).map(({ label, Icon, est, actual }) => {
                       if (est === 0 && actual === 0) return null
                       const diff = actual - est
                       return (
-                        <tr key={stop.id} style={{ borderTop: '1px solid #30363D' }}>
-                          <td style={{ padding: '11px 16px' }}>
-                            <div style={{ fontWeight: 600, color: '#E6EDF3' }}>
-                              Stop {i + 1}
-                              {stop.game_date && (
-                                <span style={{ color: '#8B949E', fontWeight: 400 }}>
-                                  {' · '}{new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                </span>
-                              )}
-                            </div>
-                            {stadium?.name && (
-                              <div style={{ fontSize: 12, color: '#8B949E', marginTop: 1 }}>{stadium.name}</div>
-                            )}
+                        <tr key={label} style={{ borderTop: '1px solid #30363D' }}>
+                          <td style={{ padding: '11px 16px', color: '#8B949E' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                              <Icon size={13} strokeWidth={1.8} /> {label}
+                            </span>
                           </td>
                           <td style={{ padding: '11px 16px', textAlign: 'right', color: '#E6EDF3', fontWeight: 600 }}>
                             {formatCurrency(est)}
@@ -1468,50 +1475,6 @@ export default function TripDetailPage() {
                         </tr>
                       )
                     })}
-
-                    {trip.est_travel > 0 && (() => {
-                      const diff = trip.actual_travel - trip.est_travel
-                      return (
-                        <tr style={{ borderTop: '1px solid #30363D' }}>
-                          <td style={{ padding: '11px 16px', color: '#8B949E' }}>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                              <Plane size={13} strokeWidth={1.8} /> Travel
-                            </span>
-                          </td>
-                          <td style={{ padding: '11px 16px', textAlign: 'right', color: '#E6EDF3', fontWeight: 600 }}>
-                            {formatCurrency(trip.est_travel)}
-                          </td>
-                          <td style={{ padding: '11px 16px', textAlign: 'right', color: trip.actual_travel > 0 ? '#E6EDF3' : '#8B949E' }}>
-                            {trip.actual_travel > 0 ? formatCurrency(trip.actual_travel) : '—'}
-                          </td>
-                          <td style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 600, color: trip.actual_travel > 0 ? (diff > 0 ? '#F85149' : '#3FB950') : '#8B949E' }}>
-                            {trip.actual_travel > 0 ? `${diff > 0 ? '+' : ''}${formatCurrency(diff)}` : '—'}
-                          </td>
-                        </tr>
-                      )
-                    })()}
-
-                    {trip.est_hotel > 0 && (() => {
-                      const diff = trip.actual_hotel - trip.est_hotel
-                      return (
-                        <tr style={{ borderTop: '1px solid #30363D' }}>
-                          <td style={{ padding: '11px 16px', color: '#8B949E' }}>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                              <BedDouble size={13} strokeWidth={1.8} /> Hotel
-                            </span>
-                          </td>
-                          <td style={{ padding: '11px 16px', textAlign: 'right', color: '#E6EDF3', fontWeight: 600 }}>
-                            {formatCurrency(trip.est_hotel)}
-                          </td>
-                          <td style={{ padding: '11px 16px', textAlign: 'right', color: trip.actual_hotel > 0 ? '#E6EDF3' : '#8B949E' }}>
-                            {trip.actual_hotel > 0 ? formatCurrency(trip.actual_hotel) : '—'}
-                          </td>
-                          <td style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 600, color: trip.actual_hotel > 0 ? (diff > 0 ? '#F85149' : '#3FB950') : '#8B949E' }}>
-                            {trip.actual_hotel > 0 ? `${diff > 0 ? '+' : ''}${formatCurrency(diff)}` : '—'}
-                          </td>
-                        </tr>
-                      )
-                    })()}
 
                     {/* Grand total */}
                     <tr style={{ borderTop: '2px solid #30363D', backgroundColor: '#1C2430' }}>
