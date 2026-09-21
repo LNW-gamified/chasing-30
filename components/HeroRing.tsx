@@ -75,8 +75,8 @@ export default function HeroRing({ visited, total, dots, gradient, glow }: Props
           </linearGradient>
         </defs>
 
-        {/* Track — full outline, dim */}
-        <path d={plateD} fill="none" stroke="#1C2430" strokeWidth={3} strokeLinejoin="round" />
+        {/* Track — full outline, visible against the photo but still clearly dimmer than the gold progress fill */}
+        <path d={plateD} fill="none" stroke="rgba(255,255,255,0.32)" strokeWidth={3} strokeLinejoin="round" />
 
         {/* Progress trace — gradient portion of the outline, proportional
             to visited/total. pathLength="1" lets the dash math work in a
