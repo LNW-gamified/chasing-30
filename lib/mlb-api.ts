@@ -579,3 +579,30 @@ export async function fetchFarmSystemToday(
     opponentLogoUrl:  g.opponentMilbId != null ? (logoByTeamId[g.opponentMilbId] ?? null) : null,
   }))
 }
+
+// Re-checks the real, current first-pitch time for a team's home game on a
+// specific date. MLB often publishes a game's date long before its actual
+// time is locked in (day vs. night, TV scheduling), so a time saved when a
+// trip stop or ticket was first added can go stale. This is called lazily
+// — whenever the trip or stadium page that shows the time is opened, not
+// on any kind of background schedule — and returns the real time
+// formatted in that stadium's own local timezone, or null if the game
+// can't be found (postponed, date mismatch, etc.) so the caller can leave
+// the existing stored value alone rather than overwrite it with nothing.
+export async function fetchRealGameTime(stadiumAbbr: string, gameDate: string): Promise<string | null> {
+  const teamId = MLB_TEAM_IDS[stadiumAbbr]
+  if (!teamId) return null
+  try {
+    const res = await fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=${teamId}&date=${gameDate}`)
+    if (!res.ok) return null
+    const data = await res.json()
+    const game = data.dates?.[0]?.games?.[0]
+    const utc = game?.gameDate
+    if (!utc) return null
+    const tz = STADIUM_TZ[stadiumAbbr] ?? 'America/Los_Angeles'
+    const tzLabel = TZ_LABEL[tz] ?? 'PT'
+    return new Date(utc).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: tz }) + ` ${tzLabel}`
+  } catch {
+    return null
+  }
+}

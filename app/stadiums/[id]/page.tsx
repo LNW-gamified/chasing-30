@@ -8,7 +8,7 @@ import BoxScore from '@/components/BoxScore'
 import { formatDate } from '@/lib/utils'
 import type { Stadium, StadiumVisit, RetiredNumber, StadiumTrendingFood, StadiumSouvenir, StadiumWeather } from '@/types'
 import { MILESTONES } from '@/lib/milestones'
-import { type UpcomingGame, type VenueDimensions, type TeamSeasonStats, type RosterPlayer, type Transaction, type MiLBAffiliate } from '@/lib/mlb-api'
+import { type UpcomingGame, type VenueDimensions, type TeamSeasonStats, type RosterPlayer, type Transaction, type MiLBAffiliate, STADIUM_TZ, TZ_LABEL, fetchRealGameTime } from '@/lib/mlb-api'
 import { type ESPNNewsItem } from '@/lib/espn-api'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Loader2, Users, CalendarDays, Trophy, Share2, Hash, Building2, Map, ChevronRight, CloudRain, Wind } from 'lucide-react'
@@ -298,6 +298,23 @@ export default function StadiumDetailPage() {
         time_str:   t.time_str,
         promotions: t.promotions ?? [],
       })))
+      refreshStaleTicketTimes(data)
+    }
+  }
+
+  // Lazily re-checks the real first-pitch time for any ticketed game and
+  // quietly corrects it if MLB has since locked in a different time. See
+  // fetchRealGameTime's comment in lib/mlb-api.ts for why this runs on
+  // page load rather than a background schedule.
+  async function refreshStaleTicketTimes(tickets: any[]) {
+    if (!stadium) return
+    const supabase = createClient()
+    for (const t of tickets) {
+      const real = await fetchRealGameTime(stadium.abbreviation, t.game_date)
+      if (real && real !== t.time_str) {
+        await supabase.from('mlb_tickets').update({ time_str: real }).eq('game_pk', t.game_pk).eq('stadium_id', stadium.id)
+        setTicketGames(prev => prev.map(g => g.game_pk === t.game_pk ? { ...g, time_str: real } : g))
+      }
     }
   }
 
@@ -310,16 +327,18 @@ export default function StadiumDetailPage() {
         .eq('stadium_id', stadium.id)
       if (error) { console.error('ticket delete error:', error); return }
     } else {
+      const tz = STADIUM_TZ[stadium.abbreviation] ?? 'America/Los_Angeles'
+      const tzLabel = TZ_LABEL[tz] ?? 'PT'
       const timeStr = new Date(g.gameDate).toLocaleTimeString('en-US', {
-        hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles',
-      })
+        hour: 'numeric', minute: '2-digit', timeZone: tz,
+      }) + ` ${tzLabel}`
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       const { error } = await supabase.from('mlb_tickets').insert({
         user_id:    user.id,
         stadium_id: stadium.id,
         game_pk:    g.gamePk,
-        game_date: new Date(g.gameDate).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }),
+        game_date: new Date(g.gameDate).toLocaleDateString('en-CA', { timeZone: tz }),
         opponent:   g.awayTeam,
         time_str:   timeStr,
         promotions: g.promotions,
@@ -737,7 +756,7 @@ export default function StadiumDetailPage() {
                             <div>
                               <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3' }}>vs {t.opponent}</div>
                               <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>
-                                {dateStr}{t.time_str ? ` · ${t.time_str} PT` : ''}
+                                {dateStr}{t.time_str ? ` · ${t.time_str}` : ''}
                               </div>
                               {t.promotions.length > 0 && (
                                 <div style={{ fontSize: 13, color: '#F5A623', marginTop: 2 }}>🎁 {t.promotions[0]}</div>

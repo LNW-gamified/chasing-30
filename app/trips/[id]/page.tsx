@@ -14,6 +14,7 @@ import StopChecklist from '@/components/StopChecklist'
 import { DESTINATION_BY_SLUG, destinationLocation, EXPERIENCE_TYPES } from '@/lib/destinations'
 import { fetchForecastWeather, fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
 import { TEAM_PRIMARY, TEAM_GRADIENTS as TEAM_COLORS, TEAM_BTN_COLOR, TEAM_LOGO_BG } from '@/lib/team-colors'
+import { fetchRealGameTime } from '@/lib/mlb-api'
 
 // Large form only ever shown behind a click — load it on demand instead
 // of shipping its code in this route's initial bundle.
@@ -89,6 +90,27 @@ export default function TripDetailPage() {
     }
 
     await calculateDrivingDistance(loadedStops)
+    refreshStaleGameTimes(loadedStops)
+  }
+
+  // Lazily re-checks the real first-pitch time for any upcoming stop that
+  // has one, and quietly corrects it if MLB has since locked in a
+  // different time than whatever was showing when the stop was added.
+  // Runs once per page load, never in the background — see
+  // fetchRealGameTime's own comment for why lazy beats a scheduled job
+  // here.
+  async function refreshStaleGameTimes(stopsToCheck: typeof stops) {
+    const todayISO = new Date().toISOString().slice(0, 10)
+    const supabase = createClient()
+    for (const s of stopsToCheck) {
+      const stadium = s.stadium as Stadium | null
+      if (!stadium || !s.game_date || s.game_date < todayISO) continue
+      const real = await fetchRealGameTime(stadium.abbreviation, s.game_date)
+      if (real && real !== s.game_time) {
+        await supabase.from('trip_stops').update({ game_time: real }).eq('id', s.id)
+        setStops(prev => prev.map(p => p.id === s.id ? { ...p, game_time: real } : p))
+      }
+    }
   }
 
   async function calculateDrivingDistance(stopsToCalc: typeof stops) {
