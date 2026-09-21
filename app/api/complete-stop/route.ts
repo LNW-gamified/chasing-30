@@ -56,11 +56,17 @@ export async function POST(req: NextRequest) {
 
       // Destination stop → create destination_visit (mirrors complete-trip)
       if (stop.destination_id) {
+        // Match on destination + date, not trip_id, same reasoning as the
+        // stadium_visits check below. Date stays in this match (unlike
+        // stadium_visits it's not load-bearing for correctness there, but
+        // here a recurring destination could genuinely have an older,
+        // unrelated visit on file, and matching by destination_id alone
+        // could wrongly link to that instead of the real one for this trip).
         const { data: existingDV } = await supabase
           .from('destination_visits')
           .select('id')
-          .eq('trip_id', stop.trip_id)
           .eq('destination_id', stop.destination_id)
+          .eq('visit_date', stop.game_date)
           .maybeSingle()
 
         const dvId = existingDV?.id ?? (await supabase
@@ -89,10 +95,15 @@ export async function POST(req: NextRequest) {
       // Stadium visit: regular stadium stops, and MLB-event destination stops
       const stadium = (stop as any).stadium
       if (stadium) {
+        // Match on stadium + date only, not trip_id. A game logged
+        // directly from the stadium page (or any other trip, or no trip
+        // at all) has no trip_id tying it to this specific trip, so
+        // requiring that match here meant this check could never find a
+        // real, already-logged visit for exactly the situation it exists
+        // to catch, and created a duplicate instead.
         const { data: existing } = await supabase
           .from('stadium_visits')
           .select('id')
-          .eq('trip_id', stop.trip_id)
           .eq('stadium_id', stop.stadium_id)
           .eq('visit_date', stop.game_date)
           .maybeSingle()
