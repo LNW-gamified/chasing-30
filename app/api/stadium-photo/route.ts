@@ -10,6 +10,14 @@ export const revalidate = 604800
 
 export async function GET(req: NextRequest) {
   const abbr = req.nextUrl.searchParams.get('abbr')
+  const abbrs = req.nextUrl.searchParams.get('abbrs')
+
+  if (abbrs) {
+    const list = abbrs.split(',').map(a => a.trim()).filter(Boolean)
+    const results = await Promise.all(list.map(async a => [a, (await fetchStadiumWiki(a)).photo] as const))
+    return NextResponse.json(Object.fromEntries(results))
+  }
+
   if (!abbr) return NextResponse.json({ summary: null, photo: null })
   const data = await fetchStadiumWiki(abbr)
   return NextResponse.json(data)

@@ -444,13 +444,18 @@ export default function StadiumsPage() {
       setMlStadiums((mls ?? []) as MinorLeagueStadium[])
       setBleEntries((ble ?? []) as BleEntry[])
       setLoading(false)
-      ;(s ?? []).forEach((stadium: Stadium) => {
-        fetch(`/api/stadium-photo?abbr=${stadium.abbreviation}`)
+      const abbrs = (s ?? []).map((stadium: Stadium) => stadium.abbreviation).join(',')
+      if (abbrs) {
+        fetch(`/api/stadium-photo?abbrs=${encodeURIComponent(abbrs)}`)
           .then(r => r.json())
-          .then(({ photo }) => {
-            if (photo) setPhotos(prev => ({ ...prev, [stadium.abbreviation]: photo }))
+          .then((photoMap: Record<string, string | null>) => {
+            const clean: Record<string, string> = {}
+            for (const [abbr, photo] of Object.entries(photoMap)) {
+              if (photo) clean[abbr] = photo
+            }
+            setPhotos(prev => ({ ...prev, ...clean }))
           })
-      })
+      }
     })
   }, [])
 

@@ -309,13 +309,13 @@ export default function StadiumDetailPage() {
   async function refreshStaleTicketTimes(tickets: any[]) {
     if (!stadium) return
     const supabase = createClient()
-    for (const t of tickets) {
+    await Promise.all(tickets.map(async t => {
       const real = await fetchRealGameTime(stadium.abbreviation, t.game_date)
       if (real && real !== t.time_str) {
         await supabase.from('mlb_tickets').update({ time_str: real }).eq('game_pk', t.game_pk).eq('stadium_id', stadium.id)
         setTicketGames(prev => prev.map(g => g.game_pk === t.game_pk ? { ...g, time_str: real } : g))
       }
-    }
+    }))
   }
 
   async function toggleTicket(g: UpcomingGame) {

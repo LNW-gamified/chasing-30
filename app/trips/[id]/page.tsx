@@ -102,15 +102,15 @@ export default function TripDetailPage() {
   async function refreshStaleGameTimes(stopsToCheck: typeof stops) {
     const todayISO = new Date().toISOString().slice(0, 10)
     const supabase = createClient()
-    for (const s of stopsToCheck) {
-      const stadium = s.stadium as Stadium | null
-      if (!stadium || !s.game_date || s.game_date < todayISO) continue
-      const real = await fetchRealGameTime(stadium.abbreviation, s.game_date)
+    const upcoming = stopsToCheck.filter(s => (s.stadium as Stadium | null) && s.game_date && s.game_date >= todayISO)
+    await Promise.all(upcoming.map(async s => {
+      const stadium = s.stadium as Stadium
+      const real = await fetchRealGameTime(stadium.abbreviation, s.game_date as string)
       if (real && real !== s.game_time) {
         await supabase.from('trip_stops').update({ game_time: real }).eq('id', s.id)
         setStops(prev => prev.map(p => p.id === s.id ? { ...p, game_time: real } : p))
       }
-    }
+    }))
   }
 
   async function calculateDrivingDistance(stopsToCalc: typeof stops) {
