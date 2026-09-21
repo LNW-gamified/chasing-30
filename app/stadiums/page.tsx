@@ -405,7 +405,31 @@ export default function StadiumsPage() {
       // differently — trip_stops already has "vs " baked in, mlb_tickets
       // doesn't — so strip any existing prefix here and let the render
       // add exactly one, instead of getting "vs vs Team" for one source.
-      const stripVs = (name: string) => name.replace(/^vs\s+/i, '')
+      // Full team names ("Colorado Rockies") also overflow this card's
+      // narrow date row, so shorten to just the nickname ("Rockies")
+      // here too, falling back to the raw name if it isn't one of the 30
+      // recognized full names (e.g. "Athletics" already comes bare).
+      const NICKNAME_BY_FULLNAME: Record<string, string> = {
+        'arizona diamondbacks': 'Diamondbacks', 'atlanta braves': 'Braves',
+        'baltimore orioles': 'Orioles', 'boston red sox': 'Red Sox',
+        'chicago cubs': 'Cubs', 'chicago white sox': 'White Sox',
+        'cincinnati reds': 'Reds', 'cleveland guardians': 'Guardians',
+        'colorado rockies': 'Rockies', 'detroit tigers': 'Tigers',
+        'houston astros': 'Astros', 'kansas city royals': 'Royals',
+        'los angeles angels': 'Angels', 'los angeles dodgers': 'Dodgers',
+        'miami marlins': 'Marlins', 'milwaukee brewers': 'Brewers',
+        'minnesota twins': 'Twins', 'new york mets': 'Mets',
+        'new york yankees': 'Yankees', 'oakland athletics': 'Athletics',
+        'philadelphia phillies': 'Phillies', 'pittsburgh pirates': 'Pirates',
+        'san diego padres': 'Padres', 'san francisco giants': 'Giants',
+        'seattle mariners': 'Mariners', 'st. louis cardinals': 'Cardinals',
+        'tampa bay rays': 'Rays', 'texas rangers': 'Rangers',
+        'toronto blue jays': 'Blue Jays', 'washington nationals': 'Nationals',
+      }
+      const stripVs = (name: string) => {
+        const clean = name.replace(/^vs\s+/i, '')
+        return NICKNAME_BY_FULLNAME[clean.toLowerCase()] ?? clean
+      }
       const nextGameMap: Record<string, NextGameInfo> = {}
       for (const t of (stops ?? []) as { stadium_id: string; game_date: string; opponent: string | null }[]) {
         if (!nextGameMap[t.stadium_id]) nextGameMap[t.stadium_id] = { date: fmtGameDateShort(t.game_date), opponentName: t.opponent ? stripVs(t.opponent) : 'TBD' }
