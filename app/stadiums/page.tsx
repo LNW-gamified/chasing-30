@@ -42,7 +42,7 @@ interface MinorLeagueStadium {
   affiliate_full: string; description: string | null; milb_team_id: number | null
   image_url: string | null; logo_url: string | null
 }
-interface BleEntry { id: string; category: string; event_type: string | null; venue: string | null; minor_league_stadium_id: string | null }
+interface BleEntry { id: string; category: string; event_type: string | null; venue: string | null; minor_league_stadium_id: string | null; visit_date: string }
 
 // ─── Team colors ──────────────────────────────────────────────────────────────
 
@@ -180,8 +180,8 @@ function StadiumCard({ stadium, visited, visitDate, visitCount, nextGame, photo 
 
 // ─── Event card ───────────────────────────────────────────────────────────────
 
-function EventCard({ event, attendedCount, onLog }: {
-  event: BaseballEvent; attendedCount: number; onLog: () => void
+function EventCard({ event, attendedCount, visitDate, onLog }: {
+  event: BaseballEvent; attendedCount: number; visitDate: string | null; onLog: () => void
 }) {
   const meta = EVENT_META[event.category] ?? { emoji: '🏆', color: '#F5A623', label: event.category }
   const attended = attendedCount > 0
@@ -203,8 +203,11 @@ function EventCard({ event, attendedCount, onLog }: {
         <div style={{ flex: 1, minHeight: 8 }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
           {attended ? (
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', border: '1px solid rgba(63,185,80,0.25)', padding: '2px 8px', borderRadius: 999 }}>
-              Attended {attendedCount > 1 ? `${attendedCount}×` : '✓'}
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', border: '1px solid rgba(63,185,80,0.25)', padding: '2px 8px', borderRadius: 999 }}>
+                Attended {attendedCount > 1 ? `${attendedCount}×` : '✓'}
+              </span>
+              {visitDate && <span style={{ fontSize: 13, color: '#8B949E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{fmtDate(visitDate)}</span>}
             </span>
           ) : (
             <span style={{ fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid rgba(139,148,158,0.25)', padding: '2px 8px', borderRadius: 999 }}>Not yet</span>
@@ -223,8 +226,8 @@ function EventCard({ event, attendedCount, onLog }: {
 
 // ─── Experience card ──────────────────────────────────────────────────────────
 
-function ExperienceCard({ exp, visited, onLog }: {
-  exp: BaseballExperience; visited: boolean; onLog: () => void
+function ExperienceCard({ exp, visited, visitDate, onLog }: {
+  exp: BaseballExperience; visited: boolean; visitDate: string | null; onLog: () => void
 }) {
   const [imgFailed, setImgFailed] = useState(false)
   const loc = [exp.city, exp.state ?? exp.country].filter(Boolean).join(', ')
@@ -257,7 +260,10 @@ function ExperienceCard({ exp, visited, onLog }: {
         <div style={{ flex: 1, minHeight: 8 }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
           {visited ? (
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', border: '1px solid rgba(63,185,80,0.25)', padding: '2px 8px', borderRadius: 999 }}>Visited ✓</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#3FB950', backgroundColor: 'rgba(63,185,80,0.12)', border: '1px solid rgba(63,185,80,0.25)', padding: '2px 8px', borderRadius: 999 }}>Visited ✓</span>
+              {visitDate && <span style={{ fontSize: 13, color: '#8B949E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{fmtDate(visitDate)}</span>}
+            </span>
           ) : (
             <span style={{ fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid rgba(139,148,158,0.25)', padding: '2px 8px', borderRadius: 999 }}>Not yet</span>
           )}
@@ -387,7 +393,7 @@ export default function StadiumsPage() {
       supabase.from('baseball_events').select('*').order('sort_order'),
       supabase.from('baseball_experiences').select('*').order('sort_order'),
       supabase.from('minor_league_stadiums').select('id,name,team,abbreviation,city,state,level,affiliate,affiliate_full,description,milb_team_id,image_url,logo_url').order('sort_order'),
-      supabase.from('baseball_life_entries').select('id,category,event_type,venue,minor_league_stadium_id'),
+      supabase.from('baseball_life_entries').select('id,category,event_type,venue,minor_league_stadium_id,visit_date'),
     ]).then(([{ data: s }, { data: v }, { data: tickets }, { data: stops }, { data: ev }, { data: ex }, { data: mls }, { data: ble }]) => {
       setStadiums(s ?? [])
       setVisits((v as VisitRow[]) ?? [])
@@ -465,6 +471,14 @@ export default function StadiumsPage() {
     return bleEntries.filter(fn).length
   }, [bleEntries])
 
+  const eventAttendedDate = useCallback((slug: string): string | null => {
+    const fn = EVENT_MATCH[slug]
+    if (!fn) return null
+    const matches = bleEntries.filter(fn)
+    if (matches.length === 0) return null
+    return [...matches].sort((a, b) => b.visit_date.localeCompare(a.visit_date))[0].visit_date
+  }, [bleEntries])
+
   const experienceVisited = useCallback((exp: BaseballExperience) => {
     const nameLow = exp.name.toLowerCase()
     return bleEntries.some(e =>
@@ -473,6 +487,18 @@ export default function StadiumsPage() {
         e.event_type?.toLowerCase().includes(nameLow.split(' ').slice(0, 2).join(' '))
       )
     )
+  }, [bleEntries])
+
+  const experienceVisitedDate = useCallback((exp: BaseballExperience): string | null => {
+    const nameLow = exp.name.toLowerCase()
+    const matches = bleEntries.filter(e =>
+      e.category === 'pilgrimage' && (
+        e.venue?.toLowerCase().includes(nameLow.split(' ').slice(0, 2).join(' ')) ||
+        e.event_type?.toLowerCase().includes(nameLow.split(' ').slice(0, 2).join(' '))
+      )
+    )
+    if (matches.length === 0) return null
+    return [...matches].sort((a, b) => b.visit_date.localeCompare(a.visit_date))[0].visit_date
   }, [bleEntries])
 
   const mlVisitCount = useCallback((stadiumId: string) =>
@@ -614,6 +640,7 @@ export default function StadiumsPage() {
                           key={ev.id}
                           event={ev}
                           attendedCount={eventAttendedCount(ev.slug)}
+                          visitDate={eventAttendedDate(ev.slug)}
                           onLog={() => openLog('mlb_special_event', eventDefaultType(ev.slug))}
                         />
                       ))
@@ -644,6 +671,7 @@ export default function StadiumsPage() {
                           key={ev.id}
                           event={ev}
                           attendedCount={eventAttendedCount(ev.slug)}
+                          visitDate={eventAttendedDate(ev.slug)}
                           onLog={() => openLog(
                             ev.category === 'spring_training' ? 'spring_training' :
                             ev.category === 'amateur' ? 'mlb_special_event' :
@@ -670,6 +698,7 @@ export default function StadiumsPage() {
                           key={ev.id}
                           event={ev}
                           attendedCount={eventAttendedCount(ev.slug)}
+                          visitDate={eventAttendedDate(ev.slug)}
                           onLog={() => openLog(
                             ev.category === 'spring_training' ? 'spring_training' :
                             ev.category === 'amateur' ? 'mlb_special_event' :
@@ -697,6 +726,7 @@ export default function StadiumsPage() {
                     key={exp.id}
                     exp={exp}
                     visited={experienceVisited(exp)}
+                    visitDate={experienceVisitedDate(exp)}
                     onLog={() => openLog('pilgrimage', exp.name)}
                   />
                 ))}
