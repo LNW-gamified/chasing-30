@@ -26,6 +26,9 @@ type StopMini = {
   stop_type: 'stadium' | 'destination' | null
   experience_type: string | null
   opponent_team_id: number | null
+  stadium_visit_id: string | null
+  destination_visit_id: string | null
+  baseball_life_entry_id: string | null
   est_tickets: number
   est_food: number
   est_parking: number
@@ -145,8 +148,6 @@ type FormType = 'stadium' | 'destination'
 export default function TripsPage() {
   const [trips,        setTrips]        = useState<TripWithExtras[]>([])
   const [stadiums,     setStadiums]     = useState<Stadium[]>([])
-  const [visitedIds,   setVisitedIds]   = useState<Set<string>>(new Set())
-  const [visitedDestinationIds, setVisitedDestinationIds] = useState<Set<string>>(new Set())
   const [loading,      setLoading]      = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [showTypePicker, setShowTypePicker] = useState(false)
@@ -154,20 +155,16 @@ export default function TripsPage() {
 
   async function load() {
     const supabase = createClient()
-    const [{ data: t }, { data: s }, { data: v }, { data: dv }] = await Promise.all([
+    const [{ data: t }, { data: s }] = await Promise.all([
       supabase.from('trips')
-        .select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, is_mlb_event), trip_stops(id, stadium_id, destination_id, stop_type, experience_type, opponent_team_id, sort_order, est_tickets, est_food, est_parking, est_hotel, est_local_transport, actual_tickets, actual_food, actual_parking, actual_hotel, actual_local_transport, stadium:stadiums(id, abbreviation, name))')
+        .select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, is_mlb_event), trip_stops(id, stadium_id, destination_id, stop_type, experience_type, opponent_team_id, sort_order, stadium_visit_id, destination_visit_id, baseball_life_entry_id, est_tickets, est_food, est_parking, est_hotel, est_local_transport, actual_tickets, actual_food, actual_parking, actual_hotel, actual_local_transport, stadium:stadiums(id, abbreviation, name))')
         .order('start_date', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false })
         .order('sort_order', { referencedTable: 'trip_stops', ascending: true }),
       supabase.from('stadiums').select('*').order('name'),
-      supabase.from('stadium_visits').select('stadium_id'),
-      supabase.from('destination_visits').select('destination_id'),
     ])
     setTrips((t as TripWithExtras[]) ?? [])
     setStadiums(s ?? [])
-    setVisitedIds(new Set((v ?? []).map((r: any) => r.stadium_id)))
-    setVisitedDestinationIds(new Set((dv ?? []).map((r: any) => r.destination_id)))
     setLoading(false)
   }
 
@@ -493,8 +490,7 @@ export default function TripsPage() {
                               const allStopIds: string[] = trip.trip_stops
                                 .map(s => s.stadium_id ?? s.destination_id)
                                 .filter((id): id is string => id !== null)
-                              const visitedAllIds = new Set([...visitedIds, ...visitedDestinationIds])
-                              const stopsVisited = allStopIds.filter(id => visitedAllIds.has(id)).length
+                              const stopsVisited = trip.trip_stops.filter(s => s.stadium_visit_id || s.destination_visit_id || s.baseball_life_entry_id).length
                               const totalStops = allStopIds.length
                               const allVisited = totalStops > 0 && stopsVisited === totalStops
                               return (
@@ -575,22 +571,31 @@ export default function TripsPage() {
                             })()}
 
                             {/* Budget row */}
-                            {est > 0 && (
+                            {(est > 0 || hasActual) && (
                               <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'flex-end' }}>
                                 <div style={{ width: 180 }}>
                                   <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 5, textAlign: 'right' }}>
-                                    Budget:&nbsp;
-                                    <span style={{ color: '#E6EDF3', fontWeight: 600 }}>{formatCurrency(est)} est</span>
-                                    {hasActual && (
+                                    {est > 0 ? (
                                       <>
-                                        &nbsp;·&nbsp;
-                                        <span style={{ color: overBudget ? '#F85149' : '#3FB950', fontWeight: 600 }}>
-                                          {formatCurrency(actual)} actual
-                                        </span>
+                                        Budget:&nbsp;
+                                        <span style={{ color: '#E6EDF3', fontWeight: 600 }}>{formatCurrency(est)} est</span>
+                                        {hasActual && (
+                                          <>
+                                            &nbsp;·&nbsp;
+                                            <span style={{ color: overBudget ? '#F85149' : '#3FB950', fontWeight: 600 }}>
+                                              {formatCurrency(actual)} actual
+                                            </span>
+                                          </>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <>
+                                        Spent:&nbsp;
+                                        <span style={{ color: '#E6EDF3', fontWeight: 600 }}>{formatCurrency(actual)}</span>
                                       </>
                                     )}
                                   </div>
-                                  {hasActual && (
+                                  {est > 0 && hasActual && (
                                     <div style={{ height: 4, backgroundColor: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
                                       <div style={{
                                         height: '100%', borderRadius: 4, width: `${pct}%`,
