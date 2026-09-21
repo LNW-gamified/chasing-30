@@ -543,7 +543,7 @@ export default function TripsPage() {
                                       )}
                                     </div>
                                   </div>
-                                  {totalStops > 0 && (
+                                  {totalStops > 0 && !(trip.status === 'completed' && allVisited) && (
                                     <div>
                                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                                         <span style={{ fontSize: 13, color: allVisited ? '#3FB950' : '#8B949E', fontWeight: 600 }}>

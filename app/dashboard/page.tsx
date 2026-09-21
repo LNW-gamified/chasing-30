@@ -537,6 +537,24 @@ export default async function DashboardPage() {
           </div>
         )}
 
+        {/* ── No favorite team yet — explains why the next few sections
+              are missing instead of just leaving a blank gap ─────────── */}
+        {!favAbbr && (
+          <div style={{
+            marginBottom: SECTION_GAP, padding: '20px', borderRadius: 14,
+            backgroundColor: '#161B22', border: '1px dashed #30363D',
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>⭐</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3', marginBottom: 4 }}>
+              Pick a favorite team to unlock more
+            </div>
+            <div style={{ fontSize: 13, color: '#8B949E' }}>
+              Playoff picture, farm system scores, and the pennant race all show up here once you set one, tap your profile icon to choose.
+            </div>
+          </div>
+        )}
+
         {/* ── Playoff Picture (streamed — doesn't block the rest of the page) ── */}
         {favStadium && (
           <Suspense fallback={<SectionSkeleton height={220} />}>
