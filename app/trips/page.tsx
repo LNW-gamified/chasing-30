@@ -368,7 +368,7 @@ export default function TripsPage() {
                       const actual = stopsActual + trip.actual_travel + trip.actual_hotel
                       const hasActual  = actual > 0
                       const pct        = est > 0 && hasActual ? Math.min((actual / est) * 100, 100) : 0
-                      const overBudget = hasActual && actual > est
+                      const overBudget = est > 0 && hasActual && actual > est
 
                       const isUndated = !trip.start_date && !trip.end_date && !trip.trip_date
                       const destInfo = isDestination && (trip as any).destination?.slug
@@ -536,7 +536,8 @@ export default function TripsPage() {
                                         })()}
                                       </div>
                                       {(est > 0 || hasActual) && (
-                                        <span style={{ fontSize: 13, fontWeight: 600, flexShrink: 0, color: hasActual ? (overBudget ? '#F85149' : '#3FB950') : '#8B949E' }}>
+                                        <span style={{ fontSize: 13, fontWeight: 600, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 3, color: hasActual && est > 0 ? (overBudget ? '#F85149' : '#3FB950') : '#8B949E' }}>
+                                          {hasActual && est > 0 && (overBudget ? '▲' : '▼')}
                                           {hasActual ? formatCurrency(actual) : `${formatCurrency(est)} est`}
                                         </span>
                                       )}

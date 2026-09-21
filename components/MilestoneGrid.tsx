@@ -1093,7 +1093,7 @@ export default function MilestoneGrid({
 
                 {/* Points badge */}
                 <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 13, fontWeight: 800, color: isEarned ? tier.color : '#8B949E', background: isEarned ? `${tier.color}26` : 'rgba(48,54,61,0.5)', padding: '2px 7px', borderRadius: 20 }}>
-                  +{pts}
+                  {tier.name} · +{pts}
                 </div>
 
                 {/* Auto-tracked badge */}
@@ -1204,7 +1204,8 @@ export default function MilestoneGrid({
                 )}
 
                 {/* Icon */}
-                <div style={{ fontSize: 32, marginBottom: 10, filter: hasClaims ? 'none' : 'grayscale(60%)', lineHeight: 1, marginTop: hasClaims && !isRepeatable ? 14 : 0 }}>{s.icon}</div>
+                <div style={{ fontSize: 32, marginBottom: 4, filter: hasClaims ? 'none' : 'grayscale(60%)', lineHeight: 1, marginTop: hasClaims && !isRepeatable ? 14 : 0 }}>{s.icon}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: tier.color, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>{tier.name}</div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: hasClaims ? '#E6EDF3' : '#C9D1D9', marginBottom: 3, lineHeight: 1.3 }}>{s.name}</div>
@@ -1428,7 +1429,7 @@ export default function MilestoneGrid({
                   <>
                     <div style={{ marginBottom: 14 }}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 14px', borderRadius: 20, backgroundColor: `${modalTier.color}1F`, color: modalTier.color, fontSize: 13, fontWeight: 700 }}>
-                        ⚡ +{pts} pts
+                        ⚡ {modalTier.name} · +{pts} pts
                       </span>
                     </div>
                     {milestoneContext && (

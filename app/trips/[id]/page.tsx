@@ -494,7 +494,7 @@ export default function TripDetailPage() {
   const tripActual    = trip.actual_travel + trip.actual_hotel
   const estTotal      = stopEstTotal + tripEst
   const actualTotal   = stopActTotal + tripActual
-  const overBudget    = actualTotal > estTotal && actualTotal > 0
+  const overBudget    = estTotal > 0 && actualTotal > estTotal
   const allBudgetZero = estTotal === 0 && actualTotal === 0
 
   function statusConfig(status: Trip['status']) {
