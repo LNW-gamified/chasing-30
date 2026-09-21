@@ -23,7 +23,7 @@ const userTz = getUserTimezone()
 type TabKey = 'mlb' | 'events' | 'experiences' | 'minor_league' | 'passport'
 type SortKey = 'team' | 'name' | 'state' | 'division'
 interface VisitRow { stadium_id: string; visit_date: string }
-interface NextGameInfo { date: string; opponentAbbr: string }
+interface NextGameInfo { date: string; opponentName: string }
 
 interface BaseballEvent {
   id: string; name: string; slug: string; category: string
@@ -55,17 +55,6 @@ const TEAM_ACCENT: Record<string, string> = {
   COL: '#33006F', ARI: '#A71930', SF:  '#FD5A1E', MIN: '#002B5C',
   CLE: '#E31937', DET: '#0C2340', KC:  '#004687', BAL: '#DF4601',
   TB:  '#092C5C', TOR: '#134A8E',
-}
-
-const TEAM_NICKNAME: Record<string, string> = {
-  ARI: 'D-backs',   ATL: 'Braves',    BAL: 'Orioles',   BOS: 'Red Sox',
-  CHC: 'Cubs',      CWS: 'White Sox', CIN: 'Reds',       CLE: 'Guardians',
-  COL: 'Rockies',   DET: 'Tigers',    HOU: 'Astros',     KC:  'Royals',
-  LAA: 'Angels',    LAD: 'Dodgers',   MIA: 'Marlins',    MIL: 'Brewers',
-  MIN: 'Twins',     NYM: 'Mets',      NYY: 'Yankees',    OAK: 'Athletics',
-  PHI: 'Phillies',  PIT: 'Pirates',   SD:  'Padres',     SF:  'Giants',
-  SEA: 'Mariners',  STL: 'Cardinals', TB:  'Rays',       TEX: 'Rangers',
-  TOR: 'Blue Jays', WSH: 'Nationals',
 }
 
 // ─── Event category metadata ──────────────────────────────────────────────────
@@ -127,6 +116,11 @@ function fmtDate(d: string): string {
   catch { return d }
 }
 
+function fmtGameDateShort(d: string): string {
+  try { return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }
+  catch { return d }
+}
+
 function hexToRgba(hex: string, alpha: number): string {
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
@@ -172,7 +166,7 @@ function StadiumCard({ stadium, visited, visitDate, visitCount, nextGame, photo 
               ) : (
                 <>
                   <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid rgba(139,148,158,0.25)', padding: '2px 8px', borderRadius: 999 }}>On the List</span>
-                  {nextGame && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 13, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}><CalendarDays size={11} color="#C9D1D9" style={{ flexShrink: 0 }}/>{nextGame.date} vs {TEAM_NICKNAME[nextGame.opponentAbbr] ?? nextGame.opponentAbbr}</span>}
+                  {nextGame && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 13, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}><CalendarDays size={11} color="#C9D1D9" style={{ flexShrink: 0 }}/>{nextGame.date} vs {nextGame.opponentName}</span>}
                 </>
               )}
             </div>
@@ -384,18 +378,33 @@ export default function StadiumsPage() {
 
   useEffect(() => {
     const supabase = createClient()
+    const todayISO = new Date().toLocaleDateString('en-CA', { timeZone: userTz })
     Promise.all([
       supabase.from('stadiums').select('*').order('team'),
       supabase.from('stadium_visits').select('stadium_id, visit_date').order('visit_date', { ascending: false }),
-      fetch(`/api/next-games?tz=${encodeURIComponent(userTz)}`).then(r => r.ok ? r.json() : {}),
+      supabase.from('mlb_tickets').select('stadium_id, game_date, opponent').gte('game_date', todayISO).order('game_date', { ascending: true }),
+      supabase.from('trip_stops').select('stadium_id, game_date, opponent').not('stadium_id', 'is', null).gte('game_date', todayISO).order('game_date', { ascending: true }),
       supabase.from('baseball_events').select('*').order('sort_order'),
       supabase.from('baseball_experiences').select('*').order('sort_order'),
       supabase.from('minor_league_stadiums').select('id,name,team,abbreviation,city,state,level,affiliate,affiliate_full,description,milb_team_id,image_url,logo_url').order('sort_order'),
       supabase.from('baseball_life_entries').select('id,category,event_type,venue,minor_league_stadium_id'),
-    ]).then(([{ data: s }, { data: v }, games, { data: ev }, { data: ex }, { data: mls }, { data: ble }]) => {
+    ]).then(([{ data: s }, { data: v }, { data: tickets }, { data: stops }, { data: ev }, { data: ex }, { data: mls }, { data: ble }]) => {
       setStadiums(s ?? [])
       setVisits((v as VisitRow[]) ?? [])
-      setNextGames(games ?? {})
+
+      // Tickets take priority (a ticket means you've actually committed to
+      // that specific game); a planned trip stop is the fallback. Both
+      // arrays are already sorted soonest-first, so the first match per
+      // stadium is the one to show.
+      const nextGameMap: Record<string, NextGameInfo> = {}
+      for (const t of (stops ?? []) as { stadium_id: string; game_date: string; opponent: string | null }[]) {
+        if (!nextGameMap[t.stadium_id]) nextGameMap[t.stadium_id] = { date: fmtGameDateShort(t.game_date), opponentName: t.opponent ?? 'TBD' }
+      }
+      for (const t of (tickets ?? []) as { stadium_id: string; game_date: string; opponent: string | null }[]) {
+        nextGameMap[t.stadium_id] = { date: fmtGameDateShort(t.game_date), opponentName: t.opponent ?? 'TBD' }
+      }
+      setNextGames(nextGameMap)
+
       setBaseballEvents((ev ?? []) as BaseballEvent[])
       setExperiences((ex ?? []) as BaseballExperience[])
       setMlStadiums((mls ?? []) as MinorLeagueStadium[])
