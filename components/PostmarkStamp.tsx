@@ -21,7 +21,7 @@ export default function PostmarkStamp({ stadiumName, city, state, visitDate, siz
   const year = String(d.getFullYear()).slice(2)
   const dateLabel = `${month} ${day} '${year}`
 
-  const ink = '#3FB950'
+  const ink = '#FFFFFF'
   // Unique per-instance path ids so multiple stamps on one page (a whole
   // grid of cards) don't collide on the same <path> id.
   const uid = `${stadiumName}-${city}`.replace(/[^a-zA-Z0-9]/g, '')
