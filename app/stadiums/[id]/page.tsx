@@ -13,6 +13,7 @@ import { type ESPNNewsItem } from '@/lib/espn-api'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Loader2, Users, CalendarDays, Trophy, Share2, Hash, Building2, Map, ChevronRight, CloudRain, Wind } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
+import PostmarkStamp from '@/components/PostmarkStamp'
 import { MLB_TEAMS } from '@/lib/teams'
 import { TEAM_BTN_COLOR, TEAM_GRADIENTS, darkerOf } from '@/lib/team-colors'
 import { type EditorItem } from '@/components/GiveawayFoodEditor'
@@ -621,6 +622,7 @@ export default function StadiumDetailPage() {
                   borderRadius: 14, padding: '18px 20px', marginBottom: 12,
                   border: '1px solid rgba(255,255,255,0.12)',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                  position: 'relative', overflow: 'hidden',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <TeamLogo abbreviation={stadium.abbreviation} size={40} />
@@ -638,6 +640,9 @@ export default function StadiumDetailPage() {
                         })()}
                       </div>
                     </div>
+                  </div>
+                  <div style={{ position: 'absolute', top: '50%', right: 14, transform: 'translateY(-50%)' }}>
+                    <PostmarkStamp stadiumName={stadium.name} city={stadium.city} state={stadium.state} visitDate={visits[visits.length - 1].visit_date} size={58} />
                   </div>
                 </div>
                 {/* Secondary action — Log Game (outlined) */}

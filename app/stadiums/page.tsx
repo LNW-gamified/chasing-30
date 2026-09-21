@@ -11,7 +11,6 @@ import TeamLogo from '@/components/TeamLogo'
 import MiLBLogo from '@/components/MiLBLogo'
 import type { BaseballLifeCategory } from '@/types'
 import { getUserTimezone } from '@/lib/user-timezone'
-import PostmarkStamp from '@/components/PostmarkStamp'
 
 // Large form only ever shown behind a click — load it on demand instead
 // of shipping its code in this route's initial bundle.
@@ -157,12 +156,7 @@ function StadiumCard({ stadium, visited, visitDate, visitCount, nextGame, photo 
             <TeamLogo abbreviation={stadium.abbreviation} size={80} />
           </div>
         </div>
-        <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 2, position: 'relative' }}>
-          {visited && visitDate && (
-            <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 2 }}>
-              <PostmarkStamp stadiumName={stadium.name} city={stadium.city} state={stadium.state} visitDate={visitDate} size={56} />
-            </div>
-          )}
+        <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 2 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{stadium.team}</div>
           <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{stadium.name}</div>
           <div style={{ fontSize: 13, color: '#8B949E' }}>{stadium.city}</div>
