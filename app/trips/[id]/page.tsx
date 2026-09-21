@@ -881,6 +881,16 @@ export default function TripDetailPage() {
                   </div>
                 </div>
               )}
+              {stops.some(s => s.stop_type === 'destination') && (
+                <div style={{ flexShrink: 0 }}>
+                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
+                    Pilgrimages
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>
+                    {stops.filter(s => s.stop_type === 'destination').length}
+                  </div>
+                </div>
+              )}
               {trip.start_date && trip.end_date && (
                 <div style={{ flexShrink: 0 }}>
                   <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
