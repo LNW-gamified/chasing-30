@@ -485,43 +485,6 @@ export default function TripsPage() {
                               </div>
                             )}
 
-                            {/* Budget row */}
-                            {(est > 0 || hasActual) && (
-                              <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'flex-end' }}>
-                                <div style={{ width: 180 }}>
-                                  <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 5, textAlign: 'right' }}>
-                                    {est > 0 ? (
-                                      <>
-                                        Budget:&nbsp;
-                                        <span style={{ color: '#E6EDF3', fontWeight: 600 }}>{formatCurrency(est)} est</span>
-                                        {hasActual && (
-                                          <>
-                                            &nbsp;·&nbsp;
-                                            <span style={{ color: overBudget ? '#F85149' : '#3FB950', fontWeight: 600 }}>
-                                              {formatCurrency(actual)} actual
-                                            </span>
-                                          </>
-                                        )}
-                                      </>
-                                    ) : (
-                                      <>
-                                        Spent:&nbsp;
-                                        <span style={{ color: '#E6EDF3', fontWeight: 600 }}>{formatCurrency(actual)}</span>
-                                      </>
-                                    )}
-                                  </div>
-                                  {est > 0 && hasActual && (
-                                    <div style={{ height: 4, backgroundColor: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
-                                      <div style={{
-                                        height: '100%', borderRadius: 4, width: `${pct}%`,
-                                        backgroundColor: overBudget ? '#F85149' : '#3FB950',
-                                      }} />
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
                             {/* Stadium logos */}
                             {!isDestination && abbrs.length > 0 && (() => {
                               const allStopIds: string[] = trip.trip_stops
@@ -533,26 +496,33 @@ export default function TripsPage() {
                               return (
                                 <div style={{ marginBottom: 10 }}>
                                   <div style={{ marginBottom: totalStops > 0 ? 8 : 0 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                      {(() => {
-                                        const stadiumStops = trip.trip_stops.filter((s: any) => s.stop_type === 'stadium')
-                                        const eventStops = trip.trip_stops.filter((s: any) =>
-                                          s.stop_type === 'destination' && (s.experience_type === 'game' || s.experience_type === 'festival')
-                                        )
-                                        const experienceStops = trip.trip_stops.filter((s: any) =>
-                                          s.stop_type === 'destination' && s.experience_type !== 'game' && s.experience_type !== 'festival'
-                                        )
-                                        const badges = [
-                                          stadiumStops.length > 0 ? { emoji: '⚾', count: stadiumStops.length } : null,
-                                          experienceStops.length > 0 ? { emoji: '🏛️', count: experienceStops.length } : null,
-                                          eventStops.length > 0 ? { emoji: '🎟️', count: eventStops.length } : null,
-                                        ].filter(Boolean)
-                                        return badges.map((b, i) => (
-                                          <span key={i} style={{ fontSize: 13, color: '#8B949E', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                                            {b!.emoji} {b!.count}
-                                          </span>
-                                        ))
-                                      })()}
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                        {(() => {
+                                          const stadiumStops = trip.trip_stops.filter((s: any) => s.stop_type === 'stadium')
+                                          const eventStops = trip.trip_stops.filter((s: any) =>
+                                            s.stop_type === 'destination' && (s.experience_type === 'game' || s.experience_type === 'festival')
+                                          )
+                                          const experienceStops = trip.trip_stops.filter((s: any) =>
+                                            s.stop_type === 'destination' && s.experience_type !== 'game' && s.experience_type !== 'festival'
+                                          )
+                                          const badges = [
+                                            stadiumStops.length > 0 ? { emoji: '⚾', count: stadiumStops.length } : null,
+                                            experienceStops.length > 0 ? { emoji: '🏛️', count: experienceStops.length } : null,
+                                            eventStops.length > 0 ? { emoji: '🎟️', count: eventStops.length } : null,
+                                          ].filter(Boolean)
+                                          return badges.map((b, i) => (
+                                            <span key={i} style={{ fontSize: 13, color: '#8B949E', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                                              {b!.emoji} {b!.count}
+                                            </span>
+                                          ))
+                                        })()}
+                                      </div>
+                                      {(est > 0 || hasActual) && (
+                                        <span style={{ fontSize: 13, fontWeight: 600, flexShrink: 0, color: hasActual ? (overBudget ? '#F85149' : '#3FB950') : '#8B949E' }}>
+                                          {hasActual ? formatCurrency(actual) : `${formatCurrency(est)} est`}
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
                                   {totalStops > 0 && (
