@@ -11,6 +11,7 @@ import TeamLogo from '@/components/TeamLogo'
 import MiLBLogo from '@/components/MiLBLogo'
 import type { BaseballLifeCategory } from '@/types'
 import { getUserTimezone } from '@/lib/user-timezone'
+import PostmarkStamp from '@/components/PostmarkStamp'
 
 // Large form only ever shown behind a click — load it on demand instead
 // of shipping its code in this route's initial bundle.
@@ -152,6 +153,11 @@ function StadiumCard({ stadium, visited, visitDate, visitCount, nextGame, photo 
           {photo && <img src={photo} alt={stadium.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55 }} />}
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)' }} />
           {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#0B1117', fontWeight: 900 }}>✓</div>}
+          {visited && visitDate && (
+            <div style={{ position: 'absolute', bottom: 6, right: 6, zIndex: 2 }}>
+              <PostmarkStamp stadiumName={stadium.name} city={stadium.city} state={stadium.state} visitDate={visitDate} size={62} />
+            </div>
+          )}
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
             <TeamLogo abbreviation={stadium.abbreviation} size={80} />
           </div>
