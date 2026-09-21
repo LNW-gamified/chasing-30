@@ -1240,9 +1240,13 @@ export default function MilestoneGrid({
               <div
                 key={c.id}
                 onClick={() => {
+                  const linkedVisit = c.stadium_visit_id ? allVisits.find(v => v.id === c.stadium_visit_id) : null
+                  const linkedBle   = c.baseball_life_entry_id ? allBle.find(b => b.id === c.baseball_life_entry_id) : null
                   setViewingItem({
                     id: c.id, name: c.name, category: c.category, giveawayType: c.giveaway_type, giveawayQuantity: c.giveaway_quantity, photoUrl: c.photo_url,
                     signedBy: c.signed_by, acquiredFrom: c.acquired_from, rating: c.rating, price: c.price,
+                    locationName: linkedVisit ? allStadiums.find(s => s.id === linkedVisit.stadium_id)?.name : linkedBle?.venue,
+                    visitDate: linkedVisit?.visit_date ?? linkedBle?.visit_date ?? null,
                   })
                 }}
                 style={{ backgroundColor: '#161B22', borderRadius: 12, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}

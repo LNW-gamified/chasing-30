@@ -33,6 +33,8 @@ export interface EditorItem {
   baseballLifeEntryId?: string | null
   scopedStadiumId?: string | null
   scopedMinorLeagueStadiumId?: string | null
+  locationName?: string | null
+  visitDate?: string | null
 }
 
 interface Props {

@@ -47,9 +47,19 @@ export default function CollectibleLightbox({ item, onClose, onEdit }: Props) {
 
       <div onClick={e => e.stopPropagation()} style={{ textAlign: 'center', marginBottom: 20 }}>
         <div style={{ fontSize: 17, fontWeight: 800, color: '#E6EDF3', marginBottom: 4 }}>{item.name}</div>
-        <div style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize' }}>
+        <div style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, textTransform: 'capitalize', marginBottom: 8 }}>
           {item.category === 'giveaway' && item.giveawayType ? (GIVEAWAY_TYPE_LABELS[item.giveawayType] ?? item.category) : item.category}
         </div>
+        {(item.locationName || item.visitDate) && (
+          <div style={{ fontSize: 13, color: '#8B949E' }}>
+            {item.locationName}
+            {item.locationName && item.visitDate ? ' · ' : ''}
+            {item.visitDate && new Date(item.visitDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+          </div>
+        )}
+        {item.category === 'giveaway' && item.giveawayQuantity && (
+          <div style={{ fontSize: 13, color: '#8B949E', marginTop: 4 }}>{item.giveawayQuantity}</div>
+        )}
       </div>
 
       <button

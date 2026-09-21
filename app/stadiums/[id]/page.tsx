@@ -1036,6 +1036,8 @@ export default function StadiumDetailPage() {
                             acquiredFrom: c.acquired_from,
                             rating: c.rating,
                             price: c.price,
+                            locationName: stadium.name,
+                            visitDate: visitLookup(c.stadium_visit_id)?.visit_date ?? null,
                           })}
                           style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
                         >

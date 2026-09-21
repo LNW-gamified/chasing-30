@@ -1217,6 +1217,8 @@ export default function MinorLeagueDetailPage() {
                                               acquiredFrom: c.acquired_from,
                                               rating: c.rating,
                                               price: c.price,
+                                              locationName: stadium.name,
+                                              visitDate: visit.visit_date,
                                             })}
                                             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 8, backgroundColor: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.15)', cursor: 'pointer' }}
                                           >
@@ -1303,6 +1305,8 @@ export default function MinorLeagueDetailPage() {
                             acquiredFrom: c.acquired_from,
                             rating: c.rating,
                             price: c.price,
+                            locationName: stadium.name,
+                            visitDate: visits.find(vi => vi.id === c.baseball_life_entry_id)?.visit_date ?? null,
                           })}
                           style={{ backgroundColor: '#161B22', borderRadius: 10, border: '1px solid #30363D', overflow: 'hidden', cursor: 'pointer' }}
                         >
