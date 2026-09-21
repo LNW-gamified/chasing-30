@@ -21,7 +21,7 @@ export default function PostmarkStamp({ stadiumName, city, state, visitDate, siz
   const year = String(d.getFullYear()).slice(2)
   const dateLabel = `${month} ${day} '${year}`
 
-  const ink = 'rgba(230,237,243,0.85)'
+  const ink = '#3FB950'
   // Unique per-instance path ids so multiple stamps on one page (a whole
   // grid of cards) don't collide on the same <path> id.
   const uid = `${stadiumName}-${city}`.replace(/[^a-zA-Z0-9]/g, '')
@@ -29,12 +29,16 @@ export default function PostmarkStamp({ stadiumName, city, state, visitDate, siz
   return (
     <svg
       width={size} height={size} viewBox="0 0 100 100"
-      style={{ transform: 'rotate(-8deg)', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }}
+      style={{ transform: 'rotate(-8deg)', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}
     >
       <defs>
         <path id={`postmark-top-${uid}`} d="M 12,50 A 38,38 0 0 1 88,50" fill="none" />
         <path id={`postmark-bottom-${uid}`} d="M 14,58 A 38,38 0 0 0 86,58" fill="none" />
       </defs>
+
+      {/* Dark backing so the stamp reads clearly no matter what part of
+          the photo sits behind it */}
+      <circle cx="50" cy="50" r="47" fill="rgba(11,17,23,0.55)" />
 
       {/* Outer + inner ring, slightly uneven like a real stamped impression */}
       <circle cx="50" cy="50" r="46" fill="none" stroke={ink} strokeWidth="2" opacity={0.9} />

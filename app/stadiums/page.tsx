@@ -154,7 +154,7 @@ function StadiumCard({ stadium, visited, visitDate, visitCount, nextGame, photo 
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)' }} />
           {visited && <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, width: 18, height: 18, borderRadius: '50%', backgroundColor: '#3FB950', border: '2px solid rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#0B1117', fontWeight: 900 }}>✓</div>}
           {visited && visitDate && (
-            <div style={{ position: 'absolute', bottom: 6, right: 6, zIndex: 2 }}>
+            <div style={{ position: 'absolute', top: '50%', right: 10, transform: 'translateY(-50%)', zIndex: 2 }}>
               <PostmarkStamp stadiumName={stadium.name} city={stadium.city} state={stadium.state} visitDate={visitDate} size={62} />
             </div>
           )}
