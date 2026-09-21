@@ -731,7 +731,7 @@ export default function StadiumsPage() {
                 ) : (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {visitedList.map(stadium => (
-                      <StadiumCard key={stadium.id} stadium={stadium} visited visitDate={latestVisit[stadium.id]} visitCount={visitCountMap[stadium.id]} nextGame={nextGames[stadium.abbreviation]} photo={photos[stadium.abbreviation]} />
+                      <StadiumCard key={stadium.id} stadium={stadium} visited visitDate={latestVisit[stadium.id]} visitCount={visitCountMap[stadium.id]} nextGame={nextGames[stadium.id]} photo={photos[stadium.abbreviation]} />
                     ))}
                   </div>
                 )}
@@ -746,7 +746,7 @@ export default function StadiumsPage() {
                 ) : (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {unvisitedList.map(stadium => (
-                      <StadiumCard key={stadium.id} stadium={stadium} visited={false} nextGame={nextGames[stadium.abbreviation]} photo={photos[stadium.abbreviation]} />
+                      <StadiumCard key={stadium.id} stadium={stadium} visited={false} nextGame={nextGames[stadium.id]} photo={photos[stadium.abbreviation]} />
                     ))}
                   </div>
                 )}
