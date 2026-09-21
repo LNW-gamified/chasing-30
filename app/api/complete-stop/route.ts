@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     const { data: stop, error: stopError } = await supabase
       .from('trip_stops')
-      .select('*, stadium:stadiums(*)')
+      .select('*, stadium:stadiums(*), destination:destinations(name)')
       .eq('id', stopId)
       .single()
 
@@ -56,6 +56,36 @@ export async function POST(req: NextRequest) {
 
       // Destination stop → create destination_visit (mirrors complete-trip)
       if (stop.destination_id) {
+        // Destinations have TWO separate, older tracking paths that predate
+        // this route: destination_visits (this trip flow) and
+        // baseball_life_entries with category='pilgrimage' (the original,
+        // manual way of logging a pilgrimage visit, still in active use
+        // elsewhere in the app). There's no foreign key between them, only
+        // a free-text venue field on baseball_life_entries, so the match
+        // here is fuzzy (first two words of the destination's name), same
+        // approach already used elsewhere in the app for this exact
+        // comparison. Checking this first avoids creating a duplicate
+        // destination_visits row for a place that's already logged the
+        // other way, exactly what happened here with the Babe Ruth Museum
+        // before this check existed.
+        const destName = (stop as any).destination?.name as string | undefined
+        let bleId: string | null = null
+        if (destName) {
+          const nameLow = destName.toLowerCase()
+          const matchWords = nameLow.split(' ').slice(0, 2).join(' ')
+          const { data: bleMatches } = await supabase
+            .from('baseball_life_entries')
+            .select('id, venue, event_type')
+            .eq('category', 'pilgrimage')
+            .eq('visit_date', stop.game_date)
+          bleId = (bleMatches ?? []).find((b: any) =>
+            b.venue?.toLowerCase().includes(matchWords) || b.event_type?.toLowerCase().includes(matchWords)
+          )?.id ?? null
+        }
+
+        if (bleId) {
+          await supabase.from('trip_stops').update({ baseball_life_entry_id: bleId }).eq('id', stopId)
+        } else {
         // Match on destination + date, not trip_id, same reasoning as the
         // stadium_visits check below. Date stays in this match (unlike
         // stadium_visits it's not load-bearing for correctness there, but
@@ -85,10 +115,11 @@ export async function POST(req: NextRequest) {
         if (dvId) {
           await supabase.from('trip_stops').update({ destination_visit_id: dvId }).eq('id', stopId)
         }
+        }
 
         // Non-MLB destination (no stadium_id): done, nothing else to create
         if (!stop.stadium_id) {
-          return NextResponse.json({ success: true, createdDestinationVisit: !existingDV })
+          return NextResponse.json({ success: true, linkedExistingPilgrimage: !!bleId })
         }
       }
 
@@ -156,10 +187,10 @@ export async function POST(req: NextRequest) {
     // already created earlier, it skips anything that already exists.
     const { data: allStops } = await supabase
       .from('trip_stops')
-      .select('id, stadium_visit_id, destination_visit_id')
+      .select('id, stadium_visit_id, destination_visit_id, baseball_life_entry_id')
       .eq('trip_id', stop.trip_id)
 
-    const allDone = (allStops ?? []).every(s => s.stadium_visit_id || s.destination_visit_id)
+    const allDone = (allStops ?? []).every(s => s.stadium_visit_id || s.destination_visit_id || s.baseball_life_entry_id)
     let tripCompleted = false
 
     if (allDone && (allStops ?? []).length > 0) {
