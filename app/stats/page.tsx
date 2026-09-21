@@ -5,19 +5,23 @@ import { TrendingUp, MapPin, Trophy, Users, Star } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 import YearRecap from '@/components/YearRecap'
 
+type TripWithStopBudgets = Trip & {
+  trip_stops: { est_tickets: number; est_food: number; est_parking: number; est_hotel: number; est_local_transport: number; actual_tickets: number; actual_food: number; actual_parking: number; actual_hotel: number; actual_local_transport: number }[]
+}
+
 export default async function StatsPage() {
   const supabase = await createClient()
 
   const [{ data: stadiums }, { data: visits }, { data: trips }, { data: bleRows }] = await Promise.all([
     supabase.from('stadiums').select('*'),
     supabase.from('stadium_visits').select('*'),
-    supabase.from('trips').select('*'),
+    supabase.from('trips').select('*, trip_stops(est_tickets, est_food, est_parking, est_hotel, est_local_transport, actual_tickets, actual_food, actual_parking, actual_hotel, actual_local_transport)'),
     supabase.from('baseball_life_entries').select('id, category, is_game'),
   ])
 
   const allStadiums: Stadium[] = stadiums ?? []
   const allVisits: StadiumVisit[] = visits ?? []
-  const allTrips: Trip[] = trips ?? []
+  const allTrips = (trips ?? []) as TripWithStopBudgets[]
   const allBaseballLife = (bleRows ?? []) as { id: string; category: string; is_game: boolean }[]
 
   const mlbGames = allVisits.length
@@ -33,14 +37,17 @@ export default async function StatsPage() {
   const visitedIds = new Set(allVisits.map((v) => v.stadium_id))
   const visitedStadiums = allStadiums.filter((s) => visitedIds.has(s.id))
 
-  // Total spent across completed trips
+  // Total spent across completed trips — includes both trip-level actuals
+  // (Travel, and Hotel for single-destination trips with no stops) and
+  // per-stop actuals (Tickets/Food/Parking/Hotel/Local Transport for
+  // regular multi-stop stadium trips).
   const totalSpent = allTrips
     .filter((t) => t.status === 'completed')
-    .reduce(
-      (sum, t) =>
-        sum + t.actual_tickets + t.actual_travel + t.actual_hotel + t.actual_food + t.actual_parking,
-      0
-    )
+    .reduce((sum, t) => {
+      const stopsActual = (t.trip_stops ?? []).reduce((s, x) =>
+        s + x.actual_tickets + x.actual_food + x.actual_parking + x.actual_hotel + x.actual_local_transport, 0)
+      return sum + stopsActual + t.actual_travel + t.actual_hotel
+    }, 0)
 
   // Favorite division (most visited stadiums)
   const divisionCounts: Record<string, number> = {}

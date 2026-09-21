@@ -26,6 +26,16 @@ type StopMini = {
   stop_type: 'stadium' | 'destination' | null
   experience_type: string | null
   opponent_team_id: number | null
+  est_tickets: number
+  est_food: number
+  est_parking: number
+  est_hotel: number
+  est_local_transport: number
+  actual_tickets: number
+  actual_food: number
+  actual_parking: number
+  actual_hotel: number
+  actual_local_transport: number
   stadium: { id: string; abbreviation: string; name: string } | null
 }
 
@@ -72,7 +82,8 @@ function tripAbbrs(trip: TripWithExtras): string[] {
 }
 
 function tripStadiumCount(trip: TripWithExtras): number {
-  return trip.trip_stops.length || (trip.stadium ? 1 : 0)
+  if (trip.trip_stops.length > 0) return trip.trip_stops.filter(s => s.stop_type === 'stadium').length
+  return trip.stadium ? 1 : 0
 }
 
 function tripDays(trip: TripWithExtras): number | null {
@@ -145,7 +156,7 @@ export default function TripsPage() {
     const supabase = createClient()
     const [{ data: t }, { data: s }, { data: v }, { data: dv }] = await Promise.all([
       supabase.from('trips')
-        .select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, is_mlb_event), trip_stops(id, stadium_id, destination_id, stop_type, experience_type, opponent_team_id, sort_order, stadium:stadiums(id, abbreviation, name))')
+        .select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, is_mlb_event), trip_stops(id, stadium_id, destination_id, stop_type, experience_type, opponent_team_id, sort_order, est_tickets, est_food, est_parking, est_hotel, est_local_transport, actual_tickets, actual_food, actual_parking, actual_hotel, actual_local_transport, stadium:stadiums(id, abbreviation, name))')
         .order('start_date', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false })
         .order('sort_order', { referencedTable: 'trip_stops', ascending: true }),
@@ -337,8 +348,10 @@ export default function TripsPage() {
                       const dateRange  = tripDateRange(trip)
                       const difficulty = isDestination ? null : computeDifficulty(trip)
                       const sp         = statusPill(trip.status)
-                      const est    = trip.est_tickets + trip.est_travel + trip.est_hotel + trip.est_food + trip.est_parking
-                      const actual = trip.actual_tickets + trip.actual_travel + trip.actual_hotel + trip.actual_food + trip.actual_parking
+                      const stopsEst    = trip.trip_stops.reduce((sum, s) => sum + s.est_tickets + s.est_food + s.est_parking + s.est_hotel + s.est_local_transport, 0)
+                      const stopsActual = trip.trip_stops.reduce((sum, s) => sum + s.actual_tickets + s.actual_food + s.actual_parking + s.actual_hotel + s.actual_local_transport, 0)
+                      const est    = stopsEst + trip.est_travel + trip.est_hotel
+                      const actual = stopsActual + trip.actual_travel + trip.actual_hotel
                       const hasActual  = actual > 0
                       const pct        = est > 0 && hasActual ? Math.min((actual / est) * 100, 100) : 0
                       const overBudget = hasActual && actual > est

@@ -484,8 +484,14 @@ export default function TripDetailPage() {
 
   const stopEstTotal  = stops.reduce((sum, s) => sum + s.est_tickets + s.est_food + s.est_parking + s.est_hotel + s.est_local_transport, 0)
   const stopActTotal  = stops.reduce((sum, s) => sum + s.actual_tickets + s.actual_food + s.actual_parking + s.actual_hotel + s.actual_local_transport, 0)
-  const tripEst       = trip.est_travel
-  const tripActual    = trip.actual_travel
+  // trip.est_hotel/actual_hotel are only ever non-zero for destination-type
+  // trips (single-location pilgrimage trips with no trip_stops at all, so
+  // there's no "per stop" for hotel to live on, trip-level is the correct
+  // and only place for it). For regular multi-stop stadium trips these are
+  // always 0 now, hotel there lives on each stop instead, so including
+  // them here is harmless for that case and necessary for this one.
+  const tripEst       = trip.est_travel + trip.est_hotel
+  const tripActual    = trip.actual_travel + trip.actual_hotel
   const estTotal      = stopEstTotal + tripEst
   const actualTotal   = stopActTotal + tripActual
   const overBudget    = actualTotal > estTotal && actualTotal > 0
@@ -871,7 +877,7 @@ export default function TripDetailPage() {
                     Stadiums
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>
-                    {stops.length}
+                    {stops.filter(s => s.stop_type === 'stadium').length}
                   </div>
                 </div>
               )}
@@ -1450,7 +1456,7 @@ export default function TripDetailPage() {
                       { label: 'Tickets',         Icon: Ticket,       est: stops.reduce((s, x) => s + x.est_tickets, 0),         actual: stops.reduce((s, x) => s + x.actual_tickets, 0) },
                       { label: 'Food',            Icon: Utensils,     est: stops.reduce((s, x) => s + x.est_food, 0),            actual: stops.reduce((s, x) => s + x.actual_food, 0) },
                       { label: 'Parking',         Icon: Car,          est: stops.reduce((s, x) => s + x.est_parking, 0),         actual: stops.reduce((s, x) => s + x.actual_parking, 0) },
-                      { label: 'Hotel',           Icon: BedDouble,    est: stops.reduce((s, x) => s + x.est_hotel, 0),           actual: stops.reduce((s, x) => s + x.actual_hotel, 0) },
+                      { label: 'Hotel',           Icon: BedDouble,    est: stops.reduce((s, x) => s + x.est_hotel, 0) + trip.est_hotel,           actual: stops.reduce((s, x) => s + x.actual_hotel, 0) + trip.actual_hotel },
                       { label: 'Local Transport', Icon: CarTaxiFront, est: stops.reduce((s, x) => s + x.est_local_transport, 0), actual: stops.reduce((s, x) => s + x.actual_local_transport, 0) },
                       { label: 'Travel',          Icon: Plane,        est: trip.est_travel,                                     actual: trip.actual_travel },
                     ] as const).map(({ label, Icon, est, actual }) => {
