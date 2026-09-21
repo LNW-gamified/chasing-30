@@ -641,7 +641,23 @@ export default function StadiumsPage() {
         {/* ── Content ──────────────────────────────────────────── */}
         <div style={{ maxWidth: 960, margin: '0 auto', padding: '20px 16px' }}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '56px 16px', color: '#8B949E', fontSize: 15 }}>Loading…</div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {[0, 1, 2, 3, 4, 5].map(i => (
+                <div key={i} style={{ backgroundColor: '#161B22', borderRadius: 16, border: '1px solid #30363D', overflow: 'hidden' }}>
+                  <div style={{ height: 100, backgroundColor: '#1C2430', position: 'relative', overflow: 'hidden' }}>
+                    <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+                  </div>
+                  <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ height: 14, width: '70%', borderRadius: 6, backgroundColor: '#1C2430', position: 'relative', overflow: 'hidden' }}>
+                      <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+                    </div>
+                    <div style={{ height: 11, width: '45%', borderRadius: 6, backgroundColor: '#1C2430', position: 'relative', overflow: 'hidden' }}>
+                      <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
           ) : activeTab === 'events' ? (
             /* ── Events tab ──────────────────────────────────── */

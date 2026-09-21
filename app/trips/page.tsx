@@ -290,8 +290,25 @@ export default function TripsPage() {
 
           {/* ── Body ───────────────────────────────────────────────── */}
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '48px 0', color: '#8B949E', fontSize: 14 }}>
-              Loading trips…
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+              {[0, 1, 2].map(i => (
+                <div key={i} style={{ backgroundColor: '#161B22', borderRadius: 16, border: '1px solid #30363D', overflow: 'hidden' }}>
+                  <div style={{ height: 140, backgroundColor: '#1C2430', position: 'relative', overflow: 'hidden' }}>
+                    <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+                  </div>
+                  <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ height: 18, width: '60%', borderRadius: 6, backgroundColor: '#1C2430', position: 'relative', overflow: 'hidden' }}>
+                      <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+                    </div>
+                    <div style={{ height: 13, width: '40%', borderRadius: 6, backgroundColor: '#1C2430', position: 'relative', overflow: 'hidden' }}>
+                      <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+                    </div>
+                    <div style={{ height: 4, width: '100%', borderRadius: 4, backgroundColor: '#1C2430', marginTop: 8, position: 'relative', overflow: 'hidden' }}>
+                      <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : trips.length === 0 ? (
             <div style={{

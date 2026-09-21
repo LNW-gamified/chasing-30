@@ -201,6 +201,18 @@ async function FarmSystemSection({ favAbbr, tz }: { favAbbr: string; tz: string 
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+function SectionSkeleton({ height }: { height: number }) {
+  return (
+    <div style={{
+      height, borderRadius: 14, backgroundColor: '#161B22',
+      border: '1px solid #30363D', position: 'relative', overflow: 'hidden',
+      marginBottom: 20,
+    }}>
+      <div className="skeleton-shimmer" style={{ position: 'absolute', inset: 0 }} />
+    </div>
+  )
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const cookieStore = await cookies()
@@ -527,14 +539,14 @@ export default async function DashboardPage() {
 
         {/* ── Playoff Picture (streamed — doesn't block the rest of the page) ── */}
         {favStadium && (
-          <Suspense fallback={null}>
+          <Suspense fallback={<SectionSkeleton height={220} />}>
             <PlayoffPictureSection favStadium={favStadium} />
           </Suspense>
         )}
 
         {/* ── Farm System Today (streamed — doesn't block the rest of the page) ── */}
         {favAbbr && (
-          <Suspense fallback={null}>
+          <Suspense fallback={<SectionSkeleton height={140} />}>
             <FarmSystemSection favAbbr={favAbbr} tz={tz} />
           </Suspense>
         )}
