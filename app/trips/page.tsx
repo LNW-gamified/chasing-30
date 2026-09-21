@@ -485,6 +485,43 @@ export default function TripsPage() {
                               </div>
                             )}
 
+                            {/* Budget row */}
+                            {(est > 0 || hasActual) && (
+                              <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'flex-end' }}>
+                                <div style={{ width: 180 }}>
+                                  <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 5, textAlign: 'right' }}>
+                                    {est > 0 ? (
+                                      <>
+                                        Budget:&nbsp;
+                                        <span style={{ color: '#E6EDF3', fontWeight: 600 }}>{formatCurrency(est)} est</span>
+                                        {hasActual && (
+                                          <>
+                                            &nbsp;·&nbsp;
+                                            <span style={{ color: overBudget ? '#F85149' : '#3FB950', fontWeight: 600 }}>
+                                              {formatCurrency(actual)} actual
+                                            </span>
+                                          </>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <>
+                                        Spent:&nbsp;
+                                        <span style={{ color: '#E6EDF3', fontWeight: 600 }}>{formatCurrency(actual)}</span>
+                                      </>
+                                    )}
+                                  </div>
+                                  {est > 0 && hasActual && (
+                                    <div style={{ height: 4, backgroundColor: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
+                                      <div style={{
+                                        height: '100%', borderRadius: 4, width: `${pct}%`,
+                                        backgroundColor: overBudget ? '#F85149' : '#3FB950',
+                                      }} />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
                             {/* Stadium logos */}
                             {!isDestination && abbrs.length > 0 && (() => {
                               const allStopIds: string[] = trip.trip_stops
@@ -569,43 +606,6 @@ export default function TripsPage() {
                                 </div>
                               )
                             })()}
-
-                            {/* Budget row */}
-                            {(est > 0 || hasActual) && (
-                              <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'flex-end' }}>
-                                <div style={{ width: 180 }}>
-                                  <div style={{ fontSize: 12, color: '#8B949E', marginBottom: 5, textAlign: 'right' }}>
-                                    {est > 0 ? (
-                                      <>
-                                        Budget:&nbsp;
-                                        <span style={{ color: '#E6EDF3', fontWeight: 600 }}>{formatCurrency(est)} est</span>
-                                        {hasActual && (
-                                          <>
-                                            &nbsp;·&nbsp;
-                                            <span style={{ color: overBudget ? '#F85149' : '#3FB950', fontWeight: 600 }}>
-                                              {formatCurrency(actual)} actual
-                                            </span>
-                                          </>
-                                        )}
-                                      </>
-                                    ) : (
-                                      <>
-                                        Spent:&nbsp;
-                                        <span style={{ color: '#E6EDF3', fontWeight: 600 }}>{formatCurrency(actual)}</span>
-                                      </>
-                                    )}
-                                  </div>
-                                  {est > 0 && hasActual && (
-                                    <div style={{ height: 4, backgroundColor: '#30363D', borderRadius: 4, overflow: 'hidden' }}>
-                                      <div style={{
-                                        height: '100%', borderRadius: 4, width: `${pct}%`,
-                                        backgroundColor: overBudget ? '#F85149' : '#3FB950',
-                                      }} />
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
 
                             {/* Bottom row */}
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
