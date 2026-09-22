@@ -9,7 +9,7 @@ import { getTeamLogoUrlById, getTeamLogoUrl, getTeamAbbrById, LIGHT_BG_LOGO_TEAM
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip, TripStop, StopChecklistItem } from '@/types'
 import Link from 'next/link'
-import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink, MoreHorizontal, FileText, Ticket, Utensils, Car, CarTaxiFront, Plane, BedDouble, Camera, Loader2 } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink, MoreHorizontal, FileText, Ticket, Utensils, Car, CarTaxiFront, Plane, BedDouble, Camera, Loader2, Building2, Landmark, Gauge, Route } from 'lucide-react'
 import StopChecklist from '@/components/StopChecklist'
 import { DESTINATION_BY_SLUG, destinationLocation, EXPERIENCE_TYPES } from '@/lib/destinations'
 import { fetchForecastWeather, fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
@@ -51,6 +51,7 @@ export default function TripDetailPage() {
   const [totalDrivingMiles, setTotalDrivingMiles] = useState<number | null>(null)
   const [segmentMiles, setSegmentMiles]           = useState<number[]>([])
   const [loadingMiles, setLoadingMiles]           = useState(false)
+  const [stopPhotos, setStopPhotos] = useState<Record<string, string>>({})
   const [promoUploading, setPromoUploading]       = useState<Record<string, boolean>>({})
 
   async function load() {
@@ -79,6 +80,21 @@ export default function TripDetailPage() {
     }
     setLoading(false)
 
+    const stopAbbrs = Array.from(new Set(
+      loadedStops.map(s => (s.stadium as Stadium | null)?.abbreviation).filter((a): a is string => !!a)
+    ))
+    if (stopAbbrs.length > 0) {
+      fetch(`/api/stadium-photo?abbrs=${encodeURIComponent(stopAbbrs.join(','))}`)
+        .then(r => r.json())
+        .then((photoMap: Record<string, string | null>) => {
+          const clean: Record<string, string> = {}
+          for (const [abbr, photo] of Object.entries(photoMap)) {
+            if (photo) clean[abbr] = photo
+          }
+          setStopPhotos(clean)
+        })
+    }
+
     // Repair sort_order if it's drifted from array position (e.g. legacy
     // duplicate values) — skip the write round trip on the common case
     // where it's already correct, so a normal visit doesn't do N writes.
@@ -91,6 +107,21 @@ export default function TripDetailPage() {
 
     await calculateDrivingDistance(loadedStops)
     refreshStaleGameTimes(loadedStops)
+
+    const abbrs = Array.from(new Set(
+      loadedStops.map(s => (s.stadium as Stadium | null)?.abbreviation).filter((a): a is string => !!a)
+    )).join(',')
+    if (abbrs) {
+      fetch(`/api/stadium-photo?abbrs=${encodeURIComponent(abbrs)}`)
+        .then(r => r.json())
+        .then((photoMap: Record<string, string | null>) => {
+          const clean: Record<string, string> = {}
+          for (const [abbr, photo] of Object.entries(photoMap)) {
+            if (photo) clean[abbr] = photo
+          }
+          setStopPhotos(clean)
+        })
+    }
   }
 
   // Lazily re-checks the real first-pitch time for any upcoming stop that
@@ -883,8 +914,8 @@ export default function TripDetailPage() {
             }}>
               {!allBudgetZero && (
                 <div style={{ flexShrink: 0 }}>
-                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
-                    Est. Total
+                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <DollarSign size={12} /> Est. Total
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: '#F5A623' }}>
                     {formatCurrency(estTotal)}
@@ -893,8 +924,8 @@ export default function TripDetailPage() {
               )}
               {!allBudgetZero && actualTotal > 0 && (
                 <div style={{ flexShrink: 0 }}>
-                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
-                    Actual
+                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <DollarSign size={12} /> Actual
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: overBudget ? '#F85149' : '#3FB950' }}>
                     {formatCurrency(actualTotal)}
@@ -903,8 +934,8 @@ export default function TripDetailPage() {
               )}
               {stops.length > 0 && (
                 <div style={{ flexShrink: 0 }}>
-                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
-                    Stadiums
+                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Building2 size={12} /> Stadiums
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>
                     {stops.filter(s => s.stop_type === 'stadium').length}
@@ -913,8 +944,8 @@ export default function TripDetailPage() {
               )}
               {stops.some(s => s.stop_type === 'destination') && (
                 <div style={{ flexShrink: 0 }}>
-                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
-                    Pilgrimages
+                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Landmark size={12} /> Pilgrimages
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>
                     {stops.filter(s => s.stop_type === 'destination').length}
@@ -923,8 +954,8 @@ export default function TripDetailPage() {
               )}
               {trip.start_date && trip.end_date && (
                 <div style={{ flexShrink: 0 }}>
-                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
-                    Days
+                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Calendar size={12} /> Days
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>
                     {Math.ceil((new Date(trip.end_date + 'T12:00:00').getTime() - new Date(trip.start_date + 'T12:00:00').getTime()) / 86400000) + 1}
@@ -940,8 +971,8 @@ export default function TripDetailPage() {
                 const diffColor = difficulty === 'Road Warrior' ? '#F85149' : difficulty === 'On the Move' ? '#F5A623' : '#3FB950'
                 return (
                   <div style={{ flexShrink: 0 }}>
-                    <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
-                      Pace
+                    <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Gauge size={12} /> Pace
                     </div>
                     <div style={{ fontSize: 16, fontWeight: 900, color: diffColor }}>
                       {difficulty}
@@ -951,8 +982,8 @@ export default function TripDetailPage() {
               })()}
               {(loadingMiles || totalDrivingMiles !== null) && (
                 <div style={{ flexShrink: 0 }}>
-                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
-                    Drive
+                  <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Route size={12} /> Drive
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>
                     {loadingMiles ? '…' : `${totalDrivingMiles!.toLocaleString()}`}
@@ -975,7 +1006,10 @@ export default function TripDetailPage() {
                 Itinerary
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, position: 'relative' }}>
+                {sortedStops.length > 1 && (
+                  <div style={{ position: 'absolute', top: 0, bottom: 0, left: 34, width: 2, backgroundColor: '#30363D' }} />
+                )}
                 {sortedStops.map((stop, i) => {
                   const isDestinationStop = stop.stop_type === 'destination' || (!stop.stadium_id && !!stop.destination_id)
                   const stadium     = stop.stadium as Stadium | undefined
@@ -991,6 +1025,8 @@ export default function TripDetailPage() {
                     const heroColor = destInfo?.heroColor ?? ['#1A2030', '#0B1117']
                     const accentColor = heroColor[1] ?? '#1F6FEB'
 
+                    const destStopPhoto = stop.stadium_id && stadium ? stopPhotos[stadium.abbreviation] : undefined
+
                     const destCard = (
                       <div key={stop.id} style={{
                         backgroundColor: '#161B22', borderRadius: 16, overflow: 'hidden',
@@ -998,7 +1034,13 @@ export default function TripDetailPage() {
                         borderBottom: '1px solid #30363D',
                         borderLeft: `4px solid ${accentColor}`,
                       }}>
-                        <div style={{ padding: '20px 20px 16px' }}>
+                        <div style={{
+                          padding: '20px 20px 16px',
+                          backgroundImage: destStopPhoto
+                            ? `linear-gradient(135deg, ${accentColor}3D 0%, rgba(22,27,34,0.94) 65%), url(${destStopPhoto})`
+                            : `linear-gradient(135deg, ${heroColor[0]}55 0%, transparent 60%)`,
+                          backgroundSize: 'cover', backgroundPosition: 'center',
+                        }}>
                           {/* Header row */}
                           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -1152,6 +1194,8 @@ export default function TripDetailPage() {
                     ticketParts.push(`Seat${stop.ticket_seats.length > 1 ? 's' : ''} ${stop.ticket_seats.join(', ')}`)
                   }
 
+                  const stopPhoto = stopPhotos[stadium?.abbreviation ?? '']
+
                   const card = (
                     <div key={stop.id} style={{
                       backgroundColor: '#161B22', borderRadius: 16,
@@ -1163,7 +1207,13 @@ export default function TripDetailPage() {
                     }}>
 
                       {/* Card body */}
-                      <div style={{ padding: '18px 20px 14px' }}>
+                      <div style={{
+                        padding: '18px 20px 14px',
+                        backgroundImage: stopPhoto
+                          ? `linear-gradient(135deg, ${accentColor}3D 0%, rgba(22,27,34,0.94) 65%), url(${stopPhoto})`
+                          : `linear-gradient(135deg, ${accentColor}38 0%, transparent 65%)`,
+                        backgroundSize: 'cover', backgroundPosition: 'center',
+                      }}>
 
                         {/* Stop # badge */}
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
