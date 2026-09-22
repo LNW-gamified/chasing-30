@@ -901,6 +901,24 @@ export default function TripDetailPage() {
                   </div>
                 </div>
               )}
+              {(() => {
+                const stadiumStopCount = stops.filter(s => s.stop_type === 'stadium').length
+                if (stadiumStopCount < 2 || !trip.start_date || !trip.end_date) return null
+                const days = Math.ceil((new Date(trip.end_date + 'T12:00:00').getTime() - new Date(trip.start_date + 'T12:00:00').getTime()) / 86400000) + 1
+                const ratio = days / stadiumStopCount
+                const difficulty = ratio <= 1.5 ? 'Road Warrior' : ratio <= 3.5 ? 'On the Move' : 'Leisure Tour'
+                const diffColor = difficulty === 'Road Warrior' ? '#F85149' : difficulty === 'On the Move' ? '#F5A623' : '#3FB950'
+                return (
+                  <div style={{ flexShrink: 0 }}>
+                    <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
+                      Pace
+                    </div>
+                    <div style={{ fontSize: 16, fontWeight: 900, color: diffColor }}>
+                      {difficulty}
+                    </div>
+                  </div>
+                )
+              })()}
               {(loadingMiles || totalDrivingMiles !== null) && (
                 <div style={{ flexShrink: 0 }}>
                   <div style={{ fontSize: 13, color: '#8B949E', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>

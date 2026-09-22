@@ -152,8 +152,7 @@ function StadiumCard({ stadium, visited, visitDate, visitCount, nextGame, photo 
         </div>
         <div style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', flex: 1, gap: 2 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{stadium.team}</div>
-          <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{stadium.name}</div>
-          <div style={{ fontSize: 13, color: '#8B949E' }}>{stadium.city}</div>
+          <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{stadium.name}, {stadium.city}</div>
           <div style={{ flex: 1, minHeight: 8 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
             <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -164,10 +163,7 @@ function StadiumCard({ stadium, visited, visitDate, visitCount, nextGame, photo 
                   {visitDate && <span style={{ fontSize: 13, color: '#8B949E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{fmtDate(visitDate)}</span>}
                 </>
               ) : (
-                <>
-                  <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid rgba(139,148,158,0.25)', padding: '2px 8px', borderRadius: 999 }}>On the List</span>
-                  {nextGame && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 13, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}><CalendarDays size={11} color="#C9D1D9" style={{ flexShrink: 0 }}/>{nextGame.date} vs {nextGame.opponentName}</span>}
-                </>
+                <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid rgba(139,148,158,0.25)', padding: '2px 8px', borderRadius: 999 }}>On the List</span>
               )}
             </div>
             <ChevronRight size={13} color="#8B949E" style={{ flexShrink: 0 }} />

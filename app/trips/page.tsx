@@ -118,23 +118,6 @@ function tripDateRange(trip: TripWithExtras): string | null {
   return null
 }
 
-function computeDifficulty(trip: TripWithExtras): string | null {
-  const stops = tripStadiumCount(trip)
-  if (stops < 2) return null
-  const days = tripDays(trip)
-  if (!days) return null
-  const ratio = days / stops
-  if (ratio <= 1.5) return 'Road Warrior'
-  if (ratio <= 3.5) return 'On the Move'
-  return 'Leisure Tour'
-}
-
-function difficultyStyle(d: string): { bg: string; color: string } {
-  if (d === 'Road Warrior') return { bg: 'rgba(248,81,73,0.12)',   color: '#F85149' }
-  if (d === 'On the Move')  return { bg: 'rgba(245,166,35,0.12)',  color: '#F5A623' }
-  return                          { bg: 'rgba(63,185,80,0.12)',    color: '#3FB950' }
-}
-
 function statusPill(status: Trip['status']) {
   if (status === 'completed') return { bg: 'rgba(63,185,80,0.12)',    color: '#3FB950', label: '✓ Completed' }
   if (status === 'cancelled') return { bg: 'rgba(139,148,158,0.12)', color: '#8B949E', label: 'Cancelled' }
@@ -360,7 +343,6 @@ export default function TripsPage() {
                       const stadCount  = tripStadiumCount(trip)
                       const days       = tripDays(trip)
                       const dateRange  = tripDateRange(trip)
-                      const difficulty = isDestination ? null : computeDifficulty(trip)
                       const sp         = statusPill(trip.status)
                       const stopsEst    = trip.trip_stops.reduce((sum, s) => sum + s.est_tickets + s.est_food + s.est_parking + s.est_hotel + s.est_local_transport, 0)
                       const stopsActual = trip.trip_stops.reduce((sum, s) => sum + s.actual_tickets + s.actual_food + s.actual_parking + s.actual_hotel + s.actual_local_transport, 0)
@@ -473,6 +455,21 @@ export default function TripsPage() {
                                   textShadow: '0 1px 4px rgba(0,0,0,0.4)',
                                 }}>
                                   {dateRange}{days ? ` (${days} day${days !== 1 ? 's' : ''})` : ''}
+                                  {(() => {
+                                    const stadiumStops = trip.trip_stops.filter((s: any) => s.stop_type === 'stadium')
+                                    const experienceStops = trip.trip_stops.filter((s: any) =>
+                                      s.stop_type === 'destination' && s.experience_type !== 'game' && s.experience_type !== 'festival'
+                                    )
+                                    const eventStops = trip.trip_stops.filter((s: any) =>
+                                      s.stop_type === 'destination' && (s.experience_type === 'game' || s.experience_type === 'festival')
+                                    )
+                                    const parts = [
+                                      stadiumStops.length > 0 ? `${stadiumStops.length} stadium${stadiumStops.length !== 1 ? 's' : ''}` : null,
+                                      experienceStops.length > 0 ? `${experienceStops.length} pilgrimage${experienceStops.length !== 1 ? 's' : ''}` : null,
+                                      eventStops.length > 0 ? `${eventStops.length} event${eventStops.length !== 1 ? 's' : ''}` : null,
+                                    ].filter(Boolean)
+                                    return parts.length > 0 ? ` · ${parts.join(', ')}` : ''
+                                  })()}
                                 </div>
                               )}
                             </div>
@@ -513,35 +510,14 @@ export default function TripsPage() {
                               return (
                                 <div style={{ marginBottom: 10 }}>
                                   <div style={{ marginBottom: totalStops > 0 ? 8 : 0 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                        {(() => {
-                                          const stadiumStops = trip.trip_stops.filter((s: any) => s.stop_type === 'stadium')
-                                          const eventStops = trip.trip_stops.filter((s: any) =>
-                                            s.stop_type === 'destination' && (s.experience_type === 'game' || s.experience_type === 'festival')
-                                          )
-                                          const experienceStops = trip.trip_stops.filter((s: any) =>
-                                            s.stop_type === 'destination' && s.experience_type !== 'game' && s.experience_type !== 'festival'
-                                          )
-                                          const badges = [
-                                            stadiumStops.length > 0 ? { emoji: '⚾', count: stadiumStops.length } : null,
-                                            experienceStops.length > 0 ? { emoji: '🏛️', count: experienceStops.length } : null,
-                                            eventStops.length > 0 ? { emoji: '🎟️', count: eventStops.length } : null,
-                                          ].filter(Boolean)
-                                          return badges.map((b, i) => (
-                                            <span key={i} style={{ fontSize: 13, color: '#8B949E', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                                              {b!.emoji} {b!.count}
-                                            </span>
-                                          ))
-                                        })()}
-                                      </div>
-                                      {(est > 0 || hasActual) && (
+                                    {(est > 0 || hasActual) && (
+                                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                                         <span style={{ fontSize: 13, fontWeight: 600, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 3, color: hasActual && est > 0 ? (overBudget ? '#F85149' : '#3FB950') : '#8B949E' }}>
                                           {hasActual && est > 0 && (overBudget ? '▲' : '▼')}
                                           {hasActual ? formatCurrency(actual) : `${formatCurrency(est)} est`}
                                         </span>
-                                      )}
-                                    </div>
+                                      </div>
+                                    )}
                                   </div>
                                   {totalStops > 0 && !(trip.status === 'completed' && allVisited) && (
                                     <div>
@@ -598,14 +574,6 @@ export default function TripsPage() {
                             {/* Bottom row */}
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                                {difficulty && (
-                                  <span style={{
-                                    padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-                                    ...difficultyStyle(difficulty),
-                                  }}>
-                                    {difficulty}
-                                  </span>
-                                )}
                                 {(trip as any).experience_type && isDestination && (
                                   <span style={{
                                     padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600,
