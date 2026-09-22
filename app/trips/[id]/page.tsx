@@ -620,10 +620,29 @@ export default function TripDetailPage() {
 
         {/* ── HERO BANNER ────────────────────────────────────────── */}
         <div style={{ position: 'relative', height: 230, overflow: 'hidden', background: heroGradient }}>
+          {/* Photo collage — real stop photos already fetched for this trip, blurred and dimmed as texture behind the gradient */}
+          {heroAbbrs.filter(a => stopPhotos[a]).length > 0 && (
+            <div style={{
+              position: 'absolute', inset: 0,
+              display: 'grid', gridTemplateColumns: `repeat(${Math.min(heroAbbrs.length, 6)}, 1fr)`,
+              filter: 'blur(2px) brightness(0.6) saturate(1.1)',
+            }}>
+              {heroAbbrs.slice(0, 6).map((abbr, idx) => (
+                <div key={idx} style={{
+                  backgroundImage: stopPhotos[abbr] ? `url(${stopPhotos[abbr]})` : 'none',
+                  backgroundColor: stopPhotos[abbr] ? undefined : 'rgba(255,255,255,0.04)',
+                  backgroundSize: 'cover', backgroundPosition: 'center',
+                }} />
+              ))}
+            </div>
+          )}
+
           {/* Layered overlay for depth */}
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.6) 100%)',
+            background: heroAbbrs.filter(a => stopPhotos[a]).length > 0
+              ? `linear-gradient(to bottom, ${heroGradient.match(/#[0-9A-Fa-f]{6}/)?.[0] ?? '#0B1117'}66 0%, rgba(11,17,23,0.82) 100%)`
+              : 'linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.6) 100%)',
           }} />
 
           {/* Back button */}
@@ -737,7 +756,7 @@ export default function TripDetailPage() {
                   fontSize: 13, color: 'rgba(255,255,255,0.75)', fontWeight: 500,
                 }}>
                   <MapPin size={13} />
-                  {stops.length} stadium{stops.length !== 1 ? 's' : ''}
+                  {stops.filter(s => s.stop_type === 'stadium').length} stadium{stops.filter(s => s.stop_type === 'stadium').length !== 1 ? 's' : ''}
                 </span>
               )}
             </div>
@@ -1006,10 +1025,7 @@ export default function TripDetailPage() {
                 Itinerary
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, position: 'relative' }}>
-                {sortedStops.length > 1 && (
-                  <div style={{ position: 'absolute', top: 0, bottom: 0, left: 34, width: 2, backgroundColor: '#30363D' }} />
-                )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {sortedStops.map((stop, i) => {
                   const isDestinationStop = stop.stop_type === 'destination' || (!stop.stadium_id && !!stop.destination_id)
                   const stadium     = stop.stadium as Stadium | undefined
@@ -1034,93 +1050,95 @@ export default function TripDetailPage() {
                         borderBottom: '1px solid #30363D',
                         borderLeft: `4px solid ${accentColor}`,
                       }}>
-                        <div style={{
-                          padding: '20px 20px 16px',
-                          backgroundImage: destStopPhoto
-                            ? `linear-gradient(135deg, ${accentColor}3D 0%, rgba(22,27,34,0.94) 65%), url(${destStopPhoto})`
-                            : `linear-gradient(135deg, ${heroColor[0]}55 0%, transparent 60%)`,
-                          backgroundSize: 'cover', backgroundPosition: 'center',
-                        }}>
-                          {/* Header row */}
-                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                              <div style={{
-                                width: 28, height: 28, borderRadius: '50%',
-                                backgroundColor: 'rgba(31,111,235,0.15)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: 12, fontWeight: 800, color: '#1F6FEB', flexShrink: 0,
-                              }}>
-                                {i + 1}
-                              </div>
-                              {/* MLB event: show hosting team logo + small star overlay */}
-                              {stop.stadium_id && stadium ? (
-                                <div style={{ position: 'relative', flexShrink: 0 }}>
-                                  <TeamLogo abbreviation={stadium.abbreviation} size={44}
-                                    style={{ borderRadius: '50%', border: '2px solid rgba(245,166,35,0.4)', display: 'block' }} />
-                                  <span style={{
-                                    position: 'absolute', bottom: -2, right: -4,
-                                    fontSize: 14, lineHeight: 1,
-                                  }}>⭐</span>
-                                </div>
-                              ) : (
-                                <span style={{ fontSize: 36, lineHeight: 1 }}>{destInfo?.icon ?? '📍'}</span>
-                              )}
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              {!stop.game_date && (
-                                <div style={{ display: 'flex', gap: 4 }}>
-                                  <button
-                                    onClick={() => moveStop(stop.id, 'up')}
-                                    disabled={!canMoveStop(stop.id, 'up')}
-                                    style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: canMoveStop(stop.id, 'up') ? 'pointer' : 'default', color: canMoveStop(stop.id, 'up') ? '#8B949E' : '#30363D', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                  >↑</button>
-                                  <button
-                                    onClick={() => moveStop(stop.id, 'down')}
-                                    disabled={!canMoveStop(stop.id, 'down')}
-                                    style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: canMoveStop(stop.id, 'down') ? 'pointer' : 'default', color: canMoveStop(stop.id, 'down') ? '#8B949E' : '#30363D', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                  >↓</button>
-                                </div>
-                              )}
-                              {(dest as any)?.is_mlb_event && (
-                                <span style={{
-                                  fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 20,
-                                  color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)',
-                                  border: '1px solid rgba(245,166,35,0.35)',
-                                }}>⭐ MLB Event</span>
-                              )}
-                            </div>
-                          </div>
+                        <div className="trip-stop-body" style={{ display: 'flex', gap: 0 }}>
 
-                          <div style={{ fontWeight: 800, fontSize: 20, color: '#E6EDF3', lineHeight: 1.2, marginBottom: 2 }}>
-                            {dest?.name ?? destInfo?.name ?? 'Destination'}
-                          </div>
-                          <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 12 }}>
-                            {stop.stadium_id && stadium
-                              ? `${stadium.name} · ${stadium.city}, ${stadium.state}`
-                              : destInfo
-                                ? `${destInfo.city}${destInfo.state ? `, ${destInfo.state}` : ''}`
-                                : null}
-                          </div>
-
-                          {stop.game_date && (
-                            <div style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3', marginBottom: 8 }}>
-                              {new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', {
-                                weekday: 'long', month: 'long', day: 'numeric',
-                              })}
-                            </div>
-                          )}
-
-                          {expType && (
-                            <span style={{
-                              display: 'inline-flex', alignItems: 'center', gap: 5,
-                              fontSize: 12, fontWeight: 600,
-                              padding: '4px 12px', borderRadius: 20,
-                              backgroundColor: 'rgba(245,166,35,0.1)',
-                              color: '#F5A623', border: '1px solid rgba(245,166,35,0.25)',
+                          <div className="trip-stop-photo" style={{
+                            width: 130, flexShrink: 0, position: 'relative',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            backgroundImage: destStopPhoto
+                              ? `linear-gradient(180deg, rgba(13,17,23,0.15) 0%, rgba(13,17,23,0.55) 100%), url(${destStopPhoto})`
+                              : `linear-gradient(160deg, ${heroColor[0]} 0%, rgba(13,17,23,0.9) 100%)`,
+                            backgroundSize: 'cover', backgroundPosition: 'center',
+                          }}>
+                            <div style={{
+                              position: 'absolute', top: 10, left: 10,
+                              width: 26, height: 26, borderRadius: '50%',
+                              backgroundColor: 'rgba(13,17,23,0.75)', border: '1px solid rgba(255,255,255,0.2)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0,
                             }}>
-                              {expType.icon} {expType.label}
-                            </span>
-                          )}
+                              {i + 1}
+                            </div>
+                            {stop.stadium_id && stadium ? (
+                              <div style={{ position: 'relative', flexShrink: 0 }}>
+                                <TeamLogo abbreviation={stadium.abbreviation} size={44}
+                                  style={{ borderRadius: '50%', border: '2px solid rgba(245,166,35,0.4)', display: 'block' }} />
+                                <span style={{ position: 'absolute', bottom: -2, right: -4, fontSize: 14, lineHeight: 1 }}>⭐</span>
+                              </div>
+                            ) : (
+                              <span style={{ fontSize: 40, lineHeight: 1 }}>{destInfo?.icon ?? '📍'}</span>
+                            )}
+                          </div>
+
+                          <div style={{ flex: 1, minWidth: 0, padding: '14px 18px 14px' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 2 }}>
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ fontWeight: 800, fontSize: 18, color: '#E6EDF3', lineHeight: 1.2 }}>
+                                  {dest?.name ?? destInfo?.name ?? 'Destination'}
+                                </div>
+                                <div style={{ fontSize: 13, color: '#8B949E', marginTop: 1 }}>
+                                  {stop.stadium_id && stadium
+                                    ? `${stadium.name} · ${stadium.city}, ${stadium.state}`
+                                    : destInfo
+                                      ? `${destInfo.city}${destInfo.state ? `, ${destInfo.state}` : ''}`
+                                      : null}
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                                {!stop.game_date && (
+                                  <div style={{ display: 'flex', gap: 4 }}>
+                                    <button
+                                      onClick={() => moveStop(stop.id, 'up')}
+                                      disabled={!canMoveStop(stop.id, 'up')}
+                                      style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: canMoveStop(stop.id, 'up') ? 'pointer' : 'default', color: canMoveStop(stop.id, 'up') ? '#8B949E' : '#30363D', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    >↑</button>
+                                    <button
+                                      onClick={() => moveStop(stop.id, 'down')}
+                                      disabled={!canMoveStop(stop.id, 'down')}
+                                      style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: canMoveStop(stop.id, 'down') ? 'pointer' : 'default', color: canMoveStop(stop.id, 'down') ? '#8B949E' : '#30363D', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    >↓</button>
+                                  </div>
+                                )}
+                                {(dest as any)?.is_mlb_event && (
+                                  <span style={{
+                                    fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 20,
+                                    color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)',
+                                    border: '1px solid rgba(245,166,35,0.35)', whiteSpace: 'nowrap',
+                                  }}>⭐ MLB Event</span>
+                                )}
+                              </div>
+                            </div>
+
+                            {stop.game_date && (
+                              <div style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3', marginTop: 10, marginBottom: 8 }}>
+                                {new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', {
+                                  weekday: 'long', month: 'long', day: 'numeric',
+                                })}
+                              </div>
+                            )}
+
+                            {expType && (
+                              <span style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 5,
+                                fontSize: 12, fontWeight: 600,
+                                padding: '4px 12px', borderRadius: 20, marginTop: stop.game_date ? 0 : 10,
+                                backgroundColor: 'rgba(245,166,35,0.1)',
+                                color: '#F5A623', border: '1px solid rgba(245,166,35,0.25)',
+                              }}>
+                                {expType.icon} {expType.label}
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         {hasBudget && (
@@ -1206,147 +1224,143 @@ export default function TripDetailPage() {
                       borderLeft: `4px solid ${accentColor}`,
                     }}>
 
-                      {/* Card body */}
-                      <div style={{
-                        padding: '18px 20px 14px',
-                        backgroundImage: stopPhoto
-                          ? `linear-gradient(135deg, ${accentColor}3D 0%, rgba(22,27,34,0.94) 65%), url(${stopPhoto})`
-                          : `linear-gradient(135deg, ${accentColor}38 0%, transparent 65%)`,
-                        backgroundSize: 'cover', backgroundPosition: 'center',
-                      }}>
+                      {/* Card body: photo strip on the left, everything else in a column to the right */}
+                      <div className="trip-stop-body" style={{ display: 'flex', gap: 0 }}>
 
-                        {/* Stop # badge */}
-                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <div className="trip-stop-photo" style={{
+                          width: 130, flexShrink: 0, position: 'relative',
+                          backgroundImage: stopPhoto
+                            ? `linear-gradient(180deg, rgba(13,17,23,0.15) 0%, rgba(13,17,23,0.55) 100%), url(${stopPhoto})`
+                            : `linear-gradient(160deg, ${accentColor}55 0%, rgba(13,17,23,0.9) 100%)`,
+                          backgroundSize: 'cover', backgroundPosition: 'center',
+                        }}>
                           <div style={{
-                            width: 28, height: 28, borderRadius: '50%',
-                            backgroundColor: 'rgba(31,111,235,0.15)',
+                            position: 'absolute', top: 10, left: 10,
+                            width: 26, height: 26, borderRadius: '50%',
+                            backgroundColor: 'rgba(13,17,23,0.75)', border: '1px solid rgba(255,255,255,0.2)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 12, fontWeight: 800, color: '#1F6FEB', flexShrink: 0,
+                            fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0,
                           }}>
                             {i + 1}
                           </div>
-                          {/* Get tickets link + reorder buttons */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            {!stop.game_date && (
-                              <div style={{ display: 'flex', gap: 4 }}>
-                                <button
-                                  onClick={() => moveStop(stop.id, 'up')}
-                                  disabled={!canMoveStop(stop.id, 'up')}
-                                  style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: canMoveStop(stop.id, 'up') ? 'pointer' : 'default', color: canMoveStop(stop.id, 'up') ? '#8B949E' : '#30363D', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                >↑</button>
-                                <button
-                                  onClick={() => moveStop(stop.id, 'down')}
-                                  disabled={!canMoveStop(stop.id, 'down')}
-                                  style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: canMoveStop(stop.id, 'down') ? 'pointer' : 'default', color: canMoveStop(stop.id, 'down') ? '#8B949E' : '#30363D', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                >↓</button>
-                              </div>
-                            )}
-                            {stop.game_date && (
-                              <a
-                                href={seatGeekUrl}
-                                target="_blank" rel="noopener noreferrer"
-                                style={{
-                                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                                  fontSize: 12, fontWeight: 600, color: accentColor,
-                                  textDecoration: 'none',
-                                  padding: '5px 10px', borderRadius: 8,
-                                  backgroundColor: `${accentColor}18`,
-                                  border: `1px solid ${accentColor}40`,
-                                }}
-                              >
-                                <Ticket size={12} /> Buy Tickets
-                              </a>
-                            )}
-                          </div>
                         </div>
 
-                        {/* Stadium name */}
-                        <div style={{
-                          fontWeight: 800, fontSize: 20, color: '#E6EDF3',
-                          lineHeight: 1.2, marginBottom: 2,
-                        }}>
-                          {stadium?.name ?? 'Unknown Stadium'}
-                        </div>
+                        <div style={{ flex: 1, minWidth: 0, padding: '14px 18px 14px' }}>
 
-                        {/* City / state */}
-                        {stadium && (
-                          <div style={{ fontSize: 13, color: '#8B949E', marginBottom: 14 }}>
-                            {stadium.city}, {stadium.state}
-                          </div>
-                        )}
-
-                        {/* Full content row: left = date + matchup, right = promotions — stacks on mobile */}
-                        <div className="trip-stop-content-row" style={{ display: 'flex', gap: 0, marginBottom: 0, alignItems: 'flex-start' }}>
-
-                          {/* Left column — date, time, weather, then matchup logos */}
-                          <div className="trip-stop-left-col" style={{ flexShrink: 0, width: 180, display: 'flex', flexDirection: 'column', paddingBottom: 14 }}>
-                            {stop.game_date && (
-                              <div style={{ marginBottom: 12 }}>
-                                <div style={{ fontSize: 17, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2 }}>
-                                  {new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', {
-                                    weekday: 'long', month: 'long', day: 'numeric',
-                                  })}
-                                </div>
-                                {stop.game_time && (
-                                  <div style={{ fontSize: 15, fontWeight: 700, color: '#F5A623', marginTop: 3 }}>
-                                    {stop.game_time}
-                                  </div>
-                                )}
-                                {stopWeather[stop.id] && (() => {
-                                  const w = stopWeather[stop.id]
-                                  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
-                                  const isFuture = stop.game_date >= today
-                                  return (
-                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6, padding: '4px 10px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                      <span style={{ fontSize: 14 }}>{w.emoji}</span>
-                                      <span style={{ fontSize: 12, fontWeight: 600, color: '#C9D1D9' }}>
-                                        {w.tempF}°F · {w.condition}
-                                        {isFuture && w.rainChance != null && w.rainChance > 20 ? ` · ${w.rainChance}% rain` : ''}
-                                      </span>
-                                    </div>
-                                  )
-                                })()}
+                          {/* Name + actions row */}
+                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 2 }}>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontWeight: 800, fontSize: 18, color: '#E6EDF3', lineHeight: 1.2 }}>
+                                {stadium?.name ?? 'Unknown Stadium'}
                               </div>
-                            )}
-                            {stadium && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                                  <TeamLogo abbreviation={stadium.abbreviation} size={48} style={{ borderRadius: '50%', border: '2px solid rgba(255,255,255,0.12)' }} />
-                                  <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', letterSpacing: '0.06em' }}>{stadium.abbreviation}</span>
+                              {stadium && (
+                                <div style={{ fontSize: 13, color: '#8B949E', marginTop: 1 }}>
+                                  {stadium.city}, {stadium.state}
                                 </div>
-                                <span style={{ fontSize: 16, fontWeight: 900, color: '#8B949E' }}>VS</span>
-                                {stop.opponent ? (
-                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                                    {stop.opponent_team_id ? (
-                                      <TeamLogo abbreviation={getTeamAbbrById(stop.opponent_team_id) || 'MLB'} size={48} style={{ borderRadius: '50%', border: '2px solid rgba(255,255,255,0.12)' }} />
-                                    ) : (
-                                      <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <span style={{ fontSize: 22 }}>⚾</span>
-                                      </div>
-                                    )}
-                                    <span style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', letterSpacing: '0.06em' }}>
-                                      {stop.opponent_team_id ? getTeamAbbrById(stop.opponent_team_id) : stop.opponent.replace('vs ', '')}
+                              )}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                              {!stop.game_date && (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <button
+                                    onClick={() => moveStop(stop.id, 'up')}
+                                    disabled={!canMoveStop(stop.id, 'up')}
+                                    style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: canMoveStop(stop.id, 'up') ? 'pointer' : 'default', color: canMoveStop(stop.id, 'up') ? '#8B949E' : '#30363D', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                  >↑</button>
+                                  <button
+                                    onClick={() => moveStop(stop.id, 'down')}
+                                    disabled={!canMoveStop(stop.id, 'down')}
+                                    style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: canMoveStop(stop.id, 'down') ? 'pointer' : 'default', color: canMoveStop(stop.id, 'down') ? '#8B949E' : '#30363D', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                  >↓</button>
+                                </div>
+                              )}
+                              {stop.game_date && (
+                                <a
+                                  href={seatGeekUrl}
+                                  target="_blank" rel="noopener noreferrer"
+                                  style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                                    fontSize: 12, fontWeight: 600, color: accentColor,
+                                    textDecoration: 'none',
+                                    padding: '5px 10px', borderRadius: 8,
+                                    backgroundColor: `${accentColor}18`,
+                                    border: `1px solid ${accentColor}40`,
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  <Ticket size={12} /> Buy Tickets
+                                </a>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Date, time, weather */}
+                          {stop.game_date && (
+                            <div style={{ marginTop: 10 }}>
+                              <div style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3', lineHeight: 1.2 }}>
+                                {new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', {
+                                  weekday: 'long', month: 'long', day: 'numeric',
+                                })}
+                                {stop.game_time && <span style={{ color: '#F5A623', fontWeight: 700 }}> · {stop.game_time}</span>}
+                              </div>
+                              {stopWeather[stop.id] && (() => {
+                                const w = stopWeather[stop.id]
+                                const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+                                const isFuture = stop.game_date >= today
+                                return (
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6, padding: '4px 10px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                    <span style={{ fontSize: 14 }}>{w.emoji}</span>
+                                    <span style={{ fontSize: 12, fontWeight: 600, color: '#C9D1D9' }}>
+                                      {w.tempF}°F · {w.condition}
+                                      {isFuture && w.rainChance != null && w.rainChance > 20 ? ` · ${w.rainChance}% rain` : ''}
                                     </span>
                                   </div>
-                                ) : (
-                                  <div style={{ fontSize: 13, color: '#8B949E', fontStyle: 'italic' }}>TBD</div>
-                                )}
-                              </div>
-                            )}
-                            {hasTickets && (
-                              <div style={{ marginTop: 10 }}>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', marginBottom: 2 }}>🎟 Your Seats</div>
-                                <div style={{ fontSize: 13, color: '#E6EDF3' }}>{ticketParts.join(' · ')}</div>
-                                {stop.ticket_confirmation && (
-                                  <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>#{stop.ticket_confirmation}</div>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                                )
+                              })()}
+                            </div>
+                          )}
 
-                          {/* Right column — promotions */}
+                          {/* Matchup */}
+                          {stadium && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                                <TeamLogo abbreviation={stadium.abbreviation} size={40} style={{ borderRadius: '50%', border: '2px solid rgba(255,255,255,0.12)' }} />
+                                <span style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', letterSpacing: '0.06em' }}>{stadium.abbreviation}</span>
+                              </div>
+                              <span style={{ fontSize: 14, fontWeight: 900, color: '#8B949E' }}>VS</span>
+                              {stop.opponent ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                                  {stop.opponent_team_id ? (
+                                    <TeamLogo abbreviation={getTeamAbbrById(stop.opponent_team_id) || 'MLB'} size={40} style={{ borderRadius: '50%', border: '2px solid rgba(255,255,255,0.12)' }} />
+                                  ) : (
+                                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                      <span style={{ fontSize: 18 }}>⚾</span>
+                                    </div>
+                                  )}
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: '#8B949E', letterSpacing: '0.06em' }}>
+                                    {stop.opponent_team_id ? getTeamAbbrById(stop.opponent_team_id) : stop.opponent.replace('vs ', '')}
+                                  </span>
+                                </div>
+                              ) : (
+                                <div style={{ fontSize: 13, color: '#8B949E', fontStyle: 'italic' }}>TBD</div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Tickets */}
+                          {hasTickets && (
+                            <div style={{ marginTop: 12 }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: '#F5A623', marginBottom: 2 }}>🎟 Your Seats</div>
+                              <div style={{ fontSize: 13, color: '#E6EDF3' }}>{ticketParts.join(' · ')}</div>
+                              {stop.ticket_confirmation && (
+                                <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>#{stop.ticket_confirmation}</div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Promotions — now part of the normal flow, no reserved empty column when there are none */}
                           {stop.promotions && stop.promotions.length > 0 && (
-                            <div className="trip-stop-right-col" style={{ flex: 1, borderLeft: '1px solid rgba(245,166,35,0.15)', paddingLeft: 16, paddingBottom: 14, backgroundColor: 'rgba(245,166,35,0.02)' }}>
+                            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(245,166,35,0.15)' }}>
                               <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
                                 Promotions
                               </div>
@@ -1386,13 +1400,6 @@ export default function TripDetailPage() {
                                   )
                                 })}
                               </div>
-                            </div>
-                          )}
-
-                          {/* Right column fallback — no promotions */}
-                          {(!stop.promotions || stop.promotions.length === 0) && (
-                            <div className="trip-stop-right-col" style={{ flex: 1, borderLeft: '1px solid #21262D', paddingLeft: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <span style={{ fontSize: 13, color: '#30363D' }}>No promotions for this game</span>
                             </div>
                           )}
 
