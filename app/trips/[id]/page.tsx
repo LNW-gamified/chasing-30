@@ -1163,6 +1163,15 @@ export default function TripDetailPage() {
                                 {expType.icon} {expType.label}
                               </span>
                             )}
+
+                            {stop.notes && (
+                              <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(245,166,35,0.15)' }}>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  <FileText size={11} /> Notes
+                                </div>
+                                <div style={{ fontSize: 13, color: '#C9D1D9', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{stop.notes}</div>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -1432,6 +1441,16 @@ export default function TripDetailPage() {
                                   )
                                 })}
                               </div>
+                            </div>
+                          )}
+
+                          {/* Notes */}
+                          {stop.notes && (
+                            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(245,166,35,0.15)' }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <FileText size={11} /> Notes
+                              </div>
+                              <div style={{ fontSize: 13, color: '#C9D1D9', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{stop.notes}</div>
                             </div>
                           )}
 
