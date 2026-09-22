@@ -455,25 +455,31 @@ export default function TripsPage() {
                                   textShadow: '0 1px 4px rgba(0,0,0,0.4)',
                                 }}>
                                   {dateRange}{days ? ` (${days} day${days !== 1 ? 's' : ''})` : ''}
-                                  {(() => {
-                                    const stadiumStops = trip.trip_stops.filter((s: any) => s.stop_type === 'stadium')
-                                    const experienceStops = trip.trip_stops.filter((s: any) =>
-                                      s.stop_type === 'destination' && s.experience_type !== 'game' && s.experience_type !== 'festival'
-                                    )
-                                    const eventStops = trip.trip_stops.filter((s: any) =>
-                                      s.stop_type === 'destination' && (s.experience_type === 'game' || s.experience_type === 'festival')
-                                    )
-                                    const parts = [
-                                      stadiumStops.length > 0 ? `${stadiumStops.length} stadium${stadiumStops.length !== 1 ? 's' : ''}` : null,
-                                      experienceStops.length > 0 ? `${experienceStops.length} pilgrimage${experienceStops.length !== 1 ? 's' : ''}` : null,
-                                      eventStops.length > 0 ? `${eventStops.length} event${eventStops.length !== 1 ? 's' : ''}` : null,
-                                    ].filter(Boolean)
-                                    return parts.length > 0 ? ` · ${parts.join(', ')}` : ''
-                                  })()}
                                 </div>
                               )}
                             </div>
                           </div>
+
+                          {/* Stop summary — stadium/pilgrimage/event counts, top-left of the dark body */}
+                          {(() => {
+                            const stadiumStops = trip.trip_stops.filter((s: any) => s.stop_type === 'stadium')
+                            const experienceStops = trip.trip_stops.filter((s: any) =>
+                              s.stop_type === 'destination' && s.experience_type !== 'game' && s.experience_type !== 'festival'
+                            )
+                            const eventStops = trip.trip_stops.filter((s: any) =>
+                              s.stop_type === 'destination' && (s.experience_type === 'game' || s.experience_type === 'festival')
+                            )
+                            const parts = [
+                              stadiumStops.length > 0 ? `${stadiumStops.length} stadium${stadiumStops.length !== 1 ? 's' : ''}` : null,
+                              experienceStops.length > 0 ? `${experienceStops.length} pilgrimage${experienceStops.length !== 1 ? 's' : ''}` : null,
+                              eventStops.length > 0 ? `${eventStops.length} event${eventStops.length !== 1 ? 's' : ''}` : null,
+                            ].filter(Boolean)
+                            return parts.length > 0 ? (
+                              <div style={{ padding: '10px 16px 0', fontSize: 12, color: '#8B949E' }}>
+                                {parts.join(', ')}
+                              </div>
+                            ) : null
+                          })()}
 
                           {/* Card body */}
                           <div style={{ padding: '14px 16px' }}>
@@ -519,7 +525,7 @@ export default function TripsPage() {
                                       </div>
                                     )}
                                   </div>
-                                  {totalStops > 0 && !(trip.status === 'completed' && allVisited) && (
+                                  {totalStops > 0 && (
                                     <div>
                                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                                         <span style={{ fontSize: 13, color: allVisited ? '#3FB950' : '#8B949E', fontWeight: 600 }}>
