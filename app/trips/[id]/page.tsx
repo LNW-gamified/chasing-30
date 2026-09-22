@@ -185,24 +185,38 @@ export default function TripDetailPage() {
     setStops(prev => prev.map(s => s.id !== stopId ? s : { ...s, promotion_photos: Object.keys(newPhotos).length > 0 ? newPhotos : null }))
   }
 
-  async function moveStop(stopId: string, direction: 'up' | 'down') {
-    const idx = stops.findIndex(s => s.id === stopId)
-    if (idx === -1) return
+  function canMoveStop(stopId: string, direction: 'up' | 'down'): boolean {
+    const idx = sortedStops.findIndex(s => s.id === stopId)
+    if (idx === -1) return false
+    const current = sortedStops[idx]
+    if (current.game_date) return false
     const swapIdx = direction === 'up' ? idx - 1 : idx + 1
-    if (swapIdx < 0 || swapIdx >= stops.length) return
+    if (swapIdx < 0 || swapIdx >= sortedStops.length) return false
+    return !sortedStops[swapIdx].game_date
+  }
 
-    const current  = stops[idx]
-    const swapWith = stops[swapIdx]
+  async function moveStop(stopId: string, direction: 'up' | 'down') {
+    const idx = sortedStops.findIndex(s => s.id === stopId)
+    if (idx === -1) return
+    const current = sortedStops[idx]
+    if (current.game_date) return // dated stops sort by their real date, not manually
+
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= sortedStops.length) return
+    const swapWith = sortedStops[swapIdx]
+    if (swapWith.game_date) return // can't swap past a dated stop — see sortedStops above
 
     const supabase = createClient()
     await Promise.all([
-      supabase.from('trip_stops').update({ sort_order: swapIdx }).eq('id', current.id),
-      supabase.from('trip_stops').update({ sort_order: idx }).eq('id', swapWith.id),
+      supabase.from('trip_stops').update({ sort_order: swapWith.sort_order }).eq('id', current.id),
+      supabase.from('trip_stops').update({ sort_order: current.sort_order }).eq('id', swapWith.id),
     ])
 
-    const newStops = [...stops]
-    newStops[idx]     = { ...swapWith, sort_order: idx }
-    newStops[swapIdx] = { ...current,  sort_order: swapIdx }
+    const newStops = stops.map(s => {
+      if (s.id === current.id)  return { ...s, sort_order: swapWith.sort_order }
+      if (s.id === swapWith.id) return { ...s, sort_order: current.sort_order }
+      return s
+    })
     setStops(newStops)
 
     // Recalculate driving distance with new order
@@ -475,12 +489,28 @@ export default function TripDetailPage() {
     )
   }
 
-  const sortedStops = [...stops].sort((a, b) => {
-    if (!a.game_date && !b.game_date) return 0
-    if (!a.game_date) return 1
-    if (!b.game_date) return -1
-    return a.game_date.localeCompare(b.game_date)
-  })
+  // Dated stops always sort by their real date — that's what the
+  // driving-distance calculation between consecutive stops depends on
+  // being accurate. An undated stop (a pilgrimage with no game date)
+  // inherits the date of whichever dated stop precedes it in manual
+  // order, so wherever you've placed it between two games, it stays
+  // there — it just can't be dragged to a date position that would make
+  // the mileage between real games meaningless.
+  const sortedStops = (() => {
+    const bySortOrder = [...stops].sort((a, b) => a.sort_order - b.sort_order)
+    const withEffectiveDate = bySortOrder.reduce<{ stop: TripStop; effectiveDate: string; lastDate: string | null }[]>((acc, s) => {
+      const prevDate = acc.length > 0 ? acc[acc.length - 1].lastDate : null
+      const lastDate = s.game_date ?? prevDate
+      acc.push({ stop: s, effectiveDate: s.game_date ?? prevDate ?? '9999-12-31', lastDate })
+      return acc
+    }, [])
+    return withEffectiveDate
+      .sort((a, b) => {
+        const cmp = a.effectiveDate.localeCompare(b.effectiveDate)
+        return cmp !== 0 ? cmp : a.stop.sort_order - b.stop.sort_order
+      })
+      .map(x => x.stop)
+  })()
 
   const stopEstTotal  = stops.reduce((sum, s) => sum + s.est_tickets + s.est_food + s.est_parking + s.est_hotel + s.est_local_transport, 0)
   const stopActTotal  = stops.reduce((sum, s) => sum + s.actual_tickets + s.actual_food + s.actual_parking + s.actual_hotel + s.actual_local_transport, 0)
@@ -995,18 +1025,20 @@ export default function TripDetailPage() {
                               )}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <div style={{ display: 'flex', gap: 4 }}>
-                                <button
-                                  onClick={() => moveStop(stop.id, 'up')}
-                                  disabled={stops.indexOf(stop) === 0}
-                                  style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: stops.indexOf(stop) === 0 ? 'default' : 'pointer', color: stops.indexOf(stop) === 0 ? '#30363D' : '#8B949E', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                >↑</button>
-                                <button
-                                  onClick={() => moveStop(stop.id, 'down')}
-                                  disabled={stops.indexOf(stop) === stops.length - 1}
-                                  style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: stops.indexOf(stop) === stops.length - 1 ? 'default' : 'pointer', color: stops.indexOf(stop) === stops.length - 1 ? '#30363D' : '#8B949E', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                >↓</button>
-                              </div>
+                              {!stop.game_date && (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <button
+                                    onClick={() => moveStop(stop.id, 'up')}
+                                    disabled={!canMoveStop(stop.id, 'up')}
+                                    style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: canMoveStop(stop.id, 'up') ? 'pointer' : 'default', color: canMoveStop(stop.id, 'up') ? '#8B949E' : '#30363D', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                  >↑</button>
+                                  <button
+                                    onClick={() => moveStop(stop.id, 'down')}
+                                    disabled={!canMoveStop(stop.id, 'down')}
+                                    style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: canMoveStop(stop.id, 'down') ? 'pointer' : 'default', color: canMoveStop(stop.id, 'down') ? '#8B949E' : '#30363D', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                  >↓</button>
+                                </div>
+                              )}
                               {(dest as any)?.is_mlb_event && (
                                 <span style={{
                                   fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 20,
@@ -1145,18 +1177,20 @@ export default function TripDetailPage() {
                           </div>
                           {/* Get tickets link + reorder buttons */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <div style={{ display: 'flex', gap: 4 }}>
-                              <button
-                                onClick={() => moveStop(stop.id, 'up')}
-                                disabled={stops.indexOf(stop) === 0}
-                                style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: stops.indexOf(stop) === 0 ? 'default' : 'pointer', color: stops.indexOf(stop) === 0 ? '#30363D' : '#8B949E', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                              >↑</button>
-                              <button
-                                onClick={() => moveStop(stop.id, 'down')}
-                                disabled={stops.indexOf(stop) === stops.length - 1}
-                                style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: stops.indexOf(stop) === stops.length - 1 ? 'default' : 'pointer', color: stops.indexOf(stop) === stops.length - 1 ? '#30363D' : '#8B949E', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                              >↓</button>
-                            </div>
+                            {!stop.game_date && (
+                              <div style={{ display: 'flex', gap: 4 }}>
+                                <button
+                                  onClick={() => moveStop(stop.id, 'up')}
+                                  disabled={!canMoveStop(stop.id, 'up')}
+                                  style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: canMoveStop(stop.id, 'up') ? 'pointer' : 'default', color: canMoveStop(stop.id, 'up') ? '#8B949E' : '#30363D', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >↑</button>
+                                <button
+                                  onClick={() => moveStop(stop.id, 'down')}
+                                  disabled={!canMoveStop(stop.id, 'down')}
+                                  style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: canMoveStop(stop.id, 'down') ? 'pointer' : 'default', color: canMoveStop(stop.id, 'down') ? '#8B949E' : '#30363D', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >↓</button>
+                              </div>
+                            )}
                             {stop.game_date && (
                               <a
                                 href={seatGeekUrl}
