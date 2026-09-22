@@ -26,6 +26,33 @@ type TripWithStadium = Trip & { stadium: Stadium | null }
 const MONTH_ABBR = ['Jan.', 'Feb.', 'March', 'April', 'May', 'June', 'July', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.']
 function fmtDate(d: Date): string { return `${MONTH_ABBR[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}` }
 
+// Dated stops always sort by their real date — that's what the
+// driving-distance calculation between consecutive stops depends on
+// being accurate. An undated stop (a pilgrimage with no game date)
+// inherits the date of whichever dated stop precedes it in manual
+// order, so wherever you've placed it between two games, it stays
+// there — it just can't be dragged to a date position that would make
+// the mileage between real games meaningless.
+// Standalone (not derived from component state) so it can be used both
+// for display (sortedStops, from React state) and right after a fresh
+// load (calculateDrivingDistance needs the same order, but state hasn't
+// updated yet at that point in the function).
+function sortStopsByDate(stopsToSort: TripStop[]): TripStop[] {
+  const bySortOrder = [...stopsToSort].sort((a, b) => a.sort_order - b.sort_order)
+  const withEffectiveDate = bySortOrder.reduce<{ stop: TripStop; effectiveDate: string; lastDate: string | null }[]>((acc, s) => {
+    const prevDate = acc.length > 0 ? acc[acc.length - 1].lastDate : null
+    const lastDate = s.game_date ?? prevDate
+    acc.push({ stop: s, effectiveDate: s.game_date ?? prevDate ?? '9999-12-31', lastDate })
+    return acc
+  }, [])
+  return withEffectiveDate
+    .sort((a, b) => {
+      const cmp = a.effectiveDate.localeCompare(b.effectiveDate)
+      return cmp !== 0 ? cmp : a.stop.sort_order - b.stop.sort_order
+    })
+    .map(x => x.stop)
+}
+
 export default function TripDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -108,7 +135,7 @@ export default function TripDetailPage() {
       ))
     }
 
-    await calculateDrivingDistance(loadedStops)
+    await calculateDrivingDistance(sortStopsByDate(loadedStops))
     refreshStaleGameTimes(loadedStops)
 
     const abbrs = Array.from(new Set(
@@ -256,7 +283,7 @@ export default function TripDetailPage() {
     setStops(newStops)
 
     // Recalculate driving distance with new order
-    await calculateDrivingDistance(newStops)
+    await calculateDrivingDistance(sortStopsByDate(newStops))
   }
 
   useEffect(() => { load() }, [id])
@@ -525,28 +552,7 @@ export default function TripDetailPage() {
     )
   }
 
-  // Dated stops always sort by their real date — that's what the
-  // driving-distance calculation between consecutive stops depends on
-  // being accurate. An undated stop (a pilgrimage with no game date)
-  // inherits the date of whichever dated stop precedes it in manual
-  // order, so wherever you've placed it between two games, it stays
-  // there — it just can't be dragged to a date position that would make
-  // the mileage between real games meaningless.
-  const sortedStops = (() => {
-    const bySortOrder = [...stops].sort((a, b) => a.sort_order - b.sort_order)
-    const withEffectiveDate = bySortOrder.reduce<{ stop: TripStop; effectiveDate: string; lastDate: string | null }[]>((acc, s) => {
-      const prevDate = acc.length > 0 ? acc[acc.length - 1].lastDate : null
-      const lastDate = s.game_date ?? prevDate
-      acc.push({ stop: s, effectiveDate: s.game_date ?? prevDate ?? '9999-12-31', lastDate })
-      return acc
-    }, [])
-    return withEffectiveDate
-      .sort((a, b) => {
-        const cmp = a.effectiveDate.localeCompare(b.effectiveDate)
-        return cmp !== 0 ? cmp : a.stop.sort_order - b.stop.sort_order
-      })
-      .map(x => x.stop)
-  })()
+  const sortedStops = sortStopsByDate(stops)
 
   const stopEstTotal  = stops.reduce((sum, s) => sum + s.est_tickets + s.est_food + s.est_parking + s.est_hotel + s.est_local_transport, 0)
   const stopActTotal  = stops.reduce((sum, s) => sum + s.actual_tickets + s.actual_food + s.actual_parking + s.actual_hotel + s.actual_local_transport, 0)
