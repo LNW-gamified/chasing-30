@@ -11,6 +11,7 @@ import type { Stadium, Trip, TripStop, StopChecklistItem } from '@/types'
 import Link from 'next/link'
 import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink, MoreHorizontal, FileText, Ticket, Utensils, Car, CarTaxiFront, Plane, BedDouble, Camera, Loader2, Building2, Landmark, Gauge, Route } from 'lucide-react'
 import StopChecklist from '@/components/StopChecklist'
+import EditStopModal from '@/components/EditStopModal'
 import { DESTINATION_BY_SLUG, destinationLocation, EXPERIENCE_TYPES } from '@/lib/destinations'
 import { fetchForecastWeather, fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
 import { TEAM_PRIMARY, TEAM_GRADIENTS as TEAM_COLORS, TEAM_BTN_COLOR, TEAM_LOGO_BG } from '@/lib/team-colors'
@@ -42,6 +43,7 @@ export default function TripDetailPage() {
   const [completeError,  setCompleteError]  = useState('')
   const [checklistItems, setChecklistItems] = useState<StopChecklistItem[]>([])
   const [showDeleteMenu,  setShowDeleteMenu]  = useState(false)
+  const [editingStop, setEditingStop] = useState<TripStop | null>(null)
   const [stopWeather, setStopWeather]             = useState<Record<string, WeatherData>>({})
   const [markingStopId,   setMarkingStopId]   = useState<string | null>(null)
   const [markStopError,   setMarkStopError]   = useState<Record<string, string>>({})
@@ -49,6 +51,7 @@ export default function TripDetailPage() {
   const [linkCandidates,   setLinkCandidates]   = useState<{ id: string; label: string }[]>([])
   const [linkLoading,      setLinkLoading]      = useState(false)
   const [totalDrivingMiles, setTotalDrivingMiles] = useState<number | null>(null)
+  const [totalDrivingMinutes, setTotalDrivingMinutes] = useState<number | null>(null)
   const [segmentMiles, setSegmentMiles]           = useState<number[]>([])
   const [loadingMiles, setLoadingMiles]           = useState(false)
   const [stopPhotos, setStopPhotos] = useState<Record<string, string>>({})
@@ -166,12 +169,14 @@ export default function TripDetailPage() {
     const results = await Promise.all(
       pairs.map(([a, b]) =>
         fetch(`/api/driving-distance?fromLat=${a.lat}&fromLng=${a.lng}&toLat=${b.lat}&toLng=${b.lng}`)
-          .then(r => r.json()).then(d => d.miles as number | null).catch(() => null)
+          .then(r => r.json()).then(d => ({ miles: d.miles as number | null, minutes: d.minutes as number | null })).catch(() => ({ miles: null, minutes: null }))
       )
     )
-    setSegmentMiles(results.map(r => r ?? 0))
-    const valid = results.filter((r): r is number => r !== null)
-    if (valid.length > 0) setTotalDrivingMiles(valid.reduce((s, m) => s + m, 0))
+    setSegmentMiles(results.map(r => r.miles ?? 0))
+    const validMiles = results.filter((r): r is { miles: number; minutes: number | null } => r.miles !== null)
+    if (validMiles.length > 0) setTotalDrivingMiles(validMiles.reduce((s, r) => s + r.miles, 0))
+    const validMinutes = results.filter((r): r is { miles: number | null; minutes: number } => r.minutes !== null)
+    if (validMinutes.length > 0) setTotalDrivingMinutes(validMinutes.reduce((s, r) => s + r.minutes, 0))
     setLoadingMiles(false)
   }
 
@@ -1008,6 +1013,13 @@ export default function TripDetailPage() {
                     {loadingMiles ? '…' : `${totalDrivingMiles!.toLocaleString()}`}
                     {!loadingMiles && <span style={{ fontSize: 12, color: '#8B949E', fontWeight: 600 }}> mi</span>}
                   </div>
+                  {!loadingMiles && totalDrivingMinutes !== null && (
+                    <div style={{ fontSize: 12, color: '#8B949E', fontWeight: 600, marginTop: 1 }}>
+                      {totalDrivingMinutes >= 60
+                        ? `${Math.floor(totalDrivingMinutes / 60)}h ${totalDrivingMinutes % 60}m`
+                        : `${totalDrivingMinutes}m`}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1116,6 +1128,13 @@ export default function TripDetailPage() {
                                     border: '1px solid rgba(245,166,35,0.35)', whiteSpace: 'nowrap',
                                   }}>⭐ MLB Event</span>
                                 )}
+                                <button
+                                  onClick={() => setEditingStop(stop)}
+                                  aria-label="Edit stop"
+                                  style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: 'pointer', color: '#8B949E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                                >
+                                  <Pencil size={12} />
+                                </button>
                               </div>
                             </div>
 
@@ -1291,6 +1310,13 @@ export default function TripDetailPage() {
                                   <Ticket size={12} /> Buy Tickets
                                 </a>
                               )}
+                              <button
+                                onClick={() => setEditingStop(stop)}
+                                aria-label="Edit stop"
+                                style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: 'pointer', color: '#8B949E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                              >
+                                <Pencil size={12} />
+                              </button>
                             </div>
                           </div>
 
@@ -1674,6 +1700,15 @@ export default function TripDetailPage() {
           existingStops={stops}
           onClose={() => setShowEdit(false)}
           onSaved={() => { setShowEdit(false); load() }}
+        />
+      )}
+
+      {editingStop && (
+        <EditStopModal
+          stop={editingStop}
+          stadiums={stadiums}
+          onClose={() => setEditingStop(null)}
+          onSaved={() => { setEditingStop(null); load() }}
         />
       )}
     </div>
