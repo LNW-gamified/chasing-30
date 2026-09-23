@@ -45,13 +45,14 @@ const STAR_POINTS = '20,3 23.63,13.93 35.31,14.37 26.39,21.62 29.51,32.75 20,27 
 
 function makeSpecialLocationIcon(icon: string, visited: boolean): L.DivIcon {
   const fillColor = visited ? '#F5A623' : '#FFD166'
-  const borderColor = visited ? '#3FB950' : 'white'
+  const borderColor = visited ? '#4ADE80' : 'white'
+  const glow = visited ? ' drop-shadow(0 0 6px rgba(74,222,128,0.6))' : ''
   const badge = visited
-    ? `<div style="position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:#3FB950;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:900;line-height:1;">✓</div>`
+    ? `<div style="position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:#4ADE80;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:8px;color:#0B1117;font-weight:900;line-height:1;">✓</div>`
     : ''
   return L.divIcon({
     html: `
-      <div style="position:relative;width:40px;height:40px;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.55));">
+      <div style="position:relative;width:40px;height:40px;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.55))${glow};">
         <svg width="40" height="40" viewBox="0 0 40 40" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
           <!-- Backing for contrast — turns green once visited -->
           <polygon
@@ -84,9 +85,10 @@ function makeSpecialLocationIcon(icon: string, visited: boolean): L.DivIcon {
 // ── Stadium pin icon factory ────────────────────────────────────────────────
 
 function makeStadiumIcon(logoUrl: string, visited: boolean, abbr: string): L.DivIcon {
-  const ring  = visited ? '#3FB950' : '#C9D1D9'
+  const ring  = visited ? '#4ADE80' : '#C9D1D9'
+  const glow  = visited ? ', 0 0 10px 2px rgba(74,222,128,0.55)' : ''
   const badge = visited
-    ? `<div style="position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:#3FB950;border:2px solid #0B1117;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:900;line-height:1;">✓</div>`
+    ? `<div style="position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:#4ADE80;border:2px solid #0B1117;display:flex;align-items:center;justify-content:center;font-size:9px;color:#0B1117;font-weight:900;line-height:1;">✓</div>`
     : ''
 
   const lightBg = LIGHT_BG_LOGO_TEAMS.has(abbr)
@@ -102,10 +104,10 @@ function makeStadiumIcon(logoUrl: string, visited: boolean, abbr: string): L.Div
       <div style="position:relative;width:40px;height:40px;">
         <div style="
           width:40px;height:40px;border-radius:50%;
-          border:3px solid ${ring};
+          border:${visited ? 4 : 3}px solid ${ring};
           outline:2px solid white;
           outline-offset:-5px;
-          box-shadow:0 3px 14px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.15);
+          box-shadow:0 3px 14px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.15)${glow};
           ${bgStyle}
           background-image:url('${logoUrl}');
           background-size:72%;
