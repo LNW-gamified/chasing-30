@@ -319,9 +319,9 @@ select.input { cursor: pointer; }
 }
 .challenge-card { animation: challenge-pulse 3s ease-in-out infinite; }
 
-/* ── Map tile dimming (light basemap) ───────────────────────────────── */
+/* ── Map tile contrast (dark basemap) ───────────────────────────────── */
 .leaflet-tile-pane {
-  filter: brightness(0.68) saturate(0.9);
+  filter: brightness(1.55) contrast(1.15);
 }
 
 @keyframes confetti-fall {
