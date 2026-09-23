@@ -283,12 +283,12 @@ function BracketTree({ data, favAbbr }: { data: BracketData; favAbbr: string }) 
   const winsNeededFor = (type: RoundType) => ROUND_META[type]?.winsNeeded ?? 4
 
   // Lay out left-to-right: AL rounds → World Series (if it exists) → NL rounds (reversed)
-  let x = 0
-  const alPositioned = alCols.map(col => { const p = { col, x }; x += COL_W + COL_GAP; return p })
-  const wsX = ws != null ? x : null
-  if (ws != null) x += COL_W + COL_GAP
-  const nlPositioned = nlCols.map(col => { const p = { col, x }; x += COL_W + COL_GAP; return p })
-  const totalWidth = Math.max(x - COL_GAP, COL_W)
+  const step = COL_W + COL_GAP
+  const alPositioned = alCols.map((col, i) => ({ col, x: i * step }))
+  const wsX = ws != null ? alCols.length * step : null
+  const nlStartX = alCols.length * step + (ws != null ? step : 0)
+  const nlPositioned = nlCols.map((col, i) => ({ col, x: nlStartX + i * step }))
+  const totalWidth = Math.max(nlStartX + nlCols.length * step - COL_GAP, COL_W)
 
   return (
     <div style={{ overflowX: 'auto', paddingBottom: 8 }}>

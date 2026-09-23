@@ -236,7 +236,7 @@ const LADDER_EXPERIENCE_IDS = new Set(['minor_league_explorer'])
 
 const CONFETTI_COLORS = ['#F5A623', '#3FB950', '#1F6FEB', '#F85149', '#A78BFA', '#58A6FF', '#FF7B72']
 
-function ConfettiPiece({ color, left, delay, size }: { color: string; left: number; delay: number; size: number }) {
+function ConfettiPiece({ color, left, delay, size, duration }: { color: string; left: number; delay: number; size: number; duration: number }) {
   return (
     <div
       className="confetti-piece"
@@ -245,7 +245,7 @@ function ConfettiPiece({ color, left, delay, size }: { color: string; left: numb
         width: size, height: size * 0.6,
         backgroundColor: color, borderRadius: 2,
         animationDelay: `${delay}s`,
-        animationDuration: `${1.6 + Math.random() * 0.8}s`,
+        animationDuration: `${duration}s`,
         pointerEvents: 'none',
       }}
     />
@@ -279,7 +279,7 @@ export default function MilestoneGrid({
   const [search, setSearch]     = useState('')
   const [selected, setSelected] = useState<SelectedItem | null>(null)
   const [dayNightCounts, setDayNightCounts] = useState<{ day: number; night: number; twilight: number } | null>(null)
-  const [confetti, setConfetti] = useState<{ id: number; color: string; left: number; delay: number; size: number }[]>([])
+  const [confetti, setConfetti] = useState<{ id: number; color: string; left: number; delay: number; size: number; duration: number }[]>([])
   const confettiIdRef           = useRef(0)
 
   // Claims
@@ -672,6 +672,7 @@ export default function MilestoneGrid({
       left: Math.random() * 100,
       delay: Math.random() * 0.5,
       size: 7 + Math.random() * 8,
+      duration: 1.6 + Math.random() * 0.8,
     }))
     setConfetti(pieces)
     setTimeout(() => setConfetti([]), 2800)
@@ -690,7 +691,7 @@ export default function MilestoneGrid({
     <>
       {/* Confetti layer */}
       {confetti.map(p => (
-        <ConfettiPiece key={p.id} color={p.color} left={p.left} delay={p.delay} size={p.size} />
+        <ConfettiPiece key={p.id} color={p.color} left={p.left} delay={p.delay} size={p.size} duration={p.duration} />
       ))}
 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 16px 80px' }}>

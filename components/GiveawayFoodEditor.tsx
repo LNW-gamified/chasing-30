@@ -81,7 +81,7 @@ export default function GiveawayFoodEditor({ item, onClose, onSaved, onDeleted }
   const isMemorabilia = category === 'memorabilia'
   const isGiveaway = category === 'giveaway'
   const isFood = category === 'food'
-  const tempId = `temp-${Date.now()}`
+  const [tempId] = useState(() => `temp-${Date.now()}`)
 
   useEffect(() => {
     if (!needsGamePicker) return
