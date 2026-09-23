@@ -401,3 +401,27 @@ CREATE POLICY "Authenticated users can delete stop_checklist"
 -- ============================================================
 
 ALTER TABLE stadium_visits ADD COLUMN IF NOT EXISTS game_events TEXT[] DEFAULT '{}';
+
+-- ============================================================
+-- Route cache (driving distances from OpenRouteService)
+-- Used by /api/driving-distance. Already exists in the live DB.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS route_cache (
+  id bigint generated always as identity primary key,
+  from_lat numeric NOT NULL,
+  from_lng numeric NOT NULL,
+  to_lat numeric NOT NULL,
+  to_lng numeric NOT NULL,
+  miles integer NOT NULL,
+  minutes integer,
+  created_at timestamptz DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS route_cache_pair_idx
+  ON route_cache (from_lat, from_lng, to_lat, to_lng);
+
+ALTER TABLE route_cache ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "route_cache_select" ON route_cache FOR SELECT USING (true);
+CREATE POLICY "route_cache_insert" ON route_cache FOR INSERT WITH CHECK (true);
