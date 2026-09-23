@@ -460,7 +460,7 @@ export default function TripsPage() {
                             </div>
                           </div>
 
-                          {/* Stop summary — stadium/pilgrimage/event counts, top-left of the dark body */}
+                          {/* Stop summary + budget — same line, summary left, budget right */}
                           {(() => {
                             const stadiumStops = trip.trip_stops.filter((s: any) => s.stop_type === 'stadium')
                             const experienceStops = trip.trip_stops.filter((s: any) =>
@@ -474,9 +474,16 @@ export default function TripsPage() {
                               experienceStops.length > 0 ? `${experienceStops.length} pilgrimage${experienceStops.length !== 1 ? 's' : ''}` : null,
                               eventStops.length > 0 ? `${eventStops.length} event${eventStops.length !== 1 ? 's' : ''}` : null,
                             ].filter(Boolean)
-                            return parts.length > 0 ? (
-                              <div style={{ padding: '10px 16px 0', fontSize: 12, color: '#8B949E' }}>
-                                {parts.join(', ')}
+                            const hasBudgetLine = est > 0 || hasActual
+                            return (parts.length > 0 || hasBudgetLine) ? (
+                              <div style={{ padding: '10px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                                <span style={{ fontSize: 12, color: '#8B949E' }}>{parts.join(', ')}</span>
+                                {hasBudgetLine && (
+                                  <span style={{ fontSize: 13, fontWeight: 600, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 3, color: hasActual && est > 0 ? (overBudget ? '#F85149' : '#3FB950') : '#8B949E' }}>
+                                    {hasActual && est > 0 && (overBudget ? '▲' : '▼')}
+                                    {hasActual ? formatCurrency(actual) : `${formatCurrency(est)} est`}
+                                  </span>
+                                )}
                               </div>
                             ) : null
                           })()}
@@ -515,16 +522,6 @@ export default function TripsPage() {
                               const allVisited = totalStops > 0 && stopsVisited === totalStops
                               return (
                                 <div style={{ marginBottom: 10 }}>
-                                  <div style={{ marginBottom: totalStops > 0 ? 8 : 0 }}>
-                                    {(est > 0 || hasActual) && (
-                                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                        <span style={{ fontSize: 13, fontWeight: 600, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 3, color: hasActual && est > 0 ? (overBudget ? '#F85149' : '#3FB950') : '#8B949E' }}>
-                                          {hasActual && est > 0 && (overBudget ? '▲' : '▼')}
-                                          {hasActual ? formatCurrency(actual) : `${formatCurrency(est)} est`}
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
                                   {totalStops > 0 && (
                                     <div>
                                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
