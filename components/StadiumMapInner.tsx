@@ -213,18 +213,29 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
       >
-        {/* CartoDB Dark Matter — dark mode base map, matching the rest of
-            the app instead of the previous light_all style, which was the
-            one page that broke from the app's dark theme entirely. Same
-            API/key arrangement as before, only the style name changes.
-            CARTO started requiring a free API key on their raster tiles in
-            late Aug 2026; without one, tiles render with an "API KEY
-            REQUIRED" watermark. Appends the key from env when set, and
-            falls back to the bare URL (watermarked, but still functional)
-            if it isn't configured. */}
+        {/* Stadia Maps' Alidade Smooth Dark — a purpose-built dark
+            navigation style with real road/terrain detail, unlike CARTO's
+            dark_all, which is intentionally minimal (built as a plain
+            backdrop for data-viz dots, not for actually reading the map).
+            Stadia's key is required, not optional like CARTO's, so this
+            falls back automatically to the existing CARTO dark_all setup
+            when NEXT_PUBLIC_STADIA_API_KEY isn't set yet, rather than
+            showing broken/blank tiles in the meantime. The .map-tiles-carto-fallback
+            class (see globals.css) is what applies the brightness/contrast
+            boost dark_all needs — Alidade Smooth Dark doesn't need it and
+            looks over-processed if it's applied there too. */}
         <TileLayer
-          url={`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${process.env.NEXT_PUBLIC_CARTO_API_KEY ? `?key=${process.env.NEXT_PUBLIC_CARTO_API_KEY}` : ''}`}
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url={
+            process.env.NEXT_PUBLIC_STADIA_API_KEY
+              ? `https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=${process.env.NEXT_PUBLIC_STADIA_API_KEY}`
+              : `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${process.env.NEXT_PUBLIC_CARTO_API_KEY ? `?key=${process.env.NEXT_PUBLIC_CARTO_API_KEY}` : ''}`
+          }
+          className={process.env.NEXT_PUBLIC_STADIA_API_KEY ? '' : 'map-tiles-carto-fallback'}
+          attribution={
+            process.env.NEXT_PUBLIC_STADIA_API_KEY
+              ? '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          }
         />
 
         <MapInitializer mapRef={mapRef} />
@@ -452,7 +463,7 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
                 <Link href="/trips" style={{
                   display: 'inline-flex', alignItems: 'center', gap: 4,
                   padding: '3px 10px', borderRadius: 20,
-                  backgroundColor: 'rgba(31,111,235,0.12)', color: '#1F6FEB',
+                  backgroundColor: 'rgba(88,166,255,0.12)', color: '#58A6FF',
                   fontSize: 12, fontWeight: 600, textDecoration: 'none',
                 }}>
                   Plan Trip
@@ -536,8 +547,8 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 4,
                     padding: '7px 14px', borderRadius: 20,
-                    border: '1px solid rgba(31,111,235,0.35)',
-                    backgroundColor: 'rgba(31,111,235,0.08)', color: '#1F6FEB',
+                    border: '1px solid rgba(88,166,255,0.35)',
+                    backgroundColor: 'rgba(88,166,255,0.08)', color: '#58A6FF',
                     fontSize: 13, fontWeight: 600, textDecoration: 'none',
                   }}
                 >

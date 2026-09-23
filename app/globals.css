@@ -319,8 +319,9 @@ select.input { cursor: pointer; }
 }
 .challenge-card { animation: challenge-pulse 3s ease-in-out infinite; }
 
-/* ── Map tile contrast (dark basemap) ───────────────────────────────── */
-.leaflet-tile-pane {
+/* ── Map tile contrast (CARTO dark_all fallback only — see
+     StadiumMapInner.tsx) ─────────────────────────────────────────────── */
+.map-tiles-carto-fallback {
   filter: brightness(1.55) contrast(1.15);
 }
 
