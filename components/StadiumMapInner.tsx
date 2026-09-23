@@ -51,7 +51,7 @@ function makeSpecialLocationIcon(icon: string, visited: boolean): L.DivIcon {
     : ''
   return L.divIcon({
     html: `
-      <div style="position:relative;width:40px;height:40px;">
+      <div style="position:relative;width:40px;height:40px;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.55));">
         <svg width="40" height="40" viewBox="0 0 40 40" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
           <!-- Backing for contrast — turns green once visited -->
           <polygon
@@ -105,7 +105,7 @@ function makeStadiumIcon(logoUrl: string, visited: boolean, abbr: string): L.Div
           border:3px solid ${ring};
           outline:2px solid white;
           outline-offset:-5px;
-          box-shadow:0 2px 12px rgba(0,0,0,0.25), 0 0 0 2px white;
+          box-shadow:0 3px 14px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.15);
           ${bgStyle}
           background-image:url('${logoUrl}');
           background-size:72%;
@@ -213,13 +213,17 @@ export default function StadiumMapInner({ stadiums, destinations = [], visitedDe
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
       >
-        {/* CartoDB Positron — light mode base map. CARTO started requiring
-            a free API key on their raster tiles in late Aug 2026; without
-            one, tiles render with an "API KEY REQUIRED" watermark. Appends
-            the key from env when set, and falls back to the bare URL
-            (watermarked, but still functional) if it isn't configured. */}
+        {/* CartoDB Dark Matter — dark mode base map, matching the rest of
+            the app instead of the previous light_all style, which was the
+            one page that broke from the app's dark theme entirely. Same
+            API/key arrangement as before, only the style name changes.
+            CARTO started requiring a free API key on their raster tiles in
+            late Aug 2026; without one, tiles render with an "API KEY
+            REQUIRED" watermark. Appends the key from env when set, and
+            falls back to the bare URL (watermarked, but still functional)
+            if it isn't configured. */}
         <TileLayer
-          url={`https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png${process.env.NEXT_PUBLIC_CARTO_API_KEY ? `?key=${process.env.NEXT_PUBLIC_CARTO_API_KEY}` : ''}`}
+          url={`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${process.env.NEXT_PUBLIC_CARTO_API_KEY ? `?key=${process.env.NEXT_PUBLIC_CARTO_API_KEY}` : ''}`}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
 
