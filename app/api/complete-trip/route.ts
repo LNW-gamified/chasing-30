@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Create visit records for all stops that have a date
-    const createdVisits: { id: string; visitDate: string; stadiumAbbr: string }[] = []
+    const createdVisits: { id: string; visitDate: string; stadiumAbbr: string; stopId: string }[] = []
 
     for (const stop of stops) {
       if (!stop.game_date) continue
@@ -122,15 +122,19 @@ export async function POST(req: NextRequest) {
           id:          newVisit.id,
           visitDate:   stop.game_date,
           stadiumAbbr: stadium.abbreviation,
+          stopId:      stop.id,
         })
       }
     }
 
     // 3. Auto-populate MLB stats for each new visit (best-effort, non-blocking per visit)
     const statsResults: { stadiumAbbr: string; success: boolean; error?: string }[] = []
-    for (const { id, visitDate, stadiumAbbr } of createdVisits) {
+    for (const { id, visitDate, stadiumAbbr, stopId } of createdVisits) {
       const result = await populateGameStats(id, visitDate, stadiumAbbr)
       statsResults.push({ stadiumAbbr, success: result.success, error: result.error })
+      if (result.success && result.promotions && result.promotions.length > 0) {
+        await supabase.from('trip_stops').update({ promotions: result.promotions }).eq('id', stopId)
+      }
     }
 
     return NextResponse.json({

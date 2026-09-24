@@ -39,6 +39,7 @@ export interface PopulateResult {
   attendance?: number
   winningPitcher?: string | null
   losingPitcher?: string | null
+  promotions?: string[]
 }
 
 export async function populateGameStats(
@@ -51,7 +52,7 @@ export async function populateGameStats(
     if (!teamId) return { success: false, error: 'Unknown team abbreviation', code: 'unknown_team' }
 
     const schedRes = await fetch(
-      `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${visitDate}&teamId=${teamId}&gameType=R`,
+      `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${visitDate}&teamId=${teamId}&gameType=R&hydrate=game(promotions)`,
       { headers: { Accept: 'application/json' } }
     )
     if (!schedRes.ok) return { success: false, error: 'MLB schedule fetch failed', code: 'api_error' }
@@ -63,6 +64,8 @@ export async function populateGameStats(
     if (game.status?.abstractGameState !== 'Final') {
       return { success: false, error: 'Game not yet final', code: 'not_final' }
     }
+
+    const promotions: string[] = (game.promotions ?? []).map((p: { name?: string }) => p.name).filter(Boolean)
 
     const gamePk: number = game.gamePk
 
@@ -236,6 +239,7 @@ export async function populateGameStats(
       attendance: gameData.gameInfo?.attendance ?? undefined,
       winningPitcher: decisions.winner?.fullName ?? null,
       losingPitcher:  decisions.loser?.fullName  ?? null,
+      promotions,
     }
   } catch (e) {
     console.error('populateGameStats error:', e)

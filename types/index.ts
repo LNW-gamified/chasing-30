@@ -118,6 +118,7 @@ export interface TripStop {
   created_at: string
   stadium?: Stadium
   destination?: Destination
+  stadium_visit?: { stats_auto_populated: boolean } | null
 }
 
 export interface Trip {

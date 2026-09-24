@@ -94,7 +94,7 @@ export default function TripDetailPage() {
         'experience_type, est_tickets, est_food, est_parking, est_hotel, est_local_transport, actual_tickets, actual_food, actual_parking, actual_hotel, actual_local_transport, notes, ' +
         'ticket_section, ticket_row, ticket_seats, ticket_confirmation, promotions, promotion_photos, created_at, ' +
         'stadium_visit_id, destination_visit_id, baseball_life_entry_id, ' +
-        'stadium:stadiums(*), destination:destinations(*)'
+        'stadium:stadiums(*), destination:destinations(*), stadium_visit:stadium_visits(stats_auto_populated)'
       ).eq('trip_id', id).order('sort_order'),
     ])
     setTrip(t as TripWithStadium)
@@ -137,6 +137,7 @@ export default function TripDetailPage() {
 
     await calculateDrivingDistance(sortStopsByDate(loadedStops))
     refreshStaleGameTimes(loadedStops)
+    refreshPendingStats(loadedStops)
 
     const abbrs = Array.from(new Set(
       loadedStops.map(s => (s.stadium as Stadium | null)?.abbreviation).filter((a): a is string => !!a)
@@ -170,6 +171,37 @@ export default function TripDetailPage() {
       if (real && real !== s.game_time) {
         await supabase.from('trip_stops').update({ game_time: real }).eq('id', s.id)
         setStops(prev => prev.map(p => p.id === s.id ? { ...p, game_time: real } : p))
+      }
+    }))
+  }
+
+  async function refreshPendingStats(stopsToCheck: typeof stops) {
+    // A visit created right as a game ends can miss MLB's own "Final" flag
+    // by a few minutes — populateGameStats correctly declines to guess at
+    // stats for a game that might not really be over yet, but it also
+    // never retries afterward on its own. This catches that up: any
+    // linked visit still missing stats, for a game date that's already
+    // passed, gets one more try each time the trip is opened, by which
+    // point MLB's API has almost always caught up. Also backfills
+    // promotions, which weren't part of the original completion at all.
+    const todayISO = new Date().toISOString().slice(0, 10)
+    const pending = stopsToCheck.filter(s =>
+      s.stadium_visit_id && s.stadium_visit?.stats_auto_populated === false &&
+      s.game_date && s.game_date < todayISO
+    )
+    if (pending.length === 0) return
+    const supabase = createClient()
+    await Promise.all(pending.map(async s => {
+      const res = await fetch('/api/autofill-game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visitId: s.stadium_visit_id }),
+      })
+      if (!res.ok) return
+      const result = await res.json()
+      if (result.promotions && result.promotions.length > 0) {
+        await supabase.from('trip_stops').update({ promotions: result.promotions }).eq('id', s.id)
+        setStops(prev => prev.map(p => p.id === s.id ? { ...p, promotions: result.promotions } : p))
       }
     }))
   }

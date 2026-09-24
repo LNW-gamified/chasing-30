@@ -171,7 +171,10 @@ export async function POST(req: NextRequest) {
           visitId = newVisit?.id ?? null
 
           if (visitId) {
-            await populateGameStats(visitId, stop.game_date, stadium.abbreviation)
+            const result = await populateGameStats(visitId, stop.game_date, stadium.abbreviation)
+            if (result.success && result.promotions && result.promotions.length > 0) {
+              await supabase.from('trip_stops').update({ promotions: result.promotions }).eq('id', stopId)
+            }
           }
         }
 

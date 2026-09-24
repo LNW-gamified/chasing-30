@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
       attendance:     result.attendance,
       winningPitcher: result.winningPitcher,
       losingPitcher:  result.losingPitcher,
+      promotions:     result.promotions,
     })
   } catch (e) {
     console.error('autofill-game error:', e)
