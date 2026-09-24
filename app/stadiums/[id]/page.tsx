@@ -128,7 +128,7 @@ export default function StadiumDetailPage() {
   const [weather, setWeather]                   = useState<StadiumWeather[] | null>(null)
   const [weatherLoading, setWeatherLoading]     = useState(false)
   const [tripMonths, setTripMonths]             = useState<Set<number>>(new Set())
-  const [visitPromos, setVisitPromos]           = useState<Record<string, { promotions: string[]; promotion_photos: Record<string, string> }>>({})
+  const [visitPromos, setVisitPromos]           = useState<Record<string, { stopId: string; promotions: string[]; promotion_photos: Record<string, string> }>>({})
   const [lightboxUrl, setLightboxUrl]           = useState<string | null>(null)
   const [lightboxZoomed, setLightboxZoomed]     = useState(false)
   const [stadiumCollectibles, setStadiumCollectibles] = useState<Array<{ id: string; name: string; category: string; giveaway_type: string | null; giveaway_quantity: string | null; photo_url: string | null; signed_by: string | null; acquired_from: string | null; rating: number | null; price: number | null; stadium_visit_id: string | null }>>([])
@@ -185,15 +185,16 @@ export default function StadiumDetailPage() {
     if (tripIds.length > 0) {
       const { data: promoStops } = await supabase
         .from('trip_stops')
-        .select('trip_id, promotions, promotion_photos')
+        .select('id, trip_id, promotions, promotion_photos')
         .in('trip_id', tripIds)
         .eq('stadium_id', id)
         .not('promotions', 'is', null)
       if (promoStops && promoStops.length > 0) {
-        const map: Record<string, { promotions: string[]; promotion_photos: Record<string, string> }> = {}
+        const map: Record<string, { stopId: string; promotions: string[]; promotion_photos: Record<string, string> }> = {}
         for (const ps of promoStops) {
           const visit = (v ?? []).find(vis => vis.trip_id === ps.trip_id)
           if (visit) map[visit.id] = {
+            stopId: ps.id,
             promotions: ps.promotions ?? [],
             promotion_photos: (ps.promotion_photos ?? {}) as Record<string, string>,
           }
@@ -446,6 +447,20 @@ export default function StadiumDetailPage() {
   }
 
   function openAdd() { setEditingVisit(undefined); setShowForm(true) }
+  async function reorderPromo(visitId: string, index: number, direction: 'up' | 'down') {
+    const entry = visitPromos[visitId]
+    if (!entry) return
+    const swapIndex = direction === 'up' ? index - 1 : index + 1
+    if (swapIndex < 0 || swapIndex >= entry.promotions.length) return
+
+    const reordered = [...entry.promotions]
+    ;[reordered[index], reordered[swapIndex]] = [reordered[swapIndex], reordered[index]]
+
+    setVisitPromos(prev => ({ ...prev, [visitId]: { ...entry, promotions: reordered } }))
+    const supabase = createClient()
+    await supabase.from('trip_stops').update({ promotions: reordered }).eq('id', entry.stopId)
+  }
+
   function openEdit(visit: StadiumVisit) { setEditingVisit(visit); setShowForm(true) }
 
   if (loading) {
@@ -826,8 +841,8 @@ export default function StadiumDetailPage() {
                           const allSeatNums = [visit.seat_number, ...(visit.additional_seats ?? []).map((s: any) => s.number)].filter(Boolean)
                           const hasSeat = visit.seat_section || visit.seat_row || allSeatNums.length > 0
                           return (
+                            <div key={visit.id}>
                             <button
-                              key={visit.id}
                               onClick={() => setExpandedVisit(isExpanded ? null : visit.id)}
                               className="flex flex-col md:flex-row"
                               style={{
@@ -955,60 +970,73 @@ export default function StadiumDetailPage() {
                                 />
                               </div>
                             </button>
+
+                            {isExpanded && (
+                              <>
+                                <BoxScore
+                                  visit={visit}
+                                  stadium={stadium}
+                                  firstTimeMoments={firstTimeMoments}
+                                  fetchingStats={fetchingStats === visit.id}
+                                  statsError={statsError[visit.id] ?? null}
+                                  onEdit={() => openEdit(visit)}
+                                  onDelete={() => { deleteVisit(visit.id) }}
+                                />
+                                {(() => {
+                                  const promos = visitPromos[visit.id]
+                                  return promos && promos.promotions.length > 0 && (
+                                    <div style={{
+                                      margin: '8px 0 0', padding: '14px 16px',
+                                      backgroundColor: 'rgba(245,166,35,0.05)',
+                                      border: '1px solid rgba(245,166,35,0.2)',
+                                      borderRadius: 12,
+                                    }}>
+                                      <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                                        Promotions
+                                      </div>
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                        {promos.promotions.map((name, pIndex) => {
+                                          const photoUrl = promos.promotion_photos[name] ?? null
+                                          return (
+                                            <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                              {promos.promotions.length > 1 && (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
+                                                  <button
+                                                    onClick={() => reorderPromo(visit.id, pIndex, 'up')}
+                                                    disabled={pIndex === 0}
+                                                    aria-label="Move up"
+                                                    style={{ background: 'none', border: '1px solid #30363D', borderRadius: 5, width: 20, height: 16, cursor: pIndex === 0 ? 'default' : 'pointer', color: pIndex === 0 ? '#30363D' : '#8B949E', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                                                  >↑</button>
+                                                  <button
+                                                    onClick={() => reorderPromo(visit.id, pIndex, 'down')}
+                                                    disabled={pIndex === promos.promotions.length - 1}
+                                                    aria-label="Move down"
+                                                    style={{ background: 'none', border: '1px solid #30363D', borderRadius: 5, width: 20, height: 16, cursor: pIndex === promos.promotions.length - 1 ? 'default' : 'pointer', color: pIndex === promos.promotions.length - 1 ? '#30363D' : '#8B949E', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                                                  >↓</button>
+                                                </div>
+                                              )}
+                                              <span style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, flex: 1, minWidth: 0 }}>🎁 {name}</span>
+                                              {photoUrl && (
+                                                /* eslint-disable-next-line @next/next/no-img-element */
+                                                <img src={photoUrl} alt={name}
+                                                  style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', display: 'block', cursor: 'pointer', flexShrink: 0 }}
+                                                  onClick={() => setLightboxUrl(photoUrl)} />
+                                              )}
+                                            </div>
+                                          )
+                                        })}
+                                      </div>
+                                    </div>
+                                  )
+                                })()}
+                              </>
+                            )}
+                            </div>
                           )
                         })}
                         </div>
                       ))}
                     </div>
-
-                    {/* Expanded BoxScore */}
-                    {expandedVisit && (() => {
-                      const visit = visits.find(v => v.id === expandedVisit)
-                      if (!visit) return null
-                      const promos = visitPromos[visit.id]
-                      return (
-                        <>
-                          <BoxScore
-                            visit={visit}
-                            stadium={stadium}
-                            firstTimeMoments={firstTimeMoments}
-                            fetchingStats={fetchingStats === visit.id}
-                            statsError={statsError[visit.id] ?? null}
-                            onEdit={() => openEdit(visit)}
-                            // eslint-disable-next-line react-hooks/refs -- deleteVisit only reads prevEarnedIdsRef inside load(), invoked from this click handler, never during render
-                            onDelete={() => { deleteVisit(visit.id) }}
-                          />
-                          {promos && promos.promotions.length > 0 && (
-                            <div style={{
-                              margin: '8px 0 0', padding: '14px 16px',
-                              backgroundColor: 'rgba(245,166,35,0.05)',
-                              border: '1px solid rgba(245,166,35,0.2)',
-                              borderRadius: 12,
-                            }}>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245,166,35,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                                Promotions
-                              </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                {promos.promotions.map(name => {
-                                  const photoUrl = promos.promotion_photos[name] ?? null
-                                  return (
-                                    <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                      <span style={{ fontSize: 13, color: '#F5A623', fontWeight: 600, flex: 1, minWidth: 0 }}>🎁 {name}</span>
-                                      {photoUrl && (
-                                        /* eslint-disable-next-line @next/next/no-img-element */
-                                        <img src={photoUrl} alt={name}
-                                          style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', display: 'block', cursor: 'pointer', flexShrink: 0 }}
-                                          onClick={() => setLightboxUrl(photoUrl)} />
-                                      )}
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )
-                    })()}
                   </>
                 )}
 
