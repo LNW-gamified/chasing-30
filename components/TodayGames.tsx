@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { Radio } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 import { TEAM_BTN_COLOR } from '@/lib/team-colors'
 import { getUserTimezone } from '@/lib/user-timezone'
+import { radioListenUrl } from '@/lib/mlb-radio'
 
 const userTz = getUserTimezone()
 
@@ -228,6 +230,19 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
               <div style={{ display: 'flex', justifyContent: 'center' }}>
                 <StatusBadge isLive={g.isLive} isFinal={g.isFinal}/>
               </div>
+              {g.isFavorite && !g.isFinal && favAbbr && radioListenUrl(favAbbr) && (
+                <a
+                  href={radioListenUrl(favAbbr)!}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                    marginTop: 10, fontSize: 12, fontWeight: 600, color: favColor,
+                    textDecoration: 'none',
+                  }}
+                >
+                  <Radio size={12} /> Listen Live
+                </a>
+              )}
             </div>
           )
         })}
@@ -299,6 +314,19 @@ export default function TodayGames({ initialGames, favAbbr }: Props) {
                   </span>
                 )}
               </div>
+              {g.isFavorite && !g.isFinal && favAbbr && radioListenUrl(favAbbr) && (
+                <a
+                  href={radioListenUrl(favAbbr)!}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                    marginTop: 5, fontSize: 12, fontWeight: 600, color: favColor,
+                    textDecoration: 'none',
+                  }}
+                >
+                  <Radio size={11} /> Listen Live
+                </a>
+              )}
             </div>
           )
         })}

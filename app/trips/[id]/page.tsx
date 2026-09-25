@@ -9,9 +9,10 @@ import { getTeamLogoUrlById, getTeamLogoUrl, getTeamAbbrById, LIGHT_BG_LOGO_TEAM
 import { formatDate, formatCurrency } from '@/lib/utils'
 import type { Stadium, Trip, TripStop, StopChecklistItem } from '@/types'
 import Link from 'next/link'
-import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink, MoreHorizontal, FileText, Ticket, Utensils, Car, CarTaxiFront, Plane, BedDouble, Camera, Loader2, Building2, Landmark, Gauge, Route } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, DollarSign, CheckCircle, X, MapPin, Calendar, Plus, ExternalLink, MoreHorizontal, FileText, Ticket, Utensils, Car, CarTaxiFront, Plane, BedDouble, Camera, Loader2, Building2, Landmark, Gauge, Route, Radio } from 'lucide-react'
 import StopChecklist from '@/components/StopChecklist'
 import EditStopModal from '@/components/EditStopModal'
+import { radioListenUrl } from '@/lib/mlb-radio'
 import { DESTINATION_BY_SLUG, destinationLocation, EXPERIENCE_TYPES } from '@/lib/destinations'
 import { fetchForecastWeather, fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
 import { TEAM_PRIMARY, TEAM_GRADIENTS as TEAM_COLORS, TEAM_BTN_COLOR, TEAM_LOGO_BG } from '@/lib/team-colors'
@@ -72,6 +73,7 @@ export default function TripDetailPage() {
   const [showDeleteMenu,  setShowDeleteMenu]  = useState(false)
   const [editingStop, setEditingStop] = useState<TripStop | null>(null)
   const [stopWeather, setStopWeather]             = useState<Record<string, WeatherData>>({})
+  const [stopClimate, setStopClimate]              = useState<Record<string, { rating: string; avgHigh: number; avgPrecipDays: number }>>({})
   const [markingStopId,   setMarkingStopId]   = useState<string | null>(null)
   const [markStopError,   setMarkStopError]   = useState<Record<string, string>>({})
   const [linkPickerStopId, setLinkPickerStopId] = useState<string | null>(null)
@@ -349,6 +351,43 @@ export default function TripDetailPage() {
       fetcher(stadium.lat, stadium.lng, date).then(w => {
         if (w) setStopWeather(prev => ({ ...prev, [stop.id]: w }))
       })
+    })
+  }, [stops])
+
+  // For stops too far out for a real forecast (Open-Meteo's free daily
+  // forecast only reaches 16 days), fall back to historical monthly
+  // averages for that stadium — the same "typically great/good/fair"
+  // data already shown on the stadium detail page. Not a substitute for
+  // a real forecast, but far more useful for planning than nothing at
+  // all, which is what most trips currently get since they're planned
+  // further out than 16 days.
+  const climateCache = useRef<Record<string, { month: number; rating: string; avg_high_temp: number; avg_precip_days: number }[]>>({})
+  const stopClimateRef = useRef(stopClimate)
+  useEffect(() => { stopClimateRef.current = stopClimate }, [stopClimate])
+  useEffect(() => {
+    if (stops.length === 0) return
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+    const maxForecastDate = new Date(Date.now() + 16 * 86400000).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+    stops.forEach(async stop => {
+      if (stopClimateRef.current[stop.id]) return
+      const date = stop.game_date
+      const stadium = stop.stadium as Stadium | null
+      if (!date || !stadium?.id || date <= maxForecastDate) return // has (or will get) a real forecast, or is in the past
+
+      let months = climateCache.current[stadium.id]
+      if (!months) {
+        const res = await fetch(`/api/stadium-weather?stadiumId=${stadium.id}`)
+        const json = await res.json()
+        months = json.data ?? []
+        climateCache.current[stadium.id] = months
+      }
+      const month = new Date(date + 'T12:00:00').getMonth() + 1
+      const row = months.find(m => m.month === month)
+      if (row) {
+        setStopClimate(prev => ({ ...prev, [stop.id]: {
+          rating: row.rating, avgHigh: Math.round(row.avg_high_temp), avgPrecipDays: Math.round(row.avg_precip_days),
+        } }))
+      }
     })
   }, [stops])
 
@@ -1357,6 +1396,23 @@ export default function TripDetailPage() {
                                   <Ticket size={12} /> Buy Tickets
                                 </a>
                               )}
+                              {stop.game_date && stadium && stop.game_date >= new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' }) && radioListenUrl(stadium.abbreviation) && (
+                                <a
+                                  href={radioListenUrl(stadium.abbreviation)!}
+                                  target="_blank" rel="noopener noreferrer"
+                                  style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                                    fontSize: 12, fontWeight: 600, color: '#8B949E',
+                                    textDecoration: 'none',
+                                    padding: '5px 10px', borderRadius: 8,
+                                    backgroundColor: 'rgba(139,148,158,0.1)',
+                                    border: '1px solid rgba(139,148,158,0.25)',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  <Radio size={12} /> Listen Live
+                                </a>
+                              )}
                               <button
                                 onClick={() => setEditingStop(stop)}
                                 aria-label="Edit stop"
@@ -1376,7 +1432,7 @@ export default function TripDetailPage() {
                                 })}
                                 {stop.game_time && <span style={{ color: '#F5A623', fontWeight: 700 }}> · {stop.game_time}</span>}
                               </div>
-                              {stopWeather[stop.id] && (() => {
+                              {stopWeather[stop.id] ? (() => {
                                 const w = stopWeather[stop.id]
                                 const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
                                 const isFuture = stop.game_date >= today
@@ -1389,7 +1445,18 @@ export default function TripDetailPage() {
                                     </span>
                                   </div>
                                 )
-                              })()}
+                              })() : stopClimate[stop.id] ? (() => {
+                                const c = stopClimate[stop.id]
+                                const dot = c.rating === 'great' ? '🟢' : c.rating === 'good' ? '🔵' : c.rating === 'fair' ? '🟡' : '🔴'
+                                return (
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6, padding: '4px 10px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                    <span style={{ fontSize: 14 }}>{dot}</span>
+                                    <span style={{ fontSize: 12, fontWeight: 600, color: '#C9D1D9' }}>
+                                      Typically ~{c.avgHigh}°F{c.avgPrecipDays > 0 ? ` · rain ~${c.avgPrecipDays}d/mo` : ''}
+                                    </span>
+                                  </div>
+                                )
+                              })() : null}
                             </div>
                           )}
 
