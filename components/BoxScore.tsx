@@ -8,6 +8,7 @@ import { Pencil, Trash2, RefreshCw } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { fetchGameContent, fetchScoringPlays, type GameContent, type ScoringPlay } from '@/lib/mlb-api'
 import { fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
+import StarRating from '@/components/StarRating'
 import { getTodayLocal } from '@/lib/user-timezone'
 import { classifyDayNight, type DayNight } from '@/lib/sunrise-sunset'
 
@@ -606,6 +607,27 @@ export default function BoxScore({
                           {name}
                         </span>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {(visit.rating_food != null || visit.rating_atmosphere != null || visit.rating_seats != null) && (
+                  <div>
+                    <div style={LABEL}>Your Rating</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, backgroundColor: 'rgba(0,0,0,0.18)', borderRadius: 8, padding: '10px 12px' }}>
+                      {([
+                        { label: 'Food & Drink', value: visit.rating_food },
+                        { label: 'Atmosphere',   value: visit.rating_atmosphere },
+                        { label: 'Seats / View', value: visit.rating_seats },
+                      ] as const).filter(r => r.value != null).map(r => (
+                        <div key={r.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: 13, color: '#8B949E' }}>{r.label}</span>
+                          <StarRating value={r.value} readOnly size={14} />
+                        </div>
+                      ))}
+                      {visit.rating_note && (
+                        <div style={{ fontSize: 13, color: '#E6EDF3', marginTop: 2, fontStyle: 'italic' }}>&ldquo;{visit.rating_note}&rdquo;</div>
+                      )}
                     </div>
                   </div>
                 )}

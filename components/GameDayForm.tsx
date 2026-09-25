@@ -7,6 +7,7 @@ import { X, Plus, Minus, ImagePlus, Trash2, CloudSun, Loader2 } from 'lucide-rea
 import { GAME_MOMENTS } from '@/lib/moments'
 import { fetchSeasonHomeGames, type SeasonGame, STADIUM_TZ, TZ_LABEL } from '@/lib/mlb-api'
 import { TEAM_PRIMARY } from '@/lib/team-colors'
+import StarRating from '@/components/StarRating'
 
 interface ExtraSeat { section: string; row: string; number: string }
 
@@ -124,6 +125,10 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
   const [duplicateWarning, setDuplicateWarning] = useState(false)
   const [companions, setCompanions] = useState<string[]>(visit?.companions ?? [])
   const [companionInput, setCompanionInput] = useState('')
+  const [ratingFood, setRatingFood] = useState<number | null>(visit?.rating_food ?? null)
+  const [ratingAtmosphere, setRatingAtmosphere] = useState<number | null>(visit?.rating_atmosphere ?? null)
+  const [ratingSeats, setRatingSeats] = useState<number | null>(visit?.rating_seats ?? null)
+  const [ratingNote, setRatingNote] = useState(visit?.rating_note ?? '')
   const [foodItems, setFoodItems] = useState<Array<{ name: string; category: string; rating: number | null; photoFile: File | null; photoPreview: string | null }>>([])
   const [giveawayItems, setGiveawayItems] = useState<Array<{ name: string; category: string; giveaway_type: string; photo_url: string | null }>>([])
   const [uploadingIdx, setUploadingIdx] = useState<Record<number, boolean>>({})
@@ -391,6 +396,10 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
       additional_seats: additionalSeats.filter((s) => s.section || s.row || s.number),
       moments: selectedMoments,
       companions,
+      rating_food: ratingFood,
+      rating_atmosphere: ratingAtmosphere,
+      rating_seats: ratingSeats,
+      rating_note: ratingNote || null,
       created_by: user?.id ?? null,
     }
 
@@ -862,6 +871,30 @@ export default function GameDayForm({ stadium, visit, onClose, onSaved }: Props)
               onClick={() => setFoodItems([...foodItems, { name: '', category: 'other', rating: null, photoFile: null, photoPreview: null }])}
               style={{ width: '100%', padding: '10px', borderRadius: 10, border: '1px dashed #30363D', background: 'none', color: '#8B949E', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
             >+ Add Food or Drink</button>
+          </div>
+
+          {sectionHead('Rate This Visit')}
+          <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {([
+              { label: 'Food & Drink', value: ratingFood, set: setRatingFood },
+              { label: 'Atmosphere',   value: ratingAtmosphere, set: setRatingAtmosphere },
+              { label: 'Seats / View', value: ratingSeats, set: setRatingSeats },
+            ] as const).map(({ label, value, set }) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 14, color: '#C9D1D9', fontWeight: 600 }}>{label}</span>
+                <StarRating value={value} onChange={set} />
+              </div>
+            ))}
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label className="label">What made it stand out? (optional)</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="e.g. best crab fries in baseball, sun in your eyes all game"
+              value={ratingNote}
+              onChange={(e) => setRatingNote(e.target.value)}
+            />
           </div>
 
           {sectionHead('Story & Notes')}

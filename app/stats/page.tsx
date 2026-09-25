@@ -76,6 +76,30 @@ export default async function StatsPage() {
   }
   const topCompanion = Object.entries(companionCounts).sort((a, b) => b[1] - a[1])[0]
 
+  // Your ballpark rankings — average across every rated visit to each
+  // stadium, so visiting the same park twice with different experiences
+  // blends into one overall picture rather than showing as two entries.
+  const ratingsByStadium: Record<string, { food: number[]; atmosphere: number[]; seats: number[] }> = {}
+  for (const v of allVisits) {
+    if (v.rating_food == null && v.rating_atmosphere == null && v.rating_seats == null) continue
+    const bucket = ratingsByStadium[v.stadium_id] ?? { food: [], atmosphere: [], seats: [] }
+    if (v.rating_food != null) bucket.food.push(v.rating_food)
+    if (v.rating_atmosphere != null) bucket.atmosphere.push(v.rating_atmosphere)
+    if (v.rating_seats != null) bucket.seats.push(v.rating_seats)
+    ratingsByStadium[v.stadium_id] = bucket
+  }
+  const avg = (nums: number[]) => nums.length > 0 ? nums.reduce((s, n) => s + n, 0) / nums.length : null
+  const ballparkRankings = Object.entries(ratingsByStadium)
+    .map(([stadiumId, r]) => {
+      const stadium = allStadiums.find(s => s.id === stadiumId)
+      if (!stadium) return null
+      const parts = [avg(r.food), avg(r.atmosphere), avg(r.seats)].filter((n): n is number => n != null)
+      const overall = parts.length > 0 ? parts.reduce((s, n) => s + n, 0) / parts.length : null
+      return { stadium, overall, food: avg(r.food), atmosphere: avg(r.atmosphere), seats: avg(r.seats) }
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null && r.overall !== null)
+    .sort((a, b) => (b.overall ?? 0) - (a.overall ?? 0))
+
   // Farthest trip — from chronologically first visited stadium to all others
   let farthestStadium: Stadium | null = null
   let farthestMiles = 0
@@ -412,6 +436,38 @@ export default async function StatsPage() {
           )}
         </div>
       </div>
+
+      {/* Your Ballpark Rankings */}
+      {ballparkRankings.length > 0 && (
+        <div className="mt-6 card p-6">
+          <div className="flex items-center gap-2 font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+            <Star size={18} style={{ color: '#F5A623' }} />
+            Your Ballpark Rankings
+          </div>
+          <div className="flex flex-col gap-3">
+            {ballparkRankings.map((r, i) => (
+              <div key={r.stadium.id} className="flex items-center gap-4 p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
+                <div className="text-lg font-bold w-6 text-center flex-shrink-0" style={{ color: i === 0 ? '#F5A623' : '#8B949E' }}>
+                  {i + 1}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-semibold" style={{ color: '#E6EDF3', fontSize: '0.96rem' }}>
+                    {r.stadium.name}
+                  </div>
+                  <div className="text-xs truncate" style={{ color: '#8B949E' }}>
+                    {r.stadium.team}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <Star key={n} size={16} color="#F5A623" fill={n <= Math.round(r.overall ?? 0) ? '#F5A623' : 'none'} strokeWidth={1.5} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Streaks */}
       {allVisits.length > 0 && (

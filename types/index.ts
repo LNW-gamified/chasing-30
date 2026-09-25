@@ -78,6 +78,10 @@ export interface StadiumVisit {
   game_events: string[] | null
   boxscore_data: Record<string, unknown> | null
   trip_id: string | null
+  rating_food: number | null
+  rating_atmosphere: number | null
+  rating_seats: number | null
+  rating_note: string | null
   created_by: string | null
   created_at: string
   stadium?: Stadium
