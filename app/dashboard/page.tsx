@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
 import type { Stadium, StadiumVisit, BaseballLifeEntry, Trip } from '@/types'
 import { formatCurrency } from '@/lib/utils'
+import { tripActualSpent } from '@/lib/trip-spend'
 import Link from 'next/link'
 import { CalendarDays, ClipboardList, MapPin, DollarSign, Trophy, Eye, Star } from 'lucide-react'
 import TodayGames, { type TodayGame } from '@/components/TodayGames'
@@ -317,12 +318,7 @@ export default async function DashboardPage() {
         pilgCount > 0 ? `${pilgCount} Pilgrimages` : null,
         destinationsVisited > 0 ? `${destinationsVisited} Trips` : null,
       ].filter(Boolean).join(' · ')
-  const totalSpent = allTrips.reduce((sum, t: any) => {
-    const tripLevel  = Number(t.actual_travel ?? 0) + Number(t.actual_hotel ?? 0)
-    const stopsLevel = (t.stops ?? []).reduce((s: number, stop: any) =>
-      s + Number(stop.actual_tickets ?? 0) + Number(stop.actual_food ?? 0) + Number(stop.actual_parking ?? 0) + Number(stop.actual_hotel ?? 0) + Number(stop.actual_local_transport ?? 0), 0)
-    return sum + tripLevel + stopsLevel
-  }, 0)
+  const totalSpent = allTrips.reduce((sum, t: any) => sum + tripActualSpent(t, t.stops), 0)
 
   const divCounts: Record<string, number> = {}
   for (const s of allStadiums) {
@@ -626,8 +622,9 @@ export default async function DashboardPage() {
               { Icon: MapPin,        value: destinationsTotal,         label: 'Destinations',    color: '#1F6FEB', sub: destinationsSub },
               { Icon: DollarSign,    value: formatCurrency(totalSpent),label: 'Total Spent',     color: '#3FB950', sub: null },
             ]).map(({ Icon, value, label, color, sub }) => (
-              <div
+              <Link
                 key={label}
+                href="/stats?tab=overview"
                 className="dash-card"
                 style={{
                   ...card,
@@ -635,6 +632,7 @@ export default async function DashboardPage() {
                   display: 'flex', flexDirection: 'column',
                   borderTop: `2px solid ${color}`,
                   background: `linear-gradient(160deg, ${color}14 0%, #161B22 45%)`,
+                  textDecoration: 'none',
                 }}
               >
                 <Icon size={24} color={color} strokeWidth={1.8} style={{ marginBottom: 14, flexShrink: 0 }}/>
@@ -657,7 +655,7 @@ export default async function DashboardPage() {
                     </div>
                   )}
                 </div>
-              </div>
+              </Link>
             ))}
 
             {/* Identity tile — fav division + most seen team share one card so the
@@ -673,27 +671,27 @@ export default async function DashboardPage() {
                 background: `linear-gradient(160deg, ${tier.textColor}14 0%, #161B22 45%)`,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <Link href="/stats?tab=overview" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, textDecoration: 'none' }}>
                 <Trophy size={20} color="#F5A623" strokeWidth={1.8} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{favDivision}</div>
                   <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Fav Division</div>
                 </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              </Link>
+              <Link href="/stats?tab=rankings" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
                 <Eye size={20} color={tier.textColor} strokeWidth={1.8} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 15, fontWeight: 800, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mostSeenTeam}</div>
                   <div style={{ fontSize: 11, color: '#8B949E', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Most Seen Team</div>
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
         </div>
 
         <div style={{ textAlign: 'right', marginTop: -12, marginBottom: SECTION_GAP }}>
           <Link
-            href="/milestones"
+            href="/stats"
             style={{ fontSize: 12, fontWeight: 600, color: '#58A6FF', textDecoration: 'none' }}
           >
             View full stats →

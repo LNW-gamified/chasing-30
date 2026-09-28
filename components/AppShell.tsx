@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutDashboard, Building2, Map, Trophy, Plane } from 'lucide-react'
+import { LayoutDashboard, Building2, Map, Trophy, Plane, BarChart3 } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 import ProfilePanel from '@/components/ProfilePanel'
 
@@ -35,16 +35,18 @@ const DESKTOP_NAV = [
   { href: '/dashboard',  label: 'Home',      icon: LayoutDashboard },
   { href: '/stadiums',   label: 'Ballparks', icon: Building2        },
   { href: '/map',        label: 'Map',       icon: Map              },
-  { href: '/milestones', label: 'Records',   icon: Trophy           },
+  { href: '/milestones', label: 'Achievements', icon: Trophy       },
   { href: '/trips',      label: 'Road Trips', icon: Plane           },
+  { href: '/stats',      label: 'Stats',     icon: BarChart3        },
 ]
 
 const MOBILE_NAV = [
   { href: '/dashboard',  label: 'Home',      icon: LayoutDashboard },
   { href: '/stadiums',   label: 'Ballparks', icon: Building2        },
   { href: '/map',        label: 'Map',       icon: Map              },
-  { href: '/milestones', label: 'Records',   icon: Trophy           },
+  { href: '/milestones', label: 'Achievements', icon: Trophy       },
   { href: '/trips',      label: 'Road Trips', icon: Plane           },
+  { href: '/stats',      label: 'Stats',     icon: BarChart3        },
 ]
 
 function daysLabel(days: number): string {
@@ -149,7 +151,7 @@ export default function AppShell({ children, nextTrip, visitedCount, rankName, r
               return (
                 <Link key={href} href={href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', gap: 4, color: active ? '#1F6FEB' : 'rgba(230,237,243,0.6)' }}>
                   <Icon size={26} strokeWidth={active ? 2.5 : 1.8} />
-                  {active && <span style={{ fontSize: '0.65rem', fontWeight: 700, lineHeight: 1 }}>{label}</span>}
+                  {active && <span style={{ fontSize: '0.65rem', fontWeight: 700, lineHeight: 1, whiteSpace: 'nowrap' }}>{label}</span>}
                 </Link>
               )
             })}

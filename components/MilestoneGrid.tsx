@@ -9,7 +9,6 @@ import TeamLogo from '@/components/TeamLogo'
 import MiLBLogo from '@/components/MiLBLogo'
 import { STATIC_EXPERIENCES, type StaticExperience } from '@/lib/static-experiences'
 import SpecialVisitButton from '@/components/SpecialVisitButton'
-import { classifyDayNight, type DayNight } from '@/lib/sunrise-sunset'
 import { MILESTONE_POINTS } from '@/lib/ranks'
 import { type EditorItem } from '@/components/GiveawayFoodEditor'
 
@@ -198,13 +197,12 @@ function visitLabel(v: StadiumVisit, stadiums: Stadium[]): string {
 
 // ── Category definitions ───────────────────────────────────────────────────
 
-type CategoryKey = 'all' | 'earned' | 'inprogress' | 'records'
+type CategoryKey = 'all' | 'earned' | 'inprogress'
 
 const CATEGORIES: { key: CategoryKey; label: string; emoji: string }[] = [
   { key: 'all',        label: 'All',              emoji: '🎯' },
   { key: 'earned',     label: 'Earned',           emoji: '✅' },
   { key: 'inprogress', label: 'In Progress',      emoji: '⏳' },
-  { key: 'records',    label: 'Personal Records', emoji: '📋' },
 ]
 
 const DIVISION_IDS = new Set([
@@ -278,7 +276,6 @@ export default function MilestoneGrid({
   const [filter, setFilter]     = useState<CategoryKey>('all')
   const [search, setSearch]     = useState('')
   const [selected, setSelected] = useState<SelectedItem | null>(null)
-  const [dayNightCounts, setDayNightCounts] = useState<{ day: number; night: number; twilight: number } | null>(null)
   const [confetti, setConfetti] = useState<{ id: number; color: string; left: number; delay: number; size: number; duration: number }[]>([])
   const confettiIdRef           = useRef(0)
 
@@ -335,35 +332,6 @@ export default function MilestoneGrid({
 
   useEffect(() => { fetchClaims() }, [fetchClaims])
 
-  // Real, sunset-aware day/night breakdown — replaces the old clock-time-only
-  // heuristic, which classified purely by hour with no regard for the
-  // stadium's actual location or the date's real sunset time (e.g. it called
-  // a 6:42 PM Seattle game in May "twilight" when it was still broad
-  // daylight there). classifyDayNight is async (it looks up real sunset
-  // times), so this runs as its own effect rather than inside the
-  // synchronous personalRecords memo above.
-  useEffect(() => {
-    let cancelled = false
-    async function run() {
-      const withTime = allVisits.filter(v => v.first_pitch_time)
-      if (withTime.length === 0) { setDayNightCounts({ day: 0, night: 0, twilight: 0 }); return }
-      const results = await Promise.all(withTime.map(v => {
-        const stadium = allStadiums.find(s => s.id === v.stadium_id)
-        if (!stadium) return Promise.resolve(null as DayNight)
-        return classifyDayNight(v.first_pitch_time, v.visit_date, stadium.abbreviation, stadium.lat, stadium.lng)
-      }))
-      if (cancelled) return
-      const counts = { day: 0, night: 0, twilight: 0 }
-      for (const dn of results) {
-        if (dn === 'day') counts.day++
-        else if (dn === 'night') counts.night++
-        else if (dn === 'twilight') counts.twilight++
-      }
-      setDayNightCounts(counts)
-    }
-    run()
-    return () => { cancelled = true }
-  }, [allVisits, allStadiums])
   useEffect(() => { fetchCollectibles() }, [fetchCollectibles])
   useEffect(() => { fetchMilbStadiums() }, [fetchMilbStadiums])
 
@@ -560,7 +528,6 @@ export default function MilestoneGrid({
     return ladders.filter(m => {
       if (filter === 'earned')      return (m.currentValue ?? 0) >= (m.tiers?.[0]?.threshold ?? 1)
       if (filter === 'inprogress')  return (m.currentValue ?? 0) > 0 && (m.currentValue ?? 0) < (m.tiers?.[m.tiers.length - 1]?.threshold ?? Infinity)
-      if (filter === 'records')     return false
       return true
     }).filter(m => {
       if (!search) return true
@@ -571,7 +538,6 @@ export default function MilestoneGrid({
   }, [filter, search, ladders])
 
   const showStatics = filter === 'all' || filter === 'earned' || filter === 'inprogress'
-  const showRecords = filter === 'records'
   const filteredStatics = useMemo(() => {
     if (!showStatics) return []
     return STATIC_EXPERIENCES.filter(s => {
@@ -592,78 +558,6 @@ export default function MilestoneGrid({
     : null
 
   const sortedVisits = [...allVisits].sort((a, b) => b.visit_date.localeCompare(a.visit_date))
-
-  const personalRecords = useMemo(() => {
-    const asc = [...allVisits].sort((a, b) => a.visit_date.localeCompare(b.visit_date))
-    const withScore = allVisits.filter(v => v.home_runs != null && v.away_runs != null)
-    const wins   = withScore.filter(v => v.home_runs! > v.away_runs!)
-    const losses = withScore.filter(v => v.home_runs! < v.away_runs!)
-
-    const biggestWin   = withScore.reduce<StadiumVisit | null>((best, v) => {
-      const diff     = Math.abs(v.home_runs! - v.away_runs!)
-      const bestDiff = best ? Math.abs(best.home_runs! - best.away_runs!) : -1
-      return diff > bestDiff ? v : best
-    }, null)
-    const biggestLoss  = losses.reduce<StadiumVisit | null>((best, v) => !best || (v.away_runs! - v.home_runs!) > (best.away_runs! - best.home_runs!) ? v : best, null)
-    const highestScore = withScore.reduce<StadiumVisit | null>((best, v) => !best || (v.home_runs! + v.away_runs!) > (best.home_runs! + best.away_runs!) ? v : best, null)
-    const lowestScore  = withScore.filter(v => v.home_runs! + v.away_runs! > 0).reduce<StadiumVisit | null>((best, v) => !best || (v.home_runs! + v.away_runs!) < (best.home_runs! + best.away_runs!) ? v : best, null)
-
-    const biggestCrowd = allVisits.filter(v => v.attendance != null)
-      .reduce<StadiumVisit | null>((best, v) => !best || v.attendance! > best.attendance! ? v : best, null)
-
-    const hottestGame = allVisits.filter(v => v.temperature != null)
-      .reduce<StadiumVisit | null>((best, v) => !best || v.temperature! > best.temperature! ? v : best, null)
-
-    const coldestGame = allVisits.filter(v => v.temperature != null)
-      .reduce<StadiumVisit | null>((best, v) => !best || v.temperature! < best.temperature! ? v : best, null)
-
-    // Most visited stadium
-    const stadiumCounts: Record<string, number> = {}
-    for (const v of allVisits) stadiumCounts[v.stadium_id] = (stadiumCounts[v.stadium_id] ?? 0) + 1
-    const topStadiumId = Object.entries(stadiumCounts).sort((a, b) => b[1] - a[1])[0]?.[0]
-    const topStadium   = topStadiumId ? allStadiums.find(s => s.id === topStadiumId) : null
-    const topStadiumCount = topStadiumId ? stadiumCounts[topStadiumId] : 0
-
-    // Most seen team (home + away appearances)
-    const teamSeenCounts: Record<string, number> = {}
-    for (const v of allVisits) {
-      const away = v.visiting_team?.replace(/^vs\.?\s+/i, '').trim()
-      if (v.home_team) teamSeenCounts[v.home_team] = (teamSeenCounts[v.home_team] ?? 0) + 1
-      if (away) teamSeenCounts[away] = (teamSeenCounts[away] ?? 0) + 1
-    }
-    const topOpponent      = Object.entries(teamSeenCounts).sort((a, b) => b[1] - a[1])[0]
-    const topOpponentName  = topOpponent?.[0] ?? null
-    const topOpponentCount = topOpponent?.[1] ?? 0
-
-    // Games by year
-    const yearCounts: Record<string, number> = {}
-    for (const v of allVisits) {
-      const yr = v.visit_date.slice(0, 4)
-      yearCounts[yr] = (yearCounts[yr] ?? 0) + 1
-    }
-    const byYear = Object.entries(yearCounts).sort((a, b) => a[0].localeCompare(b[0]))
-    const maxYearCount = Math.max(...byYear.map(([, c]) => c), 1)
-
-    const fmtDate = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    const fmtScore = (v: StadiumVisit) => `${v.away_runs}–${v.home_runs}`
-    const fmtMatchup = (v: StadiumVisit) => {
-      const away = v.visiting_team?.replace(/^vs\.?\s+/i, '').trim() ?? 'Away'
-      const home = v.home_team ?? 'Home'
-      return `${away} ${v.away_runs ?? '?'} · ${home} ${v.home_runs ?? '?'}`
-    }
-    const stadiumFor = (v: StadiumVisit) => allStadiums.find(s => s.id === v.stadium_id)
-
-    return {
-      firstGame: asc[0] ?? null, lastGame: asc[asc.length - 1] ?? null,
-      totalGames: allVisits.length,
-      wins: wins.length, losses: losses.length, scored: withScore.length,
-      biggestWin, biggestLoss, highestScore, lowestScore,
-      biggestCrowd, hottestGame, coldestGame,
-      topStadium, topStadiumCount, topOpponentName, topOpponentCount,
-      byYear, maxYearCount,
-      fmtDate, fmtScore, fmtMatchup, stadiumFor,
-    }
-  }, [allVisits, allStadiums])
 
   function fireConfetti() {
     const pieces = Array.from({ length: 55 }, (_, i) => ({
@@ -696,55 +590,12 @@ export default function MilestoneGrid({
 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 16px 80px' }}>
 
-        {/* ── Personal Records compact summary ───────────────────────────── */}
-        {personalRecords && personalRecords.totalGames > 0 && (
-          <div
-            style={{
-              marginBottom: 20, padding: '14px 16px', borderRadius: 14,
-              backgroundColor: '#161B22', border: '1px solid #30363D',
-              display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
-            }}
-          >
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>📖 Your Record Book</div>
-              <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-                <div>
-                  <div style={{ fontSize: 18, fontWeight: 900, color: '#E6EDF3', lineHeight: 1 }}>{personalRecords.totalGames}</div>
-                  <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>Games</div>
-                </div>
-                {personalRecords.scored > 0 && (
-                  <div>
-                    <div style={{ fontSize: 18, fontWeight: 900, color: '#3FB950', lineHeight: 1 }}>{personalRecords.wins}–{personalRecords.losses}</div>
-                    <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>W–L Record</div>
-                  </div>
-                )}
-                {personalRecords.topStadium && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <TeamLogo abbreviation={personalRecords.topStadium.abbreviation} size={24} />
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', lineHeight: 1 }}>{personalRecords.topStadium.name}</div>
-                      <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>Most visited · {personalRecords.topStadiumCount}x</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={() => setFilter('records')}
-              style={{ fontSize: 13, fontWeight: 700, color: '#58A6FF', background: 'rgba(88,166,255,0.08)', border: '1px solid rgba(88,166,255,0.25)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', flexShrink: 0 }}
-            >
-              Full Records →
-            </button>
-          </div>
-        )}
-
         {/* ── Category card carousel ──────────────────────────────────────── */}
         <div className="no-scrollbar" style={{ overflowX: 'auto', display: 'flex', gap: 8, marginBottom: 20, paddingBottom: 4 }}>
           {CATEGORIES.map(cat => {
             const active = filter === cat.key
             const tabColor = cat.key === 'earned' ? '#3FB950'
               : cat.key === 'inprogress' ? '#F5A623'
-              : cat.key === 'records' ? '#58A6FF'
               : '#1F6FEB'
             let count: number | null = null
             if (cat.key === 'earned') count = earned.length + earnedStaticCount + earnedLadderCount
@@ -785,176 +636,8 @@ export default function MilestoneGrid({
           })}
         </div>
 
-        {/* ── Personal Records panel ─────────────────────────────────────── */}
-        {showRecords && personalRecords && (
-          <div style={{ marginBottom: 40 }}>
-            {personalRecords.totalGames === 0 ? (
-              <div style={{ textAlign: 'center', padding: '48px 16px', color: '#8B949E', fontSize: 14 }}>
-                Log some games to see your personal records.
-              </div>
-            ) : (
-              <>
-                {/* ── Record Book ── */}
-                <div style={{ marginBottom: 24 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>📖 Your Record Book</div>
-                  <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: 10 }}>
-                    {[
-                      { label: 'Games Attended', value: personalRecords.totalGames, sub: null },
-                      { label: 'W–L Record', value: personalRecords.scored > 0 ? `${personalRecords.wins}–${personalRecords.losses}` : '—', sub: personalRecords.scored > 0 ? `${Math.round((personalRecords.wins / personalRecords.scored) * 100)}% win rate` : 'No scores logged' },
-                      { label: 'First Game', value: personalRecords.firstGame ? personalRecords.fmtDate(personalRecords.firstGame.visit_date) : '—', sub: personalRecords.firstGame ? personalRecords.stadiumFor(personalRecords.firstGame)?.name ?? null : null },
-                      { label: 'Latest Game', value: personalRecords.lastGame ? personalRecords.fmtDate(personalRecords.lastGame.visit_date) : '—', sub: personalRecords.lastGame ? personalRecords.stadiumFor(personalRecords.lastGame)?.name ?? null : null },
-                    ].map(({ label, value, sub }) => (
-                      <div key={label} style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 14, padding: '14px 12px', textAlign: 'center' }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{label}</div>
-                        <div style={{ fontSize: 18, fontWeight: 900, color: '#E6EDF3', lineHeight: 1.2, marginBottom: sub ? 4 : 0 }}>{value}</div>
-                        {sub && <div style={{ fontSize: 13, color: '#8B949E', lineHeight: 1.3 }}>{sub}</div>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* ── Best Games ── */}
-                {personalRecords.totalGames > 0 && (
-                  <div style={{ marginBottom: 24 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>🏆 Best Games</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8 }}>
-                      {(() => {
-                        const rows = [
-                          personalRecords.firstGame ? {
-                            emoji: '⭐', label: 'First Game', v: personalRecords.firstGame,
-                            detail: personalRecords.fmtMatchup(personalRecords.firstGame),
-                            detail2: null,
-                          } : null,
-                          personalRecords.biggestWin ? {
-                            emoji: '🎉', label: 'Biggest Blowout', v: personalRecords.biggestWin,
-                            detail: personalRecords.fmtMatchup(personalRecords.biggestWin),
-                            detail2: `${Math.abs(personalRecords.biggestWin.home_runs! - personalRecords.biggestWin.away_runs!)}-run margin${personalRecords.biggestWin.winning_pitcher ? ` · W: ${personalRecords.biggestWin.winning_pitcher}` : ''}`,
-                          } : null,
-                          personalRecords.biggestLoss ? {
-                            emoji: '😬', label: 'Biggest Loss', v: personalRecords.biggestLoss,
-                            detail: personalRecords.fmtMatchup(personalRecords.biggestLoss),
-                            detail2: personalRecords.biggestLoss.losing_pitcher ? `L: ${personalRecords.biggestLoss.losing_pitcher}` : null,
-                          } : null,
-                          personalRecords.highestScore ? {
-                            emoji: '💣', label: 'Highest Scoring', v: personalRecords.highestScore,
-                            detail: personalRecords.fmtMatchup(personalRecords.highestScore),
-                            detail2: `${personalRecords.highestScore.home_runs! + personalRecords.highestScore.away_runs!} total runs`,
-                          } : null,
-                          personalRecords.lowestScore ? {
-                            emoji: '🎯', label: "Pitcher's Duel", v: personalRecords.lowestScore,
-                            detail: personalRecords.fmtMatchup(personalRecords.lowestScore),
-                            detail2: [
-                              personalRecords.lowestScore.home_starter_name,
-                              personalRecords.lowestScore.away_starter_name,
-                            ].filter(Boolean).join(' vs ') || null,
-                          } : null,
-                          personalRecords.biggestCrowd ? {
-                            emoji: '👥', label: 'Biggest Crowd', v: personalRecords.biggestCrowd,
-                            detail: personalRecords.fmtMatchup(personalRecords.biggestCrowd),
-                            detail2: `${personalRecords.biggestCrowd.attendance?.toLocaleString()} fans`,
-                          } : null,
-                          personalRecords.hottestGame ? {
-                            emoji: '🌡️', label: 'Hottest Game', v: personalRecords.hottestGame,
-                            detail: personalRecords.fmtMatchup(personalRecords.hottestGame),
-                            detail2: `${personalRecords.hottestGame.temperature}°F${personalRecords.hottestGame.weather ? ` · ${personalRecords.hottestGame.weather}` : ''}`,
-                          } : null,
-                          personalRecords.coldestGame && personalRecords.coldestGame.id !== personalRecords.hottestGame?.id ? {
-                            emoji: '🥶', label: 'Coldest Game', v: personalRecords.coldestGame,
-                            detail: personalRecords.fmtMatchup(personalRecords.coldestGame),
-                            detail2: `${personalRecords.coldestGame.temperature}°F${personalRecords.coldestGame.weather ? ` · ${personalRecords.coldestGame.weather}` : ''}`,
-                          } : null,
-                        ].filter(Boolean)
-
-                        return rows.map((row) => {
-                          if (!row) return null
-                          const stadium = personalRecords.stadiumFor(row.v)
-                          return (
-                            <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, backgroundColor: '#161B22', border: '1px solid #30363D' }}>
-                              <span style={{ fontSize: 22, flexShrink: 0 }}>{row.emoji}</span>
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', marginBottom: 2 }}>{row.label}</div>
-                                <div style={{ fontSize: 13, fontWeight: 600, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  {stadium?.name ?? '—'} · {personalRecords.fmtDate(row.v.visit_date)}
-                                </div>
-                                <div style={{ fontSize: 13, color: '#8B949E', marginTop: 2 }}>{row.detail}</div>
-                                {row.detail2 && <div style={{ fontSize: 13, color: '#8B949E', marginTop: 1 }}>{row.detail2}</div>}
-                              </div>
-                            </div>
-                          )
-                        })
-                      })()}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Favorites ── */}
-                <div style={{ marginBottom: 24 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>⭐ Favorites</div>
-                  <div className="grid grid-cols-2" style={{ gap: 10 }}>
-                    {personalRecords.topStadium && (
-                      <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 14, padding: '14px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <TeamLogo abbreviation={personalRecords.topStadium.abbreviation} size={36} />
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Most Visited</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{personalRecords.topStadium.name}</div>
-                          <div style={{ fontSize: 13, color: '#F5A623', marginTop: 2 }}>{personalRecords.topStadiumCount} visit{personalRecords.topStadiumCount !== 1 ? 's' : ''}</div>
-                        </div>
-                      </div>
-                    )}
-                    {personalRecords.topOpponentName && (
-                      <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 14, padding: '14px 12px' }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Most Seen Team</div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: '#E6EDF3', marginBottom: 2 }}>{personalRecords.topOpponentName}</div>
-                        <div style={{ fontSize: 13, color: '#F5A623' }}>{personalRecords.topOpponentCount} game{personalRecords.topOpponentCount !== 1 ? 's' : ''}</div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* ── Games by Year ── */}
-                {personalRecords.byYear.length > 0 && (
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>📅 Games by Season</div>
-                    <div style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 14, padding: '16px' }}>
-                      {personalRecords.byYear.map(([year, count]) => (
-                        <div key={year} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', width: 36, flexShrink: 0 }}>{year}</div>
-                          <div style={{ flex: 1, height: 8, backgroundColor: '#1C2430', borderRadius: 4, overflow: 'hidden' }}>
-                            <div style={{ height: '100%', borderRadius: 4, width: `${(count / personalRecords.maxYearCount) * 100}%`, background: 'linear-gradient(90deg, #1F6FEB, #58A6FF)', transition: 'width 0.4s ease' }} />
-                          </div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3', width: 24, textAlign: 'right', flexShrink: 0 }}>{count}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Day / Night ── */}
-                {dayNightCounts && (dayNightCounts.day + dayNightCounts.night + dayNightCounts.twilight) > 0 && (
-                  <div style={{ marginTop: 24 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>🌙 Day vs Night</div>
-                    <div className="grid grid-cols-3" style={{ gap: 10 }}>
-                      {[
-                        { label: 'Day Games',    value: dayNightCounts.day,      emoji: '🌅', color: '#F5A623' },
-                        { label: 'Twilight',     value: dayNightCounts.twilight, emoji: '🌇', color: '#F5A623' },
-                        { label: 'Night Games',  value: dayNightCounts.night,    emoji: '🌙', color: '#58A6FF' },
-                      ].map(({ label, value, emoji, color }) => (
-                        <div key={label} style={{ backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 14, padding: '14px 8px', textAlign: 'center' }}>
-                          <div style={{ fontSize: 22, marginBottom: 6 }}>{emoji}</div>
-                          <div style={{ fontSize: 22, fontWeight: 900, color, lineHeight: 1 }}>{value}</div>
-                          <div style={{ fontSize: 13, color: '#8B949E', marginTop: 4, fontWeight: 600 }}>{label}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
         {/* ── Search bar ─────────────────────────────────────────────────── */}
-        {!showRecords && <div style={{ position: 'relative', marginBottom: 20 }}>
+        <div style={{ position: 'relative', marginBottom: 20 }}>
           <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#8B949E', pointerEvents: 'none' }} />
           <input
             value={search}
@@ -962,10 +645,10 @@ export default function MilestoneGrid({
             placeholder="Search achievements..."
             style={{ width: '100%', padding: '10px 12px 10px 34px', borderRadius: 12, border: '1px solid #30363D', fontSize: 13, color: '#E6EDF3', backgroundColor: '#161B22', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
           />
-        </div>}
+        </div>
 
         {/* ── Achievement card grid ───────────────────────────────────────── */}
-        {!showRecords && <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12, marginBottom: 40 }}>
+        <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: 12, marginBottom: 40 }}>
 
           {/* ── Ladder milestone cards (full-width) ── */}
           {filteredLadders.map(m => {
@@ -1223,7 +906,7 @@ export default function MilestoneGrid({
               <div style={{ fontSize: 14, color: '#8B949E' }}>Try a different category or search term</div>
             </div>
           )}
-        </div>}
+        </div>
 
         {/* ── My Collection section ───────────────────────────────────────── */}
         {stadiumCollectibles.length > 0 && filter === 'all' && (() => {
