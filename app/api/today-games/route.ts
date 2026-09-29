@@ -13,8 +13,11 @@ export async function GET(req: NextRequest) {
   try {
     const tz = req.nextUrl.searchParams.get('tz') || 'America/Los_Angeles'
     const today = new Date().toLocaleDateString('en-CA', { timeZone: tz })
+    // Same fix as the dashboard's initial fetch: without the postseason game
+    // types, this route's own 60s poll would silently wipe those games back
+    // out again right after the page's first server render showed them.
     const res = await fetch(
-      `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&gameType=R&hydrate=linescore`,
+      `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&gameType=R,F,D,L,W&hydrate=linescore`,
       { next: { revalidate: 60 } }
     )
     if (!res.ok) return NextResponse.json([])

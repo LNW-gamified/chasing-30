@@ -36,8 +36,12 @@ const SECTION_GAP = '2rem'
 async function fetchTodayGames(favAbbr: string | null, timeZone: string): Promise<TodayGame[]> {
   try {
     const today = new Date().toLocaleDateString('en-CA', { timeZone })
+    // R = regular season; F/D/L/W = Wild Card, Division Series, League
+    // Championship Series, World Series. Regular season only (the original
+    // "gameType=R") meant this card silently went empty for the entire
+    // postseason every year, since none of those games carry type R.
     const res = await fetch(
-      `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&gameType=R&hydrate=linescore`,
+      `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&gameType=R,F,D,L,W&hydrate=linescore`,
       { next: { revalidate: 300 } }
     )
     if (!res.ok) return []

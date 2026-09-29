@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
 import { haversineDistance, formatCurrency } from '@/lib/utils'
 import { tripActualSpent } from '@/lib/trip-spend'
+import { sameTeam, teamNickname } from '@/lib/team-match'
+import { GAME_MOMENTS } from '@/lib/moments'
 import type { Stadium, StadiumVisit, Trip } from '@/types'
 import { TrendingUp, MapPin, Trophy, Users, Star, DollarSign, Award } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
@@ -21,6 +23,7 @@ const TABS = [
   { key: 'records',  label: 'Records'  },
   { key: 'rankings', label: 'Rankings' },
   { key: 'timeline', label: 'Timeline' },
+  { key: 'beyond',   label: 'Beyond the 30' },
 ] as const
 type TabKey = (typeof TABS)[number]['key']
 
@@ -30,27 +33,36 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
 
   const supabase = await createClient()
 
-  const [{ data: stadiums }, { data: visits }, { data: trips }, { data: bleRows }] = await Promise.all([
+  const [{ data: stadiums }, { data: visits }, { data: trips }, { data: bleRows }, { data: destVisitRows }, { data: collectibleRows }, { data: milbStadiumRows }] = await Promise.all([
     supabase.from('stadiums').select('*'),
     supabase.from('stadium_visits').select('*'),
     supabase.from('trips').select('*, trip_stops(est_tickets, est_food, est_parking, est_hotel, est_local_transport, actual_tickets, actual_food, actual_parking, actual_hotel, actual_local_transport)'),
-    supabase.from('baseball_life_entries').select('id, category, is_game'),
+    supabase.from('baseball_life_entries').select('id, category, is_game, venue, event_type, visit_date, city, state'),
+    supabase.from('destination_visits').select('id, visit_date, destination:destinations(name)'),
+    supabase.from('collectible_log').select('category, giveaway_type'),
+    supabase.from('minor_league_stadiums').select('name, team, level'),
   ])
+
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: settings } = user
+    ? await supabase.from('user_settings').select('favorite_team_abbr').eq('user_id', user.id).maybeSingle()
+    : { data: null }
+  const favAbbr: string | null = (settings as { favorite_team_abbr: string | null } | null)?.favorite_team_abbr ?? null
 
   const allStadiums: Stadium[] = stadiums ?? []
   const allVisits: StadiumVisit[] = visits ?? []
   const allTrips = (trips ?? []) as TripWithStopBudgets[]
-  const allBaseballLife = (bleRows ?? []) as { id: string; category: string; is_game: boolean }[]
+  const allBaseballLife = (bleRows ?? []) as {
+    id: string; category: string; is_game: boolean; venue: string | null; event_type: string | null
+    visit_date: string; city: string | null; state: string | null
+  }[]
+  const destVisits = (destVisitRows ?? []) as unknown as { id: string; visit_date: string; destination: { name: string } | null }[]
+  const collectibles = (collectibleRows ?? []) as { category: string; giveaway_type: string | null }[]
+  const milbStadiums = (milbStadiumRows ?? []) as { name: string; team: string | null; level: string | null }[]
 
   const mlbGames = allVisits.length
   const milbGames = allBaseballLife.filter(e => e.category === 'minor_league' && e.is_game).length
   const totalGames = mlbGames + milbGames
-
-  const bleMinorLeague = allBaseballLife.filter(e => e.category === 'minor_league').length
-  const bleSpecialEvents = allBaseballLife.filter(e => e.category === 'mlb_special_event').length
-  const bleSpringTraining = allBaseballLife.filter(e => e.category === 'spring_training').length
-  const blePilgrimages = allBaseballLife.filter(e => e.category === 'pilgrimage').length
-  const beyondThe30Total = allBaseballLife.length
 
   const visitedIds = new Set(allVisits.map((v) => v.stadium_id))
   const visitedStadiums = allStadiums.filter((s) => visitedIds.has(s.id))
@@ -106,11 +118,26 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
     .filter((r): r is NonNullable<typeof r> => r !== null && r.overall !== null)
     .sort((a, b) => (b.overall ?? 0) - (a.overall ?? 0))
 
-  // W-L across attended games that have a logged score. A "win" is the home
-  // team winning, which is how this has always been counted.
+  // Scored games are the ones with a final score logged.
   const scoredVisits = allVisits.filter(v => v.home_runs != null && v.away_runs != null)
-  const wins = scoredVisits.filter(v => v.home_runs! > v.away_runs!).length
-  const losses = scoredVisits.filter(v => v.home_runs! < v.away_runs!).length
+
+  // Your team's record at the games you attended. This used to be the home
+  // team's result at every game, which reads as "your" record but isn't: the
+  // Mariners can be 1-1 when you're there while the home teams went 2-2.
+  const favStadium = favAbbr ? allStadiums.find(st => st.abbreviation === favAbbr) ?? null : null
+  const favTeamName = favStadium?.team ?? null
+  const favGames = favTeamName
+    ? scoredVisits.filter(v => sameTeam(v.home_team, favTeamName) || sameTeam(v.visiting_team, favTeamName))
+    : []
+  const favWon = (v: StadiumVisit) =>
+    sameTeam(v.home_team, favTeamName) ? v.home_runs! > v.away_runs! : v.away_runs! > v.home_runs!
+  const favWins = favGames.filter(favWon).length
+  const favLosses = favGames.length - favWins
+
+  // Teams seen play, home or away: a second chase alongside the 30 parks.
+  const teamsSeen = allStadiums.filter(st =>
+    allVisits.some(v => sameTeam(v.home_team, st.team) || sameTeam(v.visiting_team, st.team))
+  ).length
 
   // Games by season
   const yearCounts: Record<string, number> = {}
@@ -144,6 +171,126 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
     id: st.id, name: st.name, abbreviation: st.abbreviation, lat: st.lat, lng: st.lng,
   }))
 
+  // Where the money goes, by category. Hotel counts both per-stop hotels and
+  // the trip-level hotel that single-destination trips use.
+  const spend: Record<string, number> = { Tickets: 0, Food: 0, Parking: 0, Hotel: 0, 'Local Transport': 0, Travel: 0 }
+  for (const t of allTrips) {
+    spend.Travel += Number(t.actual_travel ?? 0)
+    spend.Hotel += Number(t.actual_hotel ?? 0)
+    for (const stp of t.trip_stops ?? []) {
+      spend.Tickets += Number(stp.actual_tickets ?? 0)
+      spend.Food += Number(stp.actual_food ?? 0)
+      spend.Parking += Number(stp.actual_parking ?? 0)
+      spend.Hotel += Number(stp.actual_hotel ?? 0)
+      spend['Local Transport'] += Number(stp.actual_local_transport ?? 0)
+    }
+  }
+  const spendRows = Object.entries(spend).filter(([, amt]) => amt > 0).sort((a, b) => b[1] - a[1])
+  const tripsWithSpend = allTrips
+    .map(t => ({ name: t.name, total: tripActualSpent(t, t.trip_stops) }))
+    .filter(t => t.total > 0)
+    .sort((a, b) => b.total - a.total)
+  const priciestTrip = tripsWithSpend[0] ?? null
+  const avgPerTrip = tripsWithSpend.length > 0 ? totalSpent / tripsWithSpend.length : 0
+
+  // Fun totals
+  const runsSeen = scoredVisits.reduce((sum, v) => sum + v.home_runs! + v.away_runs!, 0)
+  const fansSeen = allVisits.reduce((sum, v) => sum + (v.attendance ?? 0), 0)
+  const visitsWithInnings = allVisits.filter(v => (v.inning_scores?.length ?? 0) > 0)
+  const extraInningGames = visitsWithInnings.filter(v => v.inning_scores.length > 9).length
+  const oneRunGames = scoredVisits.filter(v => Math.abs(v.home_runs! - v.away_runs!) === 1).length
+  const funTiles: { emoji: string; value: string; label: string; sub: string }[] = []
+  if (scoredVisits.length > 0) {
+    funTiles.push({ emoji: '🏃', value: runsSeen.toLocaleString(), label: 'Runs seen', sub: `across ${scoredVisits.length} scored game${scoredVisits.length !== 1 ? 's' : ''}` })
+  }
+  if (fansSeen > 0) {
+    funTiles.push({ emoji: '👥', value: fansSeen.toLocaleString(), label: 'Fans in the park with you', sub: 'combined attendance' })
+  }
+  if (visitsWithInnings.length > 0) {
+    funTiles.push({ emoji: '⏱️', value: String(extraInningGames), label: 'Extra-inning games', sub: `of ${visitsWithInnings.length} game${visitsWithInnings.length !== 1 ? 's' : ''}` })
+  }
+  if (scoredVisits.length > 0) {
+    funTiles.push({ emoji: '🤏', value: String(oneRunGames), label: 'One-run games', sub: `of ${scoredVisits.length} scored game${scoredVisits.length !== 1 ? 's' : ''}` })
+  }
+
+  // Game-day moments logged across your visits
+  const momentCounts = GAME_MOMENTS
+    .map(m => ({ ...m, count: allVisits.filter(v => v.moments?.includes(m.id)).length }))
+    .filter(m => m.count > 0)
+    .sort((a, b) => b.count - a.count)
+
+  // Timeline: full game log, bookends, and seasonality (Apr-Oct always shown,
+  // plus any month outside that window that actually has games).
+  const gameLog = [...allVisits].sort((a, b) => b.visit_date.localeCompare(a.visit_date))
+  const firstGame = gameLog.length > 0 ? gameLog[gameLog.length - 1] : null
+  const latestGame = gameLog.length > 1 ? gameLog[0] : null
+  const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const monthOfYear = Array.from({ length: 12 }, () => 0)
+  for (const v of allVisits) monthOfYear[Number(v.visit_date.slice(5, 7)) - 1]++
+  const activeMonths = monthOfYear.map((c, i) => (c > 0 ? i : -1)).filter(i => i >= 0)
+  const monthLo = Math.min(3, ...activeMonths)
+  const monthHi = Math.max(9, ...activeMonths)
+  const monthBars = monthOfYear.slice(monthLo, monthHi + 1).map((count, i) => ({ label: MONTH_LABELS[monthLo + i], count }))
+  const maxMonthCount = Math.max(...monthBars.map(m => m.count), 1)
+  const stadiumById = new Map(allStadiums.map(st => [st.id, st]))
+
+  // Beyond the 30
+  const milbEntries = allBaseballLife.filter(e => e.category === 'minor_league')
+  const milbVenueMap: Record<string, { venue: string; city: string | null; state: string | null; count: number; first: string; last: string }> = {}
+  for (const e of milbEntries) {
+    const key = e.venue ?? 'Unknown park'
+    const cur = milbVenueMap[key]
+    if (!cur) milbVenueMap[key] = { venue: key, city: e.city, state: e.state, count: 1, first: e.visit_date, last: e.visit_date }
+    else {
+      cur.count++
+      if (e.visit_date < cur.first) cur.first = e.visit_date
+      if (e.visit_date > cur.last) cur.last = e.visit_date
+    }
+  }
+  const milbParks = Object.values(milbVenueMap)
+    .sort((a, b) => b.count - a.count)
+    .map(pk => {
+      const meta = milbStadiums.find(m => m.name.toLowerCase() === pk.venue.toLowerCase())
+      return { ...pk, team: meta?.team ?? null, level: meta?.level ?? null }
+    })
+
+  const eventEntries = allBaseballLife
+    .filter(e => e.category === 'mlb_special_event' || e.category === 'spring_training')
+    .map(e => ({
+      name: e.event_type ?? e.venue ?? 'Event',
+      date: e.visit_date,
+      kind: e.category === 'spring_training' ? 'Spring Training' : 'Special Event',
+    }))
+    .sort((a, b) => b.date.localeCompare(a.date))
+
+  // Pilgrimages can be logged two ways (the original manual log, and the trip
+  // flow's destination visits). De-dupe so one visit isn't listed twice.
+  const pilgrimageSeen = new Set<string>()
+  const pilgrimages = [
+    ...allBaseballLife.filter(e => e.category === 'pilgrimage').map(e => ({ name: e.venue ?? e.event_type ?? 'Pilgrimage', date: e.visit_date })),
+    ...destVisits.map(d => ({ name: d.destination?.name ?? 'Destination', date: d.visit_date })),
+  ]
+    .filter(pg => {
+      const key = `${pg.date}|${pg.name.toLowerCase().split(' ').slice(0, 2).join(' ')}`
+      if (pilgrimageSeen.has(key)) return false
+      pilgrimageSeen.add(key)
+      return true
+    })
+    .sort((a, b) => b.date.localeCompare(a.date))
+
+  const collectionCounts = { giveaway: 0, food: 0, souvenir: 0 }
+  const giveawayTypeCounts: Record<string, number> = {}
+  for (const c of collectibles) {
+    if (c.category in collectionCounts) collectionCounts[c.category as keyof typeof collectionCounts]++
+    if (c.category === 'giveaway') {
+      const t = c.giveaway_type ?? 'other'
+      giveawayTypeCounts[t] = (giveawayTypeCounts[t] ?? 0) + 1
+    }
+  }
+  const GIVEAWAY_LABELS: Record<string, string> = { jersey: 'Jerseys', bobblehead: 'Bobbleheads', tshirt: 'T-shirts', hat: 'Hats', other: 'Other' }
+  const giveawayBreakdown = Object.entries(giveawayTypeCounts).sort((a, b) => b[1] - a[1])
+  const beyondTotal = allBaseballLife.length + destVisits.length
+
   // Farthest trip — from chronologically first visited stadium to all others
   let farthestStadium: Stadium | null = null
   let farthestMiles = 0
@@ -160,14 +307,6 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
     }
   }
 
-  // Games by month
-  const monthCounts: Record<string, number> = {}
-  for (const v of allVisits) {
-    const month = new Date(v.visit_date + 'T12:00:00').toLocaleString('en-US', { month: 'short', year: 'numeric' })
-    monthCounts[month] = (monthCounts[month] ?? 0) + 1
-  }
-  const monthlyData = Object.entries(monthCounts).sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
-
   // Top teams seen
   const teamSeenData = Object.entries(teamSeenCounts)
     .sort((a, b) => b[1] - a[1])
@@ -176,9 +315,11 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
   // Division breakdown
   const divBreakdown = ['AL East', 'AL Central', 'AL West', 'NL East', 'NL Central', 'NL West'].map((div) => {
     const [league, division] = div.split(' ')
-    const group = allStadiums.filter((s) => s.league === league && s.division === division)
-    const visited = group.filter((s) => visitedIds.has(s.id)).length
-    return { label: div, visited, total: group.length }
+    const group = allStadiums
+      .filter((st) => st.league === league && st.division === division)
+      .sort((a, b) => a.team.localeCompare(b.team))
+    const visited = group.filter((st) => visitedIds.has(st.id)).length
+    return { label: div, visited, total: group.length, group }
   })
 
   // Consecutive years with at least one game attended
@@ -233,15 +374,17 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
       color: '#1F6FEB',
     },
     {
+      icon: <Users size={20} />,
+      label: 'Teams Seen',
+      value: `${teamsSeen} / 30`,
+      sub: teamsSeen > 0 ? 'home or away, at any park' : 'Log a game to start the count',
+      color: '#06b6d4',
+    },
+    {
       icon: <Star size={20} />,
       label: 'Beyond the 30',
-      value: beyondThe30Total.toString(),
-      sub: [
-        bleMinorLeague > 0 ? `${bleMinorLeague} MiLB` : null,
-        bleSpecialEvents > 0 ? `${bleSpecialEvents} Events` : null,
-        bleSpringTraining > 0 ? `${bleSpringTraining} Spring` : null,
-        blePilgrimages > 0 ? `${blePilgrimages} Pilgrimages` : null,
-      ].filter(Boolean).join(' · ') || 'Log experiences to see breakdown',
+      value: beyondTotal.toString(),
+      sub: beyondTotal > 0 ? 'MiLB, events, pilgrimages & more' : 'Log experiences to see breakdown',
       color: '#F5A623',
     },
     {
@@ -253,9 +396,9 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
     },
     {
       icon: <Trophy size={20} />,
-      label: 'W-L Record',
-      value: scoredVisits.length > 0 ? `${wins}-${losses}` : 'N/A',
-      sub: scoredVisits.length > 0 ? `${Math.round((wins / scoredVisits.length) * 100)}% win rate` : 'No scores logged',
+      label: favTeamName ? `${teamNickname(favTeamName)} Record` : 'W-L Record',
+      value: favGames.length > 0 ? `${favWins}-${favLosses}` : 'N/A',
+      sub: favGames.length > 0 ? `${Math.round((favWins / favGames.length) * 100)}% win rate at your games` : favTeamName ? 'No scores logged yet' : 'Set a favorite team in Settings',
       color: '#58A6FF',
     },
     {
@@ -390,13 +533,13 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
             ))}
           </div>
 
-          {/* Division breakdown */}
+          {/* Division breakdown + full checklist */}
           <div className="card p-6">
             <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
               Progress by Division
             </div>
-            <div className="flex flex-col gap-4">
-              {divBreakdown.map(({ label, visited, total }) => (
+            <div className="flex flex-col gap-5">
+              {divBreakdown.map(({ label, visited, total, group }) => (
                 <div key={label}>
                   <div className="flex justify-between text-sm mb-1">
                     <span style={{ color: '#8B949E' }}>{label}</span>
@@ -404,7 +547,7 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
                       {visited} / {total}
                     </span>
                   </div>
-                  <div className="rounded-full overflow-hidden" style={{ height: 6, backgroundColor: '#30363D' }}>
+                  <div className="rounded-full overflow-hidden mb-3" style={{ height: 6, backgroundColor: '#30363D' }}>
                     <div
                       className="h-full rounded-full"
                       style={{
@@ -414,10 +557,54 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
                       }}
                     />
                   </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {group.map(st => {
+                      const isVisited = visitedIds.has(st.id)
+                      return (
+                        <div
+                          key={st.id}
+                          className="flex items-center gap-2 p-2 rounded-lg text-sm"
+                          style={{ backgroundColor: '#0d1424', opacity: isVisited ? 1 : 0.4 }}
+                        >
+                          <TeamLogo abbreviation={st.abbreviation} size={26} style={{ flexShrink: 0 }} />
+                          <div className="truncate" style={{ color: isVisited ? '#E6EDF3' : '#8B949E', fontSize: '0.9rem' }}>
+                            {st.team}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
+
+          {spendRows.length > 0 && (
+            <div className="card p-6 mt-6">
+              <div className="flex items-center gap-2 font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+                <DollarSign size={18} style={{ color: '#3FB950' }} />
+                Where the Money Goes
+              </div>
+              <div className="flex flex-col gap-3 mb-5">
+                {spendRows.map(([category, amt]) => listRow(category, amt, spendRows[0][1], '#3FB950'))}
+              </div>
+              <div className="flex flex-wrap gap-4 pt-4" style={{ borderTop: '1px solid #30363D' }}>
+                {priciestTrip && (
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wider" style={{ color: '#8B949E' }}>Priciest Trip</div>
+                    <div className="text-sm font-semibold mt-1" style={{ color: '#E6EDF3' }}>{priciestTrip.name}</div>
+                    <div className="text-sm" style={{ color: '#3FB950' }}>{formatCurrency(priciestTrip.total)}</div>
+                  </div>
+                )}
+                {avgPerTrip > 0 && (
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wider" style={{ color: '#8B949E' }}>Average per Trip</div>
+                    <div className="text-sm font-semibold mt-1" style={{ color: '#E6EDF3' }}>{formatCurrency(avgPerTrip)}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -426,6 +613,19 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
         allVisits.length === 0 ? emptyCard('Log some games to see your records.') : (
           <div className="flex flex-col gap-6">
             <BestGamesCard visits={recordVisits} stadiums={recordStadiums} />
+
+            {funTiles.length > 0 && (
+              <div className="grid grid-cols-2 gap-4">
+                {funTiles.map(({ emoji, value, label, sub }) => (
+                  <div key={label} className="card p-5">
+                    <div style={{ fontSize: 22, marginBottom: 6 }}>{emoji}</div>
+                    <div className="text-2xl font-black" style={{ color: '#E6EDF3' }}>{value}</div>
+                    <div className="text-sm mt-1" style={{ color: '#8B949E' }}>{label}</div>
+                    <div className="text-xs mt-0.5" style={{ color: '#8B949E' }}>{sub}</div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="card p-6">
               <div className="flex items-center gap-2 font-semibold mb-4" style={{ color: '#E6EDF3' }}>
@@ -470,6 +670,25 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
                 </div>
               </div>
             </div>
+
+            {momentCounts.length > 0 && (
+              <div className="card p-6">
+                <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+                  Game-Day Moments
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {momentCounts.map(m => (
+                    <div key={m.id} className="flex items-center gap-2 p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
+                      <span style={{ fontSize: 20, flexShrink: 0 }}>{m.icon}</span>
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold truncate" style={{ color: '#E6EDF3' }}>{m.label}</div>
+                        <div className="text-xs" style={{ color: '#8B949E' }}>{m.count} time{m.count !== 1 ? 's' : ''}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <DayNightCard visits={recordVisits} stadiums={recordStadiums} />
           </div>
@@ -578,37 +797,61 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
       {tab === 'timeline' && (
         allVisits.length === 0 ? emptyCard('Log some games to see your timeline.') : (
           <div className="flex flex-col gap-6">
-            {/* Games over time */}
-            {monthlyData.length > 0 && (
-              <div className="card p-6">
-                <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
-                  Games Over Time
-                </div>
-                <div className="flex items-end gap-2" style={{ height: 140 }}>
-                  {monthlyData.map(([month, count]) => {
-                    const max = Math.max(...monthlyData.map(([, c]) => c as number))
-                    return (
-                      <div key={month} className="flex flex-col items-center gap-1 flex-1">
-                        <div className="text-xs font-medium" style={{ color: '#1F6FEB' }}>
-                          {count}
-                        </div>
-                        <div
-                          className="w-full rounded-t"
-                          style={{
-                            height: `${((count as number) / max) * 100}px`,
-                            backgroundColor: '#1F6FEB',
-                            minHeight: 4,
-                          }}
-                        />
-                        <div className="text-xs text-center" style={{ color: '#8B949E', fontSize: '0.78rem' }}>
-                          {month}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
+            {(firstGame || latestGame) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {firstGame && (
+                  <div className="card p-5">
+                    <div className="text-sm font-bold" style={{ color: '#8B949E' }}>⭐ First Game</div>
+                    <div className="font-semibold mt-1" style={{ color: '#E6EDF3' }}>
+                      {stadiumById.get(firstGame.stadium_id)?.name ?? '-'}
+                    </div>
+                    <div className="text-sm mt-1" style={{ color: '#8B949E' }}>
+                      {new Date(firstGame.visit_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                  </div>
+                )}
+                {latestGame && (
+                  <div className="card p-5">
+                    <div className="text-sm font-bold" style={{ color: '#8B949E' }}>🗓️ Latest Game</div>
+                    <div className="font-semibold mt-1" style={{ color: '#E6EDF3' }}>
+                      {stadiumById.get(latestGame.stadium_id)?.name ?? '-'}
+                    </div>
+                    <div className="text-sm mt-1" style={{ color: '#8B949E' }}>
+                      {new Date(latestGame.visit_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
+
+            {/* Games by month of year — fixed Apr-Oct window (plus any outlier
+                month), unlike a running month-by-month chart, this doesn't
+                grow illegibly as years of history pile up. */}
+            <div className="card p-6">
+              <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+                Games by Month
+              </div>
+              <div className="flex items-end gap-2" style={{ height: 140 }}>
+                {monthBars.map(({ label, count }) => (
+                  <div key={label} className="flex flex-col items-center gap-1 flex-1">
+                    <div className="text-xs font-medium" style={{ color: count > 0 ? '#1F6FEB' : '#30363D' }}>
+                      {count > 0 ? count : ''}
+                    </div>
+                    <div
+                      className="w-full rounded-t"
+                      style={{
+                        height: `${(count / maxMonthCount) * 100}px`,
+                        backgroundColor: count > 0 ? '#1F6FEB' : '#21262D',
+                        minHeight: 4,
+                      }}
+                    />
+                    <div className="text-xs text-center" style={{ color: '#8B949E', fontSize: '0.78rem' }}>
+                      {label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* Games by season */}
             {byYear.length > 0 && (
@@ -632,37 +875,134 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
 
             <YearRecap allVisits={allVisits} allStadiums={allStadiums} />
 
-            {/* Stadiums visited list */}
+            {/* Full game log, newest first */}
             <div className="card p-6">
               <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
-                Visited Stadiums
+                Game Log
               </div>
-              {visitedStadiums.length === 0 ? (
-                <div className="text-sm" style={{ color: '#8B949E' }}>
-                  No stadiums visited yet. Start logging your games!
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
-                  {visitedStadiums.map((st) => (
-                    <div
-                      key={st.id}
-                      className="flex items-center gap-2 p-2 rounded-lg text-sm"
-                      style={{ backgroundColor: '#0d1424' }}
-                    >
-                      <TeamLogo abbreviation={st.abbreviation} size={33} style={{ flexShrink: 0 }} />
-                      <div className="min-w-0">
-                        <div className="truncate" style={{ color: '#E6EDF3', fontSize: '0.96rem' }}>
-                          {st.name}
+              <div className="flex flex-col gap-2" style={{ maxHeight: 480, overflowY: 'auto' }}>
+                {gameLog.map(v => {
+                  const st = stadiumById.get(v.stadium_id)
+                  const scored = v.home_runs != null && v.away_runs != null
+                  return (
+                    <div key={v.id} className="flex items-center gap-3 p-2.5 rounded-lg text-sm" style={{ backgroundColor: '#0d1424' }}>
+                      {st && <TeamLogo abbreviation={st.abbreviation} size={28} style={{ flexShrink: 0 }} />}
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-semibold" style={{ color: '#E6EDF3' }}>
+                          {st?.name ?? 'Unknown park'}
                         </div>
                         <div className="text-xs truncate" style={{ color: '#8B949E' }}>
-                          {st.team}
+                          {new Date(v.visit_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {v.visiting_team && v.home_team ? ` · ${v.visiting_team.replace(/^vs\.?\s+/i, '')} @ ${v.home_team}` : ''}
                         </div>
+                      </div>
+                      {scored && (
+                        <div className="text-sm font-bold flex-shrink-0" style={{ color: '#8B949E' }}>
+                          {v.away_runs}-{v.home_runs}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )
+      )}
+
+      {/* ── BEYOND THE 30 ────────────────────────────────────────────────── */}
+      {tab === 'beyond' && (
+        beyondTotal === 0 ? emptyCard('Log a MiLB game, special event, or pilgrimage to see it here.') : (
+          <div className="flex flex-col gap-6">
+            {milbParks.length > 0 && (
+              <div className="card p-6">
+                <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+                  Minor League Parks
+                </div>
+                <div className="flex flex-col gap-3">
+                  {milbParks.map(pk => (
+                    <div key={pk.venue} className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold truncate" style={{ color: '#E6EDF3' }}>{pk.venue}</div>
+                        <div className="text-xs truncate" style={{ color: '#8B949E' }}>
+                          {[pk.team, pk.level, [pk.city, pk.state].filter(Boolean).join(', ')].filter(Boolean).join(' · ')}
+                        </div>
+                      </div>
+                      <div className="text-sm font-bold flex-shrink-0" style={{ color: '#F5A623' }}>
+                        {pk.count} game{pk.count !== 1 ? 's' : ''}
                       </div>
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {eventEntries.length > 0 && (
+                <div className="card p-6">
+                  <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+                    Special Events & Spring Training
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {eventEntries.map((e, i) => (
+                      <div key={i} className="flex items-center justify-between p-2.5 rounded-lg text-sm" style={{ backgroundColor: '#0d1424' }}>
+                        <div className="min-w-0 truncate" style={{ color: '#E6EDF3' }}>{e.name}</div>
+                        <div className="text-xs flex-shrink-0 ml-2" style={{ color: '#8B949E' }}>
+                          {e.kind} · {new Date(e.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {pilgrimages.length > 0 && (
+                <div className="card p-6">
+                  <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+                    Pilgrimages
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {pilgrimages.map((pg, i) => (
+                      <div key={i} className="flex items-center justify-between p-2.5 rounded-lg text-sm" style={{ backgroundColor: '#0d1424' }}>
+                        <div className="min-w-0 truncate" style={{ color: '#E6EDF3' }}>{pg.name}</div>
+                        <div className="text-xs flex-shrink-0 ml-2" style={{ color: '#8B949E' }}>
+                          {new Date(pg.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
+
+            {collectibles.length > 0 && (
+              <div className="card p-6">
+                <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+                  Your Collection
+                </div>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  {[
+                    { label: 'Giveaways', count: collectionCounts.giveaway, color: '#F5A623' },
+                    { label: 'Food', count: collectionCounts.food, color: '#3FB950' },
+                    { label: 'Souvenirs', count: collectionCounts.souvenir, color: '#58A6FF' },
+                  ].map(c => (
+                    <div key={c.label} className="p-4 rounded-xl text-center" style={{ backgroundColor: '#0d1424' }}>
+                      <div className="text-2xl font-black" style={{ color: c.color }}>{c.count}</div>
+                      <div className="text-sm mt-1" style={{ color: '#8B949E' }}>{c.label}</div>
+                    </div>
+                  ))}
+                </div>
+                {giveawayBreakdown.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {giveawayBreakdown.map(([type, count]) => (
+                      <div key={type} className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{ backgroundColor: 'rgba(245,166,35,0.1)', color: '#F5A623', border: '1px solid rgba(245,166,35,0.25)' }}>
+                        {GIVEAWAY_LABELS[type] ?? type}: {count}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )
       )}
