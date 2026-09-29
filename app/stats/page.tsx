@@ -419,16 +419,16 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
 
   const listRow = (name: string, count: number, max: number, color: string) => (
     <div key={name} className="flex items-center gap-3">
-      <div className="text-sm w-36 truncate" style={{ color: '#8B949E' }}>{name}</div>
+      <div className="w-36 truncate" style={{ fontSize: 13, color: '#8B949E' }}>{name}</div>
       <div className="flex-1 rounded-full overflow-hidden" style={{ height: 8, backgroundColor: '#30363D' }}>
         <div className="h-full rounded-full" style={{ width: `${(count / max) * 100}%`, backgroundColor: color }} />
       </div>
-      <div className="text-sm font-bold w-6 text-right" style={{ color }}>{count}</div>
+      <div className="w-6 text-right" style={{ fontSize: 13, fontWeight: 700, color }}>{count}</div>
     </div>
   )
 
   const emptyCard = (message: string) => (
-    <div className="card p-8 text-center text-sm" style={{ color: '#8B949E' }}>{message}</div>
+    <div className="card p-8 text-center" style={{ fontSize: 13, color: '#8B949E' }}>{message}</div>
   )
 
   return (
@@ -475,7 +475,7 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
               pointerEvents: 'none',
             }} />
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <div className="text-base font-bold uppercase tracking-widest mb-3" style={{ color: '#8B949E', letterSpacing: '0.2em' }}>
+              <div className="mb-3" style={{ fontSize: 15, fontWeight: 700, textTransform: 'uppercase', color: '#8B949E', letterSpacing: '0.2em' }}>
                 MLB Parks Visited
               </div>
               <div
@@ -490,10 +490,10 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
               >
                 {visitedIds.size}
               </div>
-              <div className="text-2xl font-bold mt-2" style={{ color: '#E6EDF3' }}>
+              <div className="mt-2" style={{ fontSize: 22, fontWeight: 700, color: '#E6EDF3' }}>
                 of 30 stadiums
               </div>
-              <div className="text-lg mt-1" style={{ color: '#8B949E' }}>
+              <div className="mt-1" style={{ fontSize: 16, color: '#8B949E' }}>
                 {Math.round((visitedIds.size / 30) * 100)}% of your MLB journey complete
               </div>
               <div className="rounded-full overflow-hidden mt-5 mx-auto" style={{ height: 6, maxWidth: 320, backgroundColor: 'rgba(255,255,255,0.06)' }}>
@@ -517,15 +517,15 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
               <div key={label} className="card p-5">
                 <div className="flex items-center gap-1.5 mb-3">
                   <span style={{ color }}>{icon}</span>
-                  <span className="text-base font-bold uppercase tracking-wider" style={{ color: '#8B949E' }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8B949E' }}>
                     {label}
                   </span>
                 </div>
-                <div className="text-3xl font-black leading-tight truncate" style={{ color: '#E6EDF3' }}>
+                <div className="truncate" style={{ fontSize: 28, fontWeight: 900, lineHeight: '1.15', color: '#E6EDF3' }}>
                   {value}
                 </div>
                 {sub && (
-                  <div className="text-base mt-1.5" style={{ color: '#8B949E' }}>
+                  <div className="mt-1.5" style={{ fontSize: 13, color: '#8B949E' }}>
                     {sub}
                   </div>
                 )}
@@ -535,13 +535,13 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
 
           {/* Division breakdown + full checklist */}
           <div className="card p-6">
-            <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+            <div className="mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
               Progress by Division
             </div>
             <div className="flex flex-col gap-5">
               {divBreakdown.map(({ label, visited, total, group }) => (
                 <div key={label}>
-                  <div className="flex justify-between text-sm mb-1">
+                  <div className="flex justify-between mb-1" style={{ fontSize: 13 }}>
                     <span style={{ color: '#8B949E' }}>{label}</span>
                     <span style={{ color: visited === total ? '#3FB950' : '#8B949E' }}>
                       {visited} / {total}
@@ -563,8 +563,7 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
                       return (
                         <div
                           key={st.id}
-                          className="flex items-center gap-2 p-2 rounded-lg text-sm"
-                          style={{ backgroundColor: '#0d1424', opacity: isVisited ? 1 : 0.4 }}
+                          className="flex items-center gap-2 p-2 rounded-lg" style={{ fontSize: 13, backgroundColor: '#0d1424', opacity: isVisited ? 1 : 0.4 }}
                         >
                           <TeamLogo abbreviation={st.abbreviation} size={26} style={{ flexShrink: 0 }} />
                           <div className="truncate" style={{ color: isVisited ? '#E6EDF3' : '#8B949E', fontSize: '0.9rem' }}>
@@ -581,7 +580,7 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
 
           {spendRows.length > 0 && (
             <div className="card p-6 mt-6">
-              <div className="flex items-center gap-2 font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+              <div className="flex items-center gap-2 mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
                 <DollarSign size={18} style={{ color: '#3FB950' }} />
                 Where the Money Goes
               </div>
@@ -591,15 +590,15 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
               <div className="flex flex-wrap gap-4 pt-4" style={{ borderTop: '1px solid #30363D' }}>
                 {priciestTrip && (
                   <div>
-                    <div className="text-xs font-bold uppercase tracking-wider" style={{ color: '#8B949E' }}>Priciest Trip</div>
-                    <div className="text-sm font-semibold mt-1" style={{ color: '#E6EDF3' }}>{priciestTrip.name}</div>
-                    <div className="text-sm" style={{ color: '#3FB950' }}>{formatCurrency(priciestTrip.total)}</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8B949E' }}>Priciest Trip</div>
+                    <div className="mt-1" style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{priciestTrip.name}</div>
+                    <div style={{ fontSize: 13, color: '#3FB950' }}>{formatCurrency(priciestTrip.total)}</div>
                   </div>
                 )}
                 {avgPerTrip > 0 && (
                   <div>
-                    <div className="text-xs font-bold uppercase tracking-wider" style={{ color: '#8B949E' }}>Average per Trip</div>
-                    <div className="text-sm font-semibold mt-1" style={{ color: '#E6EDF3' }}>{formatCurrency(avgPerTrip)}</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8B949E' }}>Average per Trip</div>
+                    <div className="mt-1" style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{formatCurrency(avgPerTrip)}</div>
                   </div>
                 )}
               </div>
@@ -619,52 +618,52 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
                 {funTiles.map(({ emoji, value, label, sub }) => (
                   <div key={label} className="card p-5">
                     <div style={{ fontSize: 22, marginBottom: 6 }}>{emoji}</div>
-                    <div className="text-2xl font-black" style={{ color: '#E6EDF3' }}>{value}</div>
-                    <div className="text-sm mt-1" style={{ color: '#8B949E' }}>{label}</div>
-                    <div className="text-xs mt-0.5" style={{ color: '#8B949E' }}>{sub}</div>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: '#E6EDF3' }}>{value}</div>
+                    <div className="mt-1" style={{ fontSize: 13, color: '#8B949E' }}>{label}</div>
+                    <div className="mt-0.5" style={{ fontSize: 12, color: '#8B949E' }}>{sub}</div>
                   </div>
                 ))}
               </div>
             )}
 
             <div className="card p-6">
-              <div className="flex items-center gap-2 font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+              <div className="flex items-center gap-2 mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
                 <TrendingUp size={18} style={{ color: '#1F6FEB' }} />
                 Streaks
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="p-4 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
-                  <div className="text-4xl font-bold" style={{ color: '#1F6FEB' }}>
+                  <div style={{ fontSize: 32, fontWeight: 700, color: '#1F6FEB' }}>
                     {longestYearStreak}
                   </div>
-                  <div className="text-sm mt-1" style={{ color: '#8B949E' }}>
+                  <div className="mt-1" style={{ fontSize: 13, color: '#8B949E' }}>
                     Consecutive year{longestYearStreak !== 1 ? 's' : ''} with a game
                   </div>
                   {yearsWithGames.length > 0 && (
-                    <div className="text-xs mt-1" style={{ color: '#8B949E' }}>
+                    <div className="mt-1" style={{ fontSize: 12, color: '#8B949E' }}>
                       {yearsWithGames[0]}-{yearsWithGames[yearsWithGames.length - 1]}
                     </div>
                   )}
                 </div>
                 <div className="p-4 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
-                  <div className="text-4xl font-bold" style={{ color: '#a78bfa' }}>
+                  <div style={{ fontSize: 32, fontWeight: 700, color: '#a78bfa' }}>
                     {longestTripStreak}
                   </div>
-                  <div className="text-sm mt-1" style={{ color: '#8B949E' }}>
+                  <div className="mt-1" style={{ fontSize: 13, color: '#8B949E' }}>
                     Stadiums in one road trip
                   </div>
-                  <div className="text-xs mt-1" style={{ color: '#8B949E' }}>
+                  <div className="mt-1" style={{ fontSize: 12, color: '#8B949E' }}>
                     consecutive-day streak
                   </div>
                 </div>
                 <div className="p-4 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
-                  <div className="text-4xl font-bold" style={{ color: '#3FB950' }}>
+                  <div style={{ fontSize: 32, fontWeight: 700, color: '#3FB950' }}>
                     {yearsWithGames.length}
                   </div>
-                  <div className="text-sm mt-1" style={{ color: '#8B949E' }}>
+                  <div className="mt-1" style={{ fontSize: 13, color: '#8B949E' }}>
                     Season{yearsWithGames.length !== 1 ? 's' : ''} attended
                   </div>
-                  <div className="text-xs mt-1" style={{ color: '#8B949E' }}>
+                  <div className="mt-1" style={{ fontSize: 12, color: '#8B949E' }}>
                     unique calendar years
                   </div>
                 </div>
@@ -673,7 +672,7 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
 
             {momentCounts.length > 0 && (
               <div className="card p-6">
-                <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+                <div className="mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
                   Game-Day Moments
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -681,8 +680,8 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
                     <div key={m.id} className="flex items-center gap-2 p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
                       <span style={{ fontSize: 20, flexShrink: 0 }}>{m.icon}</span>
                       <div className="min-w-0">
-                        <div className="text-sm font-semibold truncate" style={{ color: '#E6EDF3' }}>{m.label}</div>
-                        <div className="text-xs" style={{ color: '#8B949E' }}>{m.count} time{m.count !== 1 ? 's' : ''}</div>
+                        <div className="truncate" style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{m.label}</div>
+                        <div style={{ fontSize: 12, color: '#8B949E' }}>{m.count} time{m.count !== 1 ? 's' : ''}</div>
                       </div>
                     </div>
                   ))}
@@ -702,21 +701,21 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
             {/* Your Ballpark Rankings */}
             {ballparkRankings.length > 0 ? (
               <div className="card p-6">
-                <div className="flex items-center gap-2 font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+                <div className="flex items-center gap-2 mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
                   <Star size={18} style={{ color: '#F5A623' }} />
                   Your Ballpark Rankings
                 </div>
                 <div className="flex flex-col gap-3">
                   {ballparkRankings.map((r, i) => (
                     <div key={r.stadium.id} className="flex items-center gap-4 p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
-                      <div className="text-lg font-bold w-6 text-center flex-shrink-0" style={{ color: i === 0 ? '#F5A623' : '#8B949E' }}>
+                      <div className="w-6 text-center flex-shrink-0" style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? '#F5A623' : '#8B949E' }}>
                         {i + 1}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="truncate font-semibold" style={{ color: '#E6EDF3', fontSize: '0.96rem' }}>
+                        <div className="truncate" style={{ fontWeight: 700, color: '#E6EDF3', fontSize: '0.96rem' }}>
                           {r.stadium.name}
                         </div>
-                        <div className="text-xs truncate" style={{ color: '#8B949E' }}>
+                        <div className="truncate" style={{ fontSize: 12, color: '#8B949E' }}>
                           {r.stadium.team}
                         </div>
                       </div>
@@ -731,11 +730,11 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
               </div>
             ) : (
               <div className="card p-6">
-                <div className="flex items-center gap-2 font-semibold mb-2" style={{ color: '#E6EDF3' }}>
+                <div className="flex items-center gap-2 mb-2" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
                   <Star size={18} style={{ color: '#F5A623' }} />
                   Your Ballpark Rankings
                 </div>
-                <div className="text-sm" style={{ color: '#8B949E' }}>
+                <div style={{ fontSize: 13, color: '#8B949E' }}>
                   Rate a visit (food, atmosphere, seats) when you log or edit a game, and your parks will rank here.
                 </div>
               </div>
@@ -745,7 +744,7 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
               {/* Most visited ballparks */}
               {mostVisited.length > 0 && (
                 <div className="card p-6">
-                  <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+                  <div className="mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
                     Most Visited Ballparks
                   </div>
                   <div className="flex flex-col gap-3">
@@ -758,12 +757,12 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
 
               {/* Most games with */}
               <div className="card p-6">
-                <div className="flex items-center gap-2 font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+                <div className="flex items-center gap-2 mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
                   <Users size={18} style={{ color: '#58A6FF' }} />
                   Most Games With
                 </div>
                 {topCompanions.length === 0 ? (
-                  <div className="text-sm" style={{ color: '#8B949E' }}>
+                  <div style={{ fontSize: 13, color: '#8B949E' }}>
                     Add companions when you log a game to see who you go with most.
                   </div>
                 ) : (
@@ -776,11 +775,11 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
 
             {/* Most seen teams */}
             <div className="card p-6">
-              <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+              <div className="mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
                 Most Seen Teams
               </div>
               {teamSeenData.length === 0 ? (
-                <div className="text-sm" style={{ color: '#8B949E' }}>
+                <div style={{ fontSize: 13, color: '#8B949E' }}>
                   Log some games to see team stats
                 </div>
               ) : (
@@ -801,22 +800,22 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {firstGame && (
                   <div className="card p-5">
-                    <div className="text-sm font-bold" style={{ color: '#8B949E' }}>⭐ First Game</div>
-                    <div className="font-semibold mt-1" style={{ color: '#E6EDF3' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E' }}>⭐ First Game</div>
+                    <div className="mt-1" style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>
                       {stadiumById.get(firstGame.stadium_id)?.name ?? '-'}
                     </div>
-                    <div className="text-sm mt-1" style={{ color: '#8B949E' }}>
+                    <div className="mt-1" style={{ fontSize: 13, color: '#8B949E' }}>
                       {new Date(firstGame.visit_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </div>
                   </div>
                 )}
                 {latestGame && (
                   <div className="card p-5">
-                    <div className="text-sm font-bold" style={{ color: '#8B949E' }}>🗓️ Latest Game</div>
-                    <div className="font-semibold mt-1" style={{ color: '#E6EDF3' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#8B949E' }}>🗓️ Latest Game</div>
+                    <div className="mt-1" style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>
                       {stadiumById.get(latestGame.stadium_id)?.name ?? '-'}
                     </div>
-                    <div className="text-sm mt-1" style={{ color: '#8B949E' }}>
+                    <div className="mt-1" style={{ fontSize: 13, color: '#8B949E' }}>
                       {new Date(latestGame.visit_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </div>
                   </div>
@@ -828,13 +827,13 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
                 month), unlike a running month-by-month chart, this doesn't
                 grow illegibly as years of history pile up. */}
             <div className="card p-6">
-              <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+              <div className="mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
                 Games by Month
               </div>
               <div className="flex items-end gap-2" style={{ height: 140 }}>
                 {monthBars.map(({ label, count }) => (
                   <div key={label} className="flex flex-col items-center gap-1 flex-1">
-                    <div className="text-xs font-medium" style={{ color: count > 0 ? '#1F6FEB' : '#30363D' }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: count > 0 ? '#1F6FEB' : '#30363D' }}>
                       {count > 0 ? count : ''}
                     </div>
                     <div
@@ -845,7 +844,7 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
                         minHeight: 4,
                       }}
                     />
-                    <div className="text-xs text-center" style={{ color: '#8B949E', fontSize: '0.78rem' }}>
+                    <div className="text-center" style={{ color: '#8B949E', fontSize: '0.78rem' }}>
                       {label}
                     </div>
                   </div>
@@ -856,17 +855,17 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
             {/* Games by season */}
             {byYear.length > 0 && (
               <div className="card p-6">
-                <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+                <div className="mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
                   Games by Season
                 </div>
                 <div className="flex flex-col gap-3">
                   {byYear.map(([year, count]) => (
                     <div key={year} className="flex items-center gap-3">
-                      <div className="text-sm font-bold w-10 flex-shrink-0" style={{ color: '#8B949E' }}>{year}</div>
+                      <div className="w-10 flex-shrink-0" style={{ fontSize: 13, fontWeight: 700, color: '#8B949E' }}>{year}</div>
                       <div className="flex-1 rounded-full overflow-hidden" style={{ height: 8, backgroundColor: '#30363D' }}>
                         <div className="h-full rounded-full" style={{ width: `${(count / maxYearCount) * 100}%`, background: 'linear-gradient(90deg, #1F6FEB, #58A6FF)' }} />
                       </div>
-                      <div className="text-sm font-bold w-6 text-right" style={{ color: '#E6EDF3' }}>{count}</div>
+                      <div className="w-6 text-right" style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{count}</div>
                     </div>
                   ))}
                 </div>
@@ -877,7 +876,7 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
 
             {/* Full game log, newest first */}
             <div className="card p-6">
-              <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+              <div className="mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
                 Game Log
               </div>
               <div className="flex flex-col gap-2" style={{ maxHeight: 480, overflowY: 'auto' }}>
@@ -885,19 +884,19 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
                   const st = stadiumById.get(v.stadium_id)
                   const scored = v.home_runs != null && v.away_runs != null
                   return (
-                    <div key={v.id} className="flex items-center gap-3 p-2.5 rounded-lg text-sm" style={{ backgroundColor: '#0d1424' }}>
+                    <div key={v.id} className="flex items-center gap-3 p-2.5 rounded-lg" style={{ fontSize: 13, backgroundColor: '#0d1424' }}>
                       {st && <TeamLogo abbreviation={st.abbreviation} size={28} style={{ flexShrink: 0 }} />}
                       <div className="min-w-0 flex-1">
-                        <div className="truncate font-semibold" style={{ color: '#E6EDF3' }}>
+                        <div className="truncate" style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>
                           {st?.name ?? 'Unknown park'}
                         </div>
-                        <div className="text-xs truncate" style={{ color: '#8B949E' }}>
+                        <div className="truncate" style={{ fontSize: 12, color: '#8B949E' }}>
                           {new Date(v.visit_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                           {v.visiting_team && v.home_team ? ` · ${v.visiting_team.replace(/^vs\.?\s+/i, '')} @ ${v.home_team}` : ''}
                         </div>
                       </div>
                       {scored && (
-                        <div className="text-sm font-bold flex-shrink-0" style={{ color: '#8B949E' }}>
+                        <div className="flex-shrink-0" style={{ fontSize: 13, fontWeight: 700, color: '#8B949E' }}>
                           {v.away_runs}-{v.home_runs}
                         </div>
                       )}
@@ -916,19 +915,19 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
           <div className="flex flex-col gap-6">
             {milbParks.length > 0 && (
               <div className="card p-6">
-                <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+                <div className="mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
                   Minor League Parks
                 </div>
                 <div className="flex flex-col gap-3">
                   {milbParks.map(pk => (
                     <div key={pk.venue} className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: '#0d1424' }}>
                       <div className="min-w-0 flex-1">
-                        <div className="font-semibold truncate" style={{ color: '#E6EDF3' }}>{pk.venue}</div>
-                        <div className="text-xs truncate" style={{ color: '#8B949E' }}>
+                        <div className="truncate" style={{ fontSize: 13, fontWeight: 700, color: '#E6EDF3' }}>{pk.venue}</div>
+                        <div className="truncate" style={{ fontSize: 12, color: '#8B949E' }}>
                           {[pk.team, pk.level, [pk.city, pk.state].filter(Boolean).join(', ')].filter(Boolean).join(' · ')}
                         </div>
                       </div>
-                      <div className="text-sm font-bold flex-shrink-0" style={{ color: '#F5A623' }}>
+                      <div className="flex-shrink-0" style={{ fontSize: 13, fontWeight: 700, color: '#F5A623' }}>
                         {pk.count} game{pk.count !== 1 ? 's' : ''}
                       </div>
                     </div>
@@ -940,14 +939,14 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {eventEntries.length > 0 && (
                 <div className="card p-6">
-                  <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+                  <div className="mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
                     Special Events & Spring Training
                   </div>
                   <div className="flex flex-col gap-2">
                     {eventEntries.map((e, i) => (
-                      <div key={i} className="flex items-center justify-between p-2.5 rounded-lg text-sm" style={{ backgroundColor: '#0d1424' }}>
+                      <div key={i} className="flex items-center justify-between p-2.5 rounded-lg" style={{ fontSize: 13, backgroundColor: '#0d1424' }}>
                         <div className="min-w-0 truncate" style={{ color: '#E6EDF3' }}>{e.name}</div>
-                        <div className="text-xs flex-shrink-0 ml-2" style={{ color: '#8B949E' }}>
+                        <div className="flex-shrink-0 ml-2" style={{ fontSize: 12, color: '#8B949E' }}>
                           {e.kind} · {new Date(e.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </div>
                       </div>
@@ -958,14 +957,14 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
 
               {pilgrimages.length > 0 && (
                 <div className="card p-6">
-                  <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+                  <div className="mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
                     Pilgrimages
                   </div>
                   <div className="flex flex-col gap-2">
                     {pilgrimages.map((pg, i) => (
-                      <div key={i} className="flex items-center justify-between p-2.5 rounded-lg text-sm" style={{ backgroundColor: '#0d1424' }}>
+                      <div key={i} className="flex items-center justify-between p-2.5 rounded-lg" style={{ fontSize: 13, backgroundColor: '#0d1424' }}>
                         <div className="min-w-0 truncate" style={{ color: '#E6EDF3' }}>{pg.name}</div>
-                        <div className="text-xs flex-shrink-0 ml-2" style={{ color: '#8B949E' }}>
+                        <div className="flex-shrink-0 ml-2" style={{ fontSize: 12, color: '#8B949E' }}>
                           {new Date(pg.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </div>
                       </div>
@@ -977,7 +976,7 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
 
             {collectibles.length > 0 && (
               <div className="card p-6">
-                <div className="font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+                <div className="mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
                   Your Collection
                 </div>
                 <div className="grid grid-cols-3 gap-4 mb-4">
@@ -987,15 +986,15 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
                     { label: 'Souvenirs', count: collectionCounts.souvenir, color: '#58A6FF' },
                   ].map(c => (
                     <div key={c.label} className="p-4 rounded-xl text-center" style={{ backgroundColor: '#0d1424' }}>
-                      <div className="text-2xl font-black" style={{ color: c.color }}>{c.count}</div>
-                      <div className="text-sm mt-1" style={{ color: '#8B949E' }}>{c.label}</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, color: c.color }}>{c.count}</div>
+                      <div className="mt-1" style={{ fontSize: 13, color: '#8B949E' }}>{c.label}</div>
                     </div>
                   ))}
                 </div>
                 {giveawayBreakdown.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {giveawayBreakdown.map(([type, count]) => (
-                      <div key={type} className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{ backgroundColor: 'rgba(245,166,35,0.1)', color: '#F5A623', border: '1px solid rgba(245,166,35,0.25)' }}>
+                      <div key={type} className="px-3 py-1.5 rounded-full" style={{ fontSize: 12, fontWeight: 700, backgroundColor: 'rgba(245,166,35,0.1)', color: '#F5A623', border: '1px solid rgba(245,166,35,0.25)' }}>
                         {GIVEAWAY_LABELS[type] ?? type}: {count}
                       </div>
                     ))}

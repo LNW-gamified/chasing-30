@@ -137,7 +137,7 @@ export function BestGamesCard({ visits, stadiums }: Props) {
 
   return (
     <div className="card p-6">
-      <div className="flex items-center gap-2 font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+      <div className="flex items-center gap-2 mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
         <Trophy size={18} style={{ color: '#F5A623' }} />
         Best Games
       </div>
@@ -190,7 +190,7 @@ export function DayNightCard({ visits, stadiums }: Props) {
 
   return (
     <div className="card p-6">
-      <div className="flex items-center gap-2 font-semibold mb-4" style={{ color: '#E6EDF3' }}>
+      <div className="flex items-center gap-2 mb-4" style={{ fontSize: 15, fontWeight: 700, color: '#E6EDF3' }}>
         <Sun size={18} style={{ color: '#F5A623' }} />
         Day vs Night
       </div>
