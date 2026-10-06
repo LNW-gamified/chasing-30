@@ -52,7 +52,7 @@ export async function populateGameStats(
     if (!teamId) return { success: false, error: 'Unknown team abbreviation', code: 'unknown_team' }
 
     const schedRes = await fetch(
-      `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${visitDate}&teamId=${teamId}&gameType=R&hydrate=game(promotions)`,
+      `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${visitDate}&teamId=${teamId}&gameType=R,F,D,L,W&hydrate=game(promotions)`,
       { headers: { Accept: 'application/json' } }
     )
     if (!schedRes.ok) return { success: false, error: 'MLB schedule fetch failed', code: 'api_error' }

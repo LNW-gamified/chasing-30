@@ -6,6 +6,7 @@ import type { Stadium, Trip, TripStop, Destination } from '@/types'
 import { X, Plus, Trash2, Loader2, MapPin, Ticket, DollarSign, CalendarDays, ChevronDown } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 import { DESTINATION_BY_SLUG, EXPERIENCE_TYPES } from '@/lib/destinations'
+import { newestSeason } from '@/lib/season'
 import { MLB_TEAM_IDS as ABBR_TO_MLB_ID } from '@/lib/mlb-api'
 
 const ABBR_TO_TZ: Record<string, { tz: string; label: string }> = {
@@ -246,12 +247,16 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       // startDate — widening endDate does NOT pull in a future season, so
       // once next year's schedule is published it has to be requested as
       // its own call rather than as a wider range on this one.
+      // R,F,D,L,W = regular season plus Wild Card, Division, League
+      // Championship and World Series, so a playoff game can be planned once
+      // MLB publishes it. Spring training is left out on purpose: those home
+      // games are played at the spring complexes, not these 30 ballparks.
       const seasonRanges = [
         { startDate: `${year}-03-01`,     endDate: `${year}-12-31` },
         { startDate: `${year + 1}-01-01`, endDate: `${year + 1}-12-31` },
       ]
       const allDates = (await Promise.all(seasonRanges.map(async ({ startDate, endDate }) => {
-        const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=${teamId}&gameType=R&startDate=${startDate}&endDate=${endDate}&hydrate=game(promotions)`
+        const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=${teamId}&gameType=R,F,D,L,W&startDate=${startDate}&endDate=${endDate}&hydrate=game(promotions)`
         const res  = await fetch(url)
         if (!res.ok) return []
         const json = await res.json()
@@ -555,20 +560,23 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
         // Auto-populate food & souvenirs checklists — stadium stops only
         if (isStadium && stop.stadium_id) {
           const [
-            { data: foodClassics }, { data: foodSeasonal },
-            { data: souvenirClassics }, { data: souvenirSeasonal },
+            { data: foodClassics }, { data: foodSeasonalRows },
+            { data: souvenirClassics }, { data: souvenirSeasonalRows },
           ] = await Promise.all([
             supabase.from('stadium_trending_food')
               .select('item_name').eq('stadium_id', stop.stadium_id).eq('is_classic', true).limit(3),
             supabase.from('stadium_trending_food')
-              .select('item_name').eq('stadium_id', stop.stadium_id).eq('is_classic', false)
-              .eq('active', true).eq('season_year', 2026).limit(2),
+              .select('item_name, season_year').eq('stadium_id', stop.stadium_id).eq('is_classic', false)
+              .eq('active', true).limit(50),
             supabase.from('stadium_souvenirs')
               .select('item_name').eq('stadium_id', stop.stadium_id).eq('is_classic', true).limit(2),
             supabase.from('stadium_souvenirs')
-              .select('item_name').eq('stadium_id', stop.stadium_id).eq('is_classic', false)
-              .eq('active', true).eq('season_year', 2026).limit(2),
+              .select('item_name, season_year').eq('stadium_id', stop.stadium_id).eq('is_classic', false)
+              .eq('active', true).limit(50),
           ])
+          // Newest season this stadium has rows for, instead of a hardcoded year.
+          const foodSeasonal      = newestSeason(foodSeasonalRows ?? []).rows.slice(0, 2)
+          const souvenirSeasonal  = newestSeason(souvenirSeasonalRows ?? []).rows.slice(0, 2)
           const suggestions = [
             ...(foodClassics    ?? []).map(f => ({ stop_id: newStop.id, category: 'food_drinks' as const, item: f.item_name, suggested: true })),
             ...(foodSeasonal    ?? []).map(f => ({ stop_id: newStop.id, category: 'food_drinks' as const, item: f.item_name, suggested: true })),

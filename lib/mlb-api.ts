@@ -102,7 +102,10 @@ export async function fetchSeasonHomeGames(teamAbbr: string): Promise<SeasonGame
   const year      = new Date().getFullYear()
   const startDate = `${year}-03-01`
   const endDate   = `${year + 2}-12-31`
-  const url = `https://statsapi.mlb.com/api/v1/schedule?teamId=${teamId}&startDate=${startDate}&endDate=${endDate}&sportId=1&gameType=R`
+  // R,F,D,L,W = regular season plus every postseason round, so a playoff game
+  // you attended shows up in the picker. Spring training is left out on
+  // purpose: those home games are played at spring complexes, not these parks.
+  const url = `https://statsapi.mlb.com/api/v1/schedule?teamId=${teamId}&startDate=${startDate}&endDate=${endDate}&sportId=1&gameType=R,F,D,L,W`
 
   try {
     const res = await fetch(url, { cache: 'no-store' })

@@ -142,15 +142,15 @@ INSERT INTO stadiums (name, team, abbreviation, city, state, lat, lng, capacity,
   ('Tropicana Field', 'Tampa Bay Rays', 'TB', 'St. Petersburg', 'FL', 27.7682, -82.6534, 25000, 1990, 'AstroTurf', 'AL', 'East'),
   ('Rogers Centre', 'Toronto Blue Jays', 'TOR', 'Toronto', 'ON', 43.6414, -79.3894, 49286, 1989, 'AstroTurf', 'AL', 'East'),
   -- AL Central
-  ('Guaranteed Rate Field', 'Chicago White Sox', 'CWS', 'Chicago', 'IL', 41.8299, -87.6338, 40615, 1991, 'Grass', 'AL', 'Central'),
+  ('Rate Field', 'Chicago White Sox', 'CWS', 'Chicago', 'IL', 41.8299, -87.6338, 40615, 1991, 'Grass', 'AL', 'Central'),
   ('Progressive Field', 'Cleveland Guardians', 'CLE', 'Cleveland', 'OH', 41.4962, -81.6852, 34830, 1994, 'Grass', 'AL', 'Central'),
   ('Comerica Park', 'Detroit Tigers', 'DET', 'Detroit', 'MI', 42.3390, -83.0485, 41083, 2000, 'Grass', 'AL', 'Central'),
   ('Kauffman Stadium', 'Kansas City Royals', 'KC', 'Kansas City', 'MO', 39.0517, -94.4803, 37903, 1973, 'Grass', 'AL', 'Central'),
   ('Target Field', 'Minnesota Twins', 'MIN', 'Minneapolis', 'MN', 44.9817, -93.2776, 38544, 2010, 'Grass', 'AL', 'Central'),
   -- AL West
-  ('Minute Maid Park', 'Houston Astros', 'HOU', 'Houston', 'TX', 29.7572, -95.3555, 41168, 2000, 'Grass', 'AL', 'West'),
+  ('Daikin Park', 'Houston Astros', 'HOU', 'Houston', 'TX', 29.7572, -95.3555, 41168, 2000, 'Grass', 'AL', 'West'),
   ('Angel Stadium', 'Los Angeles Angels', 'LAA', 'Anaheim', 'CA', 33.8003, -117.8827, 45517, 1966, 'Grass', 'AL', 'West'),
-  ('Sutter Health Park', 'Oakland Athletics', 'OAK', 'Sacramento', 'CA', 38.5802, -121.5088, 14014, 2000, 'Grass', 'AL', 'West'),
+  ('Sutter Health Park', 'Athletics', 'OAK', 'Sacramento', 'CA', 38.5802, -121.5088, 14014, 2000, 'Grass', 'AL', 'West'),
   ('T-Mobile Park', 'Seattle Mariners', 'SEA', 'Seattle', 'WA', 47.5914, -122.3325, 47929, 1999, 'Grass', 'AL', 'West'),
   ('Globe Life Field', 'Texas Rangers', 'TEX', 'Arlington', 'TX', 32.7473, -97.0823, 40518, 2020, 'Grass', 'AL', 'West'),
   -- NL East

@@ -15,6 +15,8 @@ import { ArrowLeft, Plus, Loader2, Users, CalendarDays, Trophy, Share2, Hash, Bu
 import TeamLogo from '@/components/TeamLogo'
 import PostmarkStamp from '@/components/PostmarkStamp'
 import { MLB_TEAMS } from '@/lib/teams'
+import { sameTeam } from '@/lib/team-match'
+import { newestSeason, seasonHeading } from '@/lib/season'
 import { TEAM_BTN_COLOR, TEAM_GRADIENTS, darkerOf } from '@/lib/team-colors'
 import { type EditorItem } from '@/components/GiveawayFoodEditor'
 
@@ -833,7 +835,7 @@ export default function StadiumDetailPage() {
                             : '#30363D'
                           const opponent = (visit.visiting_team ?? '—').replace(/^vs\.?\s+/i, '')
                           const giveawayName = visitPromos[visit.id]?.promotions?.[0]
-                          const opponentAbbr = MLB_TEAMS.find(t => t.name === opponent)?.abbr
+                          const opponentAbbr = MLB_TEAMS.find(t => sameTeam(t.name, opponent))?.abbr
                           const dt = new Date(visit.visit_date + 'T12:00:00')
                           const dayAbbr = dt.toLocaleDateString('en-US', { weekday: 'short' })
                           const monthDay = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
@@ -1348,7 +1350,7 @@ export default function StadiumDetailPage() {
                     {/* Food content */}
                     {intelSubTab === 'food' && (() => {
                       const classics = trendingFood.filter(f => f.is_classic)
-                      const seasonal = trendingFood.filter(f => !f.is_classic && f.active && f.season_year === 2026)
+                      const { rows: seasonal, year: seasonalYear } = newestSeason(trendingFood.filter(f => !f.is_classic && f.active))
                       if (classics.length === 0 && seasonal.length === 0) return (
                         <div style={{ textAlign: 'center', padding: '32px 16px', color: '#8B949E', fontSize: 13 }}>
                           No food intel yet for this stadium.
@@ -1385,7 +1387,7 @@ export default function StadiumDetailPage() {
                           {seasonal.length > 0 && (
                             <>
                               <div style={{ padding: '10px 16px 4px', fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                                This Season
+                                {seasonHeading(seasonalYear)}
                               </div>
                               {seasonal.map((f, i) => (
                                 <div key={f.id} style={{
@@ -1415,7 +1417,7 @@ export default function StadiumDetailPage() {
                     {/* Souvenirs content */}
                     {intelSubTab === 'souvenirs' && (() => {
                       const classics = souvenirs.filter(s => s.is_classic)
-                      const seasonal = souvenirs.filter(s => !s.is_classic && s.active && s.season_year === 2026)
+                      const { rows: seasonal, year: seasonalYear } = newestSeason(souvenirs.filter(s => !s.is_classic && s.active))
                       if (classics.length === 0 && seasonal.length === 0) return (
                         <div style={{ textAlign: 'center', padding: '32px 16px', color: '#8B949E', fontSize: 13 }}>
                           No souvenir intel yet for this stadium.
@@ -1452,7 +1454,7 @@ export default function StadiumDetailPage() {
                           {seasonal.length > 0 && (
                             <>
                               <div style={{ padding: '10px 16px 4px', fontSize: 12, fontWeight: 700, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                                This Season
+                                {seasonHeading(seasonalYear)}
                               </div>
                               {seasonal.map((s, i) => (
                                 <div key={s.id} style={{

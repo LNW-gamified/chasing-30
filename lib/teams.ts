@@ -18,7 +18,7 @@ export const MLB_TEAMS: { abbr: string; name: string }[] = [
   { abbr: 'MIN', name: 'Minnesota Twins'        },
   { abbr: 'NYM', name: 'New York Mets'          },
   { abbr: 'NYY', name: 'New York Yankees'       },
-  { abbr: 'OAK', name: 'Oakland Athletics'      },
+  { abbr: 'OAK', name: 'Athletics'              },
   { abbr: 'PHI', name: 'Philadelphia Phillies'  },
   { abbr: 'PIT', name: 'Pittsburgh Pirates'     },
   { abbr: 'SD',  name: 'San Diego Padres'       },

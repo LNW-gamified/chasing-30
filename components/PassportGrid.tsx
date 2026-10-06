@@ -149,7 +149,7 @@ const STAMP_DEFS: StampDef[] = [
 
   // ── AL Central ─────────────────────────────────────────────────────────────
   {
-    abbr: 'CWS', team: 'Chicago White Sox', stadium: 'Guaranteed Rate Field', city: 'Chicago', state: 'IL',
+    abbr: 'CWS', team: 'Chicago White Sox', stadium: 'Rate Field', city: 'Chicago', state: 'IL',
     primary: '#27251F', secondary: '#C4CED4',
     art: (
       <svg {...A()}>
@@ -263,7 +263,7 @@ const STAMP_DEFS: StampDef[] = [
 
   // ── AL West ────────────────────────────────────────────────────────────────
   {
-    abbr: 'HOU', team: 'Houston Astros', stadium: 'Minute Maid Park', city: 'Houston', state: 'TX',
+    abbr: 'HOU', team: 'Houston Astros', stadium: 'Daikin Park', city: 'Houston', state: 'TX',
     primary: '#002D62', secondary: '#EB6E1F',
     art: (
       <svg {...A()}>
@@ -318,28 +318,32 @@ const STAMP_DEFS: StampDef[] = [
     ),
   },
   {
-    abbr: 'OAK', team: 'Oakland Athletics', stadium: 'Oakland Coliseum', city: 'Oakland', state: 'CA',
+    abbr: 'OAK', team: 'Athletics', stadium: 'Sutter Health Park', city: 'Sacramento', state: 'CA',
     primary: '#003831', secondary: '#EFB21E',
     art: (
       <svg {...A()}>
-        {/* Mount Davis — the infamous upper deck fill-in */}
+        {/* Tower Bridge — Sacramento's gold lift bridge over the river */}
         <rect x="8" y="8" width="64" height="46" fill="#003831" rx="2"/>
-        {/* Tiered sections */}
-        <rect x="12" y="14" width="56" height="10" fill="#EFB21E" opacity="0.2"/>
-        <rect x="12" y="26" width="56" height="10" fill="#EFB21E" opacity="0.2"/>
-        <rect x="12" y="38" width="56" height="10" fill="#EFB21E" opacity="0.2"/>
-        {/* Vertical columns */}
-        {[18,28,38,48,58].map(x => (
-          <line key={x} x1={x} y1="8" x2={x} y2="54" stroke="#EFB21E" strokeWidth="1" opacity="0.5"/>
+        {/* Towers and caps */}
+        <rect x="19" y="19" width="10" height="35" fill="#EFB21E"/>
+        <rect x="51" y="19" width="10" height="35" fill="#EFB21E"/>
+        <polygon points="17,19 24,11 31,19" fill="#EFB21E"/>
+        <polygon points="49,19 56,11 63,19" fill="#EFB21E"/>
+        <rect x="22" y="25" width="4" height="7" fill="#003831"/>
+        <rect x="54" y="25" width="4" height="7" fill="#003831"/>
+        {/* Lift span and hangers */}
+        <rect x="29" y="23" width="22" height="3" fill="#EFB21E"/>
+        {[34,40,46].map(x => (
+          <line key={x} x1={x} y1="26" x2={x} y2="40" stroke="#EFB21E" strokeWidth="1.2" opacity="0.7"/>
         ))}
-        {/* Foul poles */}
-        <line x1="15" y1="8" x2="15" y2="60" stroke="#EFB21E" strokeWidth="2.5"/>
-        <line x1="65" y1="8" x2="65" y2="60" stroke="#EFB21E" strokeWidth="2.5"/>
-        {/* Scoreboard area */}
-        <rect x="30" y="10" width="20" height="12" fill="#EFB21E" opacity="0.3"/>
-        {/* Ground */}
-        <rect x="8" y="54" width="64" height="6" fill="#003831"/>
-        <rect x="8" y="60" width="64" height="4" fill="#4A7C59" opacity="0.4"/>
+        {/* Deck and approach supports */}
+        <rect x="8" y="40" width="64" height="3" fill="#EFB21E"/>
+        <line x1="19" y1="43" x2="12" y2="54" stroke="#EFB21E" strokeWidth="1.2" opacity="0.5"/>
+        <line x1="61" y1="43" x2="68" y2="54" stroke="#EFB21E" strokeWidth="1.2" opacity="0.5"/>
+        {/* River */}
+        <rect x="8" y="54" width="64" height="10" fill="#3B7A8C" opacity="0.55"/>
+        <path d="M12 58 q3 -2 6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0" stroke="#EFB21E" strokeWidth="1" opacity="0.4"/>
+        <path d="M16 62 q3 -2 6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0" stroke="#EFB21E" strokeWidth="1" opacity="0.3"/>
       </svg>
     ),
   },
