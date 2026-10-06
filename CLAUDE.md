@@ -19,6 +19,13 @@ Next.js 16 (App Router, Turbopack), Supabase (auth + DB), react-leaflet maps, Ta
 - `components/GameDayForm.tsx` — full game-day validation form
 - `components/TripForm.tsx` — trip planner with budget breakdown
 
+## Keep-alive (free-plan Supabase)
+Supabase pauses free projects after about a week of low activity, which takes the whole site down until someone clicks Resume in the Supabase dashboard. `vercel.json` schedules a daily Vercel Cron call to `/api/keep-alive`, which makes one small anonymous read from `baseball_history`.
+- Needs a `CRON_SECRET` environment variable in Vercel (Production). Without it the route refuses to run.
+- `proxy.ts` exempts exactly `/api/keep-alive` from the login redirect, because cron requests have no session and do not follow redirects.
+- Hobby-plan crons run once a day, at some point within the scheduled hour (UTC). Check runs in Vercel under Settings > Cron Jobs > View Logs.
+- If the Supabase plan is ever upgraded to Pro, this can be removed.
+
 ## Architecture note
 Both users share all data (visits, trips). RLS policies allow any authenticated user to read/write all rows — there's no per-user isolation by design.
 

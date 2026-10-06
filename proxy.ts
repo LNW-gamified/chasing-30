@@ -2,6 +2,12 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
+  // Vercel's daily keep-alive request has no login session, and cron requests
+  // do not follow redirects, so the usual bounce to /login would end the run
+  // silently without ever reaching the route. The route checks its own secret.
+  // Only this exact path is exempt.
+  if (request.nextUrl.pathname === '/api/keep-alive') return NextResponse.next()
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
