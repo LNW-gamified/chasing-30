@@ -9,6 +9,7 @@ import type { Stadium } from '@/types'
 import Link from 'next/link'
 import { ArrowLeft, MapPin, Calendar, Zap, Clock, Plus, Loader2, AlertCircle, CheckCircle2, ChevronRight, Search, Car } from 'lucide-react'
 import { TEAM_PRIMARY } from '@/lib/team-colors'
+import { teamNickname } from '@/lib/team-match'
 
 const MONTHS = [
   'January','February','March','April','May','June',
@@ -250,7 +251,9 @@ export default function OptimizerPage() {
 
         <div className="flex flex-col gap-5">
           {divisions.map(({ label, league, division }) => {
-            const divTeams = stadiums.filter(s => s.league === league && s.division === division)
+            const divTeams = stadiums
+              .filter(s => s.league === league && s.division === division)
+              .sort((a, b) => teamNickname(a.team).localeCompare(teamNickname(b.team)))
             return (
               <div key={label}>
                 <div className="text-sm font-bold uppercase tracking-widest mb-2 pb-1" style={{ color: '#8B949E', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
