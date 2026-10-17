@@ -110,6 +110,7 @@ interface Props {
   stadiums: Stadium[]
   trip?: Trip
   existingStops?: TripStop[]
+  startWithCustomEvent?: boolean
   onClose: () => void
   onSaved: () => void
 }
@@ -187,7 +188,7 @@ function SectionHeader({ icon, label }: { icon: React.ReactNode; label: string }
   )
 }
 
-export default function TripForm({ stadiums, trip, existingStops, onClose, onSaved }: Props) {
+export default function TripForm({ stadiums, trip, existingStops, startWithCustomEvent, onClose, onSaved }: Props) {
   const [form,          setForm]          = useState(() => defaultForm(trip))
   const [stops,         setStops]         = useState<StopDraft[]>(() => {
     if (existingStops && existingStops.length > 0) {
@@ -229,7 +230,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
         promotion_photos:    (s.promotion_photos   ?? {}) as Record<string, string>,
       }))
     }
-    return [defaultStop(stadiums)]
+    return [startWithCustomEvent ? defaultCustomStop() : defaultStop(stadiums)]
   })
   const [stopSchedules, setStopSchedules] = useState<StopSchedule[]>(() => {
     const n = (existingStops && existingStops.length > 0) ? existingStops.length : 1

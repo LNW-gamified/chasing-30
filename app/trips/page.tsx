@@ -126,7 +126,7 @@ function statusPill(status: Trip['status']) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-type FormType = 'stadium' | 'destination'
+type FormType = 'stadium' | 'destination' | 'event'
 
 export default function TripsPage() {
   const [trips,        setTrips]        = useState<TripWithExtras[]>([])
@@ -231,6 +231,22 @@ export default function TripsPage() {
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 600 }}>Baseball Destination</div>
                       <div style={{ fontSize: 12, color: '#8B949E' }}>HOF, events, historic sites & more</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => { setFormType('event'); setShowForm(true); setShowTypePicker(false) }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                      background: 'none', border: 'none', cursor: 'pointer', padding: '10px 12px',
+                      borderRadius: 8, color: '#E6EDF3', textAlign: 'left',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#1C2128')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                  >
+                    <span style={{ fontSize: 18, width: 18, textAlign: 'center', flexShrink: 0 }}>🍌</span>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>Banana Ball / Other Event</div>
+                      <div style={{ fontSize: 12, color: '#8B949E' }}>Banana Ball, college and other games</div>
                     </div>
                   </button>
                 </div>
@@ -615,9 +631,10 @@ export default function TripsPage() {
           )}
       </div>
 
-      {showForm && formType === 'stadium' && (
+      {showForm && (formType === 'stadium' || formType === 'event') && (
         <TripForm
           stadiums={stadiums}
+          startWithCustomEvent={formType === 'event'}
           onClose={() => setShowForm(false)}
           onSaved={() => { setShowForm(false); load() }}
         />
