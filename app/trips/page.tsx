@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { Plus, ChevronRight, Building2, MapPin, Map, Plane } from 'lucide-react'
 import { getTeamLogoUrl, LIGHT_BG_LOGO_TEAMS, getTeamAbbrById } from '@/lib/team-logos'
 import TeamLogo from '@/components/TeamLogo'
+import EventTeamLogo from '@/components/EventTeamLogo'
 import { TEAM_GRADIENTS as TEAM_COLORS, TEAM_BTN_COLOR, TEAM_LOGO_BG } from '@/lib/team-colors'
 import { DESTINATION_BY_SLUG } from '@/lib/destinations'
 
@@ -29,6 +30,9 @@ type StopMini = {
   stadium_visit_id: string | null
   destination_visit_id: string | null
   baseball_life_entry_id: string | null
+  event_slug: string | null
+  event_home_team: string | null
+  event_away_team: string | null
   est_tickets: number
   est_food: number
   est_parking: number
@@ -140,7 +144,7 @@ export default function TripsPage() {
     const supabase = createClient()
     const [{ data: t }, { data: s }] = await Promise.all([
       supabase.from('trips')
-        .select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, is_mlb_event), trip_stops(id, stadium_id, destination_id, stop_type, experience_type, opponent_team_id, sort_order, stadium_visit_id, destination_visit_id, baseball_life_entry_id, est_tickets, est_food, est_parking, est_hotel, est_local_transport, actual_tickets, actual_food, actual_parking, actual_hotel, actual_local_transport, stadium:stadiums(id, abbreviation, name))')
+        .select('*, stadium:stadiums(*), destination:destinations(slug, name, city, state, country, type, is_mlb_event), trip_stops(id, stadium_id, destination_id, stop_type, experience_type, opponent_team_id, sort_order, stadium_visit_id, destination_visit_id, baseball_life_entry_id, event_slug, event_home_team, event_away_team, est_tickets, est_food, est_parking, est_hotel, est_local_transport, actual_tickets, actual_food, actual_parking, actual_hotel, actual_local_transport, stadium:stadiums(id, abbreviation, name))')
         .order('start_date', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false })
         .order('sort_order', { referencedTable: 'trip_stops', ascending: true }),
@@ -357,6 +361,10 @@ export default function TripsPage() {
                       const isDestination = (trip as any).trip_type === 'destination'
                       const abbrs      = tripAbbrs(trip)
                       const stadCount  = tripStadiumCount(trip)
+                      const eventTeams = Array.from(new Set(trip.trip_stops
+                        .filter(s => s.event_slug)
+                        .flatMap(s => [s.event_away_team, s.event_home_team])
+                        .filter((n): n is string => !!n)))
                       const days       = tripDays(trip)
                       const dateRange  = tripDateRange(trip)
                       const sp         = statusPill(trip.status)
@@ -453,9 +461,18 @@ export default function TripsPage() {
                                 ))}
                               </div>
                             )}
+                            {!isDestination && abbrs.length === 0 && eventTeams.length > 0 && (
+                              <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', flexWrap: 'wrap', gap: 5, maxWidth: 160, justifyContent: 'flex-end' }}>
+                                {eventTeams.slice(0, 6).map(name => (
+                                  <div key={name} style={{ borderRadius: 13, boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                                    <EventTeamLogo name={name} size={48} />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                             <div style={{
                               position: 'absolute', bottom: 13, left: 16,
-                              right: (isDestination || abbrs.length > 0) ? 80 : 16,
+                              right: (isDestination || abbrs.length > 0 || eventTeams.length > 0) ? 80 : 16,
                             }}>
                               <div style={{
                                 fontSize: 24, fontWeight: 800, color: '#ffffff', lineHeight: 1.2,
