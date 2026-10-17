@@ -8,7 +8,7 @@ export default async function DataHealthPage() {
   const [{ data: visits }, { data: bleEntries }, { data: stops }] = await Promise.all([
     supabase.from('stadium_visits').select('id, stadium_id, visit_date, photo_url, photos'),
     supabase.from('baseball_life_entries').select('id, category, visit_date, venue, notes'),
-    supabase.from('trip_stops').select('id, trip_id, stadium_id, destination_id, sort_order'),
+    supabase.from('trip_stops').select('id, trip_id, stadium_id, destination_id, event_slug, sort_order'),
   ])
 
   // Find duplicate visits (same stadium + date)
@@ -25,8 +25,8 @@ export default async function DataHealthPage() {
   // Find BLE entries missing venue
   const bleNoVenue = (bleEntries ?? []).filter(e => !e.venue)
 
-  // Find trip stops with neither stadium nor destination
-  const orphanStops = (stops ?? []).filter(s => !s.stadium_id && !s.destination_id)
+  // Find trip stops with no stadium, destination or custom event
+  const orphanStops = (stops ?? []).filter(s => !s.stadium_id && !s.destination_id && !s.event_slug)
 
   return (
     <div style={{ color: '#E6EDF3', minHeight: '100vh' }}>

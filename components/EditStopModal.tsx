@@ -30,6 +30,7 @@ const labelStyle: React.CSSProperties = {
 
 export default function EditStopModal({ stop, stadiums, onClose, onSaved }: Props) {
   const isStadiumStop = stop.stop_type === 'stadium'
+  const isCustomStop = !!stop.event_slug
   const [gameDate, setGameDate] = useState(stop.game_date ?? '')
   const [gameTime, setGameTime] = useState(stop.game_time ?? '')
   const [opponentTeamId, setOpponentTeamId] = useState(stop.opponent_team_id?.toString() ?? '')
@@ -39,6 +40,8 @@ export default function EditStopModal({ stop, stadiums, onClose, onSaved }: Prop
   const [ticketConfirmation, setTicketConfirmation] = useState(stop.ticket_confirmation ?? '')
   const [experienceType, setExperienceType] = useState(stop.experience_type ?? '')
   const [notes, setNotes] = useState(stop.notes ?? '')
+  const [awayTeam, setAwayTeam] = useState(stop.event_away_team ?? '')
+  const [homeTeam, setHomeTeam] = useState(stop.event_home_team ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -64,11 +67,19 @@ export default function EditStopModal({ stop, stadiums, onClose, onSaved }: Prop
           ticket_confirmation: ticketConfirmation || null,
           notes: notes || null,
         }
-      : {
-          game_date: gameDate || null,
-          experience_type: experienceType || null,
-          notes: notes || null,
-        }
+      : isCustomStop
+        ? {
+            game_date: gameDate || null,
+            game_time: gameTime || null,
+            event_away_team: awayTeam.trim() || null,
+            event_home_team: homeTeam.trim() || null,
+            notes: notes || null,
+          }
+        : {
+            game_date: gameDate || null,
+            experience_type: experienceType || null,
+            notes: notes || null,
+          }
 
     const { error: updateError } = await supabase.from('trip_stops').update(update).eq('id', stop.id)
     setSaving(false)
@@ -137,7 +148,26 @@ export default function EditStopModal({ stop, stadiums, onClose, onSaved }: Prop
             </>
           )}
 
-          {!isStadiumStop && (
+          {isCustomStop && (
+            <>
+              <div>
+                <label style={labelStyle}>First pitch</label>
+                <input type="text" placeholder="TBD" value={gameTime} onChange={e => setGameTime(e.target.value)} style={inputStyle} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={labelStyle}>Away team</label>
+                  <input type="text" value={awayTeam} onChange={e => setAwayTeam(e.target.value)} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Home team</label>
+                  <input type="text" value={homeTeam} onChange={e => setHomeTeam(e.target.value)} style={inputStyle} />
+                </div>
+              </div>
+            </>
+          )}
+
+          {!isStadiumStop && !isCustomStop && (
             <div>
               <label style={labelStyle}>Experience Type</label>
               <select value={experienceType} onChange={e => setExperienceType(e.target.value)} style={inputStyle}>

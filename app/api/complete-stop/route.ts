@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { populateGameStats } from '@/lib/populate-game-stats'
+import { customEventType } from '@/lib/event-match'
 
 // Marks ONE trip stop as done, either by:
 //   action: 'log'  — create a fresh stadium_visits/destination_visits row
@@ -21,6 +22,7 @@ export async function POST(req: NextRequest) {
       action: 'log' | 'link'
       stadiumVisitId?: string
       destinationVisitId?: string
+      baseballLifeEntryId?: string
     }
     const { stopId, action } = body
     if (!stopId || !action) return NextResponse.json({ error: 'stopId and action required' }, { status: 400 })
@@ -42,8 +44,9 @@ export async function POST(req: NextRequest) {
       const update: Record<string, string | null> = {}
       if (body.stadiumVisitId)     update.stadium_visit_id     = body.stadiumVisitId
       if (body.destinationVisitId) update.destination_visit_id = body.destinationVisitId
+      if (body.baseballLifeEntryId) update.baseball_life_entry_id = body.baseballLifeEntryId
       if (Object.keys(update).length === 0) {
-        return NextResponse.json({ error: 'stadiumVisitId or destinationVisitId required for link' }, { status: 400 })
+        return NextResponse.json({ error: 'stadiumVisitId, destinationVisitId or baseballLifeEntryId required for link' }, { status: 400 })
       }
       const { error: linkError } = await supabase.from('trip_stops').update(update).eq('id', stopId)
       if (linkError) return NextResponse.json({ error: linkError.message }, { status: 500 })
@@ -52,6 +55,50 @@ export async function POST(req: NextRequest) {
     if (action === 'log') {
       if (!stop.game_date) {
         return NextResponse.json({ error: 'This stop has no date set, so it cannot be logged yet' }, { status: 400 })
+      }
+
+      // Custom event stop (a game outside the MLB schedule) → a Beyond the 30
+      // entry. The trip page normally opens the full after-game sheet for
+      // these instead; this is the quick path, and it reuses an existing
+      // entry for the same event and date rather than creating a duplicate.
+      if (stop.event_slug) {
+        if (!user) return NextResponse.json({ error: 'Not signed in' }, { status: 401 })
+        const eventType = customEventType(stop.event_slug)
+        const { data: existingEntry } = await supabase
+          .from('baseball_life_entries')
+          .select('id')
+          .eq('category', 'mlb_special_event')
+          .eq('event_type', eventType)
+          .eq('visit_date', stop.game_date)
+          .limit(1)
+          .maybeSingle()
+
+        let entryId = existingEntry?.id ?? null
+        if (!entryId) {
+          const { data: created, error: createError } = await supabase
+            .from('baseball_life_entries')
+            .insert({
+              user_id:      user.id,
+              category:     'mlb_special_event',
+              is_game:      true,
+              venue:        stop.event_venue ?? null,
+              city:         stop.event_city ?? null,
+              state:        stop.event_state ?? null,
+              visit_date:   stop.game_date,
+              event_type:   eventType,
+              opponent:     stop.event_away_team ?? null,
+              away_team:    stop.event_away_team ?? null,
+              home_team:    stop.event_home_team ?? null,
+              game_time:    stop.game_time ?? null,
+            })
+            .select('id')
+            .single()
+          if (createError) return NextResponse.json({ error: createError.message }, { status: 500 })
+          entryId = created?.id ?? null
+        }
+        if (entryId) {
+          await supabase.from('trip_stops').update({ baseball_life_entry_id: entryId }).eq('id', stopId)
+        }
       }
 
       // Destination stop → create destination_visit (mirrors complete-trip)

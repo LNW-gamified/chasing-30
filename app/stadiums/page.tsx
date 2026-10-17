@@ -11,6 +11,7 @@ import TeamLogo from '@/components/TeamLogo'
 import MiLBLogo from '@/components/MiLBLogo'
 import type { BaseballLifeCategory } from '@/types'
 import { getUserTimezone } from '@/lib/user-timezone'
+import { eventMatches, eventDefaultType } from '@/lib/event-match'
 
 // Large form only ever shown behind a click — load it on demand instead
 // of shipping its code in this route's initial bundle.
@@ -80,33 +81,6 @@ const EVENT_GRADIENT: Record<string, string> = {
   playoffs:        '#CC1122',  // red
   field_of_dreams: '#2A7A2A',  // green
   spring_training: '#1A8FE3',  // blue
-}
-
-// ─── "Attended" matching: event slug → keywords in ble.event_type ─────────────
-
-const EVENT_MATCH: Record<string, (e: BleEntry) => boolean> = {
-  'mlb-all-star-game':           e => e.category === 'mlb_special_event' && !!(e.event_type?.toLowerCase().includes('all-star') || e.event_type?.toLowerCase().includes('all star')),
-  'home-run-derby':              e => e.category === 'mlb_special_event' && !!e.event_type?.toLowerCase().includes('home run derby'),
-  'wild-card-game':              e => e.category === 'mlb_special_event' && !!e.event_type?.toLowerCase().includes('wild card'),
-  'division-series-alds':        e => e.category === 'mlb_special_event' && !!e.event_type?.toLowerCase().includes('alds'),
-  'division-series-nlds':        e => e.category === 'mlb_special_event' && !!e.event_type?.toLowerCase().includes('nlds'),
-  'championship-series-alcs':    e => e.category === 'mlb_special_event' && !!e.event_type?.toLowerCase().includes('alcs'),
-  'championship-series-nlcs':    e => e.category === 'mlb_special_event' && !!e.event_type?.toLowerCase().includes('nlcs'),
-  'world-series':                e => e.category === 'mlb_special_event' && !!e.event_type?.toLowerCase().includes('world series'),
-  'field-of-dreams-game':        e => e.category === 'mlb_special_event' && !!e.event_type?.toLowerCase().includes('field of dreams'),
-  'spring-training-cactus':      e => e.category === 'spring_training',
-  'spring-training-grapefruit':  e => e.category === 'spring_training',
-}
-
-function eventDefaultType(slug: string): string {
-  const map: Record<string, string> = {
-    'mlb-all-star-game': 'All-Star Game', 'home-run-derby': 'Home Run Derby',
-    'wild-card-game': 'Wild Card Game', 'division-series-alds': 'ALDS',
-    'division-series-nlds': 'NLDS', 'championship-series-alcs': 'ALCS',
-    'championship-series-nlcs': 'NLCS', 'world-series': 'World Series',
-    'field-of-dreams-game': 'Field of Dreams Game',
-  }
-  return map[slug] ?? ''
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -183,6 +157,7 @@ function EventCard({ event, attendedCount, visitDate, onLog }: {
   const attended = attendedCount > 0
   const gradColor = EVENT_GRADIENT[event.category] ?? meta.color
   return (
+    <Link href={`/events/${event.slug}`} onClick={() => { try { sessionStorage.setItem('ballparks-tab', 'events') } catch {} }} style={{ display: 'block', height: '100%', textDecoration: 'none' }}>
     <div className="stadium-card" style={{ backgroundColor: '#111827', border: attended ? '1px solid rgba(63,185,80,0.4)' : '1px solid #21262D', borderTop: `3px solid ${meta.color}`, borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s' }}>
       <div style={{ height: 136, position: 'relative', overflow: 'hidden' }}>
         {event.image_url
@@ -209,7 +184,7 @@ function EventCard({ event, attendedCount, visitDate, onLog }: {
             <span style={{ fontSize: 12, fontWeight: 600, color: '#8B949E', backgroundColor: 'rgba(139,148,158,0.1)', border: '1px solid rgba(139,148,158,0.25)', padding: '2px 8px', borderRadius: 999 }}>Not yet</span>
           )}
           <button
-            onClick={e => { e.stopPropagation(); onLog() }}
+            onClick={e => { e.preventDefault(); e.stopPropagation(); onLog() }}
             style={{ fontSize: 13, fontWeight: 700, color: meta.color, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
           >
             + Log
@@ -217,6 +192,7 @@ function EventCard({ event, attendedCount, visitDate, onLog }: {
         </div>
       </div>
     </div>
+    </Link>
   )
 }
 
@@ -491,15 +467,11 @@ export default function StadiumsPage() {
 
   // BLE lookups
   const eventAttendedCount = useCallback((slug: string) => {
-    const fn = EVENT_MATCH[slug]
-    if (!fn) return 0
-    return bleEntries.filter(fn).length
+    return bleEntries.filter(e => eventMatches(slug, e)).length
   }, [bleEntries])
 
   const eventAttendedDate = useCallback((slug: string): string | null => {
-    const fn = EVENT_MATCH[slug]
-    if (!fn) return null
-    const matches = bleEntries.filter(fn)
+    const matches = bleEntries.filter(e => eventMatches(slug, e))
     if (matches.length === 0) return null
     return [...matches].sort((a, b) => b.visit_date.localeCompare(a.visit_date))[0].visit_date
   }, [bleEntries])

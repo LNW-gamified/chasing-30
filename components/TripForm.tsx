@@ -6,6 +6,9 @@ import type { Stadium, Trip, TripStop, Destination } from '@/types'
 import { X, Plus, Trash2, Loader2, MapPin, Ticket, DollarSign, CalendarDays, ChevronDown } from 'lucide-react'
 import TeamLogo from '@/components/TeamLogo'
 import { DESTINATION_BY_SLUG, EXPERIENCE_TYPES } from '@/lib/destinations'
+import { CUSTOM_EVENT_OPTIONS, customEventLabel } from '@/lib/event-match'
+import { geocodeCity } from '@/lib/geocode'
+import EventTeamLogo from '@/components/EventTeamLogo'
 import { newestSeason } from '@/lib/season'
 import { MLB_TEAM_IDS as ABBR_TO_MLB_ID } from '@/lib/mlb-api'
 
@@ -58,6 +61,16 @@ interface StopDraft {
   // Destination stop fields
   destination_id: string
   experience_type: string
+  // Custom event stop fields (event_slug set means this is a custom event)
+  event_slug: string
+  event_home_team: string
+  event_away_team: string
+  event_venue: string
+  event_city: string
+  event_state: string
+  event_lat: string
+  event_lng: string
+  event_stadium_id: string   // form-only: which MLB ballpark was picked as the venue
   // Shared
   est_tickets: string
   est_food: string
@@ -119,6 +132,7 @@ function defaultStop(stadiums: Stadium[]): StopDraft {
     notes: '',
     ticket_section: '', ticket_row: '', ticket_seats: [], ticket_confirmation: '',
     destination_id: '', experience_type: '',
+    event_slug: '', event_home_team: '', event_away_team: '', event_venue: '', event_city: '', event_state: '', event_lat: '', event_lng: '', event_stadium_id: '',
     promotions: [], promotion_photos: {},
   }
 }
@@ -133,8 +147,13 @@ function defaultDestStop(): StopDraft {
     notes: '',
     ticket_section: '', ticket_row: '', ticket_seats: [], ticket_confirmation: '',
     destination_id: '', experience_type: '',
+    event_slug: '', event_home_team: '', event_away_team: '', event_venue: '', event_city: '', event_state: '', event_lat: '', event_lng: '', event_stadium_id: '',
     promotions: [], promotion_photos: {},
   }
+}
+
+function defaultCustomStop(): StopDraft {
+  return { ...defaultDestStop(), experience_type: 'game', event_slug: 'banana-ball' }
 }
 
 function emptySchedule(): StopSchedule {
@@ -178,6 +197,15 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
         stadium_id:       s.stadium_id       ?? '',
         destination_id:   s.destination_id   ?? '',
         experience_type:  s.experience_type  ?? '',
+        event_slug:       s.event_slug       ?? '',
+        event_home_team:  s.event_home_team  ?? '',
+        event_away_team:  s.event_away_team  ?? '',
+        event_venue:      s.event_venue      ?? '',
+        event_city:       s.event_city       ?? '',
+        event_state:      s.event_state      ?? '',
+        event_lat:        s.event_lat != null ? String(s.event_lat) : '',
+        event_lng:        s.event_lng != null ? String(s.event_lng) : '',
+        event_stadium_id: s.event_venue ? (stadiums.find(st => st.name === s.event_venue)?.id ?? '') : '',
         game_date:        s.game_date                    ?? '',
         game_time:        s.game_time                    ?? '',
         opponent:         s.opponent                     ?? '',
@@ -215,6 +243,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
   const [error,  setError]            = useState('')
   const [destinations, setDestinations] = useState<Destination[]>([])
   const [expandedStop, setExpandedStop]       = useState<number | null>(0)
+  const [geoMsg, setGeoMsg]                   = useState<Record<number, string>>({})
   const [expandedDetails, setExpandedDetails] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
@@ -400,7 +429,23 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     ))
   }
 
-  function addStop(type: 'stadium' | 'destination' = 'stadium') {
+  function setStopFields(i: number, patch: Partial<StopDraft>) {
+    setStops(prev => prev.map((s, idx) => idx === i ? { ...s, ...patch } : s))
+  }
+
+  async function findEventLocation(i: number) {
+    const st = stops[i]
+    setGeoMsg(prev => ({ ...prev, [i]: 'Looking up…' }))
+    const hit = await geocodeCity(st.event_city, st.event_state)
+    if (!hit) {
+      setGeoMsg(prev => ({ ...prev, [i]: "Couldn't find that city. Check the spelling, or save without a location (weather and mileage will be skipped)." }))
+      return
+    }
+    setStopFields(i, { event_lat: String(hit.lat), event_lng: String(hit.lng) })
+    setGeoMsg(prev => ({ ...prev, [i]: `Location set to ${hit.label}` }))
+  }
+
+  function addStop(type: 'stadium' | 'destination' | 'custom' = 'stadium') {
     const newIdx = stops.length
     if (type === 'stadium') {
       const newStadiumId = stadiums[0]?.id ?? ''
@@ -409,17 +454,17 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       setSeatInputs(prev => [...prev, ''])
       if (newStadiumId) setTimeout(() => fetchGamesForStop(newIdx, newStadiumId), 0)
     } else {
-      setStops(prev => [...prev, defaultDestStop()])
+      setStops(prev => [...prev, type === 'custom' ? defaultCustomStop() : defaultDestStop()])
       setStopSchedules(prev => [...prev, emptySchedule()])
       setSeatInputs(prev => [...prev, ''])
     }
     setExpandedStop(newIdx)
   }
 
-  function changeStopType(i: number, type: 'stadium' | 'destination') {
+  function changeStopType(i: number, type: 'stadium' | 'destination' | 'custom') {
     setStops(prev => prev.map((s, idx) => {
       if (idx !== i) return s
-      if (type === 'destination') {
+      if (type !== 'stadium') {
         const oldPaths = Object.values(s.promotion_photos)
           .map(url => { const m = url.match(/\/promo-photos\/(.+)$/); return m?.[1] ?? '' })
           .filter(Boolean)
@@ -427,7 +472,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       }
       return type === 'stadium'
         ? { ...defaultStop(stadiums), id: s.id, sort_order: i, est_tickets: s.est_tickets, est_food: s.est_food, est_parking: s.est_parking, est_hotel: s.est_hotel, est_local_transport: s.est_local_transport, actual_tickets: s.actual_tickets, actual_food: s.actual_food, actual_parking: s.actual_parking, actual_hotel: s.actual_hotel, actual_local_transport: s.actual_local_transport }
-        : { ...defaultDestStop(),     id: s.id, sort_order: i, est_tickets: s.est_tickets, est_food: s.est_food, est_parking: s.est_parking, est_hotel: s.est_hotel, est_local_transport: s.est_local_transport, actual_tickets: s.actual_tickets, actual_food: s.actual_food, actual_parking: s.actual_parking, actual_hotel: s.actual_hotel, actual_local_transport: s.actual_local_transport }
+        : { ...(type === 'custom' ? defaultCustomStop() : defaultDestStop()), id: s.id, sort_order: i, est_tickets: s.est_tickets, est_food: s.est_food, est_parking: s.est_parking, est_hotel: s.est_hotel, est_local_transport: s.est_local_transport, actual_tickets: s.actual_tickets, actual_food: s.actual_food, actual_parking: s.actual_parking, actual_hotel: s.actual_hotel, actual_local_transport: s.actual_local_transport }
     }))
     if (type === 'stadium') {
       const newStadiumId = stadiums[0]?.id ?? ''
@@ -440,6 +485,7 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       .map(url => { const m = url.match(/\/promo-photos\/(.+)$/); return m?.[1] ?? '' })
       .filter(Boolean)
     if (oldPaths.length > 0) createClient().storage.from('promo-photos').remove(oldPaths)
+    setGeoMsg({})
     setStops(prev => prev.filter((_, idx) => idx !== i))
     setStopSchedules(prev => prev.filter((_, idx) => idx !== i))
     setSeatInputs(prev => prev.filter((_, idx) => idx !== i))
@@ -469,11 +515,29 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
       }
     }
 
+    for (const [i, stop] of stops.entries()) {
+      if (stop.stop_type === 'destination' && stop.event_slug && !stop.event_away_team.trim() && !stop.event_home_team.trim()) {
+        setError(`Stop ${i + 1}: enter at least one team name for this event.`)
+        return
+      }
+    }
+
     setSaving(true)
     setError('')
 
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
+
+    // Custom events at a non-MLB venue need coordinates for weather and
+    // mileage. If the city was typed but "Find location" wasn't pressed,
+    // look it up now. A failed lookup doesn't block saving.
+    const resolvedCoords: Record<number, { lat: number; lng: number }> = {}
+    for (const [i, stop] of stops.entries()) {
+      if (stop.stop_type === 'destination' && stop.event_slug && !stop.event_lat && stop.event_city.trim()) {
+        const hit = await geocodeCity(stop.event_city, stop.event_state)
+        if (hit) resolvedCoords[i] = { lat: hit.lat, lng: hit.lng }
+      }
+    }
 
     const tripPayload = {
       name:           form.name,
@@ -518,13 +582,14 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
     // Update existing stops in place, insert new ones
     for (const [i, stop] of stops.entries()) {
       const isStadium = stop.stop_type === 'stadium'
+      const isCustom  = stop.stop_type === 'destination' && !!stop.event_slug
       const payload = {
         stop_type:           stop.stop_type,
         stadium_id:          stop.stadium_id || null,
         destination_id:      isStadium ? null : (stop.destination_id || null),
-        experience_type:     isStadium ? null : (stop.experience_type || null),
+        experience_type:     isStadium ? null : (isCustom ? 'game' : (stop.experience_type || null)),
         game_date:           stop.game_date || null,
-        game_time:           isStadium ? (stop.game_time || null) : null,
+        game_time:           (isStadium || isCustom) ? (stop.game_time || null) : null,
         opponent:            isStadium ? (stop.opponent  || null) : null,
         opponent_team_id:    (isStadium || stop.experience_type === 'game' || stop.experience_type === 'festival')
           ? (parseInt(stop.opponent_team_id) || null)
@@ -547,6 +612,14 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
         ticket_confirmation: isStadium ? (stop.ticket_confirmation || null) : null,
         promotions:          isStadium && stop.promotions.length > 0 ? stop.promotions : null,
         promotion_photos:    isStadium && Object.keys(stop.promotion_photos).length > 0 ? stop.promotion_photos : null,
+        event_slug:          isCustom ? stop.event_slug : null,
+        event_home_team:     isCustom ? (stop.event_home_team.trim() || null) : null,
+        event_away_team:     isCustom ? (stop.event_away_team.trim() || null) : null,
+        event_venue:         isCustom ? (stop.event_venue.trim() || null) : null,
+        event_city:          isCustom ? (stop.event_city.trim() || null) : null,
+        event_state:         isCustom ? (stop.event_state.trim().toUpperCase() || null) : null,
+        event_lat:           isCustom ? (stop.event_lat ? parseFloat(stop.event_lat) : (resolvedCoords[i]?.lat ?? null)) : null,
+        event_lng:           isCustom ? (stop.event_lng ? parseFloat(stop.event_lng) : (resolvedCoords[i]?.lng ?? null)) : null,
       }
 
       if (stop.id) {
@@ -720,6 +793,14 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                 }}>
                   <Plus size={12} /> Destination Stop
                 </button>
+                <button type="button" onClick={() => addStop('custom')} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '6px 12px', borderRadius: 8,
+                  border: '1px solid #30363D', backgroundColor: '#1C2430',
+                  color: '#8B949E', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                }}>
+                  <Plus size={12} /> Custom Event
+                </button>
               </div>
             </div>
 
@@ -751,9 +832,11 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                         </span>
                         {expandedStop !== i && (
                           <span style={{ fontSize: 12, color: '#8B949E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {stop.stop_type === 'destination'
-                              ? destinations.find(d => d.id === stop.destination_id)?.name ?? 'Destination'
-                              : stadiums.find(s => s.id === stop.stadium_id)?.name ?? 'Stadium'}
+                            {stop.stop_type === 'destination' && stop.event_slug
+                              ? ([stop.event_away_team, stop.event_home_team].filter(Boolean).join(' vs ') || customEventLabel(stop.event_slug))
+                              : stop.stop_type === 'destination'
+                                ? destinations.find(d => d.id === stop.destination_id)?.name ?? 'Destination'
+                                : stadiums.find(s => s.id === stop.stadium_id)?.name ?? 'Stadium'}
                           </span>
                         )}
                       </div>
@@ -781,20 +864,134 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                         {([
                           { key: 'stadium'     as const, label: '🏟️ Stadium Game' },
                           { key: 'destination' as const, label: '📍 Destination'  },
-                        ]).map(({ key, label }) => (
-                          <button key={key} type="button" onClick={() => changeStopType(i, key)} style={{
+                          { key: 'custom'      as const, label: '🍌 Custom Event' },
+                        ]).map(({ key, label }) => {
+                          const activeKey = stop.stop_type === 'stadium' ? 'stadium' : stop.event_slug ? 'custom' : 'destination'
+                          return (
+                          <button key={key} type="button" onClick={() => { if (activeKey !== key) changeStopType(i, key) }} style={{
                             flex: 1, padding: '6px 8px', borderRadius: 8,
-                            fontSize: 12, fontWeight: stop.stop_type === key ? 700 : 500,
+                            fontSize: 12, fontWeight: activeKey === key ? 700 : 500,
                             border: 'none', cursor: 'pointer',
-                            backgroundColor: stop.stop_type === key ? '#0d1424' : 'transparent',
-                            color: stop.stop_type === key ? '#E6EDF3' : '#8B949E',
+                            backgroundColor: activeKey === key ? '#0d1424' : 'transparent',
+                            color: activeKey === key ? '#E6EDF3' : '#8B949E',
                           }}>
                             {label}
                           </button>
-                        ))}
+                          )
+                        })}
                       </div>
 
-                      {stop.stop_type === 'destination' ? (
+                      {stop.stop_type === 'destination' && stop.event_slug ? (
+                        <>
+                          <div style={{ padding: '8px 10px', borderRadius: 8, marginBottom: 14, backgroundColor: 'rgba(245,166,35,0.07)', border: '1px solid rgba(245,166,35,0.25)', fontSize: 13, color: '#F5A623' }}>
+                            For games that aren&apos;t in the MLB schedule. It counts as a game on your trip and in Beyond the 30, not toward your 30 ballparks.
+                          </div>
+
+                          <div style={{ marginBottom: 14 }}>
+                            <label style={labelStyle}>Event</label>
+                            <select style={inputStyle} value={stop.event_slug}
+                              onChange={e => setStop(i, 'event_slug', e.target.value)}>
+                              {CUSTOM_EVENT_OPTIONS.map(o => <option key={o.slug} value={o.slug}>{o.label}</option>)}
+                            </select>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+                            {([
+                              { field: 'event_away_team' as const, label: 'Away team' },
+                              { field: 'event_home_team' as const, label: 'Home team (if known)' },
+                            ]).map(({ field, label }) => (
+                              <div key={field}>
+                                <label style={labelStyle}>{label}</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  {stop[field].trim() && <EventTeamLogo key={stop[field]} name={stop[field]} size={32} />}
+                                  <input type="text" style={{ ...inputStyle, flex: 1, minWidth: 0 }} value={stop[field]}
+                                    placeholder="Team name"
+                                    onChange={e => setStop(i, field, e.target.value)} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div style={{ marginBottom: 14 }}>
+                            <label style={labelStyle}>Venue</label>
+                            <select
+                              style={inputStyle}
+                              value={stop.event_stadium_id || (stop.event_venue || stop.event_city || geoMsg[i] !== undefined ? 'other' : '')}
+                              onChange={e => {
+                                const v = e.target.value
+                                if (v === '') {
+                                  setStopFields(i, { event_stadium_id: '', event_venue: '', event_city: '', event_state: '', event_lat: '', event_lng: '' })
+                                  setGeoMsg(prev => { const n = { ...prev }; delete n[i]; return n })
+                                } else if (v === 'other') {
+                                  setStopFields(i, { event_stadium_id: '', event_venue: '', event_city: '', event_state: '', event_lat: '', event_lng: '' })
+                                  setGeoMsg(prev => ({ ...prev, [i]: '' }))
+                                } else {
+                                  const st = stadiums.find(x => x.id === v)
+                                  if (st) setStopFields(i, {
+                                    event_stadium_id: st.id, event_venue: st.name, event_city: st.city, event_state: st.state,
+                                    event_lat: st.lat != null ? String(st.lat) : '', event_lng: st.lng != null ? String(st.lng) : '',
+                                  })
+                                }
+                              }}
+                            >
+                              <option value="">Select a venue…</option>
+                              <optgroup label="MLB ballparks">
+                                {[...stadiums].sort((a, b) => a.name.localeCompare(b.name)).map(st => (
+                                  <option key={st.id} value={st.id}>{st.name} · {st.city}, {st.state}</option>
+                                ))}
+                              </optgroup>
+                              <option value="other">Other venue…</option>
+                            </select>
+                          </div>
+
+                          {!stop.event_stadium_id && (stop.event_venue || stop.event_city || geoMsg[i] !== undefined) && (
+                            <div style={{ marginBottom: 14 }}>
+                              <input type="text" style={{ ...inputStyle, marginBottom: 8 }} placeholder="Venue name"
+                                value={stop.event_venue} onChange={e => setStop(i, 'event_venue', e.target.value)} />
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                <input type="text" style={{ ...inputStyle, flex: 2 }} placeholder="City"
+                                  value={stop.event_city}
+                                  onChange={e => setStopFields(i, { event_city: e.target.value, event_lat: '', event_lng: '' })} />
+                                <input type="text" style={{ ...inputStyle, flex: 1, textTransform: 'uppercase' }} placeholder="ST" maxLength={2}
+                                  value={stop.event_state}
+                                  onChange={e => setStopFields(i, { event_state: e.target.value, event_lat: '', event_lng: '' })} />
+                                <button type="button" onClick={() => findEventLocation(i)} disabled={!stop.event_city.trim()}
+                                  style={{ padding: '0 14px', borderRadius: 10, border: '1px solid #30363D', backgroundColor: '#1C2430', color: '#E6EDF3', fontSize: 12, fontWeight: 600, cursor: stop.event_city.trim() ? 'pointer' : 'default', opacity: stop.event_city.trim() ? 1 : 0.5, whiteSpace: 'nowrap' }}>
+                                  Find location
+                                </button>
+                              </div>
+                              {(geoMsg[i] || stop.event_lat) && (
+                                <div style={{ fontSize: 12, color: stop.event_lat ? '#3FB950' : '#8B949E', marginTop: 6 }}>
+                                  {geoMsg[i] || 'Location set'}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+                            <div>
+                              <label style={labelStyle}>Date</label>
+                              <input type="date" style={inputStyle} value={stop.game_date}
+                                onChange={e => setStop(i, 'game_date', e.target.value)} />
+                            </div>
+                            <div>
+                              <label style={labelStyle}>First pitch</label>
+                              <input type="text" style={inputStyle} value={stop.game_time} placeholder="TBD"
+                                onChange={e => setStop(i, 'game_time', e.target.value)} />
+                            </div>
+                          </div>
+                          <div style={{ fontSize: 12, color: '#8B949E', margin: '-6px 0 14px' }}>
+                            Not sure which day yet? Pick one and note the other below. You can change both later.
+                          </div>
+
+                          <div style={{ marginBottom: 14 }}>
+                            <label style={labelStyle}>Notes</label>
+                            <textarea rows={2} style={{ ...inputStyle, resize: 'vertical' }} value={stop.notes}
+                              placeholder="e.g. Or Saturday the 24th, tickets go on sale in November"
+                              onChange={e => setStop(i, 'notes', e.target.value)} />
+                          </div>
+                        </>
+                      ) : stop.stop_type === 'destination' ? (
                         <>
                           {/* Destination selector */}
                           <div style={{ marginBottom: 14 }}>
@@ -1225,6 +1422,14 @@ export default function TripForm({ stadiums, trip, existingStops, onClose, onSav
                 color: '#8B949E', fontSize: 12, fontWeight: 600, cursor: 'pointer',
               }}>
                 <Plus size={12} /> Destination Stop
+              </button>
+              <button type="button" onClick={() => addStop('custom')} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '6px 12px', borderRadius: 8,
+                border: '1px solid #30363D', backgroundColor: '#1C2430',
+                color: '#8B949E', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              }}>
+                <Plus size={12} /> Custom Event
               </button>
             </div>
 

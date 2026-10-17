@@ -119,6 +119,17 @@ export interface TripStop {
   stadium_visit_id: string | null
   destination_visit_id: string | null
   baseball_life_entry_id: string | null
+  // Custom event stops (games not in the MLB schedule): a destination-type
+  // stop with no destination_id, where these hold what the destination or
+  // stadium row would normally supply.
+  event_slug: string | null
+  event_home_team: string | null
+  event_away_team: string | null
+  event_venue: string | null
+  event_city: string | null
+  event_state: string | null
+  event_lat: number | null
+  event_lng: number | null
   created_at: string
   stadium?: Stadium
   destination?: Destination

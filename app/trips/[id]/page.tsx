@@ -17,10 +17,15 @@ import { DESTINATION_BY_SLUG, destinationLocation, EXPERIENCE_TYPES } from '@/li
 import { fetchForecastWeather, fetchHistoricalWeather, type WeatherData } from '@/lib/open-meteo'
 import { TEAM_PRIMARY, TEAM_GRADIENTS as TEAM_COLORS, TEAM_BTN_COLOR, TEAM_LOGO_BG } from '@/lib/team-colors'
 import { fetchRealGameTime } from '@/lib/mlb-api'
+import { customEventLabel, customEventType } from '@/lib/event-match'
+import { stopCoords, toTwentyFourHour } from '@/lib/trip-stop-utils'
+import EventTeamLogo from '@/components/EventTeamLogo'
 
 // Large form only ever shown behind a click — load it on demand instead
 // of shipping its code in this route's initial bundle.
 const TripForm = dynamic(() => import('@/components/TripForm'), { ssr: false })
+// After-game sheet for custom event stops, opened from the stop card.
+const BaseballLifeForm = dynamic(() => import('@/components/BaseballLifeForm'), { ssr: false })
 
 type TripWithStadium = Trip & { stadium: Stadium | null }
 
@@ -72,6 +77,7 @@ export default function TripDetailPage() {
   const [checklistItems, setChecklistItems] = useState<StopChecklistItem[]>([])
   const [showDeleteMenu,  setShowDeleteMenu]  = useState(false)
   const [editingStop, setEditingStop] = useState<TripStop | null>(null)
+  const [logGameStop, setLogGameStop] = useState<TripStop | null>(null)
   const [stopWeather, setStopWeather]             = useState<Record<string, WeatherData>>({})
   const [stopClimate, setStopClimate]              = useState<Record<string, { rating: string; avgHigh: number; avgPrecipDays: number }>>({})
   const [markingStopId,   setMarkingStopId]   = useState<string | null>(null)
@@ -96,6 +102,7 @@ export default function TripDetailPage() {
         'experience_type, est_tickets, est_food, est_parking, est_hotel, est_local_transport, actual_tickets, actual_food, actual_parking, actual_hotel, actual_local_transport, notes, ' +
         'ticket_section, ticket_row, ticket_seats, ticket_confirmation, promotions, promotion_photos, created_at, ' +
         'stadium_visit_id, destination_visit_id, baseball_life_entry_id, ' +
+        'event_slug, event_home_team, event_away_team, event_venue, event_city, event_state, event_lat, event_lng, ' +
         'stadium:stadiums(*), destination:destinations(*), stadium_visit:stadium_visits(stats_auto_populated)'
       ).eq('trip_id', id).order('sort_order'),
     ])
@@ -211,13 +218,7 @@ export default function TripDetailPage() {
   async function calculateDrivingDistance(stopsToCalc: typeof stops) {
     interface GeoPoint { lat: number; lng: number }
     const withLocation: GeoPoint[] = stopsToCalc
-      .map(s => {
-        const stadium = s.stadium as Stadium | null
-        const destination = s.destination as { lat: number | null; lng: number | null } | null
-        if (stadium?.lat != null && stadium?.lng != null) return { lat: stadium.lat, lng: stadium.lng }
-        if (destination?.lat != null && destination?.lng != null) return { lat: destination.lat, lng: destination.lng }
-        return null
-      })
+      .map(s => stopCoords(s))
       .filter((p): p is GeoPoint => p !== null)
 
     if (withLocation.length < 2) return
@@ -341,14 +342,16 @@ export default function TripDetailPage() {
       if (stopWeatherRef.current[stop.id]) return
       const date = stop.game_date
       const stadium = stop.stadium as Stadium | null
-      if (!date || !stadium?.lat || !stadium?.lng) return
+      const wLat = stadium?.lat ?? stop.event_lat
+      const wLng = stadium?.lng ?? stop.event_lng
+      if (!date || !wLat || !wLng) return
       const fetcher = date >= today && date <= maxForecastDate
         ? fetchForecastWeather
         : date < today
           ? fetchHistoricalWeather
           : null
       if (!fetcher) return
-      fetcher(stadium.lat, stadium.lng, date).then(w => {
+      fetcher(wLat, wLng, date).then(w => {
         if (w) setStopWeather(prev => ({ ...prev, [stop.id]: w }))
       })
     })
@@ -371,7 +374,8 @@ export default function TripDetailPage() {
     stops.forEach(async stop => {
       if (stopClimateRef.current[stop.id]) return
       const date = stop.game_date
-      const stadium = stop.stadium as Stadium | null
+      const stadium = (stop.stadium as Stadium | null)
+        ?? (stop.event_venue ? stadiums.find(st => st.name === stop.event_venue) ?? null : null)
       if (!date || !stadium?.id || date <= maxForecastDate) return // has (or will get) a real forecast, or is in the past
 
       let months = climateCache.current[stadium.id]
@@ -389,7 +393,7 @@ export default function TripDetailPage() {
         } }))
       }
     })
-  }, [stops])
+  }, [stops, stadiums])
 
   async function handleDelete() {
     if (!confirm('Delete this trip?')) return
@@ -420,13 +424,39 @@ export default function TripDetailPage() {
     }
   }
 
+  // The after-game sheet saved a baseball_life_entry; point the stop at it.
+  async function handleGameSheetSaved(stop: TripStop, entryId: string) {
+    try {
+      await fetch('/api/complete-stop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stopId: stop.id, action: 'link', baseballLifeEntryId: entryId }),
+      })
+    } catch {
+      setMarkStopError(prev => ({ ...prev, [stop.id]: 'Saved the game, but could not mark this stop done. Use "Already logged this".' }))
+    }
+    await load()
+  }
+
   async function openLinkPicker(stop: TripStop) {
     setLinkPickerStopId(stop.id)
     setLinkLoading(true)
     setLinkCandidates([])
     const supabase = createClient()
     try {
-      if (stop.destination_id) {
+      if (stop.event_slug) {
+        const { data } = await supabase
+          .from('baseball_life_entries')
+          .select('id, visit_date, event_type, home_team, away_team')
+          .eq('category', 'mlb_special_event')
+          .order('visit_date', { ascending: false })
+          .limit(10)
+        type EntryRow = { id: string; visit_date: string | null; event_type: string | null; home_team: string | null; away_team: string | null }
+        setLinkCandidates(((data ?? []) as EntryRow[]).map(b => ({
+          id: b.id,
+          label: `${b.visit_date ? formatDate(b.visit_date) : 'Undated'} · ${[b.away_team, b.home_team].filter(Boolean).join(' vs ') || b.event_type || 'Event'}`,
+        })))
+      } else if (stop.destination_id) {
         const { data } = await supabase
           .from('destination_visits')
           .select('id, visit_date')
@@ -458,7 +488,7 @@ export default function TripDetailPage() {
         body: JSON.stringify({
           stopId: stop.id,
           action: 'link',
-          ...(stop.destination_id ? { destinationVisitId: entryId } : { stadiumVisitId: entryId }),
+          ...(stop.event_slug ? { baseballLifeEntryId: entryId } : stop.destination_id ? { destinationVisitId: entryId } : { stadiumVisitId: entryId }),
         }),
       })
       const result = await res.json()
@@ -494,7 +524,7 @@ export default function TripDetailPage() {
         {!isPicking ? (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button
-              onClick={() => handleLogStop(stop.id)}
+              onClick={() => stop.event_slug ? setLogGameStop(stop) : handleLogStop(stop.id)}
               disabled={isMarking}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -504,7 +534,7 @@ export default function TripDetailPage() {
               }}
             >
               {isMarking ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />}
-              Mark Done
+              {stop.event_slug ? 'Log game' : 'Mark Done'}
             </button>
             <button
               onClick={() => openLinkPicker(stop)}
@@ -1126,6 +1156,9 @@ export default function TripDetailPage() {
                   if (isDestinationStop) {
                     const dest     = (stop as any).destination as { id: string; slug: string; name: string; city: string; state: string | null; is_mlb_event: boolean } | undefined
                     const destInfo = dest?.slug ? DESTINATION_BY_SLUG[dest.slug] : null
+                    const isCustom = !!stop.event_slug
+                    const customTitle = [stop.event_away_team, stop.event_home_team].filter(Boolean).join(' vs ') || customEventLabel(stop.event_slug)
+                    const customVenue = [stop.event_venue, [stop.event_city, stop.event_state].filter(Boolean).join(', ')].filter(Boolean).join(' · ')
                     const expType  = EXPERIENCE_TYPES.find(e => e.value === stop.experience_type)
                     const heroColor = destInfo?.heroColor ?? ['#1A2030', '#0B1117']
                     const accentColor = heroColor[1] ?? '#1F6FEB'
@@ -1158,7 +1191,14 @@ export default function TripDetailPage() {
                             }}>
                               {i + 1}
                             </div>
-                            {stop.stadium_id && stadium ? (
+                            {isCustom ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                                {stop.event_away_team && <EventTeamLogo key={stop.event_away_team} name={stop.event_away_team} size={44} />}
+                                {stop.event_away_team && stop.event_home_team && <span style={{ fontSize: 12, fontWeight: 900, color: 'rgba(255,255,255,0.7)' }}>VS</span>}
+                                {stop.event_home_team && <EventTeamLogo key={stop.event_home_team} name={stop.event_home_team} size={44} />}
+                                {!stop.event_away_team && !stop.event_home_team && <span style={{ fontSize: 40, lineHeight: 1 }}>🍌</span>}
+                              </div>
+                            ) : stop.stadium_id && stadium ? (
                               <div style={{ position: 'relative', flexShrink: 0 }}>
                                 <TeamLogo abbreviation={stadium.abbreviation} size={44}
                                   style={{ borderRadius: '50%', border: '2px solid rgba(245,166,35,0.4)', display: 'block' }} />
@@ -1173,10 +1213,10 @@ export default function TripDetailPage() {
                             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 2 }}>
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ fontWeight: 800, fontSize: 18, color: '#E6EDF3', lineHeight: 1.2 }}>
-                                  {dest?.name ?? destInfo?.name ?? 'Destination'}
+                                  {isCustom ? customTitle : (dest?.name ?? destInfo?.name ?? 'Destination')}
                                 </div>
                                 <div style={{ fontSize: 13, color: '#8B949E', marginTop: 1 }}>
-                                  {stop.stadium_id && stadium
+                                  {isCustom ? (customVenue || null) : stop.stadium_id && stadium
                                     ? `${stadium.name} · ${stadium.city}, ${stadium.state}`
                                     : destInfo
                                       ? `${destInfo.city}${destInfo.state ? `, ${destInfo.state}` : ''}`
@@ -1197,6 +1237,13 @@ export default function TripDetailPage() {
                                       style={{ background: 'none', border: '1px solid #30363D', borderRadius: 6, width: 26, height: 26, cursor: canMoveStop(stop.id, 'down') ? 'pointer' : 'default', color: canMoveStop(stop.id, 'down') ? '#8B949E' : '#30363D', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                     >↓</button>
                                   </div>
+                                )}
+                                {isCustom && (
+                                  <span style={{
+                                    fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 20,
+                                    color: '#F5A623', backgroundColor: 'rgba(245,166,35,0.12)',
+                                    border: '1px solid rgba(245,166,35,0.35)', whiteSpace: 'nowrap',
+                                  }}>{customEventLabel(stop.event_slug)}</span>
                                 )}
                                 {(dest as any)?.is_mlb_event && (
                                   <span style={{
@@ -1220,8 +1267,23 @@ export default function TripDetailPage() {
                                 {new Date(stop.game_date + 'T12:00:00').toLocaleDateString('en-US', {
                                   weekday: 'long', month: 'long', day: 'numeric',
                                 })}
+                                {isCustom && <span style={{ color: '#F5A623', fontWeight: 700 }}> · {stop.game_time || 'time TBD'}</span>}
                               </div>
                             )}
+
+                            {isCustom && stop.game_date && (stopWeather[stop.id] ? (
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 8, padding: '4px 10px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                <span style={{ fontSize: 14 }}>{stopWeather[stop.id].emoji}</span>
+                                <span style={{ fontSize: 12, fontWeight: 600, color: '#C9D1D9' }}>{stopWeather[stop.id].tempF}°F · {stopWeather[stop.id].condition}</span>
+                              </div>
+                            ) : stopClimate[stop.id] ? (
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 8, padding: '4px 10px', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                <span style={{ fontSize: 14 }}>{stopClimate[stop.id].rating === 'great' ? '🟢' : stopClimate[stop.id].rating === 'good' ? '🔵' : stopClimate[stop.id].rating === 'fair' ? '🟡' : '🔴'}</span>
+                                <span style={{ fontSize: 12, fontWeight: 600, color: '#C9D1D9' }}>
+                                  Typically ~{stopClimate[stop.id].avgHigh}°F{stopClimate[stop.id].avgPrecipDays > 0 ? ` · rain ~${stopClimate[stop.id].avgPrecipDays}d/mo` : ''}
+                                </span>
+                              </div>
+                            ) : null)}
 
                             {expType && (
                               <span style={{
@@ -1288,9 +1350,9 @@ export default function TripDetailPage() {
 
                     const nextStop = sortedStops[i + 1]
                     if (!nextStop) return destCard
-                    const stopsWithStadium = sortedStops.filter(s => (s.stadium as Stadium | null)?.lat)
-                    const segIdx = stopsWithStadium.findIndex(s => s.id === stop.id)
-                    const miles = segIdx >= 0 ? segmentMiles[segIdx] : undefined
+                    const locatedStops = sortedStops.filter(s => stopCoords(s))
+                    const segIdx = locatedStops.findIndex(s => s.id === stop.id)
+                    const miles = segIdx >= 0 && locatedStops[segIdx + 1]?.id === nextStop.id ? segmentMiles[segIdx] : undefined
                     return (
                       <div key={stop.id}>
                         {destCard}
@@ -1635,9 +1697,9 @@ export default function TripDetailPage() {
                   const nextStadium = nextStop?.stadium as Stadium | undefined
                   if (!nextStop || !stadium || !nextStadium) return card
 
-                  const stopsWithStadium = sortedStops.filter(s => (s.stadium as Stadium | null)?.lat)
-                  const segIdx = stopsWithStadium.findIndex(s => s.id === stop.id)
-                  const miles = segIdx >= 0 ? segmentMiles[segIdx] : undefined
+                  const locatedStops = sortedStops.filter(s => stopCoords(s))
+                  const segIdx = locatedStops.findIndex(s => s.id === stop.id)
+                  const miles = segIdx >= 0 && locatedStops[segIdx + 1]?.id === nextStop.id ? segmentMiles[segIdx] : undefined
 
                   return (
                     <div key={stop.id}>
@@ -1824,6 +1886,27 @@ export default function TripDetailPage() {
           existingStops={stops}
           onClose={() => setShowEdit(false)}
           onSaved={() => { setShowEdit(false); load() }}
+        />
+      )}
+
+      {logGameStop && (
+        <BaseballLifeForm
+          defaultCategory="mlb_special_event"
+          prefill={{
+            eventType: customEventType(logGameStop.event_slug),
+            visitDate: logGameStop.game_date ?? '',
+            venue: logGameStop.event_venue ?? '',
+            city: logGameStop.event_city ?? '',
+            state: logGameStop.event_state ?? '',
+            mlbStadiumId: stadiums.find(st => st.name === logGameStop.event_venue)?.id,
+            homeTeam: logGameStop.event_home_team ?? '',
+            awayTeam: logGameStop.event_away_team ?? '',
+            gameTime: toTwentyFourHour(logGameStop.game_time),
+            startAtDetails: true,
+          }}
+          onSavedEntry={entryId => { void handleGameSheetSaved(logGameStop, entryId) }}
+          onSaved={() => { /* the stop is linked as soon as the entry saves */ }}
+          onClose={() => { setLogGameStop(null); void load() }}
         />
       )}
 

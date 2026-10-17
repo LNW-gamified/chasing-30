@@ -112,12 +112,29 @@ interface MlbStadium {
   state: string
 }
 
+// Pre-filled values when the form is opened from a planned trip stop.
+export interface EntryPrefill {
+  eventType?: string
+  visitDate?: string
+  venue?: string
+  city?: string
+  state?: string
+  mlbStadiumId?: string
+  homeTeam?: string
+  awayTeam?: string
+  gameTime?: string      // HH:MM, 24 hour. Anything else is ignored.
+  startAtDetails?: boolean
+}
+
 interface Props {
   onClose: () => void
   onSaved: () => void
+  // Called as soon as the entry is saved, with its id (used to link a trip stop).
+  onSavedEntry?: (entryId: string) => void
   defaultCategory?: BaseballLifeCategory
   defaultEventType?: string
   defaultMinorLeagueStadiumId?: string
+  prefill?: EntryPrefill
 }
 
 // ── Input style ───────────────────────────────────────────────────────────────
@@ -150,9 +167,9 @@ function SelectWrap({ children }: { children: React.ReactNode }) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, defaultEventType, defaultMinorLeagueStadiumId }: Props) {
+export default function BaseballLifeForm({ onClose, onSaved, onSavedEntry, defaultCategory, defaultEventType, defaultMinorLeagueStadiumId, prefill }: Props) {
   type Step = 'category' | 'location' | 'game_details' | 'notes' | 'success'
-  const [step, setStep] = useState<Step>(defaultCategory ? 'location' : 'category')
+  const [step, setStep] = useState<Step>(prefill?.startAtDetails && defaultCategory ? 'game_details' : defaultCategory ? 'location' : 'category')
   const [category, setCategory] = useState<BaseballLifeCategory | null>(defaultCategory ?? null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -162,12 +179,12 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
   const [mlbStadiums, setMlbStadiums] = useState<MlbStadium[]>([])
   const [selectedMlsId, setSelectedMlsId] = useState<string>(defaultMinorLeagueStadiumId ?? '')   // minor_league_stadium_id
   const [useCustomVenue, setUseCustomVenue] = useState(false)
-  const [venue, setVenue] = useState('')
-  const [city, setCity] = useState('')
-  const [state, setState] = useState('')
-  const [visitDate, setVisitDate] = useState('')
-  const [eventType, setEventType] = useState(defaultEventType ?? '')
-  const [selectedMlbStadiumId, setSelectedMlbStadiumId] = useState<string>('')
+  const [venue, setVenue] = useState(prefill?.venue ?? '')
+  const [city, setCity] = useState(prefill?.city ?? '')
+  const [state, setState] = useState(prefill?.state ?? '')
+  const [visitDate, setVisitDate] = useState(prefill?.visitDate ?? '')
+  const [eventType, setEventType] = useState(prefill?.eventType ?? defaultEventType ?? '')
+  const [selectedMlbStadiumId, setSelectedMlbStadiumId] = useState<string>(prefill?.mlbStadiumId ?? '')
   const [countAsChase30, setCountAsChase30] = useState(false)
   const [springTeam, setSpringTeam] = useState('')
   // Pre-fill event type from prop
@@ -176,13 +193,15 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
 
   // Game details step state
   const [opponent, setOpponent] = useState('')
+  const [homeTeam, setHomeTeam] = useState(prefill?.homeTeam ?? '')
+  const [awayTeam, setAwayTeam] = useState(prefill?.awayTeam ?? '')
   const [homeScore, setHomeScore] = useState('')
   const [awayScore, setAwayScore] = useState('')
   const [section, setSection] = useState('')
   const [row, setRow] = useState('')
   const [seats, setSeats] = useState('')
   const [confirmation, setConfirmation] = useState('')
-  const [gameTime, setGameTime] = useState('')
+  const [gameTime, setGameTime] = useState(/^\d{2}:\d{2}$/.test(prefill?.gameTime ?? '') ? prefill!.gameTime! : '')
   const [selectedMoments, setSelectedMoments] = useState<string[]>([])
 
   // Notes step
@@ -333,9 +352,9 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
       mlb_stadium_id:        resolvedMlbStadiumId,
       visit_date:            visitDate,
       event_type:            resolvedEventType,
-      opponent:              opponent.trim() || null,
-      home_team:             null,
-      away_team:             opponent.trim() || null,
+      opponent:              (category === 'mlb_special_event' ? (awayTeam.trim() || opponent.trim()) : opponent.trim()) || null,
+      home_team:             category === 'mlb_special_event' ? (homeTeam.trim() || null) : null,
+      away_team:             (category === 'mlb_special_event' ? (awayTeam.trim() || opponent.trim()) : opponent.trim()) || null,
       final_score_home:      homeScore ? parseInt(homeScore) : null,
       final_score_away:      awayScore ? parseInt(awayScore) : null,
       game_time:             gameTime.trim() || null,
@@ -350,6 +369,7 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
 
     const { data: savedEntry, error: saveErr } = await supabase.from('baseball_life_entries').insert(payload).select('id').single()
     if (saveErr) { setError(saveErr.message); setSaving(false); return }
+    if (savedEntry?.id) onSavedEntry?.(savedEntry.id)
 
     if (category === 'minor_league' && resolvedMlsId && savedEntry?.id) {
       fetch('/api/autofill-milb-game', {
@@ -548,6 +568,24 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
                     </select>
                   </SelectWrap>
                 </div>
+                {!selectedMlbStadiumId && (
+                  <>
+                    <div>
+                      <FieldLabel>Venue (if not an MLB ballpark)</FieldLabel>
+                      <input type="text" value={venue} onChange={e => setVenue(e.target.value)} placeholder="Venue name" style={inp} />
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <div style={{ flex: 2 }}>
+                        <FieldLabel>City</FieldLabel>
+                        <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="City" style={inp} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <FieldLabel>State</FieldLabel>
+                        <input type="text" value={state} onChange={e => setState(e.target.value)} placeholder="WA" maxLength={2} style={{ ...inp, textTransform: 'uppercase' }} />
+                      </div>
+                    </div>
+                  </>
+                )}
                 {selectedMlbStadiumId && (
                   <div
                     onClick={() => setCountAsChase30(v => !v)}
@@ -636,10 +674,23 @@ export default function BaseballLifeForm({ onClose, onSaved, defaultCategory, de
         <>
           <button onClick={() => setStep('location')} style={{ fontSize: 13, color: '#8B949E', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 20 }}>← Back</button>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {category === 'mlb_special_event' ? (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <FieldLabel>Away team</FieldLabel>
+                  <input type="text" value={awayTeam} onChange={e => setAwayTeam(e.target.value)} placeholder="Team name" style={inp} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <FieldLabel>Home team</FieldLabel>
+                  <input type="text" value={homeTeam} onChange={e => setHomeTeam(e.target.value)} placeholder="Team name" style={inp} />
+                </div>
+              </div>
+            ) : (
             <div>
               <FieldLabel>Opponent</FieldLabel>
               <input type="text" value={opponent} onChange={e => setOpponent(e.target.value)} placeholder="e.g. Tri-City Dust Devils" style={inp} />
             </div>
+            )}
             <div>
               <FieldLabel>Final Score</FieldLabel>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
